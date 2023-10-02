@@ -13,6 +13,9 @@ print_help() {
     exit 0
 }
 
+INPUT_FILE=""
+OUTPUT_FOLDER=""
+
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -41,8 +44,13 @@ then
     exit 0
 fi
 
+echo '****************************'
+echo 'Not working properly yet, need to concatenate execution. Will do soon, for now stopping execution'
+echo '****************************'
+exit 0
 
-./convert-hdf5-to-text.sh -i 
-./create-images-from-tps.sh
+
+./convert-hdf5-to-text.sh -i $INPUT_FILE -o $OUTPUT_FOLDER
+./create-images-from-tps.sh -i $INPUT_FILE -o $OUTPUT_FOLDER
 
 

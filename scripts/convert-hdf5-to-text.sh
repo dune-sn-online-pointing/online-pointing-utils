@@ -2,7 +2,7 @@
 
 INPUT_FILE=""
 OUTPUT_FOLDER=""
-FORMAT="npy" # can choose between txt and npy, leaving this for now
+FORMAT="txt" # can choose between txt and npy, leaving this for now
 NUM_RECORDS=5 # leaving hardcoded for now
 
 
@@ -48,7 +48,8 @@ fi
 source setup-dune-daq.sh
 
 # running actual command. Need to change from relative path to absolute path in repo
-python ../python/hdf5_converter.py --input_file $INPUT_FILE --output_folder $OUTPUT_FOLDER --format $FORMAT --num_records $NUM_RECORDS
-
+cd ../python/tpstream_hdf5_to_text
+python hdf5_converter.py --input_file $INPUT_FILE --output_path $OUTPUT_FOLDER --format $FORMAT --num_records $NUM_RECORDS
+cd ../../scripts
 # exit the environment 
 deactivate

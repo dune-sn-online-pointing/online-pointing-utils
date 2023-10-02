@@ -1,10 +1,10 @@
 import numpy as np
+import sys
 import matplotlib.pyplot as plt
 import time
 import os
 import argparse
 import warnings
-import sys
 import gc
 
 import create_images_from_tps as tp2img
@@ -18,7 +18,7 @@ parser.add_argument('--show', action='store_true', help='show the image')
 parser.add_argument('--save_img', action='store_true', help='save the image')
 parser.add_argument('--save_ds', action='store_true', help='save the dataset')
 parser.add_argument('--write', action='store_true', help='write the clusters to a file')
-parser.add_argument('--save_path', type=str, default='/eos/user/d/dapullia/tp_dataset/', help='path to save the image')
+parser.add_argument('--output_path', type=str, default='/eos/user/d/dapullia/tp_dataset/', help='path to save the image')
 parser.add_argument('--img_save_folder', type=str, default='images/', help='folder to save the image')
 parser.add_argument('--img_save_name', type=str, default='image', help='name to save the image')
 parser.add_argument('--n_events', type=int, default=0, help='number of events to process')
@@ -33,7 +33,7 @@ show = args.show
 save_img = args.save_img
 save_ds = args.save_ds
 write = args.write
-save_path = args.save_path
+output_path = args.output_path
 n_events = args.n_events
 min_tps_to_cluster = args.min_tps_to_cluster
 img_save_folder = args.img_save_folder
@@ -106,9 +106,9 @@ if __name__=='__main__':
         if show:
             tp2img.show_img(np.array(cluster), channel_map, min_tps_to_create_img=2, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50)
         if save_img:
-            if not os.path.exists(save_path+img_save_folder):
-                os.makedirs(save_path+img_save_folder)
-            tp2img.save_img(np.array(cluster), channel_map, save_path=save_path+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=2, make_fixed_size=True, width=120, height=1500, x_margin=5, y_margin=400)
+            if not os.path.exists(output_path+img_save_folder):
+                os.makedirs(output_path+img_save_folder)
+            tp2img.save_img(np.array(cluster), channel_map, output_path=output_path+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=2, make_fixed_size=True, width=120, height=1500, x_margin=5, y_margin=400)
     # write the clusters to a file
     if write:
         with open('clusters.txt', 'w') as f:
