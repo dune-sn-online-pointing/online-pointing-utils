@@ -11,4 +11,15 @@ Improvements will come.
 
 `generate-images-from-hdf5.sh` doesn't work yet, you have to run the two steps separately.
 
+## Example of usage
+To make it simple, I work in lxplus in a shell with python 3.8, with `scl enable rh-python38 bash`.
+Then these steps work for me:
+
+```
+./convert-hdf5-to-text.sh -i /eos/home-e/evilla/dune/tps/tpstream_run020638_0000_tpwriter_tpswriter_20230314T222757.hdf5 -o /eos/home-e/evilla/dune/tps/;
+source ../venv/bin/activate; # my venv containing matplotlib
+./create-images-from-tps.sh -i /eos/home-e/evilla/dune/tps/tpstream_run020638_0000_tpwriter_tpswriter_20230314T222757.txt -o /eos/home-e/evilla/dune/tps/; # output will be npy "images"
+deactivate;
+```
+
 
