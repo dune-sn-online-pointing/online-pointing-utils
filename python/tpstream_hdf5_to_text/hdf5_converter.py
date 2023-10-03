@@ -62,7 +62,7 @@ all_tps = tpsconv.tpstream_hdf5_converter(input_file, output_path, num_records, 
 # take the input name from the last slash
 
 output_file_name = input_file.split("/")[-1]
-print ("output file name is", output_file_name)
+print ("output file name is", output_file_name[:-5] )
 if save_txt:
     np.savetxt(output_path + output_file_name[:-5] + ".txt", all_tps, fmt='%i')
 if save_npy:

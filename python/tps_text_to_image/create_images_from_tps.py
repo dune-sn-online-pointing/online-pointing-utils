@@ -108,10 +108,10 @@ if __name__=='__main__':
         if save_img:
             if not os.path.exists(output_path+img_save_folder):
                 os.makedirs(output_path+img_save_folder)
-            tp2img.save_img(np.array(cluster), channel_map, output_path=output_path+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=2, make_fixed_size=True, width=120, height=1500, x_margin=5, y_margin=400)
+            tp2img.save_img(np.array(cluster), channel_map, save_path=output_path+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=2, make_fixed_size=True, width=120, height=1500, x_margin=5, y_margin=400)
     # write the clusters to a file
     if write:
-        with open('clusters.txt', 'w') as f:
+        with open(output_path+'clusters.txt', 'w') as f:
             for i, cluster in enumerate(clusters):
                 f.write('Cluster'+str(i)+':\n')
                 for tp in cluster:
