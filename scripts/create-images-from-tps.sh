@@ -2,7 +2,7 @@
 
 INPUT_FILE=""
 OUTPUT_FOLDER=""
-CHANMAP=vdcbce_chanmap_v4.txt # leaving hardcoded for now
+CHANMAP=../../channel-maps/vdcbce_chanmap_v4.txt # leaving hardcoded for now
 SHOW=false
 SAVE_IMG=false
 SAVE_DS=true
@@ -80,12 +80,12 @@ else
     WRITE_FLAG=""
 fi
 
+
+# load a recent python version
+#scl enable rh-python38 bash
+
 # move to the folder, run and come back to scripts
 cd ../python/tps_text_to_image
-
-echo 'list of what there is here'
-ls
-
 python create_images_from_tps.py --input_file $INPUT_FILE --chanmap $CHANMAP --output_path $OUTPUT_FOLDER --img_save_folder $IMG_SAVE_FOLDER --img_save_name $IMG_SAVE_NAME --n_events $N_EVENTS --min_tps_to_cluster $MIN_TPS_TO_CLUSTER $SHOW_FLAG $SAVE_IMG_FLAG $SAVE_DS_FLAG $WRITE_FLAG
 cd ../../scripts
 

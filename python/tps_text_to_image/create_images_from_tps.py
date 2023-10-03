@@ -7,7 +7,7 @@ import argparse
 import warnings
 import gc
 
-import create_images_from_tps as tp2img
+import create_images_from_tps_libs as tp2img
 
 
 # write a parser to set up the running from command line
@@ -38,7 +38,7 @@ n_events = args.n_events
 min_tps_to_cluster = args.min_tps_to_cluster
 img_save_folder = args.img_save_folder
 img_save_name = args.img_save_name
-
+save_path = output_path
 
 
 '''
