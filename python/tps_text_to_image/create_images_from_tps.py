@@ -17,70 +17,43 @@ parser.add_argument('--chanmap', type=str, default='FDHDChannelMap_v1_wireends.t
 parser.add_argument('--show', action='store_true', help='show the image')
 parser.add_argument('--save_img', action='store_true', help='save the image')
 parser.add_argument('--save_ds', action='store_true', help='save the dataset')
-parser.add_argument('--write', action='store_true', help='write the clusters to a file')
+parser.add_argument('--write', action='store_true', help='write the groups to a file')
 parser.add_argument('--output_path', type=str, default='/eos/user/d/dapullia/tp_dataset/', help='path to save the image')
 parser.add_argument('--img_save_folder', type=str, default='images/', help='folder to save the image')
 parser.add_argument('--img_save_name', type=str, default='image', help='name to save the image')
 parser.add_argument('--n_events', type=int, default=0, help='number of events to process')
-parser.add_argument('--min_tps_to_cluster', type=int, default=4, help='minimum number of TPs to create a cluster')
+parser.add_argument('--min_tps_to_group', type=int, default=4, help='minimum number of TPs to create a group')
+parser.add_argument('--drift_direction', type=int, default=0, help='0 for horizontal drift, 1 for vertical drift')
+parser.add_argument('--ticks_limit', type=int, default=550, help='closeness in ticks to group TPs')
+parser.add_argument('--channel_limit', type=int, default=20, help='closeness in channels to group TPs')
+parser.add_argument('--make_fixed_size', action='store_true', help='make the image size fixed')
+parser.add_argument('--img_width', type=int, default=70, help='width of the image')
+parser.add_argument('--img_height', type=int, default=1000, help='height of the image')
+parser.add_argument('--x_margin', type=int, default=5, help='margin in x')
+parser.add_argument('--y_margin', type=int, default=50, help='margin in y')
+parser.add_argument('--min_tps_to_create_img', type=int, default=2, help='minimum number of TPs to create an image')
 
 args = parser.parse_args()
-# unpack the arguments
 filename = args.input_file
-
-chanMap = args.chanmap
+channel_map_file = args.chanmap
 show = args.show
 save_img = args.save_img
 save_ds = args.save_ds
 write = args.write
 output_path = args.output_path
 n_events = args.n_events
-min_tps_to_cluster = args.min_tps_to_cluster
+min_tps_to_group = args.min_tps_to_group
 img_save_folder = args.img_save_folder
 img_save_name = args.img_save_name
-save_path = output_path
-
-
-'''
-TP format (snana_hits):  
-[0] time_start
-[1] time_over_threshold
-[2] time_peak
-[3] channel
-[4] adc_integral
-[5] adc_peak
-[6] detID
-[7] type
-
-TP format (tpstream):  
-[0] time_start
-[1] time_over_threshold
-[2] time_peak
-[3] channel
-[4] adc_integral
-[5] adc_peak
-[6] detID
-[7] flag
-[8] version
-
-'''
-
-
-'''
-Channel Map format (apa):
-[0] offlchan    in gdml and channel sorting convention
-[1] upright     0 for inverted, 1 for upright
-[2] wib         1, 2, 3, 4 or 5  (slot number +1?)
-[3] link        link identifier: 0 or 1
-[4] femb_on_link    which of two FEMBs in the WIB frame this FEMB is:  0 or 1
-[5] cebchan     cold electronics channel on FEMB:  0 to 127
-[6] plane       0: U,  1: V,  2: X
-[7] chan_in_plane   which channel this is in the plane in the FEMB:  0:39 for U and V, 0:47 for X
-[8] femb       which FEMB on an APA -- 1 to 20
-[9] asic       ASIC:   1 to 8
-[10] asicchan   ASIC channel:  0 to 15
-[11] wibframechan   channel index in WIB frame (used with get_adc in detdataformats/WIB2Frame.hh).  0:255
-'''
+drift_direction = args.drift_direction
+ticks_limit = args.ticks_limit
+channel_limit = args.channel_limit
+make_fixed_size = args.make_fixed_size
+width = args.img_width
+height = args.img_height
+x_margin = args.x_margin
+y_margin = args.y_margin
+min_tps_to_create_img = args.min_tps_to_create_img
 
 
 
@@ -93,63 +66,42 @@ if __name__=='__main__':
         all_TPs = np.loadtxt(filename, skiprows=0, dtype=int)
     
     #read channel map
-    channel_map = tp2img.create_channel_map_array(chanMap)
-    # The line below is needed because the channel map is not the same (pain)
-    channel_map[:,6] = channel_map[:,7]
+    channel_map = tp2img.create_channel_map_array(channel_map_file, drift_direction=drift_direction)
 
+    groups = tp2img.group_maker(all_TPs, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
 
-    #create images
-    # clusters = tp2img.cluster_maker(all_TPs, channel_map, ticks_limit=550, channel_limit=20, min_tps_to_cluster=min_tps_to_cluster)
-    clusters = tp2img.cluster_maker_only_by_time(all_TPs, channel_map, ticks_limit=400, channel_limit=20, min_tps_to_cluster=min_tps_to_cluster)
-    print('Number of clusters: ', len(clusters))
-    for i, cluster in enumerate(clusters):
+    print("Number of groups: ", len(groups))
+    total_channels = channel_map.shape[0]
+    n_views = np.unique(channel_map[all_TPs[:, 3]% total_channels, 1]).shape[0]
+    print("Number of planes: ", n_views)
+
+    for i, group in enumerate(groups):
         if show:
-            tp2img.show_img(np.array(cluster), channel_map, min_tps_to_create_img=2, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50)
+            tp2img.show_img(np.array(group), channel_map, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
         if save_img:
             if not os.path.exists(output_path+img_save_folder):
                 os.makedirs(output_path+img_save_folder)
-            tp2img.save_img(np.array(cluster), channel_map, save_path=output_path+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=2, make_fixed_size=True, width=120, height=1500, x_margin=5, y_margin=400)
-    # write the clusters to a file
+            tp2img.save_img(np.array(group), channel_map, save_path=output_path+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
     if write:
-        with open(output_path+'clusters.txt', 'w') as f:
-            for i, cluster in enumerate(clusters):
-                f.write('Cluster'+str(i)+':\n')
-                for tp in cluster:
-                    f.write(str(tp[0]) + ' ' + str(tp[1]) + ' ' + str(tp[2]) + ' ' + str(tp[3]) + ' ' + str(tp[4]) + ' ' + str(tp[5]) + ' ' + str(tp[6]) + ' ' + str(tp[7]) + '\n')
+        with open(output_path+'groups.txt', 'w') as f:
+            for i, group in enumerate(groups):
+                f.write('Group'+str(i)+':\n')
+                for tp in group:
+                    f.write(f"{tp[0]} {tp[1]} {tp[2]} {tp[3]} {tp[4]} {tp[5]} {tp[6]} {tp[7]}\n")
                 f.write('\n')
-        
-    # do some statistics on the clusters
-
-    n_spurious_clusters = 0
-    hist_types = np.array([0,0,0,0,0,0,0,0,0,0])
-    for cluster in clusters:
-        temp = cluster[0][7]
-        for tp in cluster:
-            if tp[7] != temp:
-                n_spurious_clusters += 1
-                break
-        else:
-            hist_types[cluster[0][7]] += 1
-    print('Number of clusters with different type: ', n_spurious_clusters)
-
-    print('Types: ', hist_types)
-
 
     if save_ds:
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-        # create the dataset
-        print('--------- Python list version with numpy array and preallocated array --------')
-        dataset_img, dataset_label = tp2img.create_dataset(clusters, channel_map=channel_map, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50)
+        if not os.path.exists(output_path+'dataset/'):
+            os.makedirs(output_path+'dataset/')
+        dataset_img, dataset_label = tp2img.create_dataset(groups,  channel_map=channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, n_views=n_views)
+        print("Dataset shape: ", dataset_img.shape)
+        print("Dataset label shape: ", dataset_label.shape)
 
+        np.save(output_path+'dataset/dataset_img.npy', dataset_img)
+        np.save(output_path+'dataset/dataset_label.npy', dataset_label)
 
-        print('Dataset shape: ', (dataset_img).shape)
-        print('Labels shape: ', (dataset_label).shape)            
-        np.save(save_path + 'dataset_img.npy', dataset_img)
-        np.save(save_path + 'dataset_lab.npy', dataset_label)
-        
         print(np.unique(dataset_label,return_counts=True))
-       
 
-    print("Done!")
+    print('Done!')
+
 

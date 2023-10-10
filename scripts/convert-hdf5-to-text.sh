@@ -1,7 +1,7 @@
 # very preliminary, will add external clp, folder checks during execution...
 
-INPUT_FILE=""
-OUTPUT_FOLDER=""
+INPUT_FILE="/eos/user/d/dapullia/tpstream_hdf5/tpstream_run020638_0000_tpwriter_tpswriter_20230314T222757.hdf5"
+OUTPUT_FOLDER="/eos/user/d/dapullia/tpstream_hdf5/"
 FORMAT="txt" # can choose between txt and npy, leaving this for now
 NUM_RECORDS=5 # leaving hardcoded for now
 
