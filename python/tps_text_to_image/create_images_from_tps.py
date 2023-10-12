@@ -24,7 +24,7 @@ parser.add_argument('--img_save_name', type=str, default='image', help='name to 
 parser.add_argument('--n_events', type=int, default=0, help='number of events to process')
 parser.add_argument('--min_tps_to_group', type=int, default=4, help='minimum number of TPs to create a group')
 parser.add_argument('--drift_direction', type=int, default=0, help='0 for horizontal drift, 1 for vertical drift')
-parser.add_argument('--ticks_limit', type=int, default=550, help='closeness in ticks to group TPs')
+parser.add_argument('--ticks_limit', type=int, default=150, help='closeness in ticks to group TPs')
 parser.add_argument('--channel_limit', type=int, default=20, help='closeness in channels to group TPs')
 parser.add_argument('--make_fixed_size', action='store_true', help='make the image size fixed')
 parser.add_argument('--img_width', type=int, default=70, help='width of the image')

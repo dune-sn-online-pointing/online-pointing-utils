@@ -1,15 +1,14 @@
 # very preliminary, will add external clp, folder checks during execution...
-
 INPUT_FILE="/eos/user/d/dapullia/tp_dataset/snana_hits.txt"
-OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/snana/temp_test/"
+OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/snana/"
 CHANMAP=../../channel-maps/channel_map_upright.txt # leaving hardcoded for now
 SHOW=false
-SAVE_IMG=true
+SAVE_IMG=false
 SAVE_DS=true
-WRITE=true 
+WRITE=false 
 IMG_SAVE_FOLDER=images/
 IMG_SAVE_NAME=image
-N_EVENTS=10000
+N_EVENTS=2000000
 MIN_TPS_TO_GROUP=2
 DRIFT_DIRECTION=0
 MAKE_FIXED_SIZE=true

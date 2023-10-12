@@ -42,8 +42,7 @@ def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps
         print('Warning: multiple planes in the event. Grouping only by time.')
         return group_maker_only_by_time(all_tps, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
 
-
-
+    # all_tps[:, 3] = all_tps[:, 3] % 2560 #to be removed, wrong
     # create a list of groups
     groups = []
     buffer = []
