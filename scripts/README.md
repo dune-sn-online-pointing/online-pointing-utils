@@ -44,6 +44,6 @@ For the moment, to set all the parameters you need to edit the script changing t
 You can change the output format by changing the value of the variable `FORMAT`. The possible values are:
 - `txt`: the output is a text file
 - `npy`: the output is a numpy array
-- `img_groups': TPs are grouped, and an image is produced for each group
+- `img_groups`: TPs are grouped, and an image is produced for each group
 - `img_all`: an image with all the tps is produced. You can also set the time range of the image with the variables `TIME_START_FOR_IMG_ALL` and `TIME_END_FOR_IMG_ALL`.
 
