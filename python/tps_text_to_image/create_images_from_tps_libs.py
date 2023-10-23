@@ -287,6 +287,7 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
     :param x_margin: margin on the x axis if make_fixed_size is False
     :param y_margin: margin on the y axis if make_fixed_size is False
     '''
+    total_channels = channel_map.shape[0]
 
     #create images
     img_u, img_v, img_x = all_views_img_maker(all_TPs, channel_map, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
@@ -308,8 +309,8 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         plt.imsave(save_path +'x_' + os.path.basename(outname) + '.png', img_x)
 
     if n_views == 0:
-        print('No images saved! Do a better grouping algorithm!')
-
+        print(f'No images saved! Do a better grouping algorithm! You had {all_TPs.shape[0]} tps and {min_tps_to_create_img} as min_tps_to_create_img.' )
+        print(f'You have {all_TPs[np.where(channel_map[all_TPs[:, 3]% total_channels, 1] == 0)].shape[0]} U tps, {all_TPs[np.where(channel_map[all_TPs[:, 3]% total_channels, 1] == 1)].shape[0]} V tps and {all_TPs[np.where(channel_map[all_TPs[:, 3]% total_channels, 1] == 2)].shape[0]} Z tps.')
 
 
     if n_views > 1:

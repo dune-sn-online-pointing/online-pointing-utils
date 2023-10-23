@@ -18,6 +18,10 @@ import trgdataformats
 import detchannelmaps
 from hdf5libs import HDF5RawDataFile
 import hdf5_converter_libs as tpsconv
+import sys
+
+# 
+
 sys.path.append('../tps_text_to_image')
 import create_images_from_tps_libs as tp2img
 
@@ -31,10 +35,10 @@ parser.add_argument('--input_file', type=str, help='Input file name', default='/
 parser.add_argument('--output_path', type=str, help='Output file path', default='')
 parser.add_argument('--format', type=str, help='Output file format', default=['txt'], nargs='+')
 parser.add_argument('--num_records', type=int, help='Number of records to process', default=-1)
-parser.add_argument('--chanmap', type=str, default='FDHDChannelMap_v1_wireends.txt', help='path to the file with Channel Map')
-parser.add_argument('--min_tps_to_group', type=int, default=4, help='minimum number of TPs to create a group')
+parser.add_argument('--chanmap', type=str, default='../../channel-maps/vdcbce_chanmap_v4.txt', help='path to the file with Channel Map')
+parser.add_argument('--min_tps_to_group', type=int, default=9, help='minimum number of TPs to create a group')
 parser.add_argument('--drift_direction', type=int, default=0, help='0 for horizontal drift, 1 for vertical drift')
-parser.add_argument('--ticks_limit', type=int, default=150, help='closeness in ticks to group TPs')
+parser.add_argument('--ticks_limit', type=int, default=100, help='closeness in ticks to group TPs')
 parser.add_argument('--channel_limit', type=int, default=20, help='closeness in channels to group TPs')
 parser.add_argument('--make_fixed_size', action='store_true', help='make the image size fixed')
 parser.add_argument('--img_width', type=int, default=70, help='width of the image')
@@ -44,6 +48,9 @@ parser.add_argument('--y_margin', type=int, default=50, help='margin in y')
 parser.add_argument('--min_tps_to_create_img', type=int, default=2, help='minimum number of TPs to create an image')
 parser.add_argument('--img_save_folder', type=str, default='images/', help='folder to save the image, on top of the output path')
 parser.add_argument('--img_save_name', type=str, default='image', help='name to save the image')
+parser.add_argument('--time_start_for_img_all', type=int, default=-1, help='Start time to draw for IMG ALL')
+parser.add_argument('--time_end_for_img_all', type=int, default=-1, help='End time to draw for IMG ALL')
+
 
 args = parser.parse_args()
 input_file = args.input_file
@@ -63,6 +70,9 @@ y_margin = args.y_margin
 min_tps_to_create_img = args.min_tps_to_create_img
 img_save_folder = args.img_save_folder
 img_save_name = args.img_save_name
+time_start_for_img_all=args.time_start_for_img_all
+time_end_for_img_all=args.time_end_for_img_all
+
 
 # check if the output format is a subset of the valid formats
 valid_formats = ["txt", "npy", "img_groups", "img_all"]
@@ -74,7 +84,7 @@ save_img_all = False
 
 
 if not all(item in valid_formats for item in out_format):
-    print(f'Output format {out_format} not valid. Please choose between txt, npy or both.')
+    print(f'Output format {out_format} not valid. Please choose between txt, npy, img_groups, img_all')
     sys.exit(1)
 
 if "txt" in out_format:
@@ -92,11 +102,11 @@ if "img_all" in out_format:
 
 all_tps = tpsconv.tpstream_hdf5_converter(input_file, output_path, num_records, out_format)
 
+print(f"Converted {all_tps.shape[0]} tps!")
 
 
 # Save the data
 # take the input name from the last slash
-
 output_file_name = input_file.split("/")[-1]
 print ("output file name is", output_file_name[:-5] )
 if save_txt:
@@ -104,13 +114,29 @@ if save_txt:
 if save_npy:
     np.save(output_path + output_file_name[:-5] + ".npy", all_tps)
 if save_img_groups:
+    print("Producing groups images")
     channel_map = tp2img.create_channel_map_array(channel_map_file, drift_direction=drift_direction)
-    groups = tp2img.group_maker(all_TPs, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
+    groups = tp2img.group_maker(all_tps, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
+    print(f"Created {len(groups)} groups!")
+
     for i, group in enumerate(groups):
         tp2img.save_img(np.array(group), channel_map, save_path=output_path+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
 if save_img_all:
+    eff_time_start=all_tps[0][0]
+    eff_time_end=all_tps[-1][0]
+    all_tps = np.array(all_tps)
+    if not (eff_time_start < time_start_for_img_all and time_start_for_img_all<time_end_for_img_all and time_end_for_img_all<eff_time_end):
+        print("Something wrong with your time choices. You have:")
+        print(f"First TP time start: {eff_time_start}")
+        print(f"First TP time end: {eff_time_end}")
+        print(f"I will draw all the converted TPs.")
+    else:
+        print(f"I will draw all TPs from {time_start_for_img_all} to {time_end_for_img_all}.")
+        all_tps = all_tps[(all_tps[:, 0] >= time_start_for_img_all) & (all_tps[:, 0] <= time_end_for_img_all)]
+        
+    print("Producing all tps image")
     channel_map = tp2img.create_channel_map_array(channel_map_file, drift_direction=drift_direction)
-    tp2img.save_img(np.array(all_tps), channel_map, save_path=output_path+img_save_folder, outname="all_" + img_save_name, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=False, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+    tp2img.save_img((all_tps), channel_map, save_path=output_path+img_save_folder, outname="all_" + img_save_name, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=True, width=2*width, height=2*height, x_margin=x_margin, y_margin=y_margin)
 
 
 
