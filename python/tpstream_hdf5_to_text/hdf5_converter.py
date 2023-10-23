@@ -20,11 +20,6 @@ from hdf5libs import HDF5RawDataFile
 import hdf5_converter_libs as tpsconv
 import sys
 
-# 
-
-sys.path.append('../tps_text_to_image')
-import create_images_from_tps_libs as tp2img
-
 
 import argparse
 import sys
@@ -99,6 +94,11 @@ if "img_groups" in out_format:
 if "img_all" in out_format:
     print("Will save one big image including all TPs")
     save_img_all = True
+
+if save_img or save_img_all:
+    sys.path.append('../tps_text_to_image')
+    import create_images_from_tps_libs as tp2img
+
 
 all_tps = tpsconv.tpstream_hdf5_converter(input_file, output_path, num_records, out_format)
 
