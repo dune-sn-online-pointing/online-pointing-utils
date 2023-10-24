@@ -31,12 +31,13 @@ You can run the script setting the input file and the output folder with:
 ./convert-hdf5-to-text.sh  -i <input_file> -o <output_folder> [-h]
 ```
 
-For the moment, to set all the parameters you need to edit the script changing the values of the variables at the beginning of the script.
+For the moment, to set all the parameters you need to edit the script changing the values of the variables at the beginning of the script.You can also set the time interval using TIME_START and TIME_END.
+
 You can change the output format by changing the value of the variable `FORMAT`. The possible values are:
 - `txt`: the output is a text file
 - `npy`: the output is a numpy array
 - `img_groups`: TPs are grouped, and an image is produced for each group
-- `img_all`: an image with all the tps is produced. You can also set the time range of the image with the variables `TIME_START_FOR_IMG_ALL` and `TIME_END_FOR_IMG_ALL`.
+- `img_all`: an image with all the tps is produced. 
 
 **NOTE 1**: this script relis on the DUNE DAQ software. You need to have it installed and sourced before running the script. You can source it with:
 ```

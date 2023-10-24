@@ -6,10 +6,6 @@ Date created: 29/09/2023
 Description:
 This file contains the main function that converts a HDF5 file containing TPStream data from DUNE DAQ to different formats.
 
-
-Usage:
-python tpstream_hdf5_converter.py -input_file <input_file_name> -input_path <input_file_path> -output_path <output_file_path> -format <output_file_format>
-
 '''
 import daqdataformats
 import detdataformats
@@ -43,8 +39,8 @@ parser.add_argument('--y_margin', type=int, default=50, help='margin in y')
 parser.add_argument('--min_tps_to_create_img', type=int, default=2, help='minimum number of TPs to create an image')
 parser.add_argument('--img_save_folder', type=str, default='images/', help='folder to save the image, on top of the output path')
 parser.add_argument('--img_save_name', type=str, default='image', help='name to save the image')
-parser.add_argument('--time_start_for_img_all', type=int, default=-1, help='Start time to draw for IMG ALL')
-parser.add_argument('--time_end_for_img_all', type=int, default=-1, help='End time to draw for IMG ALL')
+parser.add_argument('--time_start', type=int, default=-1, help='Start time to draw for IMG ALL')
+parser.add_argument('--time_end', type=int, default=-1, help='End time to draw for IMG ALL')
 
 
 args = parser.parse_args()
@@ -65,8 +61,8 @@ y_margin = args.y_margin
 min_tps_to_create_img = args.min_tps_to_create_img
 img_save_folder = args.img_save_folder
 img_save_name = args.img_save_name
-time_start_for_img_all=args.time_start_for_img_all
-time_end_for_img_all=args.time_end_for_img_all
+time_start=args.time_start
+time_end=args.time_end
 
 
 # check if the output format is a subset of the valid formats
@@ -95,7 +91,7 @@ if "img_all" in out_format:
     print("Will save one big image including all TPs")
     save_img_all = True
 
-if save_img or save_img_all:
+if save_img_groups or save_img_all:
     sys.path.append('../tps_text_to_image')
     import create_images_from_tps_libs as tp2img
 
@@ -103,9 +99,20 @@ if save_img or save_img_all:
 all_tps = tpsconv.tpstream_hdf5_converter(input_file, output_path, num_records, out_format)
 
 print(f"Converted {all_tps.shape[0]} tps!")
-
-
 # Save the data
+
+eff_time_start=all_tps[0][0]
+eff_time_end=all_tps[-1][0]
+all_tps = np.array(all_tps)
+if not (eff_time_start < time_start and time_start<time_end and time_end<eff_time_end):
+    print("Something wrong with your time choices. You have:")
+    print(f"First TP time start: {eff_time_start}")
+    print(f"First TP time end: {eff_time_end}")
+    print(f"I will draw all the converted TPs.")
+else:
+    print(f"I will draw all TPs from {time_start} to {time_end}.")
+    all_tps = all_tps[(all_tps[:, 0] >= time_start) & (all_tps[:, 0] <= time_end)]
+
 # take the input name from the last slash
 output_file_name = input_file.split("/")[-1]
 print ("output file name is", output_file_name[:-5] )
@@ -122,18 +129,6 @@ if save_img_groups:
     for i, group in enumerate(groups):
         tp2img.save_img(np.array(group), channel_map, save_path=output_path+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
 if save_img_all:
-    eff_time_start=all_tps[0][0]
-    eff_time_end=all_tps[-1][0]
-    all_tps = np.array(all_tps)
-    if not (eff_time_start < time_start_for_img_all and time_start_for_img_all<time_end_for_img_all and time_end_for_img_all<eff_time_end):
-        print("Something wrong with your time choices. You have:")
-        print(f"First TP time start: {eff_time_start}")
-        print(f"First TP time end: {eff_time_end}")
-        print(f"I will draw all the converted TPs.")
-    else:
-        print(f"I will draw all TPs from {time_start_for_img_all} to {time_end_for_img_all}.")
-        all_tps = all_tps[(all_tps[:, 0] >= time_start_for_img_all) & (all_tps[:, 0] <= time_end_for_img_all)]
-        
     print("Producing all tps image")
     channel_map = tp2img.create_channel_map_array(channel_map_file, drift_direction=drift_direction)
     tp2img.save_img((all_tps), channel_map, save_path=output_path+img_save_folder, outname="all_" + img_save_name, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=True, width=2*width, height=2*height, x_margin=x_margin, y_margin=y_margin)
