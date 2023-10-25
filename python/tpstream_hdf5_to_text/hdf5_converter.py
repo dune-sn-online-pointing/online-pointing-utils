@@ -45,7 +45,7 @@ if input_file == '' or output_folder == '':
 
 out_format = config_data["FORMAT"]
 num_records = config_data["NUM_RECORDS"]
-channel_map = config_data["CHANNEL_MAP"]
+channel_map_file = config_data["CHANNEL_MAP"]
 min_tps_to_group = config_data["MIN_TPS_TO_GROUP"]
 drift_direction = config_data["DRIFT_DIRECTION"]
 ticks_limit = config_data["TICKS_LIMIT"]
@@ -124,11 +124,11 @@ if save_img_groups:
     print(f"Created {len(groups)} groups!")
 
     for i, group in enumerate(groups):
-        tp2img.save_img(np.array(group), channel_map, save_path=output_folder+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+        tp2img.save_img(np.array(group), channel_map, save_path=output_folder+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=img_width, height=img_height, x_margin=x_margin, y_margin=y_margin)
 if save_img_all:
     print("Producing all tps image")
     channel_map = tp2img.create_channel_map_array(channel_map_file, drift_direction=drift_direction)
-    tp2img.save_img((all_tps), channel_map, save_path=output_folder+img_save_folder, outname="all_" + img_save_name, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=True, width=2*width, height=2*height, x_margin=x_margin, y_margin=y_margin)
+    tp2img.save_img((all_tps), channel_map, save_path=output_folder+img_save_folder, outname="all_" + img_save_name, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=True, width=2*img_width, height=2*img_height, x_margin=x_margin, y_margin=y_margin)
 
 
 
