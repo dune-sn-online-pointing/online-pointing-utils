@@ -28,7 +28,7 @@ def tp_to_numpy(tp):
     return np.array([tp.time_start, tp.time_over_threshold, tp.time_peak, tp.channel, tp.adc_integral, tp.adc_peak, tp.detid, tp.flag, tp.version])
 
 
-def tpstream_hdf5_converter(filename, output_path, num_records=-1, out_format=["txt"]):
+def tpstream_hdf5_converter(filename, num_records=-1, out_format=["txt"]):
     h5_file = HDF5RawDataFile(filename)
 
     # Get all records (TimeSlice)
@@ -86,8 +86,7 @@ def tpstream_hdf5_converter(filename, output_path, num_records=-1, out_format=["
 
     return all_tps
 
-
-def tpstream_hdf5_converter_as_cpp(filename, output_path, num_records=-1, out_format=["txt"]):
+def tpstream_hdf5_converter_as_cpp(filename, num_records=-1, out_format=["txt"]):
 
     h5_file = HDF5RawDataFile(filename)
 

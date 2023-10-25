@@ -96,7 +96,7 @@ if save_img_groups or save_img_all:
     import create_images_from_tps_libs as tp2img
 
 
-all_tps = tpsconv.tpstream_hdf5_converter(input_file, output_path, num_records, out_format)
+all_tps = tpsconv.tpstream_hdf5_converter(input_file, num_records, out_format)
 
 print(f"Converted {all_tps.shape[0]} tps!")
 # Save the data
