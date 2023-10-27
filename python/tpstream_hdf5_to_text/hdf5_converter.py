@@ -16,53 +16,56 @@ from hdf5libs import HDF5RawDataFile
 import hdf5_converter_libs as tpsconv
 import sys
 
-
-import json
 import argparse
 import sys
 import numpy as np
 
 parser = argparse.ArgumentParser(description='Convert TPStream HDF5 file to different formats.')
-parser.add_argument('--settings_file', type=str, help='Settings file path', default='your_config.json')
+parser.add_argument('--input_file', type=str, help='Input file name', default='/eos/user/d/dapullia/tpstream_hdf5/tpstream_run020638_0000_tpwriter_tpswriter_20230314T222757.hdf5')
+parser.add_argument('--output_folder', type=str, help='Output file path', default='/eos/user/d/dapullia/tpstream_hdf5/utils_test_output/')
+parser.add_argument('--format', type=str, help='Output file format', default=['txt'], nargs='+')
+parser.add_argument('--num_records', type=int, help='Number of records to process', default=-1)
+parser.add_argument('--chanmap', type=str, default='../../channel-maps/vdcbce_chanmap_v4.txt', help='path to the file with Channel Map')
+parser.add_argument('--min_tps_to_group', type=int, default=9, help='minimum number of TPs to create a group')
+parser.add_argument('--drift_direction', type=int, default=0, help='0 for horizontal drift, 1 for vertical drift')
+parser.add_argument('--ticks_limit', type=int, default=100, help='closeness in ticks to group TPs')
+parser.add_argument('--channel_limit', type=int, default=20, help='closeness in channels to group TPs')
+parser.add_argument('--make_fixed_size', action='store_true', help='make the image size fixed')
+parser.add_argument('--img_width', type=int, default=70, help='width of the image')
+parser.add_argument('--img_height', type=int, default=1000, help='height of the image')
+parser.add_argument('--x_margin', type=int, default=5, help='margin in x')
+parser.add_argument('--y_margin', type=int, default=50, help='margin in y')
+parser.add_argument('--min_tps_to_create_img', type=int, default=2, help='minimum number of TPs to create an image')
+parser.add_argument('--img_save_folder', type=str, default='images/', help='folder to save the image, on top of the output path')
+parser.add_argument('--img_save_name', type=str, default='image', help='name to save the image')
+parser.add_argument('--time_start', type=int, default=-1, help='Start time to draw for IMG ALL')
+parser.add_argument('--time_end', type=int, default=-1, help='End time to draw for IMG ALL')
+
 
 args = parser.parse_args()
-settings_file = args.settings_file
+input_file = args.input_file
+output_folder = args.output_folder
+num_records = args.num_records
+out_format = args.format
+channel_map_file = args.chanmap
+drift_direction = args.drift_direction
+ticks_limit = args.ticks_limit
+channel_limit = args.channel_limit
+min_tps_to_group = args.min_tps_to_group
+make_fixed_size = args.make_fixed_size
+width = args.img_width
+height = args.img_height
+x_margin = args.x_margin
+y_margin = args.y_margin
+min_tps_to_create_img = args.min_tps_to_create_img
+img_save_folder = args.img_save_folder
+img_save_name = args.img_save_name
+time_start=args.time_start
+time_end=args.time_end
 
-# Specify the path to your JSON configuration file
-json_settings = settings_file
-# Open and read the JSON file
-with open(json_settings, "r") as json_file:
-    config_data = json.load(json_file)
 
-# Access individual values from the config
-input_file = config_data["INPUT_FILE"]
-output_folder = config_data["OUTPUT_FOLDER"]
-
-if input_file == '' or output_folder == '':
-    print("Please specify input file and output folder")
-    sys.exit(1)
-
-
-out_format = config_data["FORMAT"]
-num_records = config_data["NUM_RECORDS"]
-channel_map_file = config_data["CHANNEL_MAP"]
-min_tps_to_group = config_data["MIN_TPS_TO_GROUP"]
-drift_direction = config_data["DRIFT_DIRECTION"]
-ticks_limit = config_data["TICKS_LIMIT"]
-channel_limit = config_data["CHANNEL_LIMIT"]
-make_fixed_size = config_data["MAKE_FIXED_SIZE"]
-img_width = config_data["IMG_WIDTH"]
-img_height = config_data["IMG_HEIGHT"]
-x_margin = config_data["X_MARGIN"]
-y_margin = config_data["Y_MARGIN"]
-min_tps_to_create_img = config_data["MIN_TPS_TO_CREATE_IMG"]
-img_save_folder = config_data["IMG_SAVE_FOLDER"]
-img_save_name = config_data["IMG_SAVE_NAME"]
-time_start = config_data["TIME_START"]
-time_end = config_data["TIME_END"]
 
 # check if the output format is a subset of the valid formats
-out_format = out_format.split(" ")
 valid_formats = ["txt", "npy", "img_groups", "img_all"]
 
 save_txt = False
