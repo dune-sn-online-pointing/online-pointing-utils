@@ -13,7 +13,6 @@ import create_images_from_tps_libs as tp2img
 # write a parser to set up the running from command line
 parser = argparse.ArgumentParser(description='Tranforms Trigger Primitives to images.')
 parser.add_argument('--input_file', type=str, help='Input file name')
-parser.add_argument('--chanmap', type=str, default='FDHDChannelMap_v1_wireends.txt', help='path to the file with Channel Map')
 parser.add_argument('--show', action='store_true', help='show the image')
 parser.add_argument('--save_img', action='store_true', help='save the image')
 parser.add_argument('--save_ds', action='store_true', help='save the dataset')
@@ -35,7 +34,6 @@ parser.add_argument('--min_tps_to_create_img', type=int, default=2, help='minimu
 
 args = parser.parse_args()
 filename = args.input_file
-channel_map_file = args.chanmap
 show = args.show
 save_img = args.save_img
 save_ds = args.save_ds
@@ -66,7 +64,7 @@ if __name__=='__main__':
         all_TPs = np.loadtxt(filename, skiprows=0, dtype=int)
     
     #read channel map
-    channel_map = tp2img.create_channel_map_array(channel_map_file, drift_direction=drift_direction)
+    channel_map = tp2img.create_channel_map_array(drift_direction=drift_direction)
 
     groups = tp2img.group_maker(all_TPs, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
 

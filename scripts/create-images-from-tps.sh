@@ -1,14 +1,13 @@
 # very preliminary, will add external clp, folder checks during execution...
 INPUT_FILE="/eos/user/d/dapullia/tp_dataset/snana_hits.txt"
-OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/snana/"
-CHANMAP=../../channel-maps/channel_map_upright.txt # leaving hardcoded for now
+OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/snana/test_no_cmap/"
 SHOW=false
-SAVE_IMG=false
+SAVE_IMG=true
 SAVE_DS=true
-WRITE=false 
+WRITE=true 
 IMG_SAVE_FOLDER=images/
 IMG_SAVE_NAME=image
-N_EVENTS=5000000
+N_EVENTS=50000
 MIN_TPS_TO_GROUP=2
 DRIFT_DIRECTION=0
 MAKE_FIXED_SIZE=true
@@ -95,6 +94,6 @@ fi
 
 # move to the folder, run and come back to scripts
 cd ../python/tps_text_to_image
-python create_images_from_tps.py --input_file $INPUT_FILE --chanmap $CHANMAP --output_path $OUTPUT_FOLDER --img_save_folder $IMG_SAVE_FOLDER --img_save_name $IMG_SAVE_NAME --n_events $N_EVENTS --min_tps_to_group $MIN_TPS_TO_GROUP --drift_direction $DRIFT_DIRECTION $SHOW_FLAG $SAVE_IMG_FLAG $SAVE_DS_FLAG $WRITE_FLAG $MAKE_FIXED_SIZE_FLAG
+python create_images_from_tps.py --input_file $INPUT_FILE --output_path $OUTPUT_FOLDER --img_save_folder $IMG_SAVE_FOLDER --img_save_name $IMG_SAVE_NAME --n_events $N_EVENTS --min_tps_to_group $MIN_TPS_TO_GROUP --drift_direction $DRIFT_DIRECTION $SHOW_FLAG $SAVE_IMG_FLAG $SAVE_DS_FLAG $WRITE_FLAG $MAKE_FIXED_SIZE_FLAG
 cd ../../scripts
 
