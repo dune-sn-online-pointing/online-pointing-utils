@@ -25,7 +25,6 @@ parser.add_argument('--input_file', type=str, help='Input file name', default='/
 parser.add_argument('--output_folder', type=str, help='Output file path', default='/eos/user/d/dapullia/tpstream_hdf5/utils_test_output/')
 parser.add_argument('--format', type=str, help='Output file format', default=['txt'], nargs='+')
 parser.add_argument('--num_records', type=int, help='Number of records to process', default=-1)
-parser.add_argument('--chanmap', type=str, default='../../channel-maps/vdcbce_chanmap_v4.txt', help='path to the file with Channel Map')
 parser.add_argument('--min_tps_to_group', type=int, default=9, help='minimum number of TPs to create a group')
 parser.add_argument('--drift_direction', type=int, default=0, help='0 for horizontal drift, 1 for vertical drift')
 parser.add_argument('--ticks_limit', type=int, default=100, help='closeness in ticks to group TPs')
@@ -47,7 +46,6 @@ input_file = args.input_file
 output_folder = args.output_folder
 num_records = args.num_records
 out_format = args.format
-channel_map_file = args.chanmap
 drift_direction = args.drift_direction
 ticks_limit = args.ticks_limit
 channel_limit = args.channel_limit
@@ -122,7 +120,7 @@ if save_npy:
     np.save(output_folder + output_file_name[:-5] + ".npy", all_tps)
 if save_img_groups:
     print("Producing groups images")
-    channel_map = tp2img.create_channel_map_array(channel_map_file, drift_direction=drift_direction)
+    channel_map = tp2img.create_channel_map_array(drift_direction=drift_direction)
     groups = tp2img.group_maker(all_tps, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
     print(f"Created {len(groups)} groups!")
 
@@ -130,7 +128,7 @@ if save_img_groups:
         tp2img.save_img(np.array(group), channel_map, save_path=output_folder+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=img_width, height=img_height, x_margin=x_margin, y_margin=y_margin)
 if save_img_all:
     print("Producing all tps image")
-    channel_map = tp2img.create_channel_map_array(channel_map_file, drift_direction=drift_direction)
+    channel_map = tp2img.create_channel_map_array(drift_direction=drift_direction)
     tp2img.save_img((all_tps), channel_map, save_path=output_folder+img_save_folder, outname="all_" + img_save_name, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=True, width=2*img_width, height=2*img_height, x_margin=x_margin, y_margin=y_margin)
 
 

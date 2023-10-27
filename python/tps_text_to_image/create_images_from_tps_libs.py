@@ -9,21 +9,20 @@ import warnings
 import gc
 
 
-def create_channel_map_array(channel_map_file, drift_direction=0):
+def create_channel_map_array(drift_direction=0):
     '''
-    :param channel_map_file: path to the channel map 
     :param drift_direction: 0 for horizontal drift, 1 for vertical drift
     :return: channel map array
     '''
-    cmap = np.loadtxt(channel_map_file, skiprows=0, dtype=int)
-    channel_map = np.zeros((cmap.shape[0], 2), dtype=int)
-    channel_map[:,0] = cmap[:,0]
+    # create the channel map array
     if drift_direction == 0:
-        channel_map[:,1] = cmap[:,6]
-    else:
-        channel_map[:,1] = cmap[:,7]
-
-    channel_map = channel_map[np.argsort(channel_map[:, 0])] 
+        channel_map = np.empty((2560, 2), dtype=int)
+        channel_map[:, 0] = np.linspace(0, 2559, 2560, dtype=int)
+        channel_map[:, 1] = np.concatenate((np.zeros(800), np.ones(800), np.ones(960)*2))        
+    elif drift_direction == 1:
+        channel_map = np.empty((3072, 2), dtype=int)
+        channel_map[:, 0] = np.linspace(0, 3071, 3072, dtype=int)
+        channel_map[:, 1] = np.concatenate((np.zeros(952), np.ones(952), np.ones(1168)*2))
     return channel_map
 
 def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps_to_group=4):

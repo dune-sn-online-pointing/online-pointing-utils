@@ -3,8 +3,7 @@
 INPUT_FILE="/eos/user/d/dapullia/tpstream_hdf5/tpstream_run020638_0000_tpwriter_tpswriter_20230314T222757.hdf5"
 OUTPUT_FOLDER="/eos/user/d/dapullia/tpstream_hdf5/utils_test_output/"
 FORMAT="txt npy" # can choose between [txt img_all npy img_groups], leaving this for now
-NUM_RECORDS=1 # leaving hardcoded for now
-CHANNEL_MAP="../../channel-maps/vdcbce_chanmap_v4.txt"
+NUM_RECORDS=5 # leaving hardcoded for now
 MIN_TPS_TO_GROUP=9 # leaving hardcoded for now
 DRIFT_DIRECTION=1 # 0 for horizontal drift, 1 for vertical drift
 TICKS_LIMIT=100 # closeness in ticks to group TPs
@@ -72,7 +71,7 @@ fi
 
 # running actual command. Need to change from relative path to absolute path in repo
 cd ../python/tpstream_hdf5_to_text
-python hdf5_converter.py --input_file $INPUT_FILE --output_folder $OUTPUT_FOLDER --format $FORMAT --num_records $NUM_RECORDS --drift_direction $DRIFT_DIRECTION --time_start $TIME_START --time_end $TIME_END --chanmap $CHANNEL_MAP --min_tps_to_group $MIN_TPS_TO_GROUP --ticks_limit $TICKS_LIMIT --channel_limit $CHANNEL_LIMIT --img_width $IMG_WIDTH --img_height $IMG_HEIGHT --x_margin $X_MARGIN --y_margin $Y_MARGIN --min_tps_to_create_img $MIN_TPS_TO_CREATE_IMG --img_save_folder $IMG_SAVE_FOLDER --img_save_name $IMG_SAVE_NAME $MAKE_FIXED_SIZE
+python hdf5_converter.py --input_file $INPUT_FILE --output_folder $OUTPUT_FOLDER --format $FORMAT --num_records $NUM_RECORDS --drift_direction $DRIFT_DIRECTION --time_start $TIME_START --time_end $TIME_END --min_tps_to_group $MIN_TPS_TO_GROUP --ticks_limit $TICKS_LIMIT --channel_limit $CHANNEL_LIMIT --img_width $IMG_WIDTH --img_height $IMG_HEIGHT --x_margin $X_MARGIN --y_margin $Y_MARGIN --min_tps_to_create_img $MIN_TPS_TO_CREATE_IMG --img_save_folder $IMG_SAVE_FOLDER --img_save_name $IMG_SAVE_NAME $MAKE_FIXED_SIZE
 cd ../../scripts
 # exit the environment 
 # deactivate
