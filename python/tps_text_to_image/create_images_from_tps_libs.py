@@ -34,7 +34,7 @@ def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps
     :param min_tps_to_group: minimum number of hits to consider
     :return: list of groups
     '''
-
+    n_numbers = all_tps.shape[1]
     # if i have tps from multiple planes, i group only by time
     total_channels = channel_map.shape[0]
     if np.unique(channel_map[all_tps[:, 3]% total_channels, 1]).shape[0] != 1:
@@ -47,7 +47,7 @@ def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps
     buffer = []
     # loop over the TPs
     for tp in all_tps:
-        tp = [tp[0], tp[1], tp[2], tp[3], tp[4], tp[5], tp[6], tp[7]]
+        tp = [tp[i] for i in range(n_numbers)]
         if len(buffer) == 0:
             buffer.append([tp])
         else:
@@ -69,10 +69,11 @@ def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps
     return groups
 
 def group_maker_only_by_time(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps_to_group=4):
+    n_numbers = all_tps.shape[1]
     groups = []
-    current_group = np.array([[all_tps[0][0], all_tps[0][1], all_tps[0][2], all_tps[0][3], all_tps[0][4], all_tps[0][5], all_tps[0][6], all_tps[0][7]]])
+    current_group = np.array([all_tps[i] for i in range(n_numbers)])
     for tp in all_tps[1:]:
-        tp = [tp[0], tp[1], tp[2], tp[3], tp[4], tp[5], tp[6], tp[7]]
+        tp = [tp[i] for i in range(n_numbers)]
         if (tp[0] - np.max(current_group[:, 0]+current_group[:,1])) < ticks_limit:
             current_group = np.append(current_group, [tp], axis=0)
         else:
@@ -295,18 +296,78 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
+    x_max = (all_TPs[:, 3].max())
+    x_min = (all_TPs[:, 3].min())
+
+    x_range = x_max - x_min 
+    t_start = all_TPs[0, 0] 
+
+    t_end = np.max(all_TPs[:, 0] + all_TPs[:, 1])
+    y_range = int((t_end - t_start))
+
+    # create the image
+    if make_fixed_size:
+        img_width = width
+        img_height = height
+        if img_width > x_range:
+            x_margin = (img_width - x_range)/2    
+        if img_height > y_range:
+            y_margin = (img_height - y_range)/2
+    else:
+        img_width =  x_range + 2*x_margin
+        img_height =  y_range + 2*y_margin
+    yticks_labels = [t_start-y_margin + i*(y_range + 2*y_margin)//10 for i in range(10)]
+
     n_views = 0
 
     if img_u[0, 0] != -1:
         n_views += 1
-        plt.imsave(save_path + 'u_' + os.path.basename(outname) + '.png', img_u)
+        plt.figure(figsize=(10, 26))
+        plt.title('U plane')
+        plt.imshow(img_u)
+        # plt.colorbar()
+        # add x and y labels
+        plt.xlabel("Channel")
+        plt.ylabel("Time (ticks)")
+        # set y axis ticks
+        plt.yticks(ticks=np.arange(0, img_v.shape[0], img_v.shape[0]/10), labels=yticks_labels)
+
+        # save the image, with a bbox in inches smaller than the default but bigger than tight
+        plt.savefig(save_path+ 'u_' + os.path.basename(outname) + '.png', bbox_inches='tight', pad_inches=1)
+        plt.close()
+
     if img_v[0, 0] != -1:
         n_views += 1
-        plt.imsave(save_path+ 'v_' + os.path.basename(outname)+ '.png', img_v)
+        plt.figure(figsize=(10, 26))    
+        plt.title('V plane')
+        plt.imshow(img_v)
+        # plt.colorbar()
+        # add x and y labels
+        plt.xlabel("Channel")
+        plt.ylabel("Time (ticks)")
+
+        # set y axis ticks
+        plt.yticks(ticks=np.arange(0, img_v.shape[0], img_v.shape[0]/10), labels=yticks_labels)
+
+        # save the image, with a bbox in inches smaller than the default but bigger than tight
+        plt.savefig(save_path+ 'v_' + os.path.basename(outname) + '.png', bbox_inches='tight', pad_inches=1)
+        plt.close()
+
     if img_x[0, 0] != -1:
         n_views += 1
-        plt.imsave(save_path +'x_' + os.path.basename(outname) + '.png', img_x)
+        plt.figure(figsize=(10, 26))
+        plt.title('X plane')
+        plt.imshow(img_x)
+        # plt.colorbar()
+        # add x and y labels
+        plt.xlabel("Channel")
+        plt.ylabel("Time (ticks)")
+        # set y axis ticks
+        plt.yticks(ticks=np.arange(0, img_v.shape[0], img_v.shape[0]/10), labels=yticks_labels)
 
+        # save the image, with a bbox in inches smaller than the default but bigger than tight
+        plt.savefig(save_path+ 'x_' + os.path.basename(outname) + '.png', bbox_inches='tight', pad_inches=1)
+        plt.close()
     if n_views == 0:
         print(f'No images saved! Do a better grouping algorithm! You had {all_TPs.shape[0]} tps and {min_tps_to_create_img} as min_tps_to_create_img.' )
         print(f'You have {all_TPs[np.where(channel_map[all_TPs[:, 3]% total_channels, 1] == 0)].shape[0]} U tps, {all_TPs[np.where(channel_map[all_TPs[:, 3]% total_channels, 1] == 1)].shape[0]} V tps and {all_TPs[np.where(channel_map[all_TPs[:, 3]% total_channels, 1] == 2)].shape[0]} Z tps.')
@@ -335,7 +396,12 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
             im = grid[2].imshow(img_x)
             grid[2].set_title('X plane')
         grid.cbar_axes[0].colorbar(im)
-        grid.axes_llc.set_yticks(np.arange(0, img_u.shape[0], 100))
+        # grid.axes_llc.set_yticks(yticks_labels)
+        # use the same yticks_labels for all the images
+        grid.axes_llc.set_yticks(np.arange(0, img_v.shape[0], img_v.shape[0]/10))
+        grid.axes_llc.set_yticklabels(yticks_labels)
+
+
         # save the image
         plt.savefig(save_path+ 'multiview_' + os.path.basename(outname) + '.png')
         plt.close()
@@ -378,12 +444,12 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
         i+=1
     return (dataset_img, dataset_label)
 
-def label_generator_snana(group):
+def label_generator_snana(group,idx=7, unknown_label=10):
     # check if the type is the same for all the TPs in the group
 
-    label = group[0][7]
+    label = group[0][idx]
     for tp in group:
-        if tp[7] != group[0][7]:
-            label = 10
+        if tp[idx] != group[0][idx]:
+            label = unknown_label
             break
     return label
