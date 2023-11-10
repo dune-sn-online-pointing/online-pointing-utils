@@ -31,6 +31,7 @@ parser.add_argument('--img_height', type=int, default=1000, help='height of the 
 parser.add_argument('--x_margin', type=int, default=5, help='margin in x')
 parser.add_argument('--y_margin', type=int, default=50, help='margin in y')
 parser.add_argument('--min_tps_to_create_img', type=int, default=2, help='minimum number of TPs to create an image')
+parser.add_argument('--preprocess_ema_ds', action='store_true', help='preprocess the ema dataset')
 
 args = parser.parse_args()
 filename = args.input_file
@@ -52,6 +53,7 @@ height = args.img_height
 x_margin = args.x_margin
 y_margin = args.y_margin
 min_tps_to_create_img = args.min_tps_to_create_img
+preprocess_ema_ds = args.preprocess_ema_ds
 
 
 
@@ -62,12 +64,16 @@ if __name__=='__main__':
         all_TPs = np.loadtxt(filename, skiprows=0, max_rows=n_events, dtype=int)
     else:
         all_TPs = np.loadtxt(filename, skiprows=0, dtype=int)
-    
+    if preprocess_ema_ds:
+        all_TPs = all_TPs[all_TPs[:,0].argsort()]
+
+
+
     #read channel map
     channel_map = tp2img.create_channel_map_array(drift_direction=drift_direction)
 
-    groups = tp2img.group_maker(all_TPs, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
-
+    # groups = tp2img.group_maker(all_TPs, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
+    groups = tp2img.group_maker_using_truth(all_TPs)
     print("Number of groups: ", len(groups))
     total_channels = channel_map.shape[0]
     n_views = np.unique(channel_map[all_TPs[:, 3]% total_channels, 1]).shape[0]

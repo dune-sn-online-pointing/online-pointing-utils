@@ -84,6 +84,27 @@ def group_maker_only_by_time(all_tps, channel_map, ticks_limit=100, channel_limi
 
     return groups
 
+
+def group_maker_using_truth(all_tps):
+    '''
+    :param all_tps: all trigger primitives in the event
+    :return: list of groups
+    '''
+    # select only the tps with [-3] = 1, i.e. supernova events
+    print("Number of TPs: ", all_tps.shape[0])
+    all_tps = all_tps[all_tps[:,-3]==1]
+    print("Number of TPs: ", all_tps.shape[0])
+    # group the tps by [-2]
+    unique, counts = np.unique(all_tps[:,-2], return_counts=True)
+    print("Number of different [-2]: ", unique.shape[0])
+
+    groups = []
+    for i in range(unique.shape[0]):
+        groups.append(all_tps[all_tps[:,-2]==unique[i]])
+
+    return groups
+
+
 def from_tp_to_imgs(tps, make_fixed_size=False, width=500, height=1000, x_margin=10, y_margin=100, y_min_overall=-1, y_max_overall=-1):
     '''
     :param tps: all trigger primitives to draw
@@ -321,6 +342,19 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
     n_views = 0
 
     if img_u[0, 0] != -1:
+        tps_u = all_TPs[np.where(channel_map[all_TPs[:, 3]% total_channels, 1] == 0)]
+        
+        x_min_u = (tps_u[:, 3].min())
+        x_max_u = (tps_u[:, 3].max())
+        x_range_u = x_max_u - x_min_u
+
+        x_margin_u = x_margin
+
+        if make_fixed_size:
+            if img_width > x_range_u:
+                x_margin_u = (img_width - x_range_u)/2    
+        xticks_labels_u = [x_min_u-x_margin_u + i*(x_range_u + 2*x_margin_u)//2 for i in range(2)]
+
         n_views += 1
         plt.figure(figsize=(10, 26))
         plt.title('U plane')
@@ -331,12 +365,27 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         plt.ylabel("Time (ticks)")
         # set y axis ticks
         plt.yticks(ticks=np.arange(0, img_v.shape[0], img_v.shape[0]/10), labels=yticks_labels)
+        # set x axis ticks
+        plt.xticks(ticks=np.arange(0, img_u.shape[1], img_u.shape[1]/2), labels=xticks_labels_u)
 
         # save the image, with a bbox in inches smaller than the default but bigger than tight
         plt.savefig(save_path+ 'u_' + os.path.basename(outname) + '.png', bbox_inches='tight', pad_inches=1)
         plt.close()
 
     if img_v[0, 0] != -1:
+        tps_v = all_TPs[np.where(channel_map[all_TPs[:, 3]% total_channels, 1] == 1)]
+
+        x_min_v = (tps_v[:, 3].min())
+        x_max_v = (tps_v[:, 3].max())
+        x_range_v = x_max_v - x_min_v
+
+        x_margin_v = x_margin
+
+        if make_fixed_size:
+            if img_width > x_range_v:
+                x_margin_v = (img_width - x_range_v)/2
+        xticks_labels_v = [x_min_v-x_margin_v + i*(x_range_v + 2*x_margin_v)//2 for i in range(2)]
+        
         n_views += 1
         plt.figure(figsize=(10, 26))    
         plt.title('V plane')
@@ -348,12 +397,27 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
 
         # set y axis ticks
         plt.yticks(ticks=np.arange(0, img_v.shape[0], img_v.shape[0]/10), labels=yticks_labels)
+        # set x axis ticks
+        plt.xticks(ticks=np.arange(0, img_v.shape[1], img_v.shape[1]/2), labels=xticks_labels_v)
 
         # save the image, with a bbox in inches smaller than the default but bigger than tight
         plt.savefig(save_path+ 'v_' + os.path.basename(outname) + '.png', bbox_inches='tight', pad_inches=1)
         plt.close()
 
     if img_x[0, 0] != -1:
+        tps_x = all_TPs[np.where(channel_map[all_TPs[:, 3]% total_channels, 1] == 2)]
+
+        x_min_x = (tps_x[:, 3].min())
+        x_max_x = (tps_x[:, 3].max())
+        x_range_x = x_max_x - x_min_x
+
+        x_margin_x = x_margin
+
+        if make_fixed_size:
+            if img_width > x_range_x:
+                x_margin_x = (img_width - x_range_x)/2
+        xticks_labels_x = [x_min_x-x_margin_x + i*(x_range_x + 2*x_margin_x)//2 for i in range(2)]
+
         n_views += 1
         plt.figure(figsize=(10, 26))
         plt.title('X plane')
@@ -364,6 +428,8 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         plt.ylabel("Time (ticks)")
         # set y axis ticks
         plt.yticks(ticks=np.arange(0, img_v.shape[0], img_v.shape[0]/10), labels=yticks_labels)
+        # set x axis ticks
+        plt.xticks(ticks=np.arange(0, img_x.shape[1], img_x.shape[1]/2), labels=xticks_labels_x)
 
         # save the image, with a bbox in inches smaller than the default but bigger than tight
         plt.savefig(save_path+ 'x_' + os.path.basename(outname) + '.png', bbox_inches='tight', pad_inches=1)
@@ -389,19 +455,25 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         if img_u[0, 0] != -1:
             im = grid[0].imshow(img_u)
             grid[0].set_title('U plane')
+            # grid[0].set_xticks(np.arange(0, img_u.shape[1], img_u.shape[1]/2))
+            # grid[0].set_xticklabels(xticks_labels_u)
         if img_v[0, 0] != -1:
             im = grid[1].imshow(img_v)
             grid[1].set_title('V plane')
+            # grid[1].set_xticks(np.arange(0, img_v.shape[1], img_v.shape[1]/2))
+            # grid[1].set_xticklabels(xticks_labels_v)
         if img_x[0, 0] != -1:
             im = grid[2].imshow(img_x)
             grid[2].set_title('X plane')
+            # grid[2].set_xticks(np.arange(0, img_x.shape[1], img_x.shape[1]/2))
+            # grid[2].set_xticklabels(xticks_labels_x)
+
         grid.cbar_axes[0].colorbar(im)
         # grid.axes_llc.set_yticks(yticks_labels)
         # use the same yticks_labels for all the images
         grid.axes_llc.set_yticks(np.arange(0, img_v.shape[0], img_v.shape[0]/10))
         grid.axes_llc.set_yticklabels(yticks_labels)
-
-
+        
         # save the image
         plt.savefig(save_path+ 'multiview_' + os.path.basename(outname) + '.png')
         plt.close()
@@ -432,11 +504,7 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
             if img_v[0, 0] != -1:
                 dataset_img[i, :, :, 1] = img_v
             if img_x[0, 0] != -1:
-                dataset_img[i, :, :, 2] = img_x
-        else:
-            img = from_tp_to_imgs(np.array(group), make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
-            if img[0, 0] != -1:
-                dataset_img[i, :, :, 0] = img
+                dataset_img[i, :, :, 2] = img_x 
 
 
         dataset_label[i] = [label]

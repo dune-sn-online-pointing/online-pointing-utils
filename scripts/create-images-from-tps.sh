@@ -1,16 +1,17 @@
 # very preliminary, will add external clp, folder checks during execution...
-INPUT_FILE="/eos/user/d/dapullia/tp_dataset/snana_hits.txt"
-OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/snana/test_no_cmap/"
+INPUT_FILE="/eos/home-e/evilla/dune/sn-data/prodmarley_nue_flat_dune10kt_1x2x6_modified-TPdump_standardHF_noiseless_fixed-100events/tpstream_standardHF_thresh30_nonoise.txt"
+OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emasim/tpstream_standardHF_thresh30_nonoise_fixed-100events/"
 SHOW=false
 SAVE_IMG=true
-SAVE_DS=true
-WRITE=true 
+SAVE_DS=false
+WRITE=false
 IMG_SAVE_FOLDER=images/
 IMG_SAVE_NAME=image
 N_EVENTS=50000
 MIN_TPS_TO_GROUP=2
 DRIFT_DIRECTION=0
 MAKE_FIXED_SIZE=true
+PREPROCESS_EMA_DS=true
 
 
 # Function to print help message
@@ -43,8 +44,10 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-
-# stop execution if fundamental variables are not set
+Number of TPs:  14339
+Number of different [-2]:  100
+Number of groups:  100
+Number of n if fundamental variables are not set
 if [ -z "$INPUT_FILE" ] || [ -z "$OUTPUT_FOLDER" ]
 then
     echo "Usage: ./create-images-from-tps.sh -i <input_file> -o <output_folder> [-h]"
@@ -88,12 +91,19 @@ else
     MAKE_FIXED_SIZE_FLAG=""
 fi
 
+# if preprocess_ema_ds is true then add --preprocess_ema_ds
+if [ "$PREPROCESS_EMA_DS" = true ] ; then
+    PREPROCESS_EMA_DS_FLAG="--preprocess_ema_ds"
+else
+    PREPROCESS_EMA_DS_FLAG=""
+fi
+
 
 # load a recent python version
 #scl enable rh-python38 bash
 
 # move to the folder, run and come back to scripts
 cd ../python/tps_text_to_image
-python create_images_from_tps.py --input_file $INPUT_FILE --output_path $OUTPUT_FOLDER --img_save_folder $IMG_SAVE_FOLDER --img_save_name $IMG_SAVE_NAME --n_events $N_EVENTS --min_tps_to_group $MIN_TPS_TO_GROUP --drift_direction $DRIFT_DIRECTION $SHOW_FLAG $SAVE_IMG_FLAG $SAVE_DS_FLAG $WRITE_FLAG $MAKE_FIXED_SIZE_FLAG
+python create_images_from_tps.py --input_file $INPUT_FILE --output_path $OUTPUT_FOLDER --img_save_folder $IMG_SAVE_FOLDER --img_save_name $IMG_SAVE_NAME --n_events $N_EVENTS --min_tps_to_group $MIN_TPS_TO_GROUP --drift_direction $DRIFT_DIRECTION $SHOW_FLAG $SAVE_IMG_FLAG $SAVE_DS_FLAG $WRITE_FLAG $MAKE_FIXED_SIZE_FLAG $PREPROCESS_EMA_DS_FLAG
 cd ../../scripts
 
