@@ -44,10 +44,8 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-Number of TPs:  14339
-Number of different [-2]:  100
-Number of groups:  100
-Number of n if fundamental variables are not set
+
+
 if [ -z "$INPUT_FILE" ] || [ -z "$OUTPUT_FOLDER" ]
 then
     echo "Usage: ./create-images-from-tps.sh -i <input_file> -o <output_folder> [-h]"
