@@ -25,7 +25,8 @@ def create_channel_map_array(drift_direction=0):
         channel_map[:, 1] = np.concatenate((np.zeros(952), np.ones(952), np.ones(1168)*2))
     return channel_map
 
-def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps_to_group=4):
+
+def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps_to_group=2):
     '''
     :param all_tps: all trigger primitives in the event
     :param channel_map: channel map
@@ -34,39 +35,48 @@ def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps
     :param min_tps_to_group: minimum number of hits to consider
     :return: list of groups
     '''
-    n_numbers = all_tps.shape[1]
-    # if i have tps from multiple planes, i group only by time
-    total_channels = channel_map.shape[0]
-    if np.unique(channel_map[all_tps[:, 3]% total_channels, 1]).shape[0] != 1:
-        print('Warning: multiple planes in the event. Grouping only by time.')
-        return group_maker_only_by_time(all_tps, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
-
-    # all_tps[:, 3] = all_tps[:, 3] % 2560 #to be removed, wrong
-    # create a list of groups
+    # create a new algorithm to group the TPs
     groups = []
     buffer = []
     # loop over the TPs
     for tp in all_tps:
-        tp = [tp[i] for i in range(n_numbers)]
-        if len(buffer) == 0:
+        if len(buffer)==0:
             buffer.append([tp])
         else:
-            appended = False
             buffer_copy = buffer.copy()
             buffer = []
-            for i, elem in enumerate(buffer_copy):
-                if (tp[2] - elem[-1][2]) < ticks_limit:
-                    if abs(tp[3] - elem[-1][3]) < channel_limit:                         
-                        elem.append(tp)
-                        appended = True
-                    buffer.append(elem)
-                elif len(elem) >= min_tps_to_group:
-                    groups.append(np.array(elem, dtype=int))
+            appended = False
+            idx = 0
+            for candidate in (buffer_copy):
+                time_cond = (tp[0] - np.max(np.array(candidate)[:, 0]+np.array(candidate)[:,1])) < ticks_limit
+                if time_cond:
+                    chan_cond = np.min(np.abs(tp[3] - np.array(candidate)[:, 3])) < channel_limit
+                    if chan_cond:
+                        if not appended:
+                            candidate.append(tp)
+                            buffer.append(candidate)
+                            idx_appended = idx
+                            appended = True
+                        else:
+                            for tp2 in candidate:
+                                buffer[idx_appended].append(tp2)
+                    else:
+                        buffer.append(candidate)
+                        idx += 1
+                else:
+                    if len(candidate) >= min_tps_to_group:
+                        groups.append(np.array(candidate, dtype=int))
             if not appended:
                 buffer.append([tp])
+    if len(buffer) > 0:
+        for candidate in buffer:
+            if len(candidate) >= min_tps_to_group:
+                groups.append(np.array(candidate, dtype=int))
 
-    groups = np.array(groups, dtype=object)    
+    groups = np.array(groups, dtype=object)
     return groups
+
+
 
 def group_maker_only_by_time(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps_to_group=4):
     n_numbers = all_tps.shape[1]
