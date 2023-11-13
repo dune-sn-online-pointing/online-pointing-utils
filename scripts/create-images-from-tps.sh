@@ -1,17 +1,17 @@
 # very preliminary, will add external clp, folder checks during execution...
-INPUT_FILE="/eos/home-e/evilla/dune/sn-data/prodmarley_nue_flat_dune10kt_1x2x6_modified-TPdump_standardHF_noiseless_fixed-100events/tpstream_standardHF_thresh30_nonoise.txt"
-OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emasim/tpstream_standardHF_thresh30_nonoise_fixed-100events/"
+INPUT_FILE="/eos/user/d/dapullia/tp_dataset/tp_dataset_original/snana_hits.txt"
+OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/snana/sparse_test/"
 SHOW=false
-SAVE_IMG=true
-SAVE_DS=false
+SAVE_IMG=false
+SAVE_DS=true
 WRITE=false
 IMG_SAVE_FOLDER=images/
 IMG_SAVE_NAME=image
-N_EVENTS=50000
+N_EVENTS=5000
 MIN_TPS_TO_GROUP=2
 DRIFT_DIRECTION=0
 MAKE_FIXED_SIZE=true
-PREPROCESS_EMA_DS=true
+PREPROCESS_EMA_DS=false
 
 
 # Function to print help message

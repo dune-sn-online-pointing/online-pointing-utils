@@ -72,40 +72,52 @@ if __name__=='__main__':
     #read channel map
     channel_map = tp2img.create_channel_map_array(drift_direction=drift_direction)
 
-    # groups = tp2img.group_maker(all_TPs, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
-    groups = tp2img.group_maker_using_truth(all_TPs)
+    groups = tp2img.group_maker(all_TPs, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
+    # groups = tp2img.group_maker_using_truth(all_TPs)
     print("Number of groups: ", len(groups))
     total_channels = channel_map.shape[0]
     n_views = np.unique(channel_map[all_TPs[:, 3]% total_channels, 1]).shape[0]
     print("Number of planes: ", n_views)
 
-    for i, group in enumerate(groups):
-        if show:
-            tp2img.show_img(np.array(group), channel_map, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
-        if save_img:
-            if not os.path.exists(output_path+img_save_folder):
-                os.makedirs(output_path+img_save_folder)
-            tp2img.save_img(np.array(group), channel_map, save_path=output_path+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+    # Prepare the output folder
+    if save_img:
+        if not os.path.exists(output_path+img_save_folder):
+            os.makedirs(output_path+img_save_folder)
+
+    if show or save_img:
+        print("Creating images...")
+        for i, group in enumerate(groups):
+            if show:
+                tp2img.show_img(np.array(group), channel_map, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+            if save_img:
+                tp2img.save_img(np.array(group), channel_map, save_path=output_path+img_save_folder, outname=img_save_name+str(i), min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+        print("Done!")
     if write:
+        print("Writing groups to file...")
         with open(output_path+'groups.txt', 'w') as f:
             for i, group in enumerate(groups):
                 f.write('Group'+str(i)+':\n')
                 for tp in group:
                     f.write(f"{tp[0]} {tp[1]} {tp[2]} {tp[3]} {tp[4]} {tp[5]} {tp[6]} {tp[7]}\n")
                 f.write('\n')
+        print("Done!")
 
     if save_ds:
+        print("Creating dataset...")
         if not os.path.exists(output_path+'dataset/'):
             os.makedirs(output_path+'dataset/')
         dataset_img, dataset_label = tp2img.create_dataset(groups,  channel_map=channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, n_views=n_views)
         print("Dataset shape: ", dataset_img.shape)
         print("Dataset label shape: ", dataset_label.shape)
 
+        # print how many entries are different from 0
+        print("Number of non-zero entries: ", np.count_nonzero(dataset_img))
+
         np.save(output_path+'dataset/dataset_img.npy', dataset_img)
         np.save(output_path+'dataset/dataset_label.npy', dataset_label)
 
         print(np.unique(dataset_label,return_counts=True))
-
+        print("Done!")
     print('Done!')
 
 

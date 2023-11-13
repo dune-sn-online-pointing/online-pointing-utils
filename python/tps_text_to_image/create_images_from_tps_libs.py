@@ -515,7 +515,10 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
                 dataset_img[i, :, :, 1] = img_v
             if img_x[0, 0] != -1:
                 dataset_img[i, :, :, 2] = img_x 
-
+        else:  
+            img = from_tp_to_imgs(np.array(group), make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+            if img[0, 0] != -1:
+                dataset_img[i, :, :, 0] = img
 
         dataset_label[i] = [label]
         
