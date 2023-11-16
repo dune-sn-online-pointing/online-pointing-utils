@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from .TriggerPrimitive import TriggerPrimitive
+# from .TriggerPrimitive import TriggerPrimitive
 
 # Function to save tps in a list
 def saveTPs (filename, max_tps):
@@ -30,20 +30,37 @@ def saveTPs (filename, max_tps):
     version = data[9]
     flags = data[10]
     
+    del data
+  
     # offset to have the first TP at t=0, we need this?
     # time_shift = time_start[0] 
     # time_start -= time_shift
     # time_start *= 16e-9 # convert to seconds, do we want it?
         
     # create a list to store the TPs
-    tp_list = []
+    # tp_list = []
     # loop over the number of TPs and append tps to the list
-    for i in range(len(time_start)):
-        tp_list.append(TriggerPrimitive(time_start[i], time_peak[i], time_over_threshold[i], channel[i], adc_integral[i], 
-                                        adc_peak[i], detid[i], type[i], algorithm[i], version[i], flags[i]))
+    # for i in range(len(time_start)):
+    #     tp_list.append(TriggerPrimitive(time_start[i], time_peak[i], time_over_threshold[i], channel[i], adc_integral[i], 
+    #                                     adc_peak[i], detid[i], type[i], algorithm[i], version[i], flags[i]))
+    
+    # fill tp_list with the arrays of the variables
+    # create a structured array with column names
+    dt = np.dtype([('time_start', float), ('time_peak', float), ('time_over_threshold', float), ('channel', int), ('adc_integral', float), ('adc_peak', float), ('detid', int), ('type', int), ('algorithm', int), ('version', int), ('flags', int)])
+    tp_list = np.rec.fromarrays([time_start, time_peak, time_over_threshold, channel, adc_integral, adc_peak, detid, type, algorithm, version, flags], dtype=dt)
     
     # delete the appo vectors
     del time_start, time_over_threshold, time_peak, channel, adc_integral, adc_peak, detid, type, algorithm, version, flags
+    
+    # sort the list by time_start
+    tp_list.sort(order='time_start')
+    
+    print ("Saved ", len(tp_list), " TPs from file ", filename)
+    print (" ")
+    
+    # print first elements of the list
+    for i in range(10):
+        print (tp_list[i])
     
     return tp_list
 
@@ -65,13 +82,13 @@ def plotTimePeak(tps_lists, file_names, superimpose=False, quantile=1, y_min=0, 
     # compute x_max using quantile, considering all the files
     time_peak_all_files = []
     for tps_file in tps_lists:
-        time_peak_all_files += [tp.time_peak - tp.time_start for tp in tps_file]
+        time_peak_all_files += [tp['time_peak'] - tp['time_start'] for tp in tps_file]
     x_max = np.quantile(time_peak_all_files, quantile)
     
     del time_peak_all_files # free memory
 
     for i, tps_file in enumerate(tps_lists):
-        time_peak = [tp.time_peak - tp.time_start for tp in tps_file]
+        time_peak = [tp['time_peak'] - tp['time_start'] for tp in tps_file]
         this_filename = file_names[i].split('/')[-1]
 
         
@@ -115,13 +132,13 @@ def  plotTimeOverThreshold(tps_lists, file_names, superimpose=False, quantile=1,
     # compute x_max using quantile, considering all the files
     time_over_threshold_all_files = []
     for tps_file in tps_lists:
-        time_over_threshold_all_files += [tp.time_over_threshold for tp in tps_file]
+        time_over_threshold_all_files += [tp['time_over_threshold'] for tp in tps_file]
     x_max = np.quantile(time_over_threshold_all_files, quantile)
     
     del time_over_threshold_all_files # free memory
 
     for i, tps_file in enumerate(tps_lists):
-        time_over_threshold = [tp.time_over_threshold for tp in tps_file]
+        time_over_threshold = [tp['time_over_threshold'] for tp in tps_file]
         this_filename = file_names[i].split('/')[-1]
      
         label = f"Time over Threshold, file {this_filename}"
@@ -164,10 +181,10 @@ def plotChannel(tps_lists, file_names, superimpose=False, x_min=0, x_max=None, y
     
     channel_all_files = []
     for tps_file in tps_lists:
-        channel_all_files += [tp.channel for tp in tps_file] 
+        channel_all_files += [tp['channel'] for tp in tps_file] 
 
     for i, tps_file in enumerate(tps_lists):
-        channel = [tp.channel for tp in tps_file]
+        channel = [tp['channel'] for tp in tps_file]
         this_filename = file_names[i].split('/')[-1]
      
         label = f"Channel, file {this_filename}"
@@ -217,14 +234,14 @@ def plotADCIntegral(tps_lists, file_names, superimpose=False, quantile=1, y_min=
     # compute x_max using quantile, considering all the files
     adc_integral_all_files = []
     for tps_file in tps_lists:
-        adc_integral_all_files += [tp.adc_integral for tp in tps_file]
+        adc_integral_all_files += [tp['adc_integral'] for tp in tps_file]
     
     x_max = np.quantile(adc_integral_all_files, quantile)
     
     del adc_integral_all_files # free memory
 
     for i, tps_file in enumerate(tps_lists):
-        adc_integral = [tp.adc_integral for tp in tps_file]
+        adc_integral = [tp['adc_integral'] for tp in tps_file]
         this_filename = file_names[i].split('/')[-1]
      
         label = f"ADC Integral, file {this_filename}"
@@ -269,13 +286,13 @@ def plotADCPeak(tps_lists, file_names, superimpose=False, quantile=1, y_min=0, y
     # compute x_max using quantile, considering all the files
     adc_peak_all_files = []
     for tps_file in tps_lists:
-        adc_peak_all_files += [tp.adc_peak for tp in tps_file]
+        adc_peak_all_files += [tp['adc_peak'] for tp in tps_file]
     x_max = np.quantile(adc_peak_all_files, quantile)
     
     del adc_peak_all_files # free memory
 
     for i, tps_file in enumerate(tps_lists):
-        adc_peak = [tp.adc_peak for tp in tps_file]
+        adc_peak = [tp['adc_peak'] for tp in tps_file]
         this_filename = file_names[i].split('/')[-1]
      
         label = f"ADC Peak, file {this_filename}"
@@ -316,13 +333,13 @@ def plotDetId(tps_lists, file_names, superimpose=False, quantile=1, y_min=0, y_m
     # compute x_max using quantile, considering all the files
     detid_all_files = []
     for tps_file in tps_lists:
-        detid_all_files += [tp.detid for tp in tps_file]
+        detid_all_files += [tp['detid'] for tp in tps_file]
     x_max = np.quantile(detid_all_files, quantile)
     
     del detid_all_files # free memory
 
     for i, tps_file in enumerate(tps_lists):
-        detid = [tp.detid for tp in tps_file]
+        detid = [tp['detid'] for tp in tps_file]
         this_filename = file_names[i].split('/')[-1]
      
         label = f"DetId, file {this_filename}"
@@ -356,4 +373,3 @@ def plotDetId(tps_lists, file_names, superimpose=False, quantile=1, y_min=0, y_m
             plt.show()
         
     return
-        

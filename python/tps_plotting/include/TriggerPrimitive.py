@@ -24,8 +24,8 @@ INVALID_DETIT = 0XFFF                       # uint16_t
 class TriggerPrimitive:
     def __init__(self,
                  time_start=INVALID_TIMESTAMP,
-                 time_peak=INVALID_TIMESTAMP,
                  time_over_threshold=INVALID_TIMESTAMP,
+                 time_peak=INVALID_TIMESTAMP,
                  channel=INVALID_CHANNEL,
                  adc_integral=0,
                  adc_peak=0,
@@ -37,8 +37,8 @@ class TriggerPrimitive:
         
         # DAQ TP variables
         self.time_start = time_start
-        self.time_peak = time_peak
         self.time_over_threshold = time_over_threshold
+        self.time_peak = time_peak
         self.channel = channel
         self.adc_integral = adc_integral
         self.adc_peak = adc_peak
