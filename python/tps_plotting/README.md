@@ -22,11 +22,31 @@ The code is getting ready to accept hdf5 files as input.
 
 The notebook should be self-explanatory, and can be good for quick checks.
 
-`plot-tps.py` does the same thing; the usage can be seen with `-h`. 
-In short, you can give it a variable number of files with the flag `-f`, the number of tps to load and plot with `-n`.
-You can decide to superimpose them on the same plot with the flag `-s`, default is `False`.
+`plot-tps.py` does the same thing; the usage can be seen with `-h`:
 
-You can change some display options for each variable directly inside the pythons script.
+```
+usage: plot-tp-properties.py [-h] [-f FILES [FILES ...]] [-e OUTPUT_FOLDER] [-n NUMBER_TPS] [-s] [-a] [-t] [-o] [-i] [-p] [-c] [-d]
+
+options:
+  -h, --help            show this help message and exit
+  -f FILES [FILES ...], --files FILES [FILES ...]
+                        files to read
+  -e OUTPUT_FOLDER, --output-folder OUTPUT_FOLDER
+                        output folder
+  -n NUMBER_TPS, --number-tps NUMBER_TPS
+                        number of tps to plot
+  -s, --superimpose     superimpose plots
+  -a, --all             plot all the TP variables
+  -t, --time-peak       plot time peak
+  -o, --time-over-threshold
+                        plot time over threshold
+  -i, --adc-integral    plot adc integral
+  -p, --adc-peak        plot adc peak
+  -c, --channel         plot channel
+  -d, --detid           plot detid
+```
+
+You can change some display options for each variable directly inside the python script.
 Default location for output is `./output/`, you see the folder in the repo but its content is added to `.gitignore`.
 
 
