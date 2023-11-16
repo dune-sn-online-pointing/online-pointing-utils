@@ -11,6 +11,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--files", nargs="+", help="files to read")
 parser.add_argument("-n", "--number-tps", type=int, help="number of tps to plot")
 parser.add_argument("-s", "--superimpose", action="store_true", help="superimpose plots")
+parser.add_argument("-a", "--all", action="store_true", help="plot all the TP variables")
+parser.add_argument("-t", "--time-peak", action="store_true", help="plot time peak")
+parser.add_argument("-o", "--time-over-threshold", action="store_true", help="plot time over threshold")
+parser.add_argument("-i", "--adc-integral", action="store_true", help="plot adc integral")
+parser.add_argument("-p", "--adc-peak", action="store_true", help="plot adc peak")
+parser.add_argument("-c", "--channel", action="store_true", help="plot channel")
+parser.add_argument("-d", "--detid", action="store_true", help="plot detid")
 args = parser.parse_args()
 
 # read the file(s) and create arrays of TPs, using the class in TriggerPrimitive.py
@@ -22,9 +29,8 @@ for tpFile_path in  args.files:
     print ("Reading file: " + tpFile_path)
     
     this_tps_list = saveTPs(tpFile_path, args.number_tps)
-    # order them basing on start_time
-    this_tps_list.sort(key=lambda x: x.time_start)
     tps_lists.append(this_tps_list)
+
 
 
 plotTimePeak(tps_lists, args.files, 
