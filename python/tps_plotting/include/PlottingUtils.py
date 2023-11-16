@@ -18,6 +18,8 @@ def saveTPs (filename, max_tps):
         # return # could stop, but for now we continue
 
     # appo vectors just for clarity, could be avoided
+    # THIS IS THE CORRECT ORDER OF THE VARIABLES
+    # TODO PUT IN SOME HEADER OR SOMEWHERE ELSE
     time_start = data[0]
     time_over_threshold = data[1]
     time_peak = data[2] 
@@ -28,7 +30,7 @@ def saveTPs (filename, max_tps):
     type = data[7]
     algorithm = data[8]
     version = data[9]
-    flags = data[10]
+    flag = data[10]
     
     del data
   
@@ -42,15 +44,15 @@ def saveTPs (filename, max_tps):
     # loop over the number of TPs and append tps to the list
     # for i in range(len(time_start)):
     #     tp_list.append(TriggerPrimitive(time_start[i], time_peak[i], time_over_threshold[i], channel[i], adc_integral[i], 
-    #                                     adc_peak[i], detid[i], type[i], algorithm[i], version[i], flags[i]))
+    #                                     adc_peak[i], detid[i], type[i], algorithm[i], version[i], flag[i]))
     
     # fill tp_list with the arrays of the variables
     # create a structured array with column names
-    dt = np.dtype([('time_start', float), ('time_peak', float), ('time_over_threshold', float), ('channel', int), ('adc_integral', float), ('adc_peak', float), ('detid', int), ('type', int), ('algorithm', int), ('version', int), ('flags', int)])
-    tp_list = np.rec.fromarrays([time_start, time_peak, time_over_threshold, channel, adc_integral, adc_peak, detid, type, algorithm, version, flags], dtype=dt)
+    dt = np.dtype([('time_start', float), ('time_peak', float), ('time_over_threshold', float), ('channel', int), ('adc_integral', float), ('adc_peak', float), ('detid', int), ('type', int), ('algorithm', int), ('version', int), ('flag', int)])
+    tp_list = np.rec.fromarrays([time_start, time_peak, time_over_threshold, channel, adc_integral, adc_peak, detid, type, algorithm, version, flag], dtype=dt)
     
     # delete the appo vectors
-    del time_start, time_over_threshold, time_peak, channel, adc_integral, adc_peak, detid, type, algorithm, version, flags
+    del time_start, time_over_threshold, time_peak, channel, adc_integral, adc_peak, detid, type, algorithm, version, flag
     
     # sort the list by time_start
     tp_list.sort(order='time_start')
