@@ -7,12 +7,12 @@ SAVE_DS=true
 WRITE=false
 IMG_SAVE_FOLDER=images/
 IMG_SAVE_NAME=image
-N_EVENTS=5000
+N_EVENTS=50000
 MIN_TPS_TO_GROUP=2
 DRIFT_DIRECTION=0
 MAKE_FIXED_SIZE=true
 PREPROCESS_EMA_DS=false
-
+USE_SPARSE=true
 
 # Function to print help message
 print_help() {
@@ -96,12 +96,20 @@ else
     PREPROCESS_EMA_DS_FLAG=""
 fi
 
+# if use_sparse is true then add --use_sparse
+if [ "$USE_SPARSE" = true ] ; then
+    USE_SPARSE_FLAG="--use_sparse"
+else
+    USE_SPARSE_FLAG=""
+fi
+
+
 
 # load a recent python version
 #scl enable rh-python38 bash
 
 # move to the folder, run and come back to scripts
 cd ../python/tps_text_to_image
-python create_images_from_tps.py --input_file $INPUT_FILE --output_path $OUTPUT_FOLDER --img_save_folder $IMG_SAVE_FOLDER --img_save_name $IMG_SAVE_NAME --n_events $N_EVENTS --min_tps_to_group $MIN_TPS_TO_GROUP --drift_direction $DRIFT_DIRECTION $SHOW_FLAG $SAVE_IMG_FLAG $SAVE_DS_FLAG $WRITE_FLAG $MAKE_FIXED_SIZE_FLAG $PREPROCESS_EMA_DS_FLAG
+python create_images_from_tps.py --input_file $INPUT_FILE --output_path $OUTPUT_FOLDER --img_save_folder $IMG_SAVE_FOLDER --img_save_name $IMG_SAVE_NAME --n_events $N_EVENTS --min_tps_to_group $MIN_TPS_TO_GROUP --drift_direction $DRIFT_DIRECTION $SHOW_FLAG $SAVE_IMG_FLAG $SAVE_DS_FLAG $WRITE_FLAG $MAKE_FIXED_SIZE_FLAG $PREPROCESS_EMA_DS_FLAG $USE_SPARSE_FLAG
 cd ../../scripts
 

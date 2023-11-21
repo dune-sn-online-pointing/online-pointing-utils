@@ -2,12 +2,9 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import ImageGrid
+from scipy import sparse
 import time
 import os
-import argparse
-import warnings
-import gc
-
 
 def create_channel_map_array(drift_direction=0):
     '''
@@ -23,8 +20,12 @@ def create_channel_map_array(drift_direction=0):
         channel_map = np.empty((3072, 2), dtype=int)
         channel_map[:, 0] = np.linspace(0, 3071, 3072, dtype=int)
         channel_map[:, 1] = np.concatenate((np.zeros(952), np.ones(952), np.ones(1168)*2))
+    elif drift_direction == 2:
+        channel_map = np.empty((128, 2), dtype=int)
+        channel_map[:, 0] = np.linspace(0, 127, 128, dtype=int)
+        # channel_map[:, 1] = np.concatenate(np.ones(49)*2, np.zeros(39), np.ones(40))
+        channel_map[:, 1] = np.concatenate((np.zeros(39), np.ones(40), np.ones(49)*2))
     return channel_map
-
 
 def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps_to_group=2):
     '''
@@ -35,6 +36,13 @@ def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps
     :param min_tps_to_group: minimum number of hits to consider
     :return: list of groups
     '''
+    # if i have tps from multiple planes, i group only by time
+    total_channels = channel_map.shape[0]
+    if np.unique(channel_map[all_tps[:, 3]% total_channels, 1]).shape[0] != 1:
+        print('Warning: multiple planes in the event. Grouping only by time.')
+        return group_maker_only_by_time(all_tps, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
+
+
     # create a new algorithm to group the TPs
     groups = []
     buffer = []
@@ -323,6 +331,8 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
     #create images
     img_u, img_v, img_x = all_views_img_maker(all_TPs, channel_map, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
 
+    max_pixel_value_overall = np.max([np.max(img_u), np.max(img_v), np.max(img_x)])
+
     #save images
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -461,19 +471,18 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
                         cbar_pad=0.25,
                         )   
 
-
         if img_u[0, 0] != -1:
-            im = grid[0].imshow(img_u)
+            im = grid[0].imshow(img_u, vmin=0, vmax=max_pixel_value_overall)
             grid[0].set_title('U plane')
             # grid[0].set_xticks(np.arange(0, img_u.shape[1], img_u.shape[1]/2))
             # grid[0].set_xticklabels(xticks_labels_u)
         if img_v[0, 0] != -1:
-            im = grid[1].imshow(img_v)
+            im = grid[1].imshow(img_v, vmin=0, vmax=max_pixel_value_overall)
             grid[1].set_title('V plane')
             # grid[1].set_xticks(np.arange(0, img_v.shape[1], img_v.shape[1]/2))
             # grid[1].set_xticklabels(xticks_labels_v)
         if img_x[0, 0] != -1:
-            im = grid[2].imshow(img_x)
+            im = grid[2].imshow(img_x, vmin=0, vmax=max_pixel_value_overall)
             grid[2].set_title('X plane')
             # grid[2].set_xticks(np.arange(0, img_x.shape[1], img_x.shape[1]/2))
             # grid[2].set_xticklabels(xticks_labels_x)
@@ -488,7 +497,7 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         plt.savefig(save_path+ 'multiview_' + os.path.basename(outname) + '.png')
         plt.close()
    
-def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50, n_views=3):
+def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50, n_views=3, use_sparse=False):
     '''
     :param groups: list of groups
     :param make_fixed_size: if True, the image will have fixed size, otherwise it will be as big as the TPs
@@ -498,31 +507,59 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
     :param y_margin: margin on the y axis
     :return: dataset [[img],[label]] in numpy array format
     '''
-    # Each pixel must have a value between 0 and 255. Maybe problematic for high ADC values. I can't affort havier data types for the moment
-    dataset_img = np.zeros((len(groups), height, width, n_views), dtype=np.uint8) 
-    dataset_label = np.empty((len(groups), 1), dtype=np.uint8)
-    i=0
-    for group in (groups):
+    if not use_sparse:
+        # Each pixel must have a value between 0 and 255. Maybe problematic for high ADC values. I can't affort havier data types for the moment
+        dataset_img = np.zeros((len(groups), height, width, n_views), dtype=np.uint8) 
+        dataset_label = np.empty((len(groups), 1), dtype=np.uint8)
+        i=0
+        for group in (groups):
 
-        # create the label. I have to do it this way because the label is not the same for all the datasets
-        label = label_generator_snana(group)
-        # append to the dataset as an array of arrays
-        if n_views > 1:
-            img_u, img_v, img_x = all_views_img_maker(np.array(group), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
-            if img_u[0, 0] != -1:
-                dataset_img[i, :, :, 0] = img_u
-            if img_v[0, 0] != -1:
-                dataset_img[i, :, :, 1] = img_v
-            if img_x[0, 0] != -1:
-                dataset_img[i, :, :, 2] = img_x 
-        else:  
-            img = from_tp_to_imgs(np.array(group), make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
-            if img[0, 0] != -1:
-                dataset_img[i, :, :, 0] = img
+            # create the label. I have to do it this way because the label is not the same for all the datasets
+            label = label_generator_snana(group)
+            # append to the dataset as an array of arrays
+            if n_views > 1:
+                img_u, img_v, img_x = all_views_img_maker(np.array(group), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+                if img_u[0, 0] != -1:
+                    dataset_img[i, :, :, 0] = img_u
+                if img_v[0, 0] != -1:
+                    dataset_img[i, :, :, 1] = img_v
+                if img_x[0, 0] != -1:
+                    dataset_img[i, :, :, 2] = img_x 
+            else:  
+                img = from_tp_to_imgs(np.array(group), make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+                if img[0, 0] != -1:
+                    dataset_img[i, :, :, 0] = img
 
-        dataset_label[i] = [label]
+            dataset_label[i] = [label]            
+            i+=1
+    else:
+        dataset_img = []
+        dataset_label = np.empty((len(groups), 1), dtype=np.uint8)
+        i=0
+        for group in (groups):
+
+            # create the label. I have to do it this way because the label is not the same for all the datasets
+            label = label_generator_snana(group)
+            # append to the dataset as an array of arrays
+            if n_views > 1:
+                img_u, img_v, img_x = all_views_img_maker(np.array(group), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+                if img_u[0, 0] != -1:
+                    img_u = sparse.csr_matrix(img_u)
+                if img_v[0, 0] != -1:
+                    img_v = sparse.csr_matrix(img_v)
+                if img_x[0, 0] != -1:
+                    img_x = sparse.csr_matrix(img_x)
+                dataset_img.append([img_u, img_v, img_x])
+            else:  
+                img = from_tp_to_imgs(np.array(group), make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+                if img[0, 0] != -1:
+                    img = sparse.csr_matrix(img)
+                dataset_img.append([img.data, img.indices, img.indptr])
+            dataset_label[i] = [label]            
+            i+=1
         
-        i+=1
+        dataset_img = np.array(dataset_img, dtype=object)
+
     return (dataset_img, dataset_label)
 
 def label_generator_snana(group,idx=7, unknown_label=10):

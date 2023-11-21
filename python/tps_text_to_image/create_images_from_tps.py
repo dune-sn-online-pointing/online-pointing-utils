@@ -32,6 +32,8 @@ parser.add_argument('--x_margin', type=int, default=5, help='margin in x')
 parser.add_argument('--y_margin', type=int, default=50, help='margin in y')
 parser.add_argument('--min_tps_to_create_img', type=int, default=2, help='minimum number of TPs to create an image')
 parser.add_argument('--preprocess_ema_ds', action='store_true', help='preprocess the ema dataset')
+parser.add_argument('--use_sparse', action='store_true', help='use sparse matrices')
+
 
 args = parser.parse_args()
 filename = args.input_file
@@ -54,6 +56,7 @@ x_margin = args.x_margin
 y_margin = args.y_margin
 min_tps_to_create_img = args.min_tps_to_create_img
 preprocess_ema_ds = args.preprocess_ema_ds
+use_sparse = args.use_sparse
 
 
 
@@ -103,19 +106,17 @@ if __name__=='__main__':
         print("Done!")
 
     if save_ds:
-        print("Creating dataset...")
+        print("Creating dataset in " + "dense" if not use_sparse else "sparse" + " format...")
         if not os.path.exists(output_path+'dataset/'):
             os.makedirs(output_path+'dataset/')
-        dataset_img, dataset_label = tp2img.create_dataset(groups,  channel_map=channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, n_views=n_views)
+        dataset_img, dataset_label = tp2img.create_dataset(groups,  channel_map=channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, n_views=n_views, use_sparse=use_sparse)
+
         print("Dataset shape: ", dataset_img.shape)
         print("Dataset label shape: ", dataset_label.shape)
-
-        # print how many entries are different from 0
-        print("Number of non-zero entries: ", np.count_nonzero(dataset_img))
-
         np.save(output_path+'dataset/dataset_img.npy', dataset_img)
         np.save(output_path+'dataset/dataset_label.npy', dataset_label)
 
+            
         print(np.unique(dataset_label,return_counts=True))
         print("Done!")
     print('Done!')
