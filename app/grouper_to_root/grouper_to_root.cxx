@@ -12,8 +12,19 @@
 #include "TLeaf.h"
 #include "TMatrixD.h"
 #include "cpp_vector_dict.cxx"
-
-
+/*
+idx = {
+    'time_start': 0,
+    'time_over_threshold': 1,
+    'time_peak': 2,
+    'channel': 3,
+    'adc_integral': 4,
+    'adc_peak': 5,
+    'mc_truth': 6,
+    'event_number': 7,
+    'plane': 8,
+}
+*/
 std::vector<std::vector<std::vector<int>>> group_maker(std::vector<std::vector<int>>& all_tps, int ticks_limit=100, int channel_limit=20, int min_tps_to_group=1) {
     std::vector<std::vector<std::vector<int>>> groups;
     std::vector<std::vector<std::vector<int>>> buffer;
@@ -91,7 +102,7 @@ std::vector<std::vector<std::vector<int>>> group_maker(std::vector<std::vector<i
     return groups;
 }
 
-std::vector<std::vector<int>> file_reader(std::string filename) {
+std::vector<std::vector<int>> file_reader(std::string filename, int plane=2, bool take_only_supernova = false) { // plane 0 1 2 = u v x
     std::ifstream infile(filename);
     std::vector<std::vector<int>> tps;
     std::string line;
@@ -103,14 +114,21 @@ std::vector<std::vector<int>> file_reader(std::string filename) {
         int i = 0;
         while (iss >> val) {
             // (0,1,2,3,4,5,11,12,13)
-            if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 11 || i == 12 || i == 13) {
+            if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 9 || i == 10 || i == 11) {
                 tp.push_back(val);
             }
             ++i;
         }
         // std::cout << tp[0] << " " << tp[1] << " " << tp[2] << " " << tp[3]<< " "  << tp[4]<< " "  << tp[5] << " " << tp[6] << " " << tp[7] << " " << tp[8] << std::endl; 
-        if (tp[8] == 2) {
-            tps.push_back(tp);
+        if (take_only_supernova) {
+            if (tp[8] == plane and tp[6] == 1) {
+                tps.push_back(tp);
+            }
+        }
+        else {
+            if (tp[8] == plane) {
+                tps.push_back(tp);
+            }
         }
     }
 
@@ -118,8 +136,8 @@ std::vector<std::vector<int>> file_reader(std::string filename) {
 
     // multiply the duration by 4492 and add it to the time and channel
     for (auto& tp : tps) {
-        tp[0] += 4492 * tp[7];
-        tp[2] += 4492 * tp[7];
+        tp[0] += 4792 * tp[7];
+        tp[2] += 4792 * tp[7];
     }
 
     // sort the TPs by time
@@ -137,20 +155,27 @@ int main(int argc, char** argv) {
     int ticks_limit;
     int channel_limit;
     int min_tps_to_group;
+    int plane;
+    bool take_only_supernova = false;
+    // define an array containing ['U', 'V', 'X']
+    std::vector<std::string> plane_names = {"U", "V", "X"};
 
-    if (argc == 6) {
+    if (argc == 8) {
         filename = argv[1];
         outfolder = argv[2];
         ticks_limit = std::stoi(argv[3]);
         channel_limit = std::stoi(argv[4]);
         min_tps_to_group = std::stoi(argv[5]);
+        plane = std::stoi(argv[6]);
+        take_only_supernova = std::stoi(argv[7]);
         // Check that the arguments are valid
         if (ticks_limit < 0 || channel_limit < 0 || min_tps_to_group < 0) {
-            std::cout << "Usage: grouper_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_group>" << std::endl;
+            std::cout << "Usage: grouper_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_group> <plane> <take_only_supernova>" << std::endl;
             return 1;
         }
-        // If outfolder does not exist, create it
-        std::string command = "mkdir -p " + outfolder;
+        // If outfolder does not exist, create it 
+
+        std::string command = "mkdir -p " + outfolder + plane_names[plane];
         system(command.c_str());
     }
     else {
@@ -170,7 +195,7 @@ int main(int argc, char** argv) {
     // write the groups to a root file
 
     // create the root file
-    std::string root_filename = outfolder + "groups_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_group_" + std::to_string(min_tps_to_group) + ".root";
+    std::string root_filename = outfolder + "/" + plane_names[plane] + "/groups_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_group_" + std::to_string(min_tps_to_group) + ".root";
     TFile* file = new TFile(root_filename.c_str(), "RECREATE");
     // prepare objects to write to the root file
     int nrows;
