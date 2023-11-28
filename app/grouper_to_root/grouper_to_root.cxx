@@ -22,8 +22,25 @@ idx = {
     'adc_peak': 5,
     'mc_truth': 6,
     'event_number': 7,
-    'plane': 8,
+    'plane': 8
 }
+
+1581 
+14 
+1590 
+30710 
+2038 
+273
+11 
+1 
+1 
+1 
+0 
+3 truth
+2 event num
+2 plane
+0
+
 */
 std::vector<std::vector<std::vector<int>>> group_maker(std::vector<std::vector<int>>& all_tps, int ticks_limit=100, int channel_limit=20, int min_tps_to_group=1) {
     std::vector<std::vector<std::vector<int>>> groups;
@@ -114,7 +131,8 @@ std::vector<std::vector<int>> file_reader(std::string filename, int plane=2, boo
         int i = 0;
         while (iss >> val) {
             // (0,1,2,3,4,5,11,12,13)
-            if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 9 || i == 10 || i == 11) {
+            if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 11 || i == 12 || i == 13) {
+            // if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 9 || i == 10 || i == 11) {
                 tp.push_back(val);
             }
             ++i;

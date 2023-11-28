@@ -166,7 +166,7 @@ def from_tp_to_imgs(tps, make_fixed_size=False, width=500, height=1000, x_margin
             x = (tp[3] - x_min) + x_margin
             y_start = (tp[0] - t_start) + y_margin
             y_end = (tp[0] + tp[1] - t_start) + y_margin
-            img[int(y_start)-1:int(y_end)-1, int(x)-1] = tp[4]/(y_end - y_start)
+            img[int(y_start)-1:int(y_end), int(x)-1] = tp[4]/(y_end - y_start)
 
 
     else:
@@ -193,26 +193,26 @@ def from_tp_to_imgs(tps, make_fixed_size=False, width=500, height=1000, x_margin
                 x=(tp[3] - x_min)/x_range * (img_width - 2*x_margin) + x_margin
                 y_start = (tp[0] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
                 y_end = (tp[0] + tp[1] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                img[int(y_start)-1:int(y_end)-1, int(x)-1] = tp[4]/(y_end - y_start)
+                img[int(y_start)-1:int(y_end), int(x)-1] = tp[4]/(y_end - y_start)
         elif stretch_x:
             for tp in tps:                
                 x=(tp[3] - x_min)/x_range * (img_width - 2*x_margin) + x_margin
                 y_start = (tp[0] - t_start) + y_margin
                 y_end = (tp[0] + tp[1] - t_start) + y_margin
-                img[int(y_start)-1:int(y_end)-1, int(x)-1] = tp[4]/(y_end - y_start)
+                img[int(y_start)-1:int(y_end), int(x)-1] = tp[4]/(y_end - y_start)
         elif stretch_y:
             for tp in tps:
                 x = (tp[3] - x_min) + x_margin
                 y_start = (tp[0] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
                 y_end = (tp[0] + tp[1] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                img[int(y_start):int(y_end)-1, int(x)-1] = tp[4]/(y_end - y_start)
+                img[int(y_start):int(y_end), int(x)-1] = tp[4]/(y_end - y_start)
 
         else:
             for tp in tps:
                 x = (tp[3] - x_min) + x_margin
                 y_start = (tp[0] - t_start) + y_margin
                 y_end = (tp[0] + tp[1] - t_start) + y_margin
-                img[int(y_start)-1:int(y_end)-1, int(x)-1] = tp[4]/(y_end - y_start)
+                img[int(y_start)-1:int(y_end), int(x)-1] = tp[4]/(y_end - y_start)
    
     return img
 
@@ -330,7 +330,6 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
 
     #create images
     img_u, img_v, img_x = all_views_img_maker(all_TPs, channel_map, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
-
     max_pixel_value_overall = np.max([np.max(img_u), np.max(img_v), np.max(img_x)])
 
     #save images
@@ -384,7 +383,7 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         plt.xlabel("Channel")
         plt.ylabel("Time (ticks)")
         # set y axis ticks
-        plt.yticks(ticks=np.arange(0, img_v.shape[0], img_v.shape[0]/10), labels=yticks_labels)
+        plt.yticks(ticks=np.arange(0, img_u.shape[0], img_u.shape[0]/10), labels=yticks_labels)
         # set x axis ticks
         plt.xticks(ticks=np.arange(0, img_u.shape[1], img_u.shape[1]/2), labels=xticks_labels_u)
 
@@ -447,7 +446,7 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         plt.xlabel("Channel")
         plt.ylabel("Time (ticks)")
         # set y axis ticks
-        plt.yticks(ticks=np.arange(0, img_v.shape[0], img_v.shape[0]/10), labels=yticks_labels)
+        plt.yticks(ticks=np.arange(0, img_x.shape[0], img_x.shape[0]/10), labels=yticks_labels)
         # set x axis ticks
         plt.xticks(ticks=np.arange(0, img_x.shape[1], img_x.shape[1]/2), labels=xticks_labels_x)
 
@@ -470,6 +469,7 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
                         cbar_size="30%",
                         cbar_pad=0.25,
                         )   
+
 
         if img_u[0, 0] != -1:
             im = grid[0].imshow(img_u, vmin=0, vmax=max_pixel_value_overall)
@@ -496,8 +496,8 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         # save the image
         plt.savefig(save_path+ 'multiview_' + os.path.basename(outname) + '.png')
         plt.close()
-   
-def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50, n_views=3, use_sparse=False):
+
+def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50, n_views=3, use_sparse=False, unknown_label=99, idx=7):
     '''
     :param groups: list of groups
     :param make_fixed_size: if True, the image will have fixed size, otherwise it will be as big as the TPs
@@ -515,7 +515,7 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
         for group in (groups):
 
             # create the label. I have to do it this way because the label is not the same for all the datasets
-            label = label_generator_snana(group)
+            label = label_generator_snana(group, unknown_label=unknown_label, idx=idx)
             # append to the dataset as an array of arrays
             if n_views > 1:
                 img_u, img_v, img_x = all_views_img_maker(np.array(group), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
@@ -539,7 +539,7 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
         for group in (groups):
 
             # create the label. I have to do it this way because the label is not the same for all the datasets
-            label = label_generator_snana(group)
+            label = label_generator_snana(group, unknown_label=unknown_label, idx=idx)
             # append to the dataset as an array of arrays
             if n_views > 1:
                 img_u, img_v, img_x = all_views_img_maker(np.array(group), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
@@ -566,8 +566,7 @@ def label_generator_snana(group,idx=7, unknown_label=10):
     # check if the type is the same for all the TPs in the group
 
     label = group[0][idx]
-    for tp in group:
-        if tp[idx] != group[0][idx]:
-            label = unknown_label
-            break
-    return label
+    if np.all(group[:, idx] == label):
+        return label
+    else:
+        return unknown_label
