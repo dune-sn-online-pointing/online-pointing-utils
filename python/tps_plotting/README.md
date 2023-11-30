@@ -22,7 +22,7 @@ The code is getting ready to accept hdf5 files as input.
 
 The notebook should be self-explanatory, and can be good for quick checks.
 
-`plot-tps.py` does the same thing; the usage can be seen with `-h`:
+`plot-tp-properties.py` does the same thing; the usage can be seen with `-h`:
 
 ```
 usage: plot-tp-properties.py [-h] [-f FILES [FILES ...]] [-e OUTPUT_FOLDER] [-n NUMBER_TPS] [-s] [-a] [-t] [-o] [-i] [-p] [-c] [-d]
@@ -53,4 +53,4 @@ Default location for output is `./output/`, you see the folder in the repo but i
 ### Include
 
 All functions are in `include/PlottingUtils.py`. 
-Definition of the TP dataclass is in `include/TriggerPrimitive.py`.
+There will be a separate lib for offline tools.
