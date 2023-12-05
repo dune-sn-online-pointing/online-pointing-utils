@@ -38,7 +38,7 @@ def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps
     '''
     # if i have tps from multiple planes, i group only by time
     total_channels = channel_map.shape[0]
-    if np.unique(channel_map[all_tps[:, 3]% total_channels, 1]).shape[0] != 1:
+    if np.unique(channel_map[all_tps["channel"]% total_channels, 1]).shape[0] != 1:
         print('Warning: multiple planes in the event. Grouping only by time.')
         return group_maker_only_by_time(all_tps, channel_map, ticks_limit=ticks_limit, channel_limit=channel_limit, min_tps_to_group=min_tps_to_group)
 
@@ -56,9 +56,9 @@ def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps
             appended = False
             idx = 0
             for candidate in (buffer_copy):
-                time_cond = (tp[0] - np.max(np.array(candidate)[:, 0]+np.array(candidate)[:,1])) < ticks_limit
+                time_cond = (tp["time_start"] - np.max(np.array(candidate)["time_start"]+np.array(candidate)["time_over_threshold"])) <= ticks_limit
                 if time_cond:
-                    chan_cond = np.min(np.abs(tp[3] - np.array(candidate)[:, 3])) < channel_limit
+                    chan_cond = np.min(np.abs(tp["channel"] - np.array(candidate)["channel"])) <= channel_limit
                     if chan_cond:
                         if not appended:
                             candidate.append(tp)
@@ -87,18 +87,15 @@ def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps
 
 
 def group_maker_only_by_time(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps_to_group=4):
-    n_numbers = all_tps.shape[1]
     groups = []
-    current_group = np.array([all_tps[i] for i in range(n_numbers)])
+    current_group = np.array([all_tps[0]])
     for tp in all_tps[1:]:
-        tp = [tp[i] for i in range(n_numbers)]
-        if (tp[0] - np.max(current_group[:, 0]+current_group[:,1])) < ticks_limit:
-            current_group = np.append(current_group, [tp], axis=0)
+        if tp["time_start"] - np.max(current_group["time_start"]+current_group["time_over_threshold"]) <= ticks_limit:
+            current_group = np.append(current_group, tp)
         else:
             if len(current_group) >= min_tps_to_group:
                 groups.append(current_group)
             current_group = np.array([tp])
-            
 
     return groups
 
@@ -110,15 +107,15 @@ def group_maker_using_truth(all_tps):
     '''
     # select only the tps with [-3] = 1, i.e. supernova events
     print("Number of TPs: ", all_tps.shape[0])
-    all_tps = all_tps[all_tps[:,-3]==1]
+    all_tps = all_tps[all_tps["truth"]==1]
     print("Number of TPs: ", all_tps.shape[0])
     # group the tps by [-2]
-    unique, counts = np.unique(all_tps[:,-2], return_counts=True)
+    unique, counts = np.unique(all_tps["ev_num"], return_counts=True)
     print("Number of different [-2]: ", unique.shape[0])
 
     groups = []
     for i in range(unique.shape[0]):
-        groups.append(all_tps[all_tps[:,-2]==unique[i]])
+        groups.append(all_tps[all_tps["ev_num"]==unique[i]])
 
     return groups
 
@@ -139,15 +136,15 @@ def from_tp_to_imgs(tps, make_fixed_size=False, width=500, height=1000, x_margin
     if y_min_overall != -1:
         t_start = y_min_overall
     else:
-        t_start = tps[0, 0] 
+        t_start = tps[0]["time_start"] 
 
     if y_max_overall != -1:
         t_end = y_max_overall
     else:
-        t_end = np.max(tps[:, 0] + tps[:, 1])
+        t_end = np.max(tps["time_start"] + tps["time_over_threshold"])
     
-    x_max = (tps[:, 3].max())
-    x_min = (tps[:, 3].min())
+    x_max = (tps["channel"].max())
+    x_min = (tps["channel"].min())
 
     x_range = x_max - x_min 
     y_range = int((t_end - t_start))
@@ -163,10 +160,10 @@ def from_tp_to_imgs(tps, make_fixed_size=False, width=500, height=1000, x_margin
     # fill image
     if (not make_fixed_size):
         for tp in tps:
-            x = (tp[3] - x_min) + x_margin
-            y_start = (tp[0] - t_start) + y_margin
-            y_end = (tp[0] + tp[1] - t_start) + y_margin
-            img[int(y_start)-1:int(y_end)-1, int(x)-1] = tp[4]/(y_end - y_start)
+            x = (tp["channel"] - x_min) + x_margin
+            y_start = (tp["time_start"] - t_start) + y_margin
+            y_end = (tp["time_start"] + tp["time_over_threshold"] - t_start) + y_margin
+            img[int(y_start)-1:int(y_end), int(x)-1] = tp["adc_integral"]/(y_end - y_start)
 
 
     else:
@@ -190,29 +187,29 @@ def from_tp_to_imgs(tps, make_fixed_size=False, width=500, height=1000, x_margin
 
         if stretch_x & stretch_y:
             for tp in tps:
-                x=(tp[3] - x_min)/x_range * (img_width - 2*x_margin) + x_margin
-                y_start = (tp[0] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                y_end = (tp[0] + tp[1] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                img[int(y_start)-1:int(y_end)-1, int(x)-1] = tp[4]/(y_end - y_start)
+                x=(tp["channel"] - x_min)/x_range * (img_width - 2*x_margin) + x_margin
+                y_start = (tp["time_start"] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
+                y_end = (tp["time_start"] + tp["time_over_threshold"] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
+                img[int(y_start)-1:int(y_end), int(x)-1] = tp["adc_integral"]/(y_end - y_start)
         elif stretch_x:
             for tp in tps:                
-                x=(tp[3] - x_min)/x_range * (img_width - 2*x_margin) + x_margin
-                y_start = (tp[0] - t_start) + y_margin
-                y_end = (tp[0] + tp[1] - t_start) + y_margin
-                img[int(y_start)-1:int(y_end)-1, int(x)-1] = tp[4]/(y_end - y_start)
+                x=(tp["channel"] - x_min)/x_range * (img_width - 2*x_margin) + x_margin
+                y_start = (tp["time_start"] - t_start) + y_margin
+                y_end = (tp["time_start"] + tp["time_over_threshold"] - t_start) + y_margin
+                img[int(y_start)-1:int(y_end), int(x)-1] = tp["adc_integral"]/(y_end - y_start)
         elif stretch_y:
             for tp in tps:
-                x = (tp[3] - x_min) + x_margin
-                y_start = (tp[0] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                y_end = (tp[0] + tp[1] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                img[int(y_start):int(y_end)-1, int(x)-1] = tp[4]/(y_end - y_start)
+                x = (tp["channel"] - x_min) + x_margin
+                y_start = (tp["time_start"] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
+                y_end = (tp["time_start"] + tp["time_over_threshold"] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
+                img[int(y_start):int(y_end), int(x)-1] = tp["adc_integral"]/(y_end - y_start)
 
         else:
             for tp in tps:
-                x = (tp[3] - x_min) + x_margin
-                y_start = (tp[0] - t_start) + y_margin
-                y_end = (tp[0] + tp[1] - t_start) + y_margin
-                img[int(y_start)-1:int(y_end)-1, int(x)-1] = tp[4]/(y_end - y_start)
+                x = (tp["channel"] - x_min) + x_margin
+                y_start = (tp["time_start"] - t_start) + y_margin
+                y_end = (tp["time_start"] + tp["time_over_threshold"] - t_start) + y_margin
+                img[int(y_start)-1:int(y_end), int(x)-1] = tp["adc_integral"]/(y_end - y_start)
    
     return img
 
@@ -231,18 +228,18 @@ def all_views_img_maker(tps, channel_map, min_tps_to_create_img=2, make_fixed_si
 
     total_channels = channel_map.shape[0]
     # U plane, take only the tps where the corrisponding position in the channel map is 0      
-    tps_u = tps[np.where(channel_map[tps[:, 3]% total_channels, 1] == 0)]
+    tps_u = tps[np.where(channel_map[tps["channel"]% total_channels, 1] == 0)]
 
     # V plane, take only the tps where the corrisponding position in the channel map is 1
-    tps_v = tps[np.where(channel_map[tps[:, 3]% total_channels, 1] == 1)]
+    tps_v = tps[np.where(channel_map[tps["channel"]% total_channels, 1] == 1)]
 
     # X plane, take only the tps where the corrisponding position in the channel map is 2
-    tps_x = tps[np.where(channel_map[tps[:, 3]% total_channels, 1] == 2)]
+    tps_x = tps[np.where(channel_map[tps["channel"]% total_channels, 1] == 2)]
 
     img_u, img_v, img_x = np.array([[-1]]), np.array([[-1]]), np.array([[-1]])
 
-    y_min_overall = tps[0,0]
-    y_max_overall = np.max(tps[:,0] + tps[:,1])
+    y_min_overall = tps[0]["time_start"]
+    y_max_overall = np.max(tps["time_start"] + tps["time_over_threshold"])
 
     if tps_u.shape[0] >= min_tps_to_create_img:
         img_u = from_tp_to_imgs(tps_u, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, y_min_overall=y_min_overall, y_max_overall=y_max_overall)
@@ -330,20 +327,19 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
 
     #create images
     img_u, img_v, img_x = all_views_img_maker(all_TPs, channel_map, min_tps_to_create_img=min_tps_to_create_img, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
-
     max_pixel_value_overall = np.max([np.max(img_u), np.max(img_v), np.max(img_x)])
 
     #save images
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
-    x_max = (all_TPs[:, 3].max())
-    x_min = (all_TPs[:, 3].min())
+    x_max = (all_TPs["channel"].max())
+    x_min = (all_TPs["channel"].min())
 
     x_range = x_max - x_min 
-    t_start = all_TPs[0, 0] 
+    t_start = all_TPs[0]["time_start"]
 
-    t_end = np.max(all_TPs[:, 0] + all_TPs[:, 1])
+    t_end = np.max(all_TPs["time_start"] + all_TPs["time_over_threshold"])
     y_range = int((t_end - t_start))
 
     # create the image
@@ -362,10 +358,10 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
     n_views = 0
 
     if img_u[0, 0] != -1:
-        tps_u = all_TPs[np.where(channel_map[all_TPs[:, 3]% total_channels, 1] == 0)]
+        tps_u = all_TPs[np.where(channel_map[all_TPs["channel"]% total_channels, 1] == 0)]
         
-        x_min_u = (tps_u[:, 3].min())
-        x_max_u = (tps_u[:, 3].max())
+        x_min_u = (tps_u["channel"].min())
+        x_max_u = (tps_u["channel"].max())
         x_range_u = x_max_u - x_min_u
 
         x_margin_u = x_margin
@@ -384,7 +380,7 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         plt.xlabel("Channel")
         plt.ylabel("Time (ticks)")
         # set y axis ticks
-        plt.yticks(ticks=np.arange(0, img_v.shape[0], img_v.shape[0]/10), labels=yticks_labels)
+        plt.yticks(ticks=np.arange(0, img_u.shape[0], img_u.shape[0]/10), labels=yticks_labels)
         # set x axis ticks
         plt.xticks(ticks=np.arange(0, img_u.shape[1], img_u.shape[1]/2), labels=xticks_labels_u)
 
@@ -393,10 +389,10 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         plt.close()
 
     if img_v[0, 0] != -1:
-        tps_v = all_TPs[np.where(channel_map[all_TPs[:, 3]% total_channels, 1] == 1)]
+        tps_v = all_TPs[np.where(channel_map[all_TPs["channel"]% total_channels, 1] == 1)]
 
-        x_min_v = (tps_v[:, 3].min())
-        x_max_v = (tps_v[:, 3].max())
+        x_min_v = (tps_v["channel"].min())
+        x_max_v = (tps_v["channel"].max())
         x_range_v = x_max_v - x_min_v
 
         x_margin_v = x_margin
@@ -425,10 +421,10 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         plt.close()
 
     if img_x[0, 0] != -1:
-        tps_x = all_TPs[np.where(channel_map[all_TPs[:, 3]% total_channels, 1] == 2)]
+        tps_x = all_TPs[np.where(channel_map[all_TPs["channel"]% total_channels, 1] == 2)]
 
-        x_min_x = (tps_x[:, 3].min())
-        x_max_x = (tps_x[:, 3].max())
+        x_min_x = (tps_x["channel"].min())
+        x_max_x = (tps_x["channel"].max())
         x_range_x = x_max_x - x_min_x
 
         x_margin_x = x_margin
@@ -447,7 +443,7 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         plt.xlabel("Channel")
         plt.ylabel("Time (ticks)")
         # set y axis ticks
-        plt.yticks(ticks=np.arange(0, img_v.shape[0], img_v.shape[0]/10), labels=yticks_labels)
+        plt.yticks(ticks=np.arange(0, img_x.shape[0], img_x.shape[0]/10), labels=yticks_labels)
         # set x axis ticks
         plt.xticks(ticks=np.arange(0, img_x.shape[1], img_x.shape[1]/2), labels=xticks_labels_x)
 
@@ -470,6 +466,7 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
                         cbar_size="30%",
                         cbar_pad=0.25,
                         )   
+
 
         if img_u[0, 0] != -1:
             im = grid[0].imshow(img_u, vmin=0, vmax=max_pixel_value_overall)
@@ -496,8 +493,8 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         # save the image
         plt.savefig(save_path+ 'multiview_' + os.path.basename(outname) + '.png')
         plt.close()
-   
-def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50, n_views=3, use_sparse=False):
+
+def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50, n_views=3, use_sparse=False, unknown_label=99, idx=7, dict_lab=None):
     '''
     :param groups: list of groups
     :param make_fixed_size: if True, the image will have fixed size, otherwise it will be as big as the TPs
@@ -515,7 +512,7 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
         for group in (groups):
 
             # create the label. I have to do it this way because the label is not the same for all the datasets
-            label = label_generator_snana(group)
+            label = label_generator_snana(group, unknown_label=unknown_label, idx=idx, dict_lab=dict_lab)
             # append to the dataset as an array of arrays
             if n_views > 1:
                 img_u, img_v, img_x = all_views_img_maker(np.array(group), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
@@ -539,7 +536,7 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
         for group in (groups):
 
             # create the label. I have to do it this way because the label is not the same for all the datasets
-            label = label_generator_snana(group)
+            label = label_generator_snana(group, unknown_label=unknown_label, idx=idx, dict_lab=dict_lab)
             # append to the dataset as an array of arrays
             if n_views > 1:
                 img_u, img_v, img_x = all_views_img_maker(np.array(group), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
@@ -562,12 +559,13 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
 
     return (dataset_img, dataset_label)
 
-def label_generator_snana(group,idx=7, unknown_label=10):
-    # check if the type is the same for all the TPs in the group
+def label_generator_snana(group,idx=7, unknown_label=10, dict_lab=None):
 
-    label = group[0][idx]
-    for tp in group:
-        if tp[idx] != group[0][idx]:
-            label = unknown_label
-            break
-    return label
+    label = group[0]["truth"]
+    if np.all(group["truth"] == label):
+        if dict_lab is None:
+            return label
+        else:
+            return dict_lab[label]
+    else:
+        return unknown_label

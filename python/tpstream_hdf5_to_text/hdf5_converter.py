@@ -107,8 +107,8 @@ else:
     exit()
 
 if not use_real_timestamps:
-    all_tps[:,0]=all_tps[:,0] - all_tps[0,0]
-    all_tps[:,2]=all_tps[:,2] - all_tps[0,0]
+    all_tps["time_start"]=all_tps["time_start"] - all_tps[0]["time_start"]
+    all_tps["time_peak"]=all_tps["time_peak"] - all_tps[0]["time_start"]
 
 
 print(f"Converted {all_tps.shape[0]} tps!")
@@ -127,7 +127,7 @@ if not (eff_time_start < time_start and time_start<time_end and time_end<eff_tim
     print(f"I will draw all the converted TPs.")
 else:
     print(f"I will draw all TPs from {time_start} to {time_end}.")
-    all_tps = all_tps[(all_tps[:, 0] >= time_start) & (all_tps[:, 0] <= time_end)]
+    all_tps = all_tps[(all_tps["time_start"] >= time_start) & (all_tps["time_start"] <= time_end)]
 
 # take the input name from the last slash
 print ("output file name is", output_file_name )
