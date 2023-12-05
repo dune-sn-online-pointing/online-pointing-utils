@@ -173,19 +173,19 @@ if __name__=='__main__':
     channel_map = tp2img.create_channel_map_array(drift_direction=drift_direction)
 
     print("Reading root file...")
-    # nrows, event, matrix = read_root_file(filename, min_tps_to_group=min_tps_to_group)
-    # groups = np.array(matrix, dtype=object)
-    # n_views = 1
-    # hack to get multiple files, I want 1 groups object
-    for i in range(8):
-        name = f"/eos/user/d/dapullia/tp_dataset/emaprod/new_lab_multirun/{i}/X/groups_tick_limits_10_channel_limits_2_min_tps_to_group_1.root"
-        nrows, event, matrix = read_root_file(name, min_tps_to_group=min_tps_to_group)
-        print(len(matrix))
-        if i == 0:
-            groups = np.array(matrix, dtype=object)
-        else:
-            groups = np.append(groups, np.array(matrix, dtype=object))
+    nrows, event, matrix = read_root_file(filename, min_tps_to_group=min_tps_to_group)
+    groups = np.array(matrix, dtype=object)
     n_views = 1
+    # # hack to get multiple files, I want 1 groups object
+    # for i in range(8):
+    #     name = f"/eos/user/d/dapullia/tp_dataset/emaprod/new_lab_multirun/{i}/X/groups_tick_limits_10_channel_limits_2_min_tps_to_group_1.root"
+    #     nrows, event, matrix = read_root_file(name, min_tps_to_group=min_tps_to_group)
+    #     print(len(matrix))
+    #     if i == 0:
+    #         groups = np.array(matrix, dtype=object)
+    #     else:
+    #         groups = np.append(groups, np.array(matrix, dtype=object))
+    # n_views = 1
 
     # channs = np.array([], dtype=int)
     # for i in range(100):
