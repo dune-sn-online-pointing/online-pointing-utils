@@ -26,6 +26,7 @@ def tp_to_numpy(tp):
 
 
 def tpstream_hdf5_converter(filename, num_records=-1, n_tps_to_convert=-1):
+
     h5_file = HDF5RawDataFile(filename)
 
     # Get all records (TimeSlice)
