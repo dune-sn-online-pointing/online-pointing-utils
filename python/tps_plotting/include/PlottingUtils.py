@@ -13,7 +13,58 @@ def saveTPs(filename, max_tps):
         data = np.genfromtxt(filename, delimiter=' ', max_rows=max_tps)
         data = data.transpose()
         
-        # Rest of the code for text format
+
+        # TP variables are 11
+        if len(data) == 11:
+            daq = True
+            print ("File ", filename, " comes from DAQ, has correct number of variables")
+        else:
+            print ("WARNING: TPs in this file have an unexpected number of variables:", len(data))
+            print (" ")
+            # return # could stop, but for now we continue
+
+        # appo vectors just for clarity, could be avoided
+        # THIS IS THE CORRECT ORDER OF THE VARIABLES
+        # TODO PUT IN SOME HEADER OR SOMEWHERE ELSE
+        time_start = data[0]
+        time_over_threshold = data[1]
+        time_peak = data[2] 
+        channel = data[3]
+        adc_integral = data[4]
+        adc_peak = data[5]
+        detid = data[6]
+        type = data[7]
+        algorithm = data[8]
+        version = data[9]
+        flag = data[10]
+        
+        del data
+    
+        # offset to have the first TP at t=0, we need this?
+        # time_shift = time_start[0] 
+        # time_start -= time_shift
+        # time_start *= 16e-9 # convert to seconds, do we want it?
+            
+        # create a list to store the TPs
+        # tp_list = []
+        # loop over the number of TPs and append tps to the list
+        # for i in range(len(time_start)):
+        #     tp_list.append(TriggerPrimitive(time_start[i], time_peak[i], time_over_threshold[i], channel[i], adc_integral[i], 
+        #                                     adc_peak[i], detid[i], type[i], algorithm[i], version[i], flag[i]))
+        
+        # fill tp_list with the arrays of the variables
+        # create a structured array with column names
+        dt = np.dtype([('time_start', float), ('time_peak', float), ('time_over_threshold', float), ('channel', int), ('adc_integral', float), ('adc_peak', float), ('detid', int), ('type', int), ('algorithm', int), ('version', int), ('flag', int)])
+        tp_list = np.rec.fromarrays([time_start, time_peak, time_over_threshold, channel, adc_integral, adc_peak, detid, type, algorithm, version, flag], dtype=dt)
+        
+        # delete the appo vectors
+        del time_start, time_over_threshold, time_peak, channel, adc_integral, adc_peak, detid, type, algorithm, version, flag
+        
+        # sort the list by time_start
+        tp_list.sort(order='time_start')
+        
+        print ("Saved ", len(tp_list), " TPs from file ", filename)
+        print (" ")
         
         return tp_list
     elif filename.endswith('.hdf5'):
