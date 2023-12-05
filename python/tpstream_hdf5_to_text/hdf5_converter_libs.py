@@ -1,8 +1,4 @@
 '''
-File name: tpstream_hdf5_converter.py
-Author: Dario Pullia
-Date created: 19/09/2023
-
 Description:
 This file contains the function that converts a HDF5 file containing TPStream data from DUNE DAQ to different formats.
 
@@ -12,6 +8,7 @@ The function tpstream_hdf5_converter returns the tps ordered by time_start.
 
 The function tpstream_hdf5_converter_as_cpp returns the tps ordered by fragment, as in the cpp implementation.
 '''
+
 
 import daqdataformats
 import detdataformats
@@ -28,7 +25,8 @@ def tp_to_numpy(tp):
     return np.array([tp.time_start, tp.time_over_threshold, tp.time_peak, tp.channel, tp.adc_integral, tp.adc_peak, tp.detid, tp.type, tp.algorithm, tp.version, tp.flag])
 
 
-def tpstream_hdf5_converter(filename, num_records=-1, out_format=["txt"]): # is out_format needed?
+def tpstream_hdf5_converter(filename, num_records=-1, n_tps_to_convert=-1):
+
     h5_file = HDF5RawDataFile(filename)
 
     # Get all records (TimeSlice)
@@ -70,6 +68,14 @@ def tpstream_hdf5_converter(filename, num_records=-1, out_format=["txt"]): # is 
             index = np.argmin(next_tp_in_datasets)
             tp = trgdataformats.TriggerPrimitive(fragments[index].get_data(one_tp_size_in_memory*(n_tps[index]-n_tps_left[index])))
             all_tps.append(tp_to_numpy(tp))
+            if len(all_tps)==n_tps_to_convert:
+                all_tps = np.array(all_tps)
+                dt = np.dtype([('time_start', int), ('time_over_threshold', int), ('time_peak', int), ('channel', int), ('adc_integral', int), ('adc_peak', int), ('detid', int), ('type', int), ('algorithm', int), ('version', int), ('flag', int)])
+                all_tps = np.rec.fromarrays([all_tps[:,0], all_tps[:,1], all_tps[:,2], all_tps[:,3], all_tps[:,4], all_tps[:,5], all_tps[:,6], all_tps[:,7], all_tps[:,8], all_tps[:,9], all_tps[:,10]], dtype=dt)
+
+                print(f"Final shape: {all_tps.shape}")
+                return all_tps                
+
             n_tps_left[index] -= 1
             if n_tps_left[index] == 0:
                 del n_tps_left[index]
@@ -82,9 +88,12 @@ def tpstream_hdf5_converter(filename, num_records=-1, out_format=["txt"]): # is 
 
 
     all_tps = np.array(all_tps)
+    dt = np.dtype([('time_start', int), ('time_over_threshold', int), ('time_peak', int), ('channel', int), ('adc_integral', int), ('adc_peak', int), ('detid', int), ('type', int), ('algorithm', int), ('version', int), ('flag', int)])
+    all_tps = np.rec.fromarrays([all_tps[:,0], all_tps[:,1], all_tps[:,2], all_tps[:,3], all_tps[:,4], all_tps[:,5], all_tps[:,6], all_tps[:,7], all_tps[:,8], all_tps[:,9], all_tps[:,10]], dtype=dt)
+    # print type(all_tps)
     print(f"Final shape: {all_tps.shape}")
-
     return all_tps
+
 
 def tpstream_hdf5_converter_as_cpp(filename, num_records=-1, out_format=["txt"]):
 
