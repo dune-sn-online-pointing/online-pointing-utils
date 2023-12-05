@@ -69,9 +69,9 @@ def saveTPs(filename, max_tps):
         return tp_list
     elif filename.endswith('.hdf5'):
         # TODO change function to use nTPs instead of nRecords
-        print ("WARNING: when using hdf5 files, what is used is not the number of TPs but the number of records. Whis will be changed.")
+        print ("WARNING: when reading hdf5 files, what is used is not the number of TPs but the number of records. This will be changed.")
         # the function should be changed to already provide the correct format TODO
-        tps_array = tpstream_hdf5_converter(filename, max_tps)
+        tps_array = tpstream_hdf5_converter(filename=filename, num_records=max_tps)
         # move out of this scope?
         dt = np.dtype([('time_start', float), ('time_over_threshold', float), ('time_peak', float), ('channel', int), ('adc_integral', float), ('adc_peak', float), ('detid', int), ('type', int), ('algorithm', int), ('version', int), ('flag', int)])
         # maybe move dt also to hdf_converter_libs?
