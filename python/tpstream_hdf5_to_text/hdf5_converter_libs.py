@@ -25,10 +25,10 @@ import sys
 import numpy as np
 
 def tp_to_numpy(tp):
-    return np.array([tp.time_start, tp.time_over_threshold, tp.time_peak, tp.channel, tp.adc_integral, tp.adc_peak, tp.detid, tp.flag, tp.version])
+    return np.array([tp.time_start, tp.time_over_threshold, tp.time_peak, tp.channel, tp.adc_integral, tp.adc_peak, tp.detid, tp.type, tp.algorithm, tp.version, tp.flag])
 
 
-def tpstream_hdf5_converter(filename, num_records=-1, out_format=["txt"]):
+def tpstream_hdf5_converter(filename, num_records=-1, out_format=["txt"]): # is out_format needed?
     h5_file = HDF5RawDataFile(filename)
 
     # Get all records (TimeSlice)
