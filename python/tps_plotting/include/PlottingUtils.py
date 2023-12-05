@@ -54,7 +54,7 @@ def saveTPs(filename, max_tps):
         
         # fill tp_list with the arrays of the variables
         # create a structured array with column names
-        dt = np.dtype([('time_start', float), ('time_peak', float), ('time_over_threshold', float), ('channel', int), ('adc_integral', float), ('adc_peak', float), ('detid', int), ('type', int), ('algorithm', int), ('version', int), ('flag', int)])
+        dt = np.dtype([('time_start', float), ('time_over_threshold', float), ('time_peak', float), ('channel', int), ('adc_integral', float), ('adc_peak', float), ('detid', int), ('type', int), ('algorithm', int), ('version', int), ('flag', int)])
         tp_list = np.rec.fromarrays([time_start, time_peak, time_over_threshold, channel, adc_integral, adc_peak, detid, type, algorithm, version, flag], dtype=dt)
         
         # delete the appo vectors
@@ -68,7 +68,11 @@ def saveTPs(filename, max_tps):
         
         return tp_list
     elif filename.endswith('.hdf5'):
-        tp_list = tpstream_hdf5_converter(filename, max_tps)
+        tps_array = tpstream_hdf5_converter(filename, max_tps)
+        # move out of this scope?
+        dt = np.dtype([('time_start', float), ('time_over_threshold', float), ('time_peak', float), ('channel', int), ('adc_integral', float), ('adc_peak', float), ('detid', int), ('type', int), ('algorithm', int), ('version', int), ('flag', int)])
+        # maybe move dt also to hdf_converter_libs?
+        tp_list = np.rec.fromarrays([tps_array[:,0], tps_array[:,1], tps_array[:,2], tps_array[:,3], tps_array[:,4], tps_array[:,5], tps_array[:,6], tps_array[:,7], tps_array[:,8], tps_array[:,9], tps_array[:,10]], dtype=dt)
         
         return tp_list
     else:
