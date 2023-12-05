@@ -1,6 +1,6 @@
 # very preliminary, will add external clp, folder checks during execution...
 INPUT_FILE="/afs/cern.ch/work/d/dapullia/public/dune/dataset_study/new_labels/X/groups_tick_limits_10_channel_limits_3_min_tps_to_group_2.root"
-OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/new_labels"
+OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/new_labels_mf/"
 SHOW=false
 SAVE_IMG=false
 SAVE_DS=true

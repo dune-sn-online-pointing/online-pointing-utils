@@ -26,7 +26,7 @@ parser.add_argument('--y_margin', type=int, default=10, help='margin in y')
 parser.add_argument('--min_tps_to_create_img', type=int, default=2, help='minimum number of TPs to create an image')
 parser.add_argument('--drift_direction', type=int, default=0, help='0 for horizontal drift, 1 for vertical drift')
 parser.add_argument('--use_sparse', action='store_true', help='use sparse matrices')
-parser.add_argument('--min_tps_to_group', type=int, default=4, help='minimum number of TPs to create a group')
+parser.add_argument('--min_tps_to_group', type=int, default=3, help='minimum number of TPs to create a group')
 
 
 args = parser.parse_args()
@@ -81,22 +81,112 @@ def read_root_file (filename, min_tps_to_group=1):
 
     return nrows, event, matrix
 
+bkg_details = {
+    "kUnknown": 0,
+    "kMarley": 1,
+    "kAr39GenInLAr": 2,
+    "kKr85GenInLAr": 3,
+    "kAr42GenInLAr": 4,
+    "kK42From42ArGenInLAr": 5,
+    "kRn222ChainRn222GenInLAr": 6,
+    "kRn222ChainPo218GenInLAr": 7,
+    "kRn222ChainPb214GenInLAr": 8,
+    "kRn222ChainBi214GenInLAr": 9,
+    "kRn222ChainPb210GenInLAr": 10,
+    "kK40GenInCPA": 11,
+    "kU238ChainGenInCPA": 12,
+    "kK42From42ArGenInCPA": 13,
+    "kRn222ChainPo218GenInCPA": 14,
+    "kRn222ChainPb214GenInCPA": 15,
+    "kRn222ChainBi214GenInCPA": 16,
+    "kRn222ChainPb210GenInCPA": 17,
+    "kRn222ChainFromBi210GenInCPA": 18,
+    "kCo60GenInAPA": 19,
+    "kU238ChainGenInAPA": 20,
+    "kRn222ChainGenInPDS": 21, # //// now called 7
+    "kNeutronGenInRock": 22
+}
+
+bkg_aggregate = {
+    "kUnknown": 0,
+    "kMarley": 1,
+    "kU238ChainGenInAPA": 2,
+    "kCo60GenInAPA": 2,
+    "kK40GenInCPA": 3,
+    "kU238ChainGenInCPA": 3,
+    "kK42From42ArGenInCPA": 3,
+    "kRn222ChainPo218GenInCPA": 3,
+    "kRn222ChainPb214GenInCPA": 3,
+    "kRn222ChainBi214GenInCPA": 3,
+    "kRn222ChainPb210GenInCPA": 3,
+    "kRn222ChainFromBi210GenInCPA": 3,
+    "kAr39GenInLAr": 4,
+    "kNeutronGenInRock": 5,
+    "kKr85GenInLAr": 6,
+    "kPo210GenInLAr": 7, # //// not existing anymore
+    "kRn222ChainRn222GenInLAr": 8,
+    "kRn222ChainPo218GenInLAr": 8,
+    "kRn222ChainPb214GenInLAr": 8,
+    "kRn222ChainBi214GenInLAr": 8,
+    "kRn222ChainPb210GenInLAr": 8,
+    "kAr42GenInLAr": 9,
+    "kK42From42ArGenInLAr": 9,
+}
+
+dict_lab = {
+    0: 0,
+    1: 1,
+    2: 4,
+    3: 6,
+    4: 9,
+    5: 9,
+    6: 8,
+    7: 8,
+    8: 8,
+    9: 8,
+    10: 8,
+    11: 3,
+    12: 3,
+    13: 3,
+    14: 3,
+    15: 3,
+    16: 3,
+    17: 3,
+    18: 3,
+    19: 2,
+    20: 2,
+    21: 7,
+    22: 5
+}
+
+
 if __name__=='__main__':
 
 
-    # quick hack
-    tps = np.loadtxt("/eos/home-e/evilla/dune/sn-data/tpstream_standardHF_thresh30_nonoise_newLabels_23evts.txt", dtype=int)
+    # # quick hack
+    # tps = np.loadtxt("/eos/home-e/evilla/dune/sn-data/tpstream_standardHF_thresh30_nonoise_newLabels_23evts.txt", dtype=int)
 
-    print(np.unique(tps[:,11], return_counts=True))
+    # print(np.unique(tps[:,11], return_counts=True))
 
 
 
     channel_map = tp2img.create_channel_map_array(drift_direction=drift_direction)
 
     print("Reading root file...")
-    nrows, event, matrix = read_root_file(filename, min_tps_to_group=min_tps_to_group)
-    groups = np.array(matrix, dtype=object)
+    # nrows, event, matrix = read_root_file(filename, min_tps_to_group=min_tps_to_group)
+    # groups = np.array(matrix, dtype=object)
+    # n_views = 1
+    # hack to get multiple files, I want 1 groups object
+    for i in range(8):
+        name = f"/eos/user/d/dapullia/tp_dataset/emaprod/new_lab_multirun/{i}/X/groups_tick_limits_10_channel_limits_2_min_tps_to_group_1.root"
+        nrows, event, matrix = read_root_file(name, min_tps_to_group=min_tps_to_group)
+        print(len(matrix))
+        if i == 0:
+            groups = np.array(matrix, dtype=object)
+        else:
+            groups = np.append(groups, np.array(matrix, dtype=object))
     n_views = 1
+
     # channs = np.array([], dtype=int)
     # for i in range(100):
     #     channs = np.append(channs, np.unique(groups[i][:,3]))
@@ -133,7 +223,7 @@ if __name__=='__main__':
         print("Creating dataset in " + "dense" if not use_sparse else "sparse" + " format...")
         if not os.path.exists(output_path+'dataset/'):
             os.makedirs(output_path+'dataset/')
-        dataset_img, dataset_label = tp2img.create_dataset(groups,  channel_map=channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, n_views=n_views, use_sparse=use_sparse, unknown_label=99, idx=6)
+        dataset_img, dataset_label = tp2img.create_dataset(groups,  channel_map=channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, n_views=n_views, use_sparse=use_sparse, unknown_label=99, idx=6, dict_lab=dict_lab)
 
         print("Dataset shape: ", dataset_img.shape)
         print("Dataset label shape: ", dataset_label.shape)

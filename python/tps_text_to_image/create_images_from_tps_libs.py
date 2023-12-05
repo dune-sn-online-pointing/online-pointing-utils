@@ -497,7 +497,7 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         plt.savefig(save_path+ 'multiview_' + os.path.basename(outname) + '.png')
         plt.close()
 
-def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50, n_views=3, use_sparse=False, unknown_label=99, idx=7):
+def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50, n_views=3, use_sparse=False, unknown_label=99, idx=7, dict_lab=None):
     '''
     :param groups: list of groups
     :param make_fixed_size: if True, the image will have fixed size, otherwise it will be as big as the TPs
@@ -515,7 +515,7 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
         for group in (groups):
 
             # create the label. I have to do it this way because the label is not the same for all the datasets
-            label = label_generator_snana(group, unknown_label=unknown_label, idx=idx)
+            label = label_generator_snana(group, unknown_label=unknown_label, idx=idx, dict_lab=dict_lab)
             # append to the dataset as an array of arrays
             if n_views > 1:
                 img_u, img_v, img_x = all_views_img_maker(np.array(group), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
@@ -539,7 +539,7 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
         for group in (groups):
 
             # create the label. I have to do it this way because the label is not the same for all the datasets
-            label = label_generator_snana(group, unknown_label=unknown_label, idx=idx)
+            label = label_generator_snana(group, unknown_label=unknown_label, idx=idx, dict_lab=dict_lab)
             # append to the dataset as an array of arrays
             if n_views > 1:
                 img_u, img_v, img_x = all_views_img_maker(np.array(group), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
@@ -562,11 +562,13 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
 
     return (dataset_img, dataset_label)
 
-def label_generator_snana(group,idx=7, unknown_label=10):
-    # check if the type is the same for all the TPs in the group
+def label_generator_snana(group,idx=7, unknown_label=10, dict_lab=None):
 
     label = group[0][idx]
     if np.all(group[:, idx] == label):
-        return label
+        if dict_lab is None:
+            return label
+        else:
+            return dict_lab[label]
     else:
         return unknown_label

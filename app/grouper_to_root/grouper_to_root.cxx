@@ -64,11 +64,11 @@ std::vector<std::vector<std::vector<int>>> group_maker(std::vector<std::vector<i
                 for (auto& tp2 : candidate) {
                     max_time = std::max(max_time, tp2[0] + tp2[1]);
                 }
-                bool time_cond = (tp[0] - max_time) < ticks_limit;
+                bool time_cond = (tp[0] - max_time) <= ticks_limit;
                 if (time_cond) {
                     bool chan_cond = false;
                     for (auto& tp2 : candidate) {
-                        if (std::abs(tp[3] - tp2[3]) < channel_limit) {
+                        if (std::abs(tp[3] - tp2[3]) <= channel_limit) {
                             chan_cond = true;
                             break;
                         }
@@ -119,43 +119,47 @@ std::vector<std::vector<std::vector<int>>> group_maker(std::vector<std::vector<i
     return groups;
 }
 
-std::vector<std::vector<int>> file_reader(std::string filename, int plane=2, bool take_only_supernova = false) { // plane 0 1 2 = u v x
-    std::ifstream infile(filename);
+std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, int plane=2, bool take_only_supernova = false) { // plane 0 1 2 = u v x
     std::vector<std::vector<int>> tps;
     std::string line;
-    // read and save the TPs
-    while (std::getline(infile, line)) {
-        std::istringstream iss(line);
-        std::vector<int> tp;
-        int val;
-        int i = 0;
-        while (iss >> val) {
-            // (0,1,2,3,4,5,11,12,13)
-            if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 11 || i == 12 || i == 13) {
-            // if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 9 || i == 10 || i == 11) {
-                tp.push_back(val);
-            }
-            ++i;
-        }
-        // std::cout << tp[0] << " " << tp[1] << " " << tp[2] << " " << tp[3]<< " "  << tp[4]<< " "  << tp[5] << " " << tp[6] << " " << tp[7] << " " << tp[8] << std::endl; 
-        if (take_only_supernova) {
-            if (tp[8] == plane and tp[6] == 1) {
-                tps.push_back(tp);
-            }
-        }
-        else {
-            if (tp[8] == plane) {
-                tps.push_back(tp);
-            }
-        }
-    }
+    int n_events_offset = 0;
+    for (auto& filename : filenames) {
+        std::ifstream infile(filename);
 
-
-
-    // multiply the duration by 4492 and add it to the time and channel
-    for (auto& tp : tps) {
-        tp[0] += 4792 * tp[7];
-        tp[2] += 4792 * tp[7];
+        // read and save the TPs
+        while (std::getline(infile, line)) {
+            std::istringstream iss(line);
+            std::vector<int> tp;
+            int val;
+            int i = 0;
+            while (iss >> val) {
+                // (0,1,2,3,4,5,11,12,13)
+                if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 11 || i == 12 || i == 13) {
+                // if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 9 || i == 10 || i == 11) {
+                    tp.push_back(val);
+                }
+                ++i;
+            }
+            // std::cout << tp[0] << " " << tp[1] << " " << tp[2] << " " << tp[3]<< " "  << tp[4]<< " "  << tp[5] << " " << tp[6] << " " << tp[7] << " " << tp[8] << std::endl; 
+            if (take_only_supernova) {
+                if (tp[8] == plane and tp[6] == 1) {
+                tp[7] += n_events_offset;
+                tp[0] += 4792 * tp[7];
+                tp[2] += 4792 * tp[7];
+                    tps.push_back(tp);
+                }
+            }
+            else {
+                // if (true) {
+                if (tp[8] == plane) {
+                    tp[7] += n_events_offset;
+                    tp[0] += 4792 * tp[7];
+                    tp[2] += 4792 * tp[7];
+                    tps.push_back(tp);
+                }
+            }
+        }
+        n_events_offset = tps[tps.size()-1][7];
     }
 
     // sort the TPs by time
@@ -185,7 +189,9 @@ int main(int argc, char** argv) {
         channel_limit = std::stoi(argv[4]);
         min_tps_to_group = std::stoi(argv[5]);
         plane = std::stoi(argv[6]);
-        take_only_supernova = std::stoi(argv[7]);
+        if (std::stoi(argv[7]) == 1) {
+            take_only_supernova = true;
+        }
         // Check that the arguments are valid
         if (ticks_limit < 0 || channel_limit < 0 || min_tps_to_group < 0) {
             std::cout << "Usage: grouper_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_group> <plane> <take_only_supernova>" << std::endl;
@@ -204,8 +210,21 @@ int main(int argc, char** argv) {
 
     // start timer
     std::clock_t start = std::clock();
+    // filename is the name of the file containing the filenames to read
+    std::vector<std::string> filenames;
+    // read the file containing the filenames and save them in a vector
+    std::ifstream infile(filename);
+    std::string line;
+    // read and save the TPs
+    while (std::getline(infile, line)) {
+        filenames.push_back(line);
+    }
+
+    
+
+
     // read the file, each row is a TP
-    std::vector<std::vector<int>> tps = file_reader(filename);
+    std::vector<std::vector<int>> tps = file_reader(filenames, plane, take_only_supernova);
     std::cout << "Number of tps: " << tps.size() << std::endl;
     // group the TPs
     std::vector<std::vector<std::vector<int>>> groups = group_maker(tps, ticks_limit, channel_limit, min_tps_to_group);
@@ -226,12 +245,15 @@ int main(int argc, char** argv) {
     tree->Branch("NRows", &nrows);
     tree->Branch("Event", &event);
 
+    // create a vector
+    std::vector<int> eventss;
 
     for (int i=0; i<groups.size(); i++){
         
         nrows = groups[i].size();
 
         event = groups[i][0][7];
+        eventss.push_back(event);
         // matrix.emplace_back(groups[i]);
         matrix = groups[i];
 
