@@ -68,11 +68,20 @@ def saveTPs(filename, max_tps):
         
         return tp_list
     elif filename.endswith('.hdf5'):
+        # TODO change function to use nTPs instead of nRecords
+        print ("WARNING: when using hdf5 files, what is used is not the number of TPs but the number of records. Whis will be changed.")
+        # the function should be changed to already provide the correct format TODO
         tps_array = tpstream_hdf5_converter(filename, max_tps)
         # move out of this scope?
         dt = np.dtype([('time_start', float), ('time_over_threshold', float), ('time_peak', float), ('channel', int), ('adc_integral', float), ('adc_peak', float), ('detid', int), ('type', int), ('algorithm', int), ('version', int), ('flag', int)])
         # maybe move dt also to hdf_converter_libs?
         tp_list = np.rec.fromarrays([tps_array[:,0], tps_array[:,1], tps_array[:,2], tps_array[:,3], tps_array[:,4], tps_array[:,5], tps_array[:,6], tps_array[:,7], tps_array[:,8], tps_array[:,9], tps_array[:,10]], dtype=dt)
+        
+        # delete the appo vectors
+        del tps_array
+        
+        # sort the list by time_start
+        tp_list.sort(order='time_start')
         
         return tp_list
     else:
@@ -87,11 +96,11 @@ alpha = 0.4 # transparency of the histograms, lower is more opaque
 grid_in_superimpose = False
 grid_in_not_superimpose = False
 image_format='.png'
+legend_properties = {'weight': 'bold', 'size': 'small'}
 
 
 def plotTimePeak(tps_lists, file_names, superimpose=False, quantile=1, y_min=0, y_max=None, output_folder=None, show=False):
     fig = plt.subplot(111)  # for when superimpose is true
-    legend_properties = {'weight': 'bold'}
     
     # compute x_max using quantile, considering all the files
     time_peak_all_files = []
@@ -141,7 +150,6 @@ def plotTimePeak(tps_lists, file_names, superimpose=False, quantile=1, y_min=0, 
 
 def  plotTimeOverThreshold(tps_lists, file_names, superimpose=False, quantile=1, y_min=0, y_max=None, output_folder=None, show=False):
     fig = plt.subplot(111)  # for when superimpose is true
-    legend_properties = {'weight': 'bold'}
     
     # compute x_max using quantile, considering all the files
     time_over_threshold_all_files = []
@@ -191,7 +199,6 @@ def  plotTimeOverThreshold(tps_lists, file_names, superimpose=False, quantile=1,
 
 def plotChannel(tps_lists, file_names, superimpose=False, x_min=0, x_max=None, y_min=0, y_max=None, output_folder=None, show=False):
     fig = plt.subplot(111)  # for when superimpose is true
-    legend_properties = {'weight': 'bold'}
     
     channel_all_files = []
     for tps_file in tps_lists:
@@ -243,7 +250,6 @@ def plotChannel(tps_lists, file_names, superimpose=False, x_min=0, x_max=None, y
 # look at above and create plotADCIntegral
 def plotADCIntegral(tps_lists, file_names, superimpose=False, quantile=1, y_min=0, y_max=None, output_folder=None, show=False):
     fig = plt.subplot(111)  # for when superimpose is true
-    legend_properties = {'weight': 'bold'}
     
     # compute x_max using quantile, considering all the files
     adc_integral_all_files = []
@@ -295,7 +301,6 @@ def plotADCIntegral(tps_lists, file_names, superimpose=False, quantile=1, y_min=
 # look at previous functions and write plotADCPeak
 def plotADCPeak(tps_lists, file_names, superimpose=False, quantile=1, y_min=0, y_max=None, output_folder=None, show=False):
     fig = plt.subplot(111)  # for when superimpose is true
-    legend_properties = {'weight': 'bold'}
     
     # compute x_max using quantile, considering all the files
     adc_peak_all_files = []
@@ -342,7 +347,6 @@ def plotADCPeak(tps_lists, file_names, superimpose=False, quantile=1, y_min=0, y
 # look at previous functions and write plotDetId
 def plotDetId(tps_lists, file_names, superimpose=False, quantile=1, y_min=0, y_max=None, output_folder=None, show=False):
     fig = plt.subplot(111)  # for when superimpose is true
-    legend_properties = {'weight': 'bold'}
     
     # compute x_max using quantile, considering all the files
     detid_all_files = []
