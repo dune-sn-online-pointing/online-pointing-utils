@@ -1,6 +1,10 @@
-# very preliminary, will add external clp, folder checks during execution...
-INPUT_FILE="/afs/cern.ch/work/d/dapullia/public/dune/dataset_study/new_labels/X/groups_tick_limits_10_channel_limits_3_min_tps_to_group_2.root"
-OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/new_labels_mf/"
+# # very preliminary, will add external clp, folder checks during execution...
+# INPUT_FILE="/eos/user/d/dapullia/tp_dataset/emaprod/all-bkg/X/groups_tick_limits_5_channel_limits_2_min_tps_to_group_2.root"
+# OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/all-bkg/"
+# INPUT_FILE="/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-only-main/X/groups_tick_limits_5_channel_limits_2_min_tps_to_group_1.root"
+# OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-only-main/"
+INPUT_FILE="/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-blips/X/groups_tick_limits_5_channel_limits_2_min_tps_to_group_1.root"
+OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-blips/"
 SHOW=false
 SAVE_IMG=false
 SAVE_DS=true
@@ -11,6 +15,7 @@ DRIFT_DIRECTION=0
 MAKE_FIXED_SIZE=true
 PREPROCESS_EMA_DS=false
 USE_SPARSE=false
+MIN_TPS_TO_GROUP=2
 
 # Function to print help message
 print_help() {
@@ -102,6 +107,6 @@ fi
 
 # move to the folder, run and come back to scripts
 cd ../python/tps_text_to_image
-python create_images_from_root_groups.py --input_file $INPUT_FILE --output_path $OUTPUT_FOLDER --img_save_folder $IMG_SAVE_FOLDER --img_save_name $IMG_SAVE_NAME --drift_direction $DRIFT_DIRECTION $SHOW_FLAG $SAVE_IMG_FLAG $SAVE_DS_FLAG $WRITE_FLAG $MAKE_FIXED_SIZE_FLAG $USE_SPARSE_FLAG
+python create_images_from_root_groups.py --input_file $INPUT_FILE --output_path $OUTPUT_FOLDER --img_save_folder $IMG_SAVE_FOLDER --img_save_name $IMG_SAVE_NAME --drift_direction $DRIFT_DIRECTION --min_tps_to_group $MIN_TPS_TO_GROUP $SHOW_FLAG $SAVE_IMG_FLAG $SAVE_DS_FLAG $WRITE_FLAG $MAKE_FIXED_SIZE_FLAG $USE_SPARSE_FLAG
 cd ../../scripts
 

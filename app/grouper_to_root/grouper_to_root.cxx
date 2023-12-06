@@ -119,7 +119,7 @@ std::vector<std::vector<std::vector<int>>> group_maker(std::vector<std::vector<i
     return groups;
 }
 
-std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, int plane=2, bool take_only_supernova = false) { // plane 0 1 2 = u v x
+std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, int plane=2, int supernova_option=0) { // plane 0 1 2 = u v x
     std::vector<std::vector<int>> tps;
     std::string line;
     int n_events_offset = 0;
@@ -141,8 +141,16 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
                 ++i;
             }
             // std::cout << tp[0] << " " << tp[1] << " " << tp[2] << " " << tp[3]<< " "  << tp[4]<< " "  << tp[5] << " " << tp[6] << " " << tp[7] << " " << tp[8] << std::endl; 
-            if (take_only_supernova) {
+            if (supernova_option==1) {
                 if (tp[8] == plane and tp[6] == 1) {
+                tp[7] += n_events_offset;
+                tp[0] += 4792 * tp[7];
+                tp[2] += 4792 * tp[7];
+                    tps.push_back(tp);
+                }
+            }
+            else if (supernova_option==2) {
+                if (tp[8] == plane and tp[6] != 1) {
                 tp[7] += n_events_offset;
                 tp[0] += 4792 * tp[7];
                 tp[2] += 4792 * tp[7];
@@ -170,6 +178,64 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
     return tps;
 }
 
+std::vector<std::vector<std::vector<int>>> filter_main_tracks(std::vector<std::vector<std::vector<int>>>& groups) { // valid only if the groups are ordered by event and for clean sn data
+    std::vector<std::vector<std::vector<int>>> main_tracks;
+    std::vector<std::vector<int>> main_group;
+    int current_event = groups[0][0][7];
+    main_group = groups[0];
+    for (auto& group : groups) {
+        if (group[0][7] != current_event) {
+            main_tracks.push_back(main_group);
+            main_group.clear();
+            current_event = group[0][7];
+            main_group=group;
+        }
+        else {
+            if (group.size() > main_group.size()) {
+                main_group = group;
+            }
+        }
+    }
+    std::cout << "Number of main tracks: " << main_tracks.size() << std::endl;
+    return main_tracks;
+}
+
+std::vector<std::vector<std::vector<int>>> filter_blips(std::vector<std::vector<std::vector<int>>>& groups) { // valid only if the groups are ordered by event and for clean sn data
+    std::vector<std::vector<std::vector<int>>> blips;
+    int current_event = groups[0][0][7];
+    std::vector<int> bad_idx_list;
+    std::vector<std::vector<int>> main_group;
+
+
+    int idx = 0;
+    for (auto& group : groups) {
+        if (group[0][7] != current_event) {
+            bad_idx_list.push_back(idx);
+            main_group.clear();
+            current_event = group[0][7];
+            main_group=group;
+        }
+        else {
+            if (group.size() > main_group.size()) {
+                main_group = group;
+            }
+        }
+    idx += 1;
+    }
+
+    for (int i=0; i<groups.size(); i++) {
+        if (std::find(bad_idx_list.begin(), bad_idx_list.end(), i) == bad_idx_list.end()) {
+            blips.push_back(groups[i]);
+        }
+    }
+
+
+    std::cout << "Number of blips: " << blips.size() << std::endl;
+    return blips;
+}
+
+
+
 int main(int argc, char** argv) {
     // Parse the arguments
     std::string filename;
@@ -177,24 +243,24 @@ int main(int argc, char** argv) {
     int ticks_limit;
     int channel_limit;
     int min_tps_to_group;
-    int plane;
-    bool take_only_supernova = false;
+    int plane=2;
+    int supernova_option = 0;
+    int main_track_option = 0;
     // define an array containing ['U', 'V', 'X']
     std::vector<std::string> plane_names = {"U", "V", "X"};
 
-    if (argc == 8) {
+    if (argc >3) {
         filename = argv[1];
         outfolder = argv[2];
         ticks_limit = std::stoi(argv[3]);
         channel_limit = std::stoi(argv[4]);
         min_tps_to_group = std::stoi(argv[5]);
         plane = std::stoi(argv[6]);
-        if (std::stoi(argv[7]) == 1) {
-            take_only_supernova = true;
-        }
+        supernova_option = std::stoi(argv[7]);
+        main_track_option = std::stoi(argv[8]);
         // Check that the arguments are valid
         if (ticks_limit < 0 || channel_limit < 0 || min_tps_to_group < 0) {
-            std::cout << "Usage: grouper_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_group> <plane> <take_only_supernova>" << std::endl;
+            std::cout << "Usage: grouper_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_group> <plane> <supernova_option> <main_track_option>" << std::endl;
             return 1;
         }
         // If outfolder does not exist, create it 
@@ -203,7 +269,7 @@ int main(int argc, char** argv) {
         system(command.c_str());
     }
     else {
-        std::cout << "Usage: grouper_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_group>" << std::endl;
+        std::cout << "Usage: grouper_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_group> <plane> <supernova_option> <main_track_option>" << std::endl;
         return 1;
     }
 
@@ -220,18 +286,26 @@ int main(int argc, char** argv) {
         filenames.push_back(line);
     }
 
-    
 
 
     // read the file, each row is a TP
-    std::vector<std::vector<int>> tps = file_reader(filenames, plane, take_only_supernova);
+    std::vector<std::vector<int>> tps = file_reader(filenames, plane, supernova_option);
     std::cout << "Number of tps: " << tps.size() << std::endl;
     // group the TPs
     std::vector<std::vector<std::vector<int>>> groups = group_maker(tps, ticks_limit, channel_limit, min_tps_to_group);
     std::cout << "Number of groups: " << groups.size() << std::endl;
-    // write the groups to a root file
+    // filter only main tracks
+    if (main_track_option == 1){
+        groups = filter_main_tracks(groups);
+    }
+    else if (main_track_option == 2){
+        groups = filter_blips(groups);
+    }
 
+
+    // write the groups to a root file
     // create the root file
+    // std::string root_filename = outfolder + "/" + plane_names[plane] + "/groups_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_group_2.root";
     std::string root_filename = outfolder + "/" + plane_names[plane] + "/groups_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_group_" + std::to_string(min_tps_to_group) + ".root";
     TFile* file = new TFile(root_filename.c_str(), "RECREATE");
     // prepare objects to write to the root file

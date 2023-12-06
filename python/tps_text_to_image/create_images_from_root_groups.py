@@ -20,14 +20,14 @@ parser.add_argument('--img_save_folder', type=str, default='images/', help='fold
 parser.add_argument('--img_save_name', type=str, default='image', help='name to save the image')
 parser.add_argument('--make_fixed_size', action='store_true', help='make the image size fixed')
 parser.add_argument('--img_width', type=int, default=70, help='width of the image')
-parser.add_argument('--img_height', type=int, default=100, help='height of the image')
+parser.add_argument('--img_height', type=int, default=300, help='height of the image')
 parser.add_argument('--x_margin', type=int, default=5, help='margin in x')
 parser.add_argument('--y_margin', type=int, default=10, help='margin in y')
 parser.add_argument('--min_tps_to_create_img', type=int, default=2, help='minimum number of TPs to create an image')
 parser.add_argument('--drift_direction', type=int, default=0, help='0 for horizontal drift, 1 for vertical drift')
 parser.add_argument('--use_sparse', action='store_true', help='use sparse matrices')
-parser.add_argument('--min_tps_to_group', type=int, default=3, help='minimum number of TPs to create a group')
-
+parser.add_argument('--min_tps_to_group', type=int, default=2, help='minimum number of TPs to create a group')
+parser.add_argument('--sample_fraction', type=float, default=1, help='fraction of the dataset to use')
 
 args = parser.parse_args()
 filename = args.input_file
@@ -47,6 +47,7 @@ min_tps_to_create_img = args.min_tps_to_create_img
 drift_direction = args.drift_direction
 use_sparse = args.use_sparse
 min_tps_to_group = args.min_tps_to_group
+sample_fraction = args.sample_fraction
 
 
 def read_root_file (filename, min_tps_to_group=1):
@@ -56,7 +57,7 @@ def read_root_file (filename, min_tps_to_group=1):
     nrows = []
     event = []
     matrix = []
-
+    print(file.GetListOfKeys())
     for i in file.GetListOfKeys():
         # get the TTree
         tree = file.Get(i.GetName())
@@ -78,6 +79,7 @@ def read_root_file (filename, min_tps_to_group=1):
                 for k in range(9):
                     m[j][k] = entry.Matrix[j][k]
             matrix.append(m)
+        break
 
     return nrows, event, matrix
 
@@ -136,28 +138,54 @@ bkg_aggregate = {
 dict_lab = {
     0: 0,
     1: 1,
-    2: 4,
-    3: 6,
-    4: 9,
-    5: 9,
-    6: 8,
-    7: 8,
-    8: 8,
-    9: 8,
-    10: 8,
-    11: 3,
-    12: 3,
-    13: 3,
-    14: 3,
-    15: 3,
-    16: 3,
-    17: 3,
-    18: 3,
-    19: 2,
-    20: 2,
-    21: 7,
-    22: 5
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0,
+    6: 0,
+    7: 0,
+    8: 0,
+    9: 0,
+    10: 0,
+    11: 0,
+    12: 0,
+    13: 0,
+    14: 0,
+    15: 0,
+    16: 0,
+    17: 0,
+    18: 0,
+    19: 0,
+    20: 0,
+    21: 0,
+    22: 0
 }
+
+# dict_lab = {
+#     0: 0,
+#     1: 1,
+#     2: 4,
+#     3: 6,
+#     4: 9,
+#     5: 9,
+#     6: 8,
+#     7: 8,
+#     8: 8,
+#     9: 8,
+#     10: 8,
+#     11: 3,
+#     12: 3,
+#     13: 3,
+#     14: 3,
+#     15: 3,
+#     16: 3,
+#     17: 3,
+#     18: 3,
+#     19: 2,
+#     20: 2,
+#     21: 7,
+#     22: 5
+# }
 
 
 if __name__=='__main__':
@@ -220,19 +248,23 @@ if __name__=='__main__':
         print("Done!")
 
     if save_ds:
+        time_start = time.time()
         print("Creating dataset in " + "dense" if not use_sparse else "sparse" + " format...")
         if not os.path.exists(output_path+'dataset/'):
             os.makedirs(output_path+'dataset/')
+        # sample_fraction = 0.1
+        if sample_fraction < 1:
+            groups = np.random.choice(groups, int(len(groups)*sample_fraction), replace=False)
         dataset_img, dataset_label = tp2img.create_dataset(groups,  channel_map=channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, n_views=n_views, use_sparse=use_sparse, unknown_label=99, idx=6, dict_lab=dict_lab)
-
+        
         print("Dataset shape: ", dataset_img.shape)
         print("Dataset label shape: ", dataset_label.shape)
         np.save(output_path+'dataset/dataset_img.npy', dataset_img)
         np.save(output_path+'dataset/dataset_label.npy', dataset_label)
 
-            
+        
         print(np.unique(dataset_label,return_counts=True))
-        print("Done!")
+        print("Done! Time: ", time.time()-time_start)
     print('Done!')
 
 
