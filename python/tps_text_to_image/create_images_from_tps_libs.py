@@ -56,9 +56,9 @@ def group_maker(all_tps, channel_map, ticks_limit=100, channel_limit=20, min_tps
             appended = False
             idx = 0
             for candidate in (buffer_copy):
-                time_cond = (tp[0] - np.max(np.array(candidate)[:, 0]+np.array(candidate)[:,1])) < ticks_limit
+                time_cond = (tp[0] - np.max(np.array(candidate)[:, 0]+np.array(candidate)[:,1])) <= ticks_limit
                 if time_cond:
-                    chan_cond = np.min(np.abs(tp[3] - np.array(candidate)[:, 3])) < channel_limit
+                    chan_cond = np.min(np.abs(tp[3] - np.array(candidate)[:, 3])) <= channel_limit
                     if chan_cond:
                         if not appended:
                             candidate.append(tp)
