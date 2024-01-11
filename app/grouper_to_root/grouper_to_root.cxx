@@ -12,6 +12,19 @@
 #include "TLeaf.h"
 #include "TMatrixD.h"
 #include "cpp_vector_dict.cxx"
+
+const double apa_lenght_in_cm = 230;
+const double wire_pitch_in_cm_collection = 0.479;
+const double wire_pitch_in_cm_induction_diagonal = 0.4669;
+const double apa_angle = (90 - 35.7);
+const double wire_pitch_in_cm_induction = wire_pitch_in_cm_induction_diagonal / sin(apa_angle * M_PI / 180);
+const double offset_between_apa_in_cm = 2.4;
+const double apa_height_in_cm = 598.4;
+const double time_tick_in_cm = 0.0805;
+const double apa_width_in_cm = 4.7;
+const int backtracker_error_margin = 4;
+const double apa_angular_coeff = tan(apa_angle * M_PI / 180);
+
 /*
 idx = {
     'time_start': 0,
@@ -134,7 +147,7 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
             int i = 0;
             while (iss >> val) {
                 // (0,1,2,3,4,5,11,12,13)
-                if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 11 || i == 12 || i == 13) {
+                if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 11 || i == 12 || i == 13 || i == 14 || i == 15 || i == 16 ) {
                 // if (i == 0 || i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 9 || i == 10 || i == 11) {
                     tp.push_back(val);
                 }
@@ -178,6 +191,32 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
     return tps;
 }
 
+
+float calculate_distance_from_true(std::vector<std::vector<int>>& group) {
+    float min_distance = 100000000;
+    for (int i=0; i<group.size(); i++) {
+        int z_apa_offset = group[i][3] / (2560*2) * (apa_lenght_in_cm + offset_between_apa_in_cm);
+        int z_channel_offset = ((group[i][3] % 2560 - 1600) % 480) * wire_pitch_in_cm_collection;
+        int z = wire_pitch_in_cm_collection + z_apa_offset + z_channel_offset;
+        int y = 0;
+        int x_signs = ((group[i][3] % 2560-2080)<0) ? -1 : 1;
+        int x = ((group[i][2] - 4792* group[i][7] )* time_tick_in_cm + apa_width_in_cm/2) * x_signs;
+
+        int true_x = group[i][9];
+        int true_y = group[i][10];
+        int true_z = group[i][11];
+
+        float dists = std::sqrt(std::pow((x - true_x),2) + std::pow((z - true_z),2));
+        if (dists < min_distance) {
+            min_distance = dists;
+        }
+    }
+
+    return min_distance;
+}
+
+
+
 std::vector<std::vector<std::vector<int>>> filter_main_tracks(std::vector<std::vector<std::vector<int>>>& groups) { // valid only if the groups are ordered by event and for clean sn data
     std::vector<std::vector<std::vector<int>>> main_tracks;
     std::vector<std::vector<int>> main_group;
@@ -191,7 +230,7 @@ std::vector<std::vector<std::vector<int>>> filter_main_tracks(std::vector<std::v
             main_group=group;
         }
         else {
-            if (group.size() > main_group.size()) {
+            if (calculate_distance_from_true(group) < calculate_distance_from_true(main_group)) {
                 main_group = group;
             }
         }
@@ -200,12 +239,12 @@ std::vector<std::vector<std::vector<int>>> filter_main_tracks(std::vector<std::v
     return main_tracks;
 }
 
-std::vector<std::vector<std::vector<int>>> filter_blips(std::vector<std::vector<std::vector<int>>>& groups) { // valid only if the groups are ordered by event and for clean sn data
+std::vector<std::vector<std::vector<int>>> filter_out_main_track(std::vector<std::vector<std::vector<int>>>& groups) { // valid only if the groups are ordered by event and for clean sn data
     std::vector<std::vector<std::vector<int>>> blips;
     int current_event = groups[0][0][7];
     std::vector<int> bad_idx_list;
     std::vector<std::vector<int>> main_group;
-
+    float min_distance = 100000000;
 
     int idx = 0;
     for (auto& group : groups) {
@@ -216,8 +255,9 @@ std::vector<std::vector<std::vector<int>>> filter_blips(std::vector<std::vector<
             main_group=group;
         }
         else {
-            if (group.size() > main_group.size()) {
+            if (calculate_distance_from_true(group) < min_distance and group[0][6] == 1) {
                 main_group = group;
+                min_distance = calculate_distance_from_true(group);
             }
         }
     idx += 1;
@@ -299,7 +339,7 @@ int main(int argc, char** argv) {
         groups = filter_main_tracks(groups);
     }
     else if (main_track_option == 2){
-        groups = filter_blips(groups);
+        groups = filter_out_main_track(groups);
     }
 
 

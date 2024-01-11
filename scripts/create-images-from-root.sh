@@ -1,10 +1,18 @@
-# # very preliminary, will add external clp, folder checks during execution...
-# INPUT_FILE="/eos/user/d/dapullia/tp_dataset/emaprod/all-bkg/X/groups_tick_limits_5_channel_limits_2_min_tps_to_group_2.root"
-# OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/all-bkg/"
-# INPUT_FILE="/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-only-main/X/groups_tick_limits_5_channel_limits_2_min_tps_to_group_1.root"
-# OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-only-main/"
-INPUT_FILE="/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-blips/X/groups_tick_limits_5_channel_limits_2_min_tps_to_group_1.root"
-OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-blips/"
+# INPUT_FILE="/eos/user/d/dapullia/tp_dataset/emaprod/max-bkg/only-bkg/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_2.root"
+# OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/max-bkg/only-bkg/"
+# INPUT_FILE="/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-truth/main-tracks/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_2.root"
+# OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-truth/main-tracks/"
+# INPUT_FILE="/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-truth/blips/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_2.root"
+# OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-truth/blips/"
+
+
+# INPUT_FILE=/eos/user/d/dapullia/tp_dataset/emaprod/cc-truth/only-mt/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
+# OUTPUT_FOLDER=/eos/user/d/dapullia/tp_dataset/emaprod/cc-truth/main-tracks/
+INPUT_FILE=/eos/user/d/dapullia/tp_dataset/emaprod/es-truth/only-mt/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
+OUTPUT_FOLDER=/eos/user/d/dapullia/tp_dataset/emaprod/es-truth/main-tracks/
+
+
+
 SHOW=false
 SAVE_IMG=false
 SAVE_DS=true

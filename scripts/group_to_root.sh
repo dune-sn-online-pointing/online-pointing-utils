@@ -14,8 +14,8 @@ TICK_LIMITS=(5)
 CHANNEL_LIMIT=(2)
 MIN_TPS_TO_GROUP=(4)
 PLANE=(2)
-SUPERNOVA_OPTION=(0)
-MAIN_TRACK_OPTION=(0)
+SUPERNOVA_OPTION=(0) # 0 =  both, 1 = supernova, 2 = no supernova
+MAIN_TRACK_OPTION=(0) # 0 = both, 1 = main track, 2 = all but main track
 
 # compile the code
 
@@ -40,8 +40,37 @@ make
 # done
 # Usage: grouper_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_group> <plane> <supernova_option> <main_track_option>
 
-./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-cc.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-cc-blips/ 5 2 1 2 1 2
-# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/max-bkg.txt /eos/user/d/dapullia/tp_dataset/emaprod/all-bkg/ 5 2 2 2 2 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/newpos.txt /afs/cern.ch/work/d/dapullia/public/dune/playground/newpos/ 5 2 1 0 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/newpos.txt /afs/cern.ch/work/d/dapullia/public/dune/playground/newpos/ 5 2 1 1 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/newpos.txt /afs/cern.ch/work/d/dapullia/public/dune/playground/newpos/ 5 2 1 2 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/newpos.txt /afs/cern.ch/work/d/dapullia/public/dune/group_plotting/data/ 3 1 1 2 0 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-truth/ 5 2 1 2 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-truth/ 5 2 1 1 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-truth/ 5 2 1 0 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/cc-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/cc-truth/ 5 2 1 2 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/cc-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/cc-truth/ 5 2 1 1 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/cc-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/cc-truth/ 5 2 1 0 1 0
+
+./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-truth/only-mt/ 3 1 1 2 1 1
+./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/cc-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/cc-truth/only-mt/ 3 1 1 2 1 1
+
+
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-bkg-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-bkg-truth/ 5 2 1 2 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-bkg-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-bkg-truth/ 5 2 1 1 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-bkg-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-bkg-truth/ 5 2 1 0 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/cc-bkg-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/cc-bkg-truth/ 5 2 1 2 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/cc-bkg-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/cc-bkg-truth/ 5 2 1 1 1 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/cc-bkg-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/cc-bkg-truth/ 5 2 1 0 1 0
+
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-cc-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-cc-truth/main-tracks/ 3 1 2 2 1 1
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-cc-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-cc-truth/blips/ 3 1 2 2 1 2
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/max-bkg.txt /eos/user/d/dapullia/tp_dataset/emaprod/max-bkg/only-bkg/ 3 1 2 2 2 0
+
+
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-cc-bkg-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-cc-bkg-truth/ 3 1 1 0 0 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-cc-bkg-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-cc-bkg-truth/ 10 3 1 0 0 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-cc-bkg-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-cc-bkg-truth/ 20 5 1 0 0 0
+# ./grouper_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/app/input-files/es-cc-bkg-truth.txt /eos/user/d/dapullia/tp_dataset/emaprod/es-cc-bkg-truth/ 50 10 1 0 0 0
 
 cd ../../scripts
 
