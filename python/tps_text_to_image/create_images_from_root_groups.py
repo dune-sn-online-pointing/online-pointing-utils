@@ -70,14 +70,19 @@ def read_root_file (filename, min_tps_to_group=1):
             # matrix = entry.Matrix
             if entry.NRows < min_tps_to_group:
                 continue
-            nrows.append(entry.NRows)
-            event.append(entry.Event)
             # Matrix is <class cppyy.gbl.std.vector<vector<int> > at 0x16365890>
             # extract the matrix from the vector<vector<int>> object to numpy array
-            m = np.empty((nrows[-1], 9), dtype=int)
-            for j in range(nrows[-1]):
+            m = np.empty((entry.NRows, 9), dtype=int)
+            for j in range(entry.NRows):
                 for k in range(9):
                     m[j][k] = entry.Matrix[j][k]
+
+            # # temporary hack to remove events
+            # if m[:,4].sum() < 0.5E6:
+            #     continue
+
+            nrows.append(entry.NRows)
+            event.append(entry.Event)
             matrix.append(m)
         break
 

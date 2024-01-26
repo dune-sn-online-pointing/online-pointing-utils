@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <sstream>
 #include <ctime>
+#include <climits>
 #include <cmath>
 // include root libraries
 #include "TFile.h"
@@ -132,13 +133,13 @@ std::vector<std::vector<std::vector<int>>> group_maker(std::vector<std::vector<i
     return groups;
 }
 
-std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, int plane=2, int supernova_option=0) { // plane 0 1 2 = u v x
+std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, int plane=2, int supernova_option=0, int max_events_per_filename = INT_MAX) { // plane 0 1 2 = u v x
     std::vector<std::vector<int>> tps;
     std::string line;
     int n_events_offset = 0;
     for (auto& filename : filenames) {
+        std::cout << filename << std::endl;
         std::ifstream infile(filename);
-
         // read and save the TPs
         while (std::getline(infile, line)) {
             std::istringstream iss(line);
@@ -152,6 +153,9 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
                     tp.push_back(val);
                 }
                 ++i;
+            }
+            if (tp[7] > max_events_per_filename) {
+                break;
             }
             // std::cout << tp[0] << " " << tp[1] << " " << tp[2] << " " << tp[3]<< " "  << tp[4]<< " "  << tp[5] << " " << tp[6] << " " << tp[7] << " " << tp[8] << std::endl; 
             if (supernova_option==1) {
@@ -180,7 +184,15 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
                 }
             }
         }
-        n_events_offset = tps[tps.size()-1][7];
+        if (tps.size() > 0){
+            if (tps[tps.size()-1][7] != n_events_offset) {
+                std::cout << "File Works" << std::endl;
+            }
+            else {
+                std::cout << "File does not work" << std::endl;
+            }
+            n_events_offset = tps[tps.size()-1][7];
+        }
     }
 
     // sort the TPs by time
@@ -286,6 +298,7 @@ int main(int argc, char** argv) {
     int plane=2;
     int supernova_option = 0;
     int main_track_option = 0;
+    int max_events_per_filename = INT_MAX;
     // define an array containing ['U', 'V', 'X']
     std::vector<std::string> plane_names = {"U", "V", "X"};
 
@@ -298,9 +311,13 @@ int main(int argc, char** argv) {
         plane = std::stoi(argv[6]);
         supernova_option = std::stoi(argv[7]);
         main_track_option = std::stoi(argv[8]);
+        max_events_per_filename = std::stoi(argv[9]);
+        if (max_events_per_filename == 0) {
+            max_events_per_filename = INT_MAX;
+        }
         // Check that the arguments are valid
         if (ticks_limit < 0 || channel_limit < 0 || min_tps_to_group < 0) {
-            std::cout << "Usage: grouper_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_group> <plane> <supernova_option> <main_track_option>" << std::endl;
+            std::cout << "Usage: grouper_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_group> <plane> <supernova_option> <main_track_option> <max_events_per_filename>" << std::endl;
             return 1;
         }
         // If outfolder does not exist, create it 
@@ -309,7 +326,7 @@ int main(int argc, char** argv) {
         system(command.c_str());
     }
     else {
-        std::cout << "Usage: grouper_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_group> <plane> <supernova_option> <main_track_option>" << std::endl;
+        std::cout << "Usage: grouper_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_group> <plane> <supernova_option> <main_track_option> <max_events_per_filename>" << std::endl;
         return 1;
     }
 
@@ -326,10 +343,11 @@ int main(int argc, char** argv) {
         filenames.push_back(line);
     }
 
+    std::cout << "Number of files: " << filenames.size() << std::endl;
 
 
     // read the file, each row is a TP
-    std::vector<std::vector<int>> tps = file_reader(filenames, plane, supernova_option);
+    std::vector<std::vector<int>> tps = file_reader(filenames, plane, supernova_option, max_events_per_filename);
     std::cout << "Number of tps: " << tps.size() << std::endl;
     // group the TPs
     std::vector<std::vector<std::vector<int>>> groups = group_maker(tps, ticks_limit, channel_limit, min_tps_to_group);

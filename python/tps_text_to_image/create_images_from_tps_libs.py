@@ -5,6 +5,14 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 from scipy import sparse
 import time
 import os
+import matplotlib.pylab as pylab
+params = {'legend.fontsize': 'xx-large',
+          'figure.figsize': (15, 5),
+         'axes.labelsize': 'xx-large',
+         'axes.titlesize':'xx-large',
+         'xtick.labelsize':'xx-large',
+         'ytick.labelsize':'xx-large'}
+pylab.rcParams.update(params)
 
 def create_channel_map_array(drift_direction=0):
     '''
@@ -213,7 +221,8 @@ def from_tp_to_imgs(tps, make_fixed_size=False, width=500, height=1000, x_margin
                 y_start = (tp[0] - t_start) + y_margin
                 y_end = (tp[0] + tp[1] - t_start) + y_margin
                 img[int(y_start)-1:int(y_end), int(x)-1] = tp[4]/(y_end - y_start)
-   
+
+    img = np.where(img>0.0, img, np.nan)
     return img
 
 def all_views_img_maker(tps, channel_map, min_tps_to_create_img=2, make_fixed_size=False, width=500, height=1000, x_margin=10, y_margin=200):
@@ -439,16 +448,17 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
 
         n_views += 1
         plt.figure(figsize=(10, 26))
-        plt.title('X plane')
-        plt.imshow(img_x)
-        # plt.colorbar()
+        plt.title('X plane', fontsize=40)
+        plt.imshow(img_x,)
+        
+        # plt.colorbar(aspect=10)
         # add x and y labels
-        plt.xlabel("Channel")
-        plt.ylabel("Time (ticks)")
+        plt.xlabel("Channel", fontsize=40)
+        plt.ylabel("Time (ticks)", fontsize=40)
         # set y axis ticks
-        plt.yticks(ticks=np.arange(0, img_x.shape[0], img_x.shape[0]/10), labels=yticks_labels)
+        plt.yticks(ticks=np.arange(0, img_x.shape[0], img_x.shape[0]/10), labels=yticks_labels, fontsize=30)
         # set x axis ticks
-        plt.xticks(ticks=np.arange(0, img_x.shape[1], img_x.shape[1]/2), labels=xticks_labels_x)
+        plt.xticks(ticks=np.arange(0, img_x.shape[1], img_x.shape[1]/2), labels=xticks_labels_x, fontsize=30)
 
         # save the image, with a bbox in inches smaller than the default but bigger than tight
         plt.savefig(save_path+ 'x_' + os.path.basename(outname) + '.png', bbox_inches='tight', pad_inches=1)

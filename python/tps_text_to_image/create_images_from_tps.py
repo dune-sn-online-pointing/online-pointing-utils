@@ -96,8 +96,9 @@ if __name__=='__main__':
     else:
         all_TPs = np.loadtxt(filename, skiprows=0, dtype=int)
     if preprocess_ema_ds:
-        all_TPs = all_TPs[all_TPs[:,0].argsort()]
-
+        all_TPs = all_TPs[all_TPs[:,0].argsort()]   
+        all_TPs[:,0] = all_TPs[:,0] + all_TPs[:,12]*4500
+        all_TPs[:,2] = all_TPs[:,2] + all_TPs[:,12]*4500
 
 
     #read channel map
