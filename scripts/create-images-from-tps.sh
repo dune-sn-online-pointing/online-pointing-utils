@@ -1,18 +1,18 @@
 # very preliminary, will add external clp, folder checks during execution...
-INPUT_FILE="/eos/user/d/dapullia/tp_dataset/tp_dataset_original/snana_hits.txt"
-OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/snana/sparse_test/"
+INPUT_FILE="/eos/user/e/evilla/dune/sn-data/prodmarley_nue_spectrum_clean_dune10kt_1x2x6_ES-TPdump_standardHF_noiseless_MCtruth-400events_0/tpstream_standardHF_thresh30_nonoise_MCtruth.txt"
+OUTPUT_FOLDER="/eos/user/d/dapullia/tp_dataset/emaprod/test_full_event/"
 SHOW=false
-SAVE_IMG=false
-SAVE_DS=true
+SAVE_IMG=true
+SAVE_DS=false
 WRITE=false
 IMG_SAVE_FOLDER=images/
 IMG_SAVE_NAME=image
 N_EVENTS=50000
 MIN_TPS_TO_GROUP=2
 DRIFT_DIRECTION=0
-MAKE_FIXED_SIZE=true
-PREPROCESS_EMA_DS=false
-USE_SPARSE=true
+MAKE_FIXED_SIZE=false
+PREPROCESS_EMA_DS=true
+USE_SPARSE=false
 
 # Function to print help message
 print_help() {

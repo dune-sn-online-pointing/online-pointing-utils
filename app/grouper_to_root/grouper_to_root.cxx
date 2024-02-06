@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
+#include <map>
 #include <ctime>
 #include <climits>
 #include <cmath>
@@ -56,7 +57,7 @@ idx = {
 0
 
 */
-std::vector<std::vector<std::vector<int>>> group_maker(std::vector<std::vector<int>>& all_tps, int ticks_limit=100, int channel_limit=20, int min_tps_to_group=1) {
+std::vector<std::vector<std::vector<int>>> group_maker(std::vector<std::vector<int>>& all_tps, int ticks_limit=100, int channel_limit=20, int min_tps_to_group=1, int adc_integral_cut=2) {
     std::vector<std::vector<std::vector<int>>> groups;
     std::vector<std::vector<std::vector<int>>> buffer;
     for (auto& tp : all_tps) {
@@ -110,7 +111,18 @@ std::vector<std::vector<std::vector<int>>> group_maker(std::vector<std::vector<i
                 else {
                     // std::cout << "not time" << std::endl<< std::endl<< std::endl<< std::endl;
                     if (candidate.size() >= min_tps_to_group) {
-                        groups.push_back(candidate);
+                        if (adc_integral_cut > 0) {
+                            int adc_integral = 0;
+                            for (auto& tp2 : candidate) {
+                                adc_integral += tp2[4];
+                            }
+                            if (adc_integral > adc_integral_cut) {
+                                groups.push_back(candidate);
+                            }
+                        }
+                        else {
+                            groups.push_back(candidate);
+                        }
                         // std::cout << "pushed" << std::endl;
                     }
                 }
@@ -125,7 +137,18 @@ std::vector<std::vector<std::vector<int>>> group_maker(std::vector<std::vector<i
     if (buffer.size() > 0) {
         for (auto& candidate : buffer) {
             if (candidate.size() >= min_tps_to_group) {
-                groups.push_back(candidate);
+                if (adc_integral_cut > 0) {
+                    int adc_integral = 0;
+                    for (auto& tp : candidate) {
+                        adc_integral += tp[4];
+                    }
+                    if (adc_integral > adc_integral_cut) {
+                        groups.push_back(candidate);
+                    }
+                }
+                else {
+                    groups.push_back(candidate);
+                }
             }
         }
     }
@@ -133,13 +156,15 @@ std::vector<std::vector<std::vector<int>>> group_maker(std::vector<std::vector<i
     return groups;
 }
 
-std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, int plane=2, int supernova_option=0, int max_events_per_filename = INT_MAX) { // plane 0 1 2 = u v x
+std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, int plane=2, int supernova_option=0, int max_events_per_filename = INT_MAX, int load_dir_file=0) { // plane 0 1 2 = u v x
     std::vector<std::vector<int>> tps;
     std::string line;
     int n_events_offset = 0;
+    int file_idx = 0;
     for (auto& filename : filenames) {
         std::cout << filename << std::endl;
         std::ifstream infile(filename);
+
         // read and save the TPs
         while (std::getline(infile, line)) {
             std::istringstream iss(line);
@@ -154,6 +179,8 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
                 }
                 ++i;
             }
+            tp.push_back(file_idx);
+
             if (tp[7] > max_events_per_filename) {
                 break;
             }
@@ -193,6 +220,7 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
             }
             n_events_offset = tps[tps.size()-1][7];
         }
+        ++file_idx;
     }
 
     // sort the TPs by time
@@ -202,6 +230,50 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
 
     return tps;
 }
+
+// create a map connectig the file index to the true x y z
+std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> filenames) {
+    std::map<int, std::vector<float>> file_idx_to_true_xyz;
+    std::string line;
+    float true_x;
+    float true_y;
+    float true_z;
+    int n_events_offset = 0;
+    int file_idx = 0;
+    for (auto& filename : filenames) {
+        std::ifstream infile(filename);
+        // split the filename by / and change the last element to this_custom_direction.txt
+        std::vector<std::string> split_filename;
+        std::string delimiter = "/";
+        size_t pos = 0;
+        std::string token;
+        while ((pos = filename.find(delimiter)) != std::string::npos) {
+            token = filename.substr(0, pos);
+            split_filename.push_back(token);
+            filename.erase(0, pos + delimiter.length());
+        }
+        split_filename.push_back("this_custom_direction.txt");
+        std::string new_filename = "";
+        for (auto& split : split_filename) {
+            new_filename += split + "/";
+        }
+        new_filename.pop_back();
+        std::cout << new_filename << std::endl;
+        infile = std::ifstream(new_filename);
+        // read new filename and save the true x y z
+        std::getline(infile, line);
+        std::istringstream iss(line);
+        iss >> true_x >> true_y >> true_z; 
+        std::cout << true_x << " " << true_y << " " << true_z << std::endl;
+        file_idx_to_true_xyz[file_idx] = {true_x, true_y, true_z};
+        ++file_idx;
+    }
+
+    return file_idx_to_true_xyz;
+}
+
+
+
 
 
 float calculate_distance_from_true(std::vector<std::vector<int>>& group) {
@@ -299,6 +371,7 @@ int main(int argc, char** argv) {
     int supernova_option = 0;
     int main_track_option = 0;
     int max_events_per_filename = INT_MAX;
+    int adc_integral_cut = 0;
     // define an array containing ['U', 'V', 'X']
     std::vector<std::string> plane_names = {"U", "V", "X"};
 
@@ -312,6 +385,7 @@ int main(int argc, char** argv) {
         supernova_option = std::stoi(argv[7]);
         main_track_option = std::stoi(argv[8]);
         max_events_per_filename = std::stoi(argv[9]);
+        adc_integral_cut = std::stoi(argv[10]);
         if (max_events_per_filename == 0) {
             max_events_per_filename = INT_MAX;
         }
@@ -343,15 +417,37 @@ int main(int argc, char** argv) {
         filenames.push_back(line);
     }
 
+    // filenames.push_back(filename);
     std::cout << "Number of files: " << filenames.size() << std::endl;
 
 
     // read the file, each row is a TP
-    std::vector<std::vector<int>> tps = file_reader(filenames, plane, supernova_option, max_events_per_filename);
+    std::vector<std::vector<int>> tps = file_reader(filenames, plane, supernova_option, max_events_per_filename, 1);
     std::cout << "Number of tps: " << tps.size() << std::endl;
+    std::map<int, std::vector<float>> file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
+    std::cout << "Number of true xyz: " << file_idx_to_true_xyz_map.size() << std::endl;
+    std::cout << file_idx_to_true_xyz_map[0][0] << " " << file_idx_to_true_xyz_map[0][1] << " " << file_idx_to_true_xyz_map[0][2] << std::endl;
+    std::cout << file_idx_to_true_xyz_map[1][0] << " " << file_idx_to_true_xyz_map[1][1] << " " << file_idx_to_true_xyz_map[1][2] << std::endl;
+
     // group the TPs
-    std::vector<std::vector<std::vector<int>>> groups = group_maker(tps, ticks_limit, channel_limit, min_tps_to_group);
+    std::vector<std::vector<std::vector<int>>> groups = group_maker(tps, ticks_limit, channel_limit, min_tps_to_group, adc_integral_cut);
     std::cout << "Number of groups: " << groups.size() << std::endl;
+    // // apply adc integral cut
+    // if (adc_integral_cut > 0) {
+    //     std::vector<std::vector<std::vector<int>>> groups_copy = groups;
+    //     groups.clear();
+    //     for (auto& group : groups_copy) {
+    //         int adc_integral = 0;
+    //         for (auto& tp : group) {
+    //             adc_integral += tp[4];
+    //         }
+    //         if (adc_integral > adc_integral_cut) {
+    //             groups.push_back(group);
+    //         }
+    //     }
+    // }
+
+
     // filter only main tracks
     if (main_track_option == 1){
         groups = filter_main_tracks(groups);
@@ -359,6 +455,8 @@ int main(int argc, char** argv) {
     else if (main_track_option == 2){
         groups = filter_out_main_track(groups);
     }
+
+
 
 
     // write the groups to a root file
@@ -369,6 +467,11 @@ int main(int argc, char** argv) {
     // prepare objects to write to the root file
     int nrows;
     int event;
+    float true_x;
+    float true_y;
+    float true_z;
+    int true_label;
+
     std::vector<std::vector<int>> matrix;
 
     // Define variables for your matrices
@@ -376,6 +479,10 @@ int main(int argc, char** argv) {
     tree->Branch("Matrix", &matrix);
     tree->Branch("NRows", &nrows);
     tree->Branch("Event", &event);
+    tree->Branch("TrueX", &true_x);
+    tree->Branch("TrueY", &true_y);
+    tree->Branch("TrueZ", &true_z);
+    tree->Branch("TrueLabel", &true_label);
 
     // create a vector
     std::vector<int> eventss;
@@ -388,8 +495,12 @@ int main(int argc, char** argv) {
         eventss.push_back(event);
         // matrix.emplace_back(groups[i]);
         matrix = groups[i];
-
-        // Fill the tree
+        true_x = file_idx_to_true_xyz_map[groups[i][0][12]][0];
+        true_y = file_idx_to_true_xyz_map[groups[i][0][12]][1];
+        true_z = file_idx_to_true_xyz_map[groups[i][0][12]][2];
+        true_label = groups[i][0][6];
+        // // Fill the tree
+        std::cout << "Event: " << event << " True X: " << true_x << " True Y: " << true_y << " True Z: " << true_z << " True Label: " << true_label << std::endl;
 
         tree->Fill();
     }

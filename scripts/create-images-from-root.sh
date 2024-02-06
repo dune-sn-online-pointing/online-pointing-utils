@@ -8,10 +8,25 @@
 
 # INPUT_FILE=/eos/user/d/dapullia/tp_dataset/emaprod/cc-truth/only-mt/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
 # OUTPUT_FOLDER=/eos/user/d/dapullia/tp_dataset/emaprod/cc-truth/main-tracks/
-INPUT_FILE=/eos/user/d/dapullia/tp_dataset/emaprod/es-truth/only-mt/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
-OUTPUT_FOLDER=/eos/user/d/dapullia/tp_dataset/emaprod/es-truth/main-tracks/
+# INPUT_FILE=/eos/user/d/dapullia/tp_dataset/emaprod/es-truth/only-mt/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
+# OUTPUT_FOLDER=/eos/user/d/dapullia/tp_dataset/emaprod/es-truth/main-tracks/
 
 
+# INPUT_FILE=/eos/user/d/dapullia/tp_dataset/emaprod/es-truth-100/main-track/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
+# OUTPUT_FOLDER=/eos/user/d/dapullia/tp_dataset/emaprod/es-truth-100/main-track-cut/
+# INPUT_FILE=/eos/user/d/dapullia/tp_dataset/emaprod/es-truth-010/main-track/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
+# OUTPUT_FOLDER=/eos/user/d/dapullia/tp_dataset/emaprod/es-truth-010/main-track-cut/
+# INPUT_FILE=/eos/user/d/dapullia/tp_dataset/emaprod/es-truth-001/main-track/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
+# OUTPUT_FOLDER=/eos/user/d/dapullia/tp_dataset/emaprod/es-truth-001/main-track-cut/
+
+# INPUT_FILE=/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-100/blips/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
+# OUTPUT_FOLDER=/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-100/blips/
+# INPUT_FILE=/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-010/blips/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
+# OUTPUT_FOLDER=/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-010/blips/
+# INPUT_FILE=/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-001/blips/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
+# OUTPUT_FOLDER=/eos/user/d/dapullia/tp_dataset/emaprod/es-cc-001/blips/
+INPUT_FILE=/eos/user/d/dapullia/tp_dataset/emaprod/all_es_dir_list_2/main-tracks/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
+OUTPUT_FOLDER=/eos/user/d/dapullia/tp_dataset/emaprod/all_es_dir_list_2/main-tracks/
 
 SHOW=false
 SAVE_IMG=false
@@ -23,7 +38,7 @@ DRIFT_DIRECTION=0
 MAKE_FIXED_SIZE=true
 PREPROCESS_EMA_DS=false
 USE_SPARSE=false
-MIN_TPS_TO_GROUP=2
+MIN_TPS_TO_GROUP=1
 
 # Function to print help message
 print_help() {

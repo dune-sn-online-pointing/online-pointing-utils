@@ -6,6 +6,7 @@ from scipy import sparse
 import time
 import os
 import matplotlib.pylab as pylab
+import group
 params = {'legend.fontsize': 'xx-large',
           'figure.figsize': (15, 5),
          'axes.labelsize': 'xx-large',
@@ -507,7 +508,7 @@ def save_img(all_TPs, channel_map,save_path, outname='test', min_tps_to_create_i
         plt.savefig(save_path+ 'multiview_' + os.path.basename(outname) + '.png')
         plt.close()
 
-def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50, n_views=3, use_sparse=False, unknown_label=99, idx=7, dict_lab=None):
+def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1000, x_margin=5, y_margin=50, n_views=3, use_sparse=False, unknown_label=99, idx=7, dict_lab=None, adapt_for_big_img=False, label_is_dir=0):
     '''
     :param groups: list of groups
     :param make_fixed_size: if True, the image will have fixed size, otherwise it will be as big as the TPs
@@ -520,15 +521,17 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
     if not use_sparse:
         # Each pixel must have a value between 0 and 255. Maybe problematic for high ADC values. I can't affort havier data types for the moment
         dataset_img = np.zeros((len(groups), height, width, n_views), dtype=np.uint8) 
-        dataset_label = np.empty((len(groups), 1), dtype=np.uint8)
+        if not label_is_dir:
+            dataset_label = np.empty((len(groups), 1), dtype=np.uint8)
+        else:
+            dataset_label = np.empty((len(groups), 3), dtype=float)
         i=0
         for group in (groups):
-
             # create the label. I have to do it this way because the label is not the same for all the datasets
-            label = label_generator_snana(group, unknown_label=unknown_label, idx=idx, dict_lab=dict_lab)
+            label = label_generator_snana(group.tps, unknown_label=unknown_label, idx=idx, dict_lab=dict_lab)
             # append to the dataset as an array of arrays
             if n_views > 1:
-                img_u, img_v, img_x = all_views_img_maker(np.array(group), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+                img_u, img_v, img_x = all_views_img_maker(np.array(group.tps), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
                 if img_u[0, 0] != -1:
                     dataset_img[i, :, :, 0] = img_u
                 if img_v[0, 0] != -1:
@@ -536,23 +539,28 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
                 if img_x[0, 0] != -1:
                     dataset_img[i, :, :, 2] = img_x 
             else:  
-                img = from_tp_to_imgs(np.array(group), make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+                img = from_tp_to_imgs(np.array(group.tps), make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
                 if img[0, 0] != -1:
                     dataset_img[i, :, :, 0] = img
-
-            dataset_label[i] = [label]            
+            if not label_is_dir:
+                dataset_label[i] = [label]
+            else:
+                dataset_label[i] = [group.true_dir_x, group.true_dir_y, group.true_dir_z]
             i+=1
     else:
         dataset_img = []
-        dataset_label = np.empty((len(groups), 1), dtype=np.uint8)
+        if not label_is_dir:
+            dataset_label = np.empty((len(groups), 1), dtype=np.uint8)
+        else:
+            dataset_label = np.empty((len(groups), 3), dtype=float)
+
         i=0
         for group in (groups):
-
             # create the label. I have to do it this way because the label is not the same for all the datasets
-            label = label_generator_snana(group, unknown_label=unknown_label, idx=idx, dict_lab=dict_lab)
+            label = label_generator_snana(group.tps, unknown_label=unknown_label, idx=idx, dict_lab=dict_lab)
             # append to the dataset as an array of arrays
             if n_views > 1:
-                img_u, img_v, img_x = all_views_img_maker(np.array(group), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+                img_u, img_v, img_x = all_views_img_maker(np.array(group.tps), channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
                 if img_u[0, 0] != -1:
                     img_u = sparse.csr_matrix(img_u)
                 if img_v[0, 0] != -1:
@@ -561,15 +569,22 @@ def create_dataset(groups, channel_map, make_fixed_size=True, width=70, height=1
                     img_x = sparse.csr_matrix(img_x)
                 dataset_img.append([img_u, img_v, img_x])
             else:  
-                img = from_tp_to_imgs(np.array(group), make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
+                np_group = np.array(group.tps)
+                if adapt_for_big_img:
+                    offset = np_group[:, 3]//5120
+                    shift = np.where(np_group[:,3]%2560 < 2080, 1600, 2080)
+                    np_group[:, 3] = np_group[:, 3]%2560 - shift + offset*480
+                img = from_tp_to_imgs(np_group, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin)
                 if img[0, 0] != -1:
                     img = sparse.csr_matrix(img)
                 dataset_img.append([img.data, img.indices, img.indptr])
-            dataset_label[i] = [label]            
+            if not label_is_dir:
+                dataset_label[i] = [label]            
+            else:
+                dataset_label[i] = [group.true_dir_x, group.true_dir_y, group.true_dir_z]
             i+=1
         
         dataset_img = np.array(dataset_img, dtype=object)
-
     return (dataset_img, dataset_label)
 
 def label_generator_snana(group,idx=7, unknown_label=10, dict_lab=None):

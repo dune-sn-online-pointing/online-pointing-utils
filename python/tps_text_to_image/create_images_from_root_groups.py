@@ -7,7 +7,7 @@ import argparse
 import ROOT
 
 import create_images_from_tps_libs as tp2img
-
+import group
 
 parser = argparse.ArgumentParser(description='Tranforms Trigger Primitives to images.')
 parser.add_argument('--input_file', type=str, help='Input file name')
@@ -23,11 +23,12 @@ parser.add_argument('--img_width', type=int, default=70, help='width of the imag
 parser.add_argument('--img_height', type=int, default=300, help='height of the image')
 parser.add_argument('--x_margin', type=int, default=5, help='margin in x')
 parser.add_argument('--y_margin', type=int, default=10, help='margin in y')
-parser.add_argument('--min_tps_to_create_img', type=int, default=2, help='minimum number of TPs to create an image')
+parser.add_argument('--min_tps_to_create_img', type=int, default=1, help='minimum number of TPs to create an image')
 parser.add_argument('--drift_direction', type=int, default=0, help='0 for horizontal drift, 1 for vertical drift')
 parser.add_argument('--use_sparse', action='store_true', help='use sparse matrices')
 parser.add_argument('--min_tps_to_group', type=int, default=2, help='minimum number of TPs to create a group')
 parser.add_argument('--sample_fraction', type=float, default=1, help='fraction of the dataset to use')
+parser.add_argument('--label_is_dir', type=int, default=0, help='label is direction')
 
 args = parser.parse_args()
 filename = args.input_file
@@ -48,45 +49,47 @@ drift_direction = args.drift_direction
 use_sparse = args.use_sparse
 min_tps_to_group = args.min_tps_to_group
 sample_fraction = args.sample_fraction
+label_is_dir = args.label_is_dir
 
+# def read_root_file (filename, min_tps_to_group=1):
+#     file = ROOT.TFile.Open(filename, "READ")
 
-def read_root_file (filename, min_tps_to_group=1):
-    file = ROOT.TFile.Open(filename, "READ")
+#     # get tree name
+#     nrows = []
+#     event = []
+#     matrix = []
+#     true_origin = []
+#     print(file.GetListOfKeys())
+#     for i in file.GetListOfKeys():
+#         # get the TTree
+#         tree = file.Get(i.GetName())
+#         print(f"Tree name: {tree.GetName()}")
+#         tree.Print()
 
-    # get tree name
-    nrows = []
-    event = []
-    matrix = []
-    print(file.GetListOfKeys())
-    for i in file.GetListOfKeys():
-        # get the TTree
-        tree = file.Get(i.GetName())
-        print(f"Tree name: {tree.GetName()}")
-        tree.Print()
+#         for entry in tree:
+#             # nrows = entry.NRows
+#             # event = entry.Event
+#             # matrix = entry.Matrix
+#             if entry.NRows < min_tps_to_group:
+#                 continue
+#             # Matrix is <class cppyy.gbl.std.vector<vector<int> > at 0x16365890>
+#             # extract the matrix from the vector<vector<int>> object to numpy array
+#             m = np.empty((entry.NRows, 9), dtype=int)
+#             for j in range(entry.NRows):
+#                 for k in range(9):
+#                     m[j][k] = entry.Matrix[j][k]
 
-        for entry in tree:
-            # nrows = entry.NRows
-            # event = entry.Event
-            # matrix = entry.Matrix
-            if entry.NRows < min_tps_to_group:
-                continue
-            # Matrix is <class cppyy.gbl.std.vector<vector<int> > at 0x16365890>
-            # extract the matrix from the vector<vector<int>> object to numpy array
-            m = np.empty((entry.NRows, 9), dtype=int)
-            for j in range(entry.NRows):
-                for k in range(9):
-                    m[j][k] = entry.Matrix[j][k]
+#             # # temporary hack to remove events
+#             # if m[:,4].sum() < 0.5E6:
+#             #     continue
 
-            # # temporary hack to remove events
-            # if m[:,4].sum() < 0.5E6:
-            #     continue
+#             nrows.append(entry.NRows)
+#             event.append(entry.Event)
+#             matrix.append(m)
+#             true_origin.append([entry.TrueX, entry.TrueY, entry.TrueZ])
+#         break
 
-            nrows.append(entry.NRows)
-            event.append(entry.Event)
-            matrix.append(m)
-        break
-
-    return nrows, event, matrix
+#     return nrows, event, matrix, true_origin
 
 bkg_details = {
     "kUnknown": 0,
@@ -206,8 +209,9 @@ if __name__=='__main__':
     channel_map = tp2img.create_channel_map_array(drift_direction=drift_direction)
 
     print("Reading root file...")
-    nrows, event, matrix = read_root_file(filename, min_tps_to_group=min_tps_to_group)
-    groups = np.array(matrix, dtype=object)
+    # nrows, event, matrix, true_origin = read_root_file(filename, min_tps_to_group=min_tps_to_group)
+    # groups = np.array(matrix, dtype=object)
+    groups, event_numbers = group.read_root_file_to_groups(filename)
     n_views = 1
     # # hack to get multiple files, I want 1 groups object
     # for i in range(8):
@@ -260,15 +264,14 @@ if __name__=='__main__':
         # sample_fraction = 0.1
         if sample_fraction < 1:
             groups = np.random.choice(groups, int(len(groups)*sample_fraction), replace=False)
-        dataset_img, dataset_label = tp2img.create_dataset(groups,  channel_map=channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, n_views=n_views, use_sparse=use_sparse, unknown_label=99, idx=6, dict_lab=dict_lab)
+        dataset_img, dataset_label = tp2img.create_dataset(groups,  channel_map=channel_map, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, n_views=n_views, use_sparse=use_sparse, unknown_label=99, idx=6, dict_lab=dict_lab, adapt_for_big_img=False, label_is_dir=1)
         
         print("Dataset shape: ", dataset_img.shape)
         print("Dataset label shape: ", dataset_label.shape)
         np.save(output_path+'dataset/dataset_img.npy', dataset_img)
         np.save(output_path+'dataset/dataset_label.npy', dataset_label)
-
-        
-        print(np.unique(dataset_label,return_counts=True))
+        print(dataset_label[:10])
+        # print(np.unique(dataset_label,return_counts=True))
         print("Done! Time: ", time.time()-time_start)
     print('Done!')
 
