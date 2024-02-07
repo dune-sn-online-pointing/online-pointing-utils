@@ -31,7 +31,9 @@ void group::update_group_info() {
     // the reconstructed position will be the average of the tps
     // we want to save the minimum distance from the true position
     float min_distance = 1000000;
+    float supernova_tp_fraction = 0;
     std::vector<int> reco_pos = {0, 0, 0};
+    int true_label = tps_[0][variables_to_index["ptype"]];
     for (int i = 0; i < tps_.size(); i++) {
         std::vector<int> pos = calculate_position(tps_[i]);
         std::vector<int> true_pos = {tps_[i][variables_to_index["true_x"]], tps_[i][variables_to_index["true_y"]], tps_[i][variables_to_index["true_z"]]};
@@ -40,18 +42,26 @@ void group::update_group_info() {
             min_distance = distance;
             true_pos_ = true_pos;
             true_energy_ = tps_[i][variables_to_index["true_energy"]];
-            true_label_ = tps_[i][variables_to_index["true_label"]];
         }
-        
+        if (tps_[i][variables_to_index["ptype"]] == 1) {
+            supernova_tp_fraction++;
+        }
+
         reco_pos[0] += pos[0];
         reco_pos[1] += pos[1];
         reco_pos[2] += pos[2];
+        if (tps_[i][variables_to_index["ptype"]] != true_label) {
+            true_label = -1;
+        }
     }
+
+    supernova_tp_fraction_ = supernova_tp_fraction / tps_.size();
     min_distance_from_true_pos_ = min_distance;
     reco_pos[0] /= tps_.size();
     reco_pos[1] /= tps_.size();
     reco_pos[2] /= tps_.size();
     reco_pos_ = reco_pos;
+    true_label_ = true_label;
 }
 
 

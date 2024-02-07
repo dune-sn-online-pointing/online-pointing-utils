@@ -34,6 +34,10 @@ std::vector<group> filter_out_main_track(std::vector<group>& groups);
 // write the groups to a root file
 void write_groups_to_root(std::vector<group>& groups, std::string root_filename);
 
+std::vector<group> read_groups_from_root(std::string root_filename);
+
+std::map<int, std::vector<std::vector<group>>> create_event_mapping(std::vector<group>& groups);
+
 #endif
 
 

@@ -27,6 +27,7 @@ public:
     float get_true_energy() { return true_energy_; }
     int get_true_label() { return true_label_; }
     float get_min_distance_from_true_pos() { return min_distance_from_true_pos_; }
+    float get_supernova_tp_fraction() { return supernova_tp_fraction_; }
     void set_true_pos(std::vector<int> pos) { true_pos_ = pos; }
     void set_true_label(int label) { true_label_ = label; }
     void set_true_energy(float energy) { true_energy_ = energy; }
@@ -40,6 +41,7 @@ private:
     float min_distance_from_true_pos_;
     float true_energy_;
     int true_label_;
+    float supernova_tp_fraction_;
 };
 
 #endif

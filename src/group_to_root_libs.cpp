@@ -45,20 +45,20 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
 
             if (supernova_option == 1 && tp[variables_to_index["ptype"]] == 1) {
                 tp[variables_to_index["event"]] += n_events_offset;
-                tp[variables_to_index["time_start"]] += n_events_offset*tp[variables_to_index["event"]];
-                tp[variables_to_index["time_peak"]] += n_events_offset*tp[variables_to_index["event"]];
+                tp[variables_to_index["time_start"]] += 5000*tp[variables_to_index["event"]];
+                tp[variables_to_index["time_peak"]] += 5000*tp[variables_to_index["event"]];
                 tps.push_back(tp);
             }   
             else if (supernova_option == 2 && tp[variables_to_index["ptype"]] != 1) {
                 tp[variables_to_index["event"]] += n_events_offset;
-                tp[variables_to_index["time_start"]] += n_events_offset*tp[variables_to_index["event"]];       
-                tp[variables_to_index["time_peak"]] += n_events_offset*tp[variables_to_index["event"]];
+                tp[variables_to_index["time_start"]] += 5000*tp[variables_to_index["event"]];       
+                tp[variables_to_index["time_peak"]] += 5000*tp[variables_to_index["event"]];
                 tps.push_back(tp);
             }
             else if (supernova_option == 0) {
                 tp[variables_to_index["event"]] += n_events_offset;
-                tp[variables_to_index["time_start"]] += n_events_offset*tp[variables_to_index["event"]];       
-                tp[variables_to_index["time_peak"]] += n_events_offset*tp[variables_to_index["event"]];
+                tp[variables_to_index["time_start"]] += 5000*tp[variables_to_index["event"]];       
+                tp[variables_to_index["time_peak"]] += 5000*tp[variables_to_index["event"]];
                 tps.push_back(tp);
             }
         }
@@ -206,9 +206,8 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
         // check if the file exists      
         infile = std::ifstream(new_filename);
         if (!infile.good()) {
-            std::cout << "File does not exist" << std::endl;
+            std::cout << "Direction file does not exist" << std::endl;
             file_idx_to_true_xyz[file_idx] = {0, 0, 0};
-            continue;
         }
         else {
         // read new filename and save the true x y z
@@ -297,6 +296,8 @@ void write_groups_to_root(std::vector<group>& groups, std::string root_filename)
     int reco_pos_x; 
     int reco_pos_y;
     int reco_pos_z;
+    float min_distance_from_true_pos;
+    float supernova_tp_fraction;
 
     // create the branches
     tree->Branch("matrix", &matrix);
@@ -310,6 +311,8 @@ void write_groups_to_root(std::vector<group>& groups, std::string root_filename)
     tree->Branch("reco_pos_x", &reco_pos_x);
     tree->Branch("reco_pos_y", &reco_pos_y);
     tree->Branch("reco_pos_z", &reco_pos_z);
+    tree->Branch("min_distance_from_true_pos", &min_distance_from_true_pos);
+    tree->Branch("supernova_tp_fraction", &supernova_tp_fraction);
 
     // fill the tree
     for (auto& g : groups) {
@@ -324,6 +327,8 @@ void write_groups_to_root(std::vector<group>& groups, std::string root_filename)
         reco_pos_x = g.get_reco_pos()[0];
         reco_pos_y = g.get_reco_pos()[1];
         reco_pos_z = g.get_reco_pos()[2];
+        min_distance_from_true_pos = g.get_min_distance_from_true_pos();
+        supernova_tp_fraction = g.get_supernova_tp_fraction();
         tree->Fill();
     }
     // write the tree

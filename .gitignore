@@ -1,1 +1,4 @@
 lists/
+*.o
+*.exe
+*/__pycache__/
