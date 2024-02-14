@@ -1,0 +1,87 @@
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <random>
+#include <ctime>
+
+#include "../../inc/position_calculator.h"
+#include "../../inc/group_to_root_libs.h"
+#include "../../inc/group.h"
+#include "../../inc/superimpose_root_files_libs.h"
+#include "cpp_vector_dict.cxx"
+
+
+int main(int argc, char* argv[]) {
+    std::string sig_group_filename;
+    std::string bkg_group_filename;
+    std::string outfolder;
+    float radius = 1.0;
+    
+    if (argc < 5) {
+        std::cout << "Usage: superimpose_root_files <sig_group_filename> <bkg_group_filename> <outfolder> <radius>" << std::endl;
+        return 1;        
+    } else {
+        sig_group_filename = argv[1];
+        bkg_group_filename = argv[2];
+        outfolder = argv[3];
+        radius = std::stof(argv[4]);
+    }
+
+    // start the clock
+    std::clock_t start;
+
+    // read the groups from the root files
+    std::vector<group> sig_groups = read_groups_from_root(sig_group_filename);
+    std::cout << "Number of sig groups: " << sig_groups.size() << std::endl;
+    std::vector<group> bkg_groups = read_groups_from_root(bkg_group_filename);
+    std::cout << "Number of bkg groups: " << bkg_groups.size() << std::endl;
+    // create a map connecting the event number to the background groups
+    std::map<int, std::vector<group>> bkg_event_mapping = create_event_mapping(bkg_groups);
+    std::cout << "Bkg event mapping created" << std::endl;
+    std::vector<int> bkg_list_of_event_numbers;
+    for (auto const& x : bkg_event_mapping) {
+        bkg_list_of_event_numbers.push_back(x.first);
+    }
+    std::cout << "Number of bkg events: " << bkg_list_of_event_numbers.size() << std::endl;
+
+    // create a map connecting the event number to the signal groups
+    std::map<int, std::vector<group>> sig_event_mapping = create_event_mapping(sig_groups);
+    std::cout << "Sig event mapping created" << std::endl;
+    std::vector<int> sig_list_of_event_numbers;
+    for (auto const& x : sig_event_mapping) {
+        sig_list_of_event_numbers.push_back(x.first);
+    }
+    std::cout << "Number of sig events: " << sig_list_of_event_numbers.size() << std::endl;
+
+    // superimpose a random background event to a signal event
+    std::vector<group> superimposed_groups;
+    for (int i = 0; i < sig_list_of_event_numbers.size(); i++) {
+        if (i%500 ==0){
+            std::cout<<"Event number: "<< i << std::endl;
+        }
+        int sig_event_number = sig_list_of_event_numbers[i];
+        std::vector<group> sig_event_groups = sig_event_mapping[sig_event_number];
+        // get a random background event
+        int bkg_event_number = bkg_list_of_event_numbers[rand() % bkg_list_of_event_numbers.size()];
+        std::vector<group> bkg_event_groups = bkg_event_mapping[bkg_event_number];
+        // superimpose the two events by connecting the groups        
+        std::vector<group> superimposed_gp = sig_event_groups;
+        superimposed_gp.insert(superimposed_gp.end(), bkg_event_groups.begin(), bkg_event_groups.end());
+        // filter the superimposed groups within a radius
+        group filtered_superimposed_group = filter_groups_within_radius(superimposed_gp, radius);
+        superimposed_groups.push_back(filtered_superimposed_group);
+    }
+
+    // write the superimposed groups to a root file
+    std::cout<<"Writing "<< superimposed_groups.size() <<" events to root" << std::endl;
+    std::string superimposed_group_filename = outfolder + "superimposed_groups.root";
+    write_groups_to_root(superimposed_groups, superimposed_group_filename);
+    // stop the clock
+    std::clock_t end;
+    double elapsed_time = double(end - start) / CLOCKS_PER_SEC;
+    std::cout << "Elapsed time: " << elapsed_time << " seconds" << std::endl;
+
+    return 0;
+}
+

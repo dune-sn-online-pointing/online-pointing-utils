@@ -48,6 +48,7 @@ int main(int argc, char* argv[]) {
     // read the file containing the filenames and save them in a vector
     std::ifstream infile(filename);
     std::string line;
+    std::cout<<"Opening file: "<< filename << std::endl;
     // read and save the TPs
     while (std::getline(infile, line)) {
         filenames.push_back(line);

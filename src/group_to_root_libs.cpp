@@ -186,6 +186,18 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
     int file_idx = 0;
     for (auto& filename : filenames) {
         std::ifstream infile(filename);
+        std::cout<<filename<<std::endl;
+        // get the number between the last underscore and the .txt extension
+        // Find the last underscore
+        size_t lastUnderscorePos = filename.rfind('_');
+
+        // Find the position of ".txt"
+        size_t txtExtensionPos = filename.find(".txt");
+        std::string new_filename = "";
+        // Extract the number between the last underscore and ".txt"
+        if (lastUnderscorePos != std::string::npos && txtExtensionPos != std::string::npos) {
+            std::string numberStr = filename.substr(lastUnderscorePos + 1, txtExtensionPos - lastUnderscorePos - 1);
+
         // split the filename by / and change the last element to this_custom_direction.txt
         std::vector<std::string> split_filename;
         std::string delimiter = "/";
@@ -196,14 +208,18 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
             split_filename.push_back(token);
             filename.erase(0, pos + delimiter.length());
         }
-        split_filename.push_back("this_custom_direction.txt");
-        std::string new_filename = "";
+        split_filename.push_back("customDirection_" + numberStr + ".txt");
+        
         for (auto& split : split_filename) {
             new_filename += split + "/";
         }
         new_filename.pop_back();
         // std::cout << new_filename << std::endl;
         // check if the file exists      
+        }
+        else{
+            std::cerr << "Could not find underscore or .txt extension in the given string." << std::endl;
+        }
         infile = std::ifstream(new_filename);
         if (!infile.good()) {
             std::cout << "Direction file does not exist" << std::endl;
@@ -213,8 +229,17 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
         // read new filename and save the true x y z
         std::getline(infile, line);
         std::istringstream iss(line);
-        iss >> true_x >> true_y >> true_z; 
-        // std::cout << true_x << " " << true_y << " " << true_z << std::endl;
+        iss >> true_x;
+        // get next line
+        std::getline(infile, line);
+        iss = std::istringstream(line);
+        iss >> true_y;
+        // get next line
+        std::getline(infile, line);
+        iss = std::istringstream(line);
+        iss >> true_z;
+
+        std::cout << true_x << " " << true_y << " " << true_z << std::endl;
         file_idx_to_true_xyz[file_idx] = {true_x, true_y, true_z};
         }
         ++file_idx;
@@ -338,3 +363,71 @@ void write_groups_to_root(std::vector<group>& groups, std::string root_filename)
     return;   
 }
 
+std::vector<group> read_groups_from_root(std::string root_filename){
+    std::cout << "Reading groups from: " << root_filename << std::endl;
+    std::vector<group> groups;
+    TFile *f = new TFile();
+    f = TFile::Open(root_filename.c_str());
+    // print the list of objects in the file
+    f->ls();
+    TTree *tree = (TTree*)f->Get("tree");
+    
+    std::vector<std::vector<int>> matrix;
+    std::vector<std::vector<int>>* matrix_ptr = &matrix;
+
+    int nrows;
+    int event;
+    float true_dir_x;
+    float true_dir_y;
+    float true_dir_z;
+    float true_energy;
+    int true_label;
+    int reco_pos_x; 
+    int reco_pos_y;
+    int reco_pos_z;
+    float min_distance_from_true_pos;
+    float supernova_tp_fraction;
+    tree->SetBranchAddress("matrix", &matrix_ptr);
+    // tree->SetBranchAddress("matrix", &matrix);
+    tree->SetBranchAddress("nrows", &nrows);
+    tree->SetBranchAddress("event", &event);
+    tree->SetBranchAddress("true_dir_x", &true_dir_x);
+    tree->SetBranchAddress("true_dir_y", &true_dir_y);
+    tree->SetBranchAddress("true_dir_z", &true_dir_z);
+    tree->SetBranchAddress("true_energy", &true_energy);
+    tree->SetBranchAddress("true_label", &true_label);
+    tree->SetBranchAddress("reco_pos_x", &reco_pos_x);
+    tree->SetBranchAddress("reco_pos_y", &reco_pos_y);
+    tree->SetBranchAddress("reco_pos_z", &reco_pos_z);
+    tree->SetBranchAddress("min_distance_from_true_pos", &min_distance_from_true_pos);
+    tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
+    for (int i = 0; i < tree->GetEntries(); i++) {
+        tree->GetEntry(i);
+        group g(matrix);
+        g.set_true_dir({true_dir_x, true_dir_y, true_dir_z});
+        g.set_true_energy(true_energy);
+        g.set_true_label(true_label);
+        g.set_reco_pos({reco_pos_x, reco_pos_y, reco_pos_z});
+        g.set_min_distance_from_true_pos(min_distance_from_true_pos);
+        g.set_supernova_tp_fraction(supernova_tp_fraction);       
+        groups.push_back(g);
+    }
+    f->Close();
+    return groups;
+}
+
+std::map<int, std::vector<group>> create_event_mapping(std::vector<group>& groups){
+    std::map<int, std::vector<group>> event_mapping;
+    for (auto& g : groups) {
+    // check if the event is already in the map
+        if (event_mapping.find(g.get_tp(0)[variables_to_index["event"]]) == event_mapping.end()) {
+            std::vector<group> temp;
+            temp.push_back(g);
+            event_mapping[g.get_tp(0)[variables_to_index["event"]]] = temp;
+        }
+        else {
+            event_mapping[g.get_tp(0)[variables_to_index["event"]]].push_back(g);
+        }
+    }
+    return event_mapping;
+}

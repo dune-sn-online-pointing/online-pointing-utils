@@ -17,7 +17,7 @@ public:
 
     void update_group_info();
 
-    std::vector<std::vector<int>> get_tps() { return tps_; }
+    std::vector<std::vector<int>> get_tps() const { return tps_; }
     void set_tps(std::vector<std::vector<int>> tps) { tps_ = tps; update_group_info();}
     std::vector<int> get_tp(int i) { return tps_[i]; }
     int get_size() { return tps_.size(); }
@@ -26,13 +26,15 @@ public:
     std::vector<float> get_true_dir() { return true_dir_; }
     float get_true_energy() { return true_energy_; }
     int get_true_label() { return true_label_; }
-    float get_min_distance_from_true_pos() { return min_distance_from_true_pos_; }
-    float get_supernova_tp_fraction() { return supernova_tp_fraction_; }
+    float get_min_distance_from_true_pos() const { return min_distance_from_true_pos_; }
+    float get_supernova_tp_fraction() const { return supernova_tp_fraction_; }
     void set_true_pos(std::vector<int> pos) { true_pos_ = pos; }
     void set_true_label(int label) { true_label_ = label; }
     void set_true_energy(float energy) { true_energy_ = energy; }
     void set_true_dir(std::vector<float> dir) { true_dir_ = dir; }
-
+    void set_reco_pos(std::vector<int> pos) { reco_pos_ = pos; }
+    void set_min_distance_from_true_pos(float min_distance) { min_distance_from_true_pos_ = min_distance; }
+    void set_supernova_tp_fraction(float fraction) { supernova_tp_fraction_ = fraction; }
 private:
     std::vector<std::vector<int>> tps_;
     std::vector<int> true_pos_;    
