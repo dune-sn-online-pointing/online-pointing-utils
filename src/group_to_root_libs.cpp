@@ -7,6 +7,7 @@
 #include <climits>
 #include "../inc/group_to_root_libs.h"
 #include "../inc/group.h"
+#include "../inc/position_calculator.h"
 
 // include root libraries
 #include "TFile.h"
@@ -45,20 +46,20 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
 
             if (supernova_option == 1 && tp[variables_to_index["ptype"]] == 1) {
                 tp[variables_to_index["event"]] += n_events_offset;
-                tp[variables_to_index["time_start"]] += 5000*tp[variables_to_index["event"]];
-                tp[variables_to_index["time_peak"]] += 5000*tp[variables_to_index["event"]];
+                tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+                tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
                 tps.push_back(tp);
             }   
             else if (supernova_option == 2 && tp[variables_to_index["ptype"]] != 1) {
                 tp[variables_to_index["event"]] += n_events_offset;
-                tp[variables_to_index["time_start"]] += 5000*tp[variables_to_index["event"]];       
-                tp[variables_to_index["time_peak"]] += 5000*tp[variables_to_index["event"]];
+                tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+                tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
                 tps.push_back(tp);
             }
             else if (supernova_option == 0) {
                 tp[variables_to_index["event"]] += n_events_offset;
-                tp[variables_to_index["time_start"]] += 5000*tp[variables_to_index["event"]];       
-                tp[variables_to_index["time_peak"]] += 5000*tp[variables_to_index["event"]];
+                tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];       
+                tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
                 tps.push_back(tp);
             }
         }

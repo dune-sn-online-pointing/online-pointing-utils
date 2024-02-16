@@ -37,7 +37,8 @@ void group::update_group_info() {
     for (int i = 0; i < tps_.size(); i++) {
         std::vector<int> pos = calculate_position(tps_[i]);
         std::vector<int> true_pos = {tps_[i][variables_to_index["true_x"]], tps_[i][variables_to_index["true_y"]], tps_[i][variables_to_index["true_z"]]};
-        float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[1] - true_pos[1], 2) + pow(pos[2] - true_pos[2], 2));
+        float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[2] - true_pos[2], 2));
+        // float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[1] - true_pos[1], 2) + pow(pos[2] - true_pos[2], 2));
         if (distance < min_distance) {
             min_distance = distance;
             true_pos_ = true_pos;
@@ -57,9 +58,10 @@ void group::update_group_info() {
 
     supernova_tp_fraction_ = supernova_tp_fraction / tps_.size();
     min_distance_from_true_pos_ = min_distance;
-    reco_pos[0] /= tps_.size();
-    reco_pos[1] /= tps_.size();
-    reco_pos[2] /= tps_.size();
+    int ntps = tps_.size();
+    reco_pos[0] /= ntps;
+    reco_pos[1] /= ntps;
+    reco_pos[2] /= ntps;
     reco_pos_ = reco_pos;
     true_label_ = true_label;
 }
