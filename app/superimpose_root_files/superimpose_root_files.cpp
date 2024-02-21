@@ -82,6 +82,16 @@ int main(int argc, char* argv[]) {
         // std::cout << "Index: " << i << " Superimposed group size: " << superimposed_gp.size() << std::endl;
         group filtered_superimposed_group = filter_groups_within_radius(superimposed_gp, radius);
         if (filtered_superimposed_group.get_min_distance_from_true_pos()>10){
+            std::cout<<"WARNING: Min distance from true pos: "<< filtered_superimposed_group.get_min_distance_from_true_pos() << std::endl;
+            for (auto g: sig_event_groups){
+                std::cout<<"Sig group min distance from true pos: "<< g.get_min_distance_from_true_pos() << std::endl;
+                for (auto tp: g.get_tps()){
+                    for (auto var: tp){
+                        std::cout<<var<<" ";
+                    }
+                    std::cout<<calculate_position(tp)[0] << " " << calculate_position(tp)[1] << " " << calculate_position(tp)[2] << std::endl;
+                }
+            }
             continue;
         }
         // if (filtered_superimposed_group.get_supernova_tp_fraction() >0.9){

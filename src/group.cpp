@@ -4,7 +4,7 @@
 #include "../inc/position_calculator.h" 
 
 std::map<std::string, int> variables_to_index = {
-    {"start_tick", 0},
+    {"time_start", 0},
     {"time_over_threshold", 1},
     {"time_peak", 2},
     {"channel", 3},
@@ -39,7 +39,7 @@ void group::update_group_info() {
         std::vector<int> true_pos = {tps_[i][variables_to_index["true_x"]], tps_[i][variables_to_index["true_y"]], tps_[i][variables_to_index["true_z"]]};
         float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[2] - true_pos[2], 2));
         // float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[1] - true_pos[1], 2) + pow(pos[2] - true_pos[2], 2));
-        if (distance < min_distance) {
+        if (distance < min_distance and tps_[i][variables_to_index["ptype"]] == 1) {
             min_distance = distance;
             true_pos_ = true_pos;
             true_energy_ = tps_[i][variables_to_index["true_energy"]];

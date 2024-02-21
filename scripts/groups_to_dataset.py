@@ -37,11 +37,23 @@ min_tps_to_group = args.min_tps_to_group
 save_img_dataset = args.save_img_dataset
 save_process_label = args.save_process_label
 save_true_dir_label = args.save_true_dir_label
+dt = np.dtype([('time_start', float), 
+                ('time_over_threshold', float),
+                ('time_peak', float),
+                ('channel', int),
+                ('adc_integral', int),
+                ('adc_peak', int),
+                ('detid', int),
+                ('type', int),
+                ('algorithm', int),
+                ('version', int),
+                ('flag', int)])
 
 
 if __name__ == '__main__':
     # Read the root file
     groups, event_number = read_root_file_to_groups(filename)
+
     print(f"Number of groups: {len(groups)}")
     # Create the channel map
     channel_map = create_channel_map_array(which_detector="APA")
@@ -55,6 +67,7 @@ if __name__ == '__main__':
         dataset_img = create_dataset_img(groups=groups, channel_map=channel_map, min_tps_to_create_img=min_tps_to_group, make_fixed_size=True, width=width, height=height, x_margin=x_margin, y_margin=y_margin, only_collection=True)
         print(f"Shape of the dataset_img: {dataset_img.shape}")
         np.save(output_path + 'dataset/dataset_img.npy', dataset_img)
+        save_samples_from_ds(dataset_img, output_path + 'samples/', n_samples=10)
     # Create the labels
     if save_process_label:
         print("Creating the process labels")
@@ -67,3 +80,6 @@ if __name__ == '__main__':
         dataset_label_true_dir = create_dataset_label_true_dir(groups)
         print(f"Shape of the dataset_label_true_dir: {dataset_label_true_dir.shape}")
         np.save(output_path + 'dataset/dataset_label_true_dir.npy', dataset_label_true_dir)
+
+
+    print('Done!')

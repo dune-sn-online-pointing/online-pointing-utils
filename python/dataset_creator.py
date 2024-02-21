@@ -27,7 +27,11 @@ def create_dataset_img(groups, channel_map, min_tps_to_create_img=1, make_fixed_
     for i, group in enumerate(groups):
         if len(group) >= min_tps_to_create_img:
             # img = create_image(group.get_tps(), channel_map, make_fixed_size, width, height, x_margin, y_margin, only_collection)
-            img_u, img_v, img_x = create_images(tps_to_draw = group.get_tps(), channel_map = channel_map, make_fixed_size = make_fixed_size, width = width, height = height, x_margin = x_margin, y_margin = y_margin, only_collection = only_collection)
+            tps_to_draw = group.get_tps()
+            tps_to_draw['time_start'] = tps_to_draw['time_start']%5000
+            tps_to_draw['time_peak'] = tps_to_draw['time_peak']%5000
+
+            img_u, img_v, img_x = create_images(tps_to_draw = tps_to_draw, channel_map = channel_map, make_fixed_size = make_fixed_size, width = width, height = height, x_margin = x_margin, y_margin = y_margin, only_collection = only_collection)
             if only_collection:
                 dataset_img[i, :, :, 0] = img_x
             else:
@@ -35,6 +39,7 @@ def create_dataset_img(groups, channel_map, min_tps_to_create_img=1, make_fixed_
                 dataset_img[i, :, :, 1] = img_v
                 dataset_img[i, :, :, 2] = img_x
     return dataset_img
+
 
 def create_dataset_label_process(groups):
     '''
@@ -55,4 +60,50 @@ def create_dataset_label_true_dir(groups):
     for i, group in enumerate(groups):
         dataset_label[i] = group.get_true_dir()
     return dataset_label
+
+def save_samples_from_ds(dataset, output_folder, name="img", n_samples=10):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    
+    n_elements = dataset.shape[0]   
+    indices = np.random.choice(n_elements, n_samples, replace=False)
+    samples = dataset[indices]
+    print(samples.shape)
+    for i, sample in enumerate(samples):
+        plt.figure(figsize=(10, 30))
+        img = sample[:,:,0]
+        print(img.shape)
+        # print(np.unique(img))
+        img = np.where(img == 0, np.nan, img)
+        plt.imshow(img)
+        plt.savefig(output_folder+name+str(i)+'.png')
+        plt.clf()
+
+        
+    # fig= plt.figure(figsize=(20, 20))
+    # for i, label in enumerate(labels_unique[0]):
+    #     grid = ImageGrid(fig, 111,          # as in plt.subplot(111)
+    #             nrows_ncols=(1,10),
+    #             axes_pad=0.5,
+    #             share_all=True,
+    #             cbar_location="right",
+    #             cbar_mode="single",
+    #             cbar_size="30%",
+    #             cbar_pad=0.25,
+    #             )   
+    #     indices = np.where(labels == label)[0]
+    #     indices = indices[:np.minimum(n_samples_per_label, indices.shape[0])]
+    #     samples = dataset[indices]
+    #     # save the images
+    #     plt.suptitle("Label: "+str(label), fontsize=25)
+
+    #     for j, sample in enumerate(samples):
+    #         im = grid[j].imshow(sample[:,:,0])
+    #         grid[j].set_title(j)
+
+    #     grid.cbar_axes[0].colorbar(im)
+    #     grid.axes_llc.set_yticks(np.arange(0, sample.shape[0], 100))
+    #     plt.savefig(output_folder+ 'all_'+str(label)+'.png')
+    #     plt.clf()
+
 

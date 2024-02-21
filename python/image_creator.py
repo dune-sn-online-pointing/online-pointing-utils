@@ -32,6 +32,7 @@ def create_image_one_view(tps_to_draw, make_fixed_size=False, width=100, height=
     :param y_max_overall: maximum y value of the image
     :return: image
     '''
+    # print(tps_to_draw)
     if y_min_overall != -1:
         t_start = y_min_overall
     else:
@@ -134,6 +135,10 @@ def create_images(tps_to_draw, channel_map, min_tps_to_create_img=2, make_fixed_
     # print ("Creating X plane images...")
     tps_x = tps_to_draw[np.where(channel_map[tps_to_draw['channel']% total_channels, 1] == 2)]
     if tps_x.shape[0] >= min_tps_to_create_img:
+        if only_collection: 
+            offset = tps_x["channel"]//5120
+            shift = np.where(tps_x["channel"]%2560 < 2080, 1600, 2080)
+            tps_x["channel"] = tps_x["channel"]%2560 - shift + offset*480
         img_x = create_image_one_view(tps_x, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, y_min_overall=y_min_overall, y_max_overall=y_max_overall)
     if only_collection:
         return img_u, img_v, img_x # calling here to avoid wasting execution time. U and V will be empty

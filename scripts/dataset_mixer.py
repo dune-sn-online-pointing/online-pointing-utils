@@ -34,8 +34,8 @@ if __name__ == '__main__':
         print("No dataset image found!")
         exit()
     # check if data and labels have different lengths
-    mix_process_label = False
-    mix_true_dir_label = False
+    mix_process_label = True
+    mix_true_dir_label = True
 
     if len(datasets_img) != len(datasets_process_label):
         print("data and labels have different lengths!")
@@ -60,6 +60,7 @@ if __name__ == '__main__':
         print(i)
         print("loading dataset: ", datasets_img[i])
         dataset_img = np.load(datasets_img[i], allow_pickle=True)
+        print("Shape of the dataset_img: ", dataset_img.shape)
         ds_img.append(dataset_img)
         if mix_process_label:
             print("loading process label: ", datasets_process_label[i])

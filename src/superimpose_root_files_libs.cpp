@@ -32,11 +32,13 @@ group filter_groups_within_radius(std::vector<group>& groups, float radius) {
     int idx_best = -1;
     int idx = 0;
     int event_number = -1;
+    int n_offsets = 0;
     for (auto g : groups) {
         if (g.get_supernova_tp_fraction() > 0.) {
             if (idx_best == -1) {
                 idx_best = idx;
                 event_number = g.get_tp(0)[variables_to_index["event"]];
+                n_offsets = g.get_tp(0)[variables_to_index["time_start"]] / EVENTS_OFFSET;
             } 
             else {
                 if (g.get_min_distance_from_true_pos() < groups[idx_best].get_min_distance_from_true_pos()) {
@@ -64,6 +66,11 @@ group filter_groups_within_radius(std::vector<group>& groups, float radius) {
     std::vector<std::vector<int>> tps_all;
     for (auto const& g : filtered_groups) {
         tps = g.get_tps();
+        // fix the different offsets coming from different events
+        for (int i = 0; i < tps.size(); i++) {
+            tps[i][variables_to_index["time_start"]] = tps[i][variables_to_index["time_start"]]%(EVENTS_OFFSET) + n_offsets*EVENTS_OFFSET;
+            tps[i][variables_to_index["time_peak"]] = tps[i][variables_to_index["time_peak"]]%(EVENTS_OFFSET) + n_offsets*EVENTS_OFFSET;
+        }
         tps_all.insert(tps_all.end(), tps.begin(), tps.end());
     }
     // set all the event numbers to the same value
