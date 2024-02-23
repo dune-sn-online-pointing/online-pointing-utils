@@ -1,0 +1,4 @@
+[submodule "submodules/simple-cpp-cmd-line-parser"]
+	path = submodules/simple-cpp-cmd-line-parser
+	url = https://git.t2k.org/ablanche/simple-cpp-cmd-line-parser.git
+	branch = main
