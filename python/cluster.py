@@ -2,7 +2,7 @@ import numpy as np
 import sys
 import ROOT
 
-class Group: # Only good for HD geometry 1x2x6
+class cluster: # Only good for HD geometry 1x2x6
     def __init__(self, tps):
         self.tps_ = tps
         self.true_dir_ = None
@@ -37,7 +37,7 @@ class Group: # Only good for HD geometry 1x2x6
         self.min_distance_from_true_pos_ = min_distance_from_true_pos
 
 
-def read_root_file_to_groups(filename):
+def read_root_file_to_clusters(filename):
         # Create a structured array with column names
     dt = np.dtype([('time_start', float), 
                     ('time_over_threshold', float),
@@ -52,7 +52,7 @@ def read_root_file_to_groups(filename):
                     ('flag', int)])
 
     file = ROOT.TFile.Open(filename, "READ")
-    groups = []
+    clusters = []
     event_numbers = []
     for i in file.GetListOfKeys():
         # get the TTree
@@ -63,7 +63,7 @@ def read_root_file_to_groups(filename):
         for entry in tree:
             counter += 1
             if counter % 1000 == 0:
-                print(f"Group {counter}")
+                print(f"cluster {counter}")
             nrows = entry.nrows
             event = entry.event
             event_numbers.append(event )
@@ -80,11 +80,11 @@ def read_root_file_to_groups(filename):
                 m[j]["algorithm"] = entry.matrix[j][8]
                 m[j]["version"] = entry.matrix[j][9]
                 m[j]["flag"] = entry.matrix[j][10]
-            this_group = Group(m)
+            this_cluster = cluster(m)
             reco_pos = np.array([entry.reco_pos_x, entry.reco_pos_y, entry.reco_pos_z])
             true_dir = np.array([entry.true_dir_x, entry.true_dir_y, entry.true_dir_z])
-            this_group.set_variables(true_dir = true_dir, reco_pos = reco_pos, true_label = entry.true_label, supernova_tp_fraction = entry.supernova_tp_fraction, min_distance_from_true_pos = entry.min_distance_from_true_pos)
-            groups.append(this_group)
+            this_cluster.set_variables(true_dir = true_dir, reco_pos = reco_pos, true_label = entry.true_label, supernova_tp_fraction = entry.supernova_tp_fraction, min_distance_from_true_pos = entry.min_distance_from_true_pos)
+            clusters.append(this_cluster)
         break
-    return groups, event_numbers
+    return clusters, event_numbers
 

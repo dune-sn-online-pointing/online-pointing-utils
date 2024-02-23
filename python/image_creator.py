@@ -160,7 +160,7 @@ def create_images(tps_to_draw, channel_map, min_tps_to_create_img=2, make_fixed_
 
 def show_image(tps_to_draw, channel_map, min_tps_to_create_img=2, make_fixed_size=False, width=500, height=1000, x_margin=10, y_margin=200, only_collection=False, img_u=None, img_v=None, img_x=None):
     '''
-    :param tps_to_draw: all trigger primitives in the group
+    :param tps_to_draw: all trigger primitives in the cluster
     :param channel_map: channel map
     :param min_tps: minimum number of TPs to create the image
     :param make_fixed_size: if True, the image will have fixed size, otherwise it will be as big as the TPs

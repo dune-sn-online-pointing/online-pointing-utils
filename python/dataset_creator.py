@@ -4,12 +4,12 @@ import sys
 
 from image_creator import *
 from utils import *
-from group import *
+from cluster import *
 
 
-def create_dataset_img(groups, channel_map, min_tps_to_create_img=1, make_fixed_size=False, width=300, height=100, x_margin=2, y_margin=10, only_collection=True):
+def create_dataset_img(clusters, channel_map, min_tps_to_create_img=1, make_fixed_size=False, width=300, height=100, x_margin=2, y_margin=10, only_collection=True):
     '''
-    :param groups: list of groups
+    :param clusters: list of clusters
     :param channel_map: array with the channel map
     :param min_tps_to_create_img: minimum number of tps to create an image
     :param make_fixed_size: if True, the images will have a fixed size
@@ -20,14 +20,14 @@ def create_dataset_img(groups, channel_map, min_tps_to_create_img=1, make_fixed_
     :return: list of images
     '''
     if only_collection:
-        dataset_img = np.empty((len(groups), height, width, 1), dtype=np.uint16)
+        dataset_img = np.empty((len(clusters), height, width, 1), dtype=np.uint16)
     else:
-        dataset_img = np.empty((len(groups), height, width, 3), dtype=np.uint16)
+        dataset_img = np.empty((len(clusters), height, width, 3), dtype=np.uint16)
 
-    for i, group in enumerate(groups):
-        if len(group) >= min_tps_to_create_img:
-            # img = create_image(group.get_tps(), channel_map, make_fixed_size, width, height, x_margin, y_margin, only_collection)
-            tps_to_draw = group.get_tps()
+    for i, cluster in enumerate(clusters):
+        if len(cluster) >= min_tps_to_create_img:
+            # img = create_image(cluster.get_tps(), channel_map, make_fixed_size, width, height, x_margin, y_margin, only_collection)
+            tps_to_draw = cluster.get_tps()
             tps_to_draw['time_start'] = tps_to_draw['time_start']%5000
             tps_to_draw['time_peak'] = tps_to_draw['time_peak']%5000
 
@@ -41,24 +41,24 @@ def create_dataset_img(groups, channel_map, min_tps_to_create_img=1, make_fixed_
     return dataset_img
 
 
-def create_dataset_label_process(groups):
+def create_dataset_label_process(clusters):
     '''
-    :param groups: list of groups
+    :param clusters: list of clusters
     :return: list of labels
     '''
-    dataset_label = np.empty(len(groups), dtype=np.uint8)
-    for i, group in enumerate(groups):
-        dataset_label[i] = group.get_true_label()
+    dataset_label = np.empty(len(clusters), dtype=np.uint8)
+    for i, cluster in enumerate(clusters):
+        dataset_label[i] = cluster.get_true_label()
     return dataset_label    
 
-def create_dataset_label_true_dir(groups):
+def create_dataset_label_true_dir(clusters):
     '''
-    :param groups: list of groups
+    :param clusters: list of clusters
     :return: list of labels
     '''
-    dataset_label = np.empty((len(groups), 3), dtype=np.float32)
-    for i, group in enumerate(groups):
-        dataset_label[i] = group.get_true_dir()
+    dataset_label = np.empty((len(clusters), 3), dtype=np.float32)
+    for i, cluster in enumerate(clusters):
+        dataset_label[i] = cluster.get_true_dir()
     return dataset_label
 
 def save_samples_from_ds(dataset, output_folder, name="img", n_samples=10):

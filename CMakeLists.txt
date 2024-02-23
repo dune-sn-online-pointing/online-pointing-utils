@@ -20,9 +20,9 @@ add_subdirectory( ${CMAKE_SOURCE_DIR}/app )
 set( LIB_NAME "utils-libraries" )
 
 set( SRC_FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/group.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/cluster.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/position_calculator.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/group_to_root_libs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/cluster_to_root_libs.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/superimpose_root_files_libs.cpp
 )
 

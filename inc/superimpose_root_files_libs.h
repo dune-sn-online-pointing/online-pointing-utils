@@ -15,11 +15,11 @@
 #include "TLeaf.h"
 #include "TMatrixD.h"
 
-#include "group.h"
+#include "cluster.h"
 
-group filter_groups_within_radius(std::vector<group>& groups, float radius);
+cluster filter_clusters_within_radius(std::vector<cluster>& clusters, float radius);
 
-float distance(group group1, group group2);
+float distance(cluster cluster1, cluster cluster2);
 
 
 

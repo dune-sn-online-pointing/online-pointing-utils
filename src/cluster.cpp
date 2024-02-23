@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 
-#include "group.h"
+#include "cluster.h"
 #include "position_calculator.h" 
 
 std::map<std::string, int> variables_to_index = {
@@ -28,7 +28,7 @@ std::map<std::string, int> variables_to_index = {
 };
 
 
-void group::update_group_info() {
+void cluster::update_cluster_info() {
     // the reconstructed position will be the average of the tps
     // we want to save the minimum distance from the true position
     float min_distance = 1000000;

@@ -1,5 +1,5 @@
-#ifndef GROUP_H
-#define GROUP_H
+#ifndef CLUSTER_H
+#define CLUSTER_H
 
 #include <vector>
 #include <cmath>
@@ -9,16 +9,16 @@
 extern std::map<std::string, int> variables_to_index;
 
 
-class group {
+class cluster {
 public:
-    group() { true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = 0;}
-    group(std::vector<std::vector<double>> tps) { tps_ = tps; true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = 0; update_group_info(); }
-    ~group() { }
+    cluster() { true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = 0;}
+    cluster(std::vector<std::vector<double>> tps) { tps_ = tps; true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = 0; update_cluster_info(); }
+    ~cluster() { }
 
-    void update_group_info();
+    void update_cluster_info();
 
     std::vector<std::vector<double>> get_tps() const { return tps_; }
-    void set_tps(std::vector<std::vector<double>> tps) { tps_ = tps; update_group_info();}
+    void set_tps(std::vector<std::vector<double>> tps) { tps_ = tps; update_cluster_info();}
     std::vector<double> get_tp(int i) { return tps_[i]; }
     int get_size() { return tps_.size(); }
     std::vector<int> get_true_pos() { return true_pos_; }
@@ -46,4 +46,4 @@ private:
     float supernova_tp_fraction_;
 };
 
-#endif
+#endif // CLUSTER_H

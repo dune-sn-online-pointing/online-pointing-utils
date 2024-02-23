@@ -13,8 +13,8 @@
 #include "TLeaf.h"
 #include "TMatrixD.h"
 
-#include "group_to_root_libs.h"
-#include "group.h"
+#include "cluster_to_root_libs.h"
+#include "cluster.h"
 #include "position_calculator.h"
 
 
@@ -88,9 +88,9 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
     return tps;
 }
 
-std::vector<group> group_maker(std::vector<std::vector<double>>& all_tps, int ticks_limit, int channel_limit, int min_tps_to_group, int adc_integral_cut) {
+std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
     std::vector<std::vector<std::vector<double>>> buffer;
-    std::vector<group> groups;
+    std::vector<cluster> clusters;
     for (auto& tp : all_tps) {
         if (buffer.size() == 0) {
             std::vector<std::vector<double>> temp;
@@ -140,14 +140,14 @@ std::vector<group> group_maker(std::vector<std::vector<double>>& all_tps, int ti
                 }
                 else {
                     // std::cout << "not time" << std::endl<< std::endl<< std::endl<< std::endl;
-                    if (candidate.size() >= min_tps_to_group) {
+                    if (candidate.size() >= min_tps_to_cluster) {
                         int adc_integral = 0;
                         for (auto& tp2 : candidate) {
                             adc_integral += tp2[4];
                         }
                         if (adc_integral > adc_integral_cut) {
-                            group g(candidate);
-                            groups.push_back(g);
+                            cluster g(candidate);
+                            clusters.push_back(g);
                         }
                     }
                 }
@@ -161,20 +161,20 @@ std::vector<group> group_maker(std::vector<std::vector<double>>& all_tps, int ti
     }
     if (buffer.size() > 0) {
         for (auto& candidate : buffer) {
-            if (candidate.size() >= min_tps_to_group) {
+            if (candidate.size() >= min_tps_to_cluster) {
                 int adc_integral = 0;
                 for (auto& tp : candidate) {
                     adc_integral += tp[4];
                 }
                 if (adc_integral > adc_integral_cut) {
-                    group g(candidate);
-                    groups.push_back(g);
+                    cluster g(candidate);
+                    clusters.push_back(g);
                 }
             }
         }
     }
 
-    return groups;
+    return clusters;
 }
 
 // create a map connectig the file index to the true x y z
@@ -250,12 +250,12 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
     return file_idx_to_true_xyz;
 }
 
-std::vector<group> filter_main_tracks(std::vector<group>& groups) { // valid only if the groups are ordered by event and for clean sn data
-    std::vector<group> main_tracks;
-    group main_track;
-    int event = groups[0].get_tp(0)[variables_to_index["event"]];
-    main_track = groups[0];
-    for (auto& g : groups) {
+std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
+    std::vector<cluster> main_tracks;
+    cluster main_track;
+    int event = clusters[0].get_tp(0)[variables_to_index["event"]];
+    main_track = clusters[0];
+    for (auto& g : clusters) {
         if (g.get_tp(0)[variables_to_index["event"]] != event) {
             main_tracks.push_back(main_track);
             main_track = g;
@@ -271,31 +271,31 @@ std::vector<group> filter_main_tracks(std::vector<group>& groups) { // valid onl
     return main_tracks;
 }
 
-std::vector<group> filter_out_main_track(std::vector<group>& groups) { // valid only if the groups are ordered by event and for clean sn data
-    std::vector<group> blips;
-    int current_event = groups[0].get_tp(0)[variables_to_index["event"]];
-    group main_group;
+std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
+    std::vector<cluster> blips;
+    int current_event = clusters[0].get_tp(0)[variables_to_index["event"]];
+    cluster main_cluster;
     float min_distance = 100000000;
     std::vector<int> bad_idx_list;
 
     int idx = 0;
-    for (auto& group : groups) {
-        if (group.get_tp(0)[variables_to_index["event"]] != current_event) {
+    for (auto& cluster : clusters) {
+        if (cluster.get_tp(0)[variables_to_index["event"]] != current_event) {
             bad_idx_list.push_back(idx);
-            main_group = group;
-            current_event = group.get_tp(0)[variables_to_index["event"]];
+            main_cluster = cluster;
+            current_event = cluster.get_tp(0)[variables_to_index["event"]];
         }
         else {
-            if (group.get_min_distance_from_true_pos() < min_distance and group.get_true_label() == 1) {
-                main_group = group;
-                min_distance = group.get_min_distance_from_true_pos();
+            if (cluster.get_min_distance_from_true_pos() < min_distance and cluster.get_true_label() == 1) {
+                main_cluster = cluster;
+                min_distance = cluster.get_min_distance_from_true_pos();
             }
         }
     idx += 1;
     }
-    for (int i=0; i<groups.size(); i++) {
+    for (int i=0; i<clusters.size(); i++) {
         if (std::find(bad_idx_list.begin(), bad_idx_list.end(), i) == bad_idx_list.end()) {
-            blips.push_back(groups[i]);
+            blips.push_back(clusters[i]);
         }
     }
     
@@ -303,7 +303,7 @@ std::vector<group> filter_out_main_track(std::vector<group>& groups) { // valid 
     return blips;
 }
 
-void write_groups_to_root(std::vector<group>& groups, std::string root_filename) {
+void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_filename) {
     // create folder if it does not exist
     std::string folder = root_filename.substr(0, root_filename.find_last_of("/"));
     std::string command = "mkdir -p " + folder;
@@ -343,7 +343,7 @@ void write_groups_to_root(std::vector<group>& groups, std::string root_filename)
     tree->Branch("supernova_tp_fraction", &supernova_tp_fraction);
 
     // fill the tree
-    for (auto& g : groups) {
+    for (auto& g : clusters) {
         matrix = g.get_tps();
         nrows = g.get_size();
         event = g.get_tp(0)[variables_to_index["event"]];
@@ -366,9 +366,9 @@ void write_groups_to_root(std::vector<group>& groups, std::string root_filename)
     return;   
 }
 
-std::vector<group> read_groups_from_root(std::string root_filename){
-    std::cout << "Reading groups from: " << root_filename << std::endl;
-    std::vector<group> groups;
+std::vector<cluster> read_clusters_from_root(std::string root_filename){
+    std::cout << "Reading clusters from: " << root_filename << std::endl;
+    std::vector<cluster> clusters;
     TFile *f = new TFile();
     f = TFile::Open(root_filename.c_str());
     // print the list of objects in the file
@@ -406,25 +406,25 @@ std::vector<group> read_groups_from_root(std::string root_filename){
     tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
     for (int i = 0; i < tree->GetEntries(); i++) {
         tree->GetEntry(i);
-        group g(matrix);
+        cluster g(matrix);
         g.set_true_dir({true_dir_x, true_dir_y, true_dir_z});
         g.set_true_energy(true_energy);
         g.set_true_label(true_label);
         g.set_reco_pos({reco_pos_x, reco_pos_y, reco_pos_z});
         g.set_min_distance_from_true_pos(min_distance_from_true_pos);
         g.set_supernova_tp_fraction(supernova_tp_fraction);       
-        groups.push_back(g);
+        clusters.push_back(g);
     }
     f->Close();
-    return groups;
+    return clusters;
 }
 
-std::map<int, std::vector<group>> create_event_mapping(std::vector<group>& groups){
-    std::map<int, std::vector<group>> event_mapping;
-    for (auto& g : groups) {
+std::map<int, std::vector<cluster>> create_event_mapping(std::vector<cluster>& clusters){
+    std::map<int, std::vector<cluster>> event_mapping;
+    for (auto& g : clusters) {
     // check if the event is already in the map
         if (event_mapping.find(g.get_tp(0)[variables_to_index["event"]]) == event_mapping.end()) {
-            std::vector<group> temp;
+            std::vector<cluster> temp;
             temp.push_back(g);
             event_mapping[g.get_tp(0)[variables_to_index["event"]]] = temp;
         }
