@@ -7,7 +7,7 @@
 #include "../../inc/position_calculator.h"
 #include "../../inc/group_to_root_libs.h"
 #include "../../inc/group.h"
-#include "cpp_vector_dict.cxx"
+// #include "cpp_vector_dict.cxx"
 
 
 
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
         filenames.push_back(line);
     }
     std::cout << "Number of files: " << filenames.size() << std::endl;
-    std::vector<std::vector<int>> tps = file_reader(filenames, plane, supernova_option, max_events_per_filename);
+    std::vector<std::vector<double>> tps = file_reader(filenames, plane, supernova_option, max_events_per_filename);
     std::cout << "Number of tps: " << tps.size() << std::endl;
     std::map<int, std::vector<float>> file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
     std::cout << "XYZ map created" << std::endl;

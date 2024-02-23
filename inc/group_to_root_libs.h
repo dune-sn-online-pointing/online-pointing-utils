@@ -17,10 +17,10 @@
 #include "TMatrixD.h"
 
 // read the tps from the files and save them in a vector
-std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, int plane=2, int supernova_option=0, int max_events_per_filename = INT_MAX);
+std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames, int plane=2, int supernova_option=0, int max_events_per_filename = INT_MAX);
 
 // create the groups from the tps
-std::vector<group> group_maker(std::vector<std::vector<int>>& all_tps, int ticks_limit=3, int channel_limit=1, int min_tps_to_group=1, int adc_integral_cut=0);
+std::vector<group> group_maker(std::vector<std::vector<double>>& all_tps, int ticks_limit=3, int channel_limit=1, int min_tps_to_group=1, int adc_integral_cut=0);
 
 // create a map connectig the file index to the true x y z
 std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> filenames);

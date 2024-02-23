@@ -18,8 +18,8 @@
 
 
 // read the tps from the files and save them in a vector
-std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, int plane, int supernova_option, int max_events_per_filename) {
-    std::vector<std::vector<int>> tps;
+std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames, int plane, int supernova_option, int max_events_per_filename) {
+    std::vector<std::vector<double>> tps;
     std::string line;
     int n_events_offset = 0;
     int file_idx = 0;
@@ -30,8 +30,8 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
         while (std::getline(infile, line)) {
 
             std::istringstream iss(line);
-            std::vector<int> tp;
-            int val;
+            std::vector<double> tp;
+            double val;
             while (iss >> val) {
                 tp.push_back(val);
             }
@@ -80,31 +80,31 @@ std::vector<std::vector<int>> file_reader(std::vector<std::string> filenames, in
         ++file_idx;
     }
         // sort the TPs by time
-    std::sort(tps.begin(), tps.end(), [](const std::vector<int>& a, const std::vector<int>& b) {
+    std::sort(tps.begin(), tps.end(), [](const std::vector<double>& a, const std::vector<double>& b) {
         return a[0] < b[0];
     });
 
     return tps;
 }
 
-std::vector<group> group_maker(std::vector<std::vector<int>>& all_tps, int ticks_limit, int channel_limit, int min_tps_to_group, int adc_integral_cut) {
-    std::vector<std::vector<std::vector<int>>> buffer;
+std::vector<group> group_maker(std::vector<std::vector<double>>& all_tps, int ticks_limit, int channel_limit, int min_tps_to_group, int adc_integral_cut) {
+    std::vector<std::vector<std::vector<double>>> buffer;
     std::vector<group> groups;
     for (auto& tp : all_tps) {
         if (buffer.size() == 0) {
-            std::vector<std::vector<int>> temp;
+            std::vector<std::vector<double>> temp;
             temp.push_back(tp);
             buffer.push_back(temp);
         }
         else {
-            std::vector<std::vector<std::vector<int>>> buffer_copy = buffer;
+            std::vector<std::vector<std::vector<double>>> buffer_copy = buffer;
             buffer.clear();
             bool appended = false;
             int idx = 0;
             int idx_appended;
             for (auto& candidate : buffer_copy) {
                 // get a the max containing the times of the TPs in the candidate
-                int max_time = 0;
+                double max_time = 0;
                 for (auto& tp2 : candidate) {
                     max_time = std::max(max_time, tp2[0] + tp2[1]);
                 }
@@ -152,7 +152,7 @@ std::vector<group> group_maker(std::vector<std::vector<int>>& all_tps, int ticks
                 }
             }
             if (!appended) {
-                std::vector<std::vector<int>> temp;
+                std::vector<std::vector<double>> temp;
                 temp.push_back(tp);
                 buffer.push_back(temp);
             }
@@ -311,7 +311,8 @@ void write_groups_to_root(std::vector<group>& groups, std::string root_filename)
     TFile *f = new TFile(root_filename.c_str(), "recreate");
     TTree *tree = new TTree("tree", "tree");
     // prepare objects to save the data
-    std::vector<std::vector<int>> matrix;
+    // std::vector<std::vector<int>> matrix;
+    std::vector<std::vector<double>> matrix;
     int nrows;
     int event;
     float true_dir_x;
@@ -373,8 +374,8 @@ std::vector<group> read_groups_from_root(std::string root_filename){
     f->ls();
     TTree *tree = (TTree*)f->Get("tree");
     
-    std::vector<std::vector<int>> matrix;
-    std::vector<std::vector<int>>* matrix_ptr = &matrix;
+    std::vector<std::vector<double>> matrix;
+    std::vector<std::vector<double>>* matrix_ptr = &matrix;
 
     int nrows;
     int event;

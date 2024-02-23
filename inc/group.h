@@ -12,14 +12,14 @@ extern std::map<std::string, int> variables_to_index;
 class group {
 public:
     group() { true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = 0;}
-    group(std::vector<std::vector<int>> tps) { tps_ = tps; true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = 0; update_group_info(); }
+    group(std::vector<std::vector<double>> tps) { tps_ = tps; true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = 0; update_group_info(); }
     ~group() { }
 
     void update_group_info();
 
-    std::vector<std::vector<int>> get_tps() const { return tps_; }
-    void set_tps(std::vector<std::vector<int>> tps) { tps_ = tps; update_group_info();}
-    std::vector<int> get_tp(int i) { return tps_[i]; }
+    std::vector<std::vector<double>> get_tps() const { return tps_; }
+    void set_tps(std::vector<std::vector<double>> tps) { tps_ = tps; update_group_info();}
+    std::vector<double> get_tp(int i) { return tps_[i]; }
     int get_size() { return tps_.size(); }
     std::vector<int> get_true_pos() { return true_pos_; }
     std::vector<int> get_reco_pos() { return reco_pos_; }
@@ -36,7 +36,7 @@ public:
     void set_min_distance_from_true_pos(float min_distance) { min_distance_from_true_pos_ = min_distance; }
     void set_supernova_tp_fraction(float fraction) { supernova_tp_fraction_ = fraction; }
 private:
-    std::vector<std::vector<int>> tps_;
+    std::vector<std::vector<double>> tps_;
     std::vector<int> true_pos_;    
     std::vector<float> true_dir_;
     std::vector<int> reco_pos_;    

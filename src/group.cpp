@@ -36,7 +36,8 @@ void group::update_group_info() {
     int true_label = tps_[0][variables_to_index["ptype"]];
     for (int i = 0; i < tps_.size(); i++) {
         std::vector<int> pos = calculate_position(tps_[i]);
-        std::vector<int> true_pos = {tps_[i][variables_to_index["true_x"]], tps_[i][variables_to_index["true_y"]], tps_[i][variables_to_index["true_z"]]};
+        std::vector<int> true_pos = {int(tps_[i][variables_to_index["true_x"]]), int(tps_[i][variables_to_index["true_y"]]), int(tps_[i][variables_to_index["true_z"]])};
+        // std::vector<int> true_pos = {tps_[i][variables_to_index["true_x"]], tps_[i][variables_to_index["true_y"]], tps_[i][variables_to_index["true_z"]]};
         float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[2] - true_pos[2], 2));
         // float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[1] - true_pos[1], 2) + pow(pos[2] - true_pos[2], 2));
         if (distance < min_distance and tps_[i][variables_to_index["ptype"]] == 1) {

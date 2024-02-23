@@ -17,7 +17,7 @@ const double apa_width_in_cm = 4.7;
 const int backtracker_error_margin = 4;
 const double apa_angular_coeff = tan(apa_angle * M_PI / 180);
 
-std::vector<int> calculate_position(std::vector<int> tp);
+std::vector<int> calculate_position(std::vector<double> tp);
 
 #endif
 

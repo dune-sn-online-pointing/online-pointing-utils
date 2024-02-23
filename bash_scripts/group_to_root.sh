@@ -14,8 +14,8 @@ cd ../app/group_to_root
 make clean
 make
 
-./group_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/lists/text_files/cc_lab.txt /eos/user/d/dapullia/root_group_files/cc-lab/ $TICK_LIMITS $CHANNEL_LIMIT $MIN_TPS_TO_GROUP $PLANE $SUPERNOVA_OPTION $MAIN_TRACK_OPTION $MAX_EVENTS_PER_FILENAME $ADC_INTEGRAL_CUT
-./group_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/lists/text_files/es_lab.txt /eos/user/d/dapullia/root_group_files/es-lab/ $TICK_LIMITS $CHANNEL_LIMIT $MIN_TPS_TO_GROUP $PLANE $SUPERNOVA_OPTION $MAIN_TRACK_OPTION $MAX_EVENTS_PER_FILENAME $ADC_INTEGRAL_CUT
+./group_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/lists/text_files/cc_lab.txt /eos/user/d/dapullia/root_group_files/eliminami/ $TICK_LIMITS $CHANNEL_LIMIT $MIN_TPS_TO_GROUP $PLANE $SUPERNOVA_OPTION $MAIN_TRACK_OPTION $MAX_EVENTS_PER_FILENAME $ADC_INTEGRAL_CUT
+# ./group_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/lists/text_files/es_lab.txt /eos/user/d/dapullia/root_group_files/es-lab/ $TICK_LIMITS $CHANNEL_LIMIT $MIN_TPS_TO_GROUP $PLANE $SUPERNOVA_OPTION $MAIN_TRACK_OPTION $MAX_EVENTS_PER_FILENAME $ADC_INTEGRAL_CUT
 # ./group_to_root.exe /afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/lists/text_files/es-cc-bkg-truth.txt /eos/user/d/dapullia/root_group_files/es-cc-bkg-truth/bkg/ $TICK_LIMITS $CHANNEL_LIMIT $MIN_TPS_TO_GROUP $PLANE $SUPERNOVA_OPTION $MAIN_TRACK_OPTION $MAX_EVENTS_PER_FILENAME $ADC_INTEGRAL_CUT
 
 
