@@ -7,7 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <climits>
-#include "../inc/group.h"
+
 // include root libraries
 #include "TFile.h"
 #include "TTree.h"
@@ -15,6 +15,7 @@
 #include "TLeaf.h"
 #include "TMatrixD.h"
 
+#include "group.h"
 
 group filter_groups_within_radius(std::vector<group>& groups, float radius);
 

@@ -4,10 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <climits>
-#include "../inc/group.h"
-#include "../inc/group_to_root_libs.h"
-#include "../inc/position_calculator.h"
-#include "../inc/superimpose_root_files_libs.h"
+
 // include root libraries
 #include "TFile.h"
 #include "TTree.h"
@@ -15,6 +12,10 @@
 #include "TLeaf.h"
 #include "TMatrixD.h"
 
+#include "group.h"
+#include "group_to_root_libs.h"
+#include "position_calculator.h"
+#include "superimpose_root_files_libs.h"
 
 float distance(group group1, group group2) {
     float x1 = group1.get_reco_pos()[0];
@@ -62,14 +63,14 @@ group filter_groups_within_radius(std::vector<group>& groups, float radius) {
     }
 
     group final_collective_group;
-    std::vector<std::vector<int>> tps;
-    std::vector<std::vector<int>> tps_all;
+    std::vector<std::vector<double>> tps; // using double in group, need to keep consistency
+    std::vector<std::vector<double>> tps_all; // using double in group, need to keep consistency
     for (auto const& g : filtered_groups) {
         tps = g.get_tps();
         // fix the different offsets coming from different events
         for (int i = 0; i < tps.size(); i++) {
-            tps[i][variables_to_index["time_start"]] = tps[i][variables_to_index["time_start"]]%(EVENTS_OFFSET) + n_offsets*EVENTS_OFFSET;
-            tps[i][variables_to_index["time_peak"]] = tps[i][variables_to_index["time_peak"]]%(EVENTS_OFFSET) + n_offsets*EVENTS_OFFSET;
+            tps[i][variables_to_index["time_start"]] =  (int) tps[i][variables_to_index["time_start"]]%(EVENTS_OFFSET) + n_offsets*EVENTS_OFFSET;
+            tps[i][variables_to_index["time_peak"]] = (int) tps[i][variables_to_index["time_peak"]]%(EVENTS_OFFSET) + n_offsets*EVENTS_OFFSET;
         }
         tps_all.insert(tps_all.end(), tps.begin(), tps.end());
     }

@@ -1,3 +1,4 @@
+build/*
 lists/
 *.o
 *.exe

@@ -5,9 +5,6 @@
 #include <fstream>
 #include <sstream>
 #include <climits>
-#include "../inc/group_to_root_libs.h"
-#include "../inc/group.h"
-#include "../inc/position_calculator.h"
 
 // include root libraries
 #include "TFile.h"
@@ -15,6 +12,10 @@
 #include "TBranch.h"
 #include "TLeaf.h"
 #include "TMatrixD.h"
+
+#include "group_to_root_libs.h"
+#include "group.h"
+#include "position_calculator.h"
 
 
 // read the tps from the files and save them in a vector

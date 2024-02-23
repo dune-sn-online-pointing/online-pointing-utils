@@ -1,8 +1,5 @@
 #include <vector>
-#include "../inc/position_calculator.h" 
-
-
-
+#include "position_calculator.h" 
 
 // std::vector<int> calculate_position(std::vector<int> tp) { // only works for plane 2
 //     int z_apa_offset = tp[3] / (2560*2) * (apa_lenght_in_cm + offset_between_apa_in_cm);

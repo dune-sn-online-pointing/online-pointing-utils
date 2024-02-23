@@ -8,13 +8,15 @@
 #include <iostream>
 #include <fstream>
 #include <climits>
-#include "../inc/group.h"
+
 // include root libraries
 #include "TFile.h"
 #include "TTree.h"
 #include "TBranch.h"
 #include "TLeaf.h"
 #include "TMatrixD.h"
+
+#include "group.h"
 
 // read the tps from the files and save them in a vector
 std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames, int plane=2, int supernova_option=0, int max_events_per_filename = INT_MAX);

@@ -1,7 +1,8 @@
 #include <iostream>
 #include <vector>
-#include "../inc/group.h"
-#include "../inc/position_calculator.h" 
+
+#include "group.h"
+#include "position_calculator.h" 
 
 std::map<std::string, int> variables_to_index = {
     {"time_start", 0},
