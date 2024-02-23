@@ -5,26 +5,66 @@
 #include <random>
 #include <ctime>
 
+#include "CmdLineParser.h"
+#include "Logger.h"
+
 #include "position_calculator.h"
 #include "cluster_to_root_libs.h"
 #include "cluster.h"
 #include "superimpose_root_files_libs.h"
 
+LoggerInit([]{
+  Logger::getUserHeader() << "[" << FILENAME << "]";
+});
+
 int main(int argc, char* argv[]) {
-    std::string sig_cluster_filename;
-    std::string bkg_cluster_filename;
-    std::string outfolder;
-    float radius = 1.0;
+
+    CmdLineParser clp;
+
+    clp.getDescription() << "> superimpose_root_files app."<< std::endl;
+
+    clp.addDummyOption("Main options");
+    clp.addOption("sig_cluster_filename",    {"-s", "--sig-filename"}, "Signal clusters filename");
+    clp.addOption("bkg_cluster_filename",    {"-b", "--bkg-filename"}, "Background clusters filename");
+    clp.addOption("out_folder",               {"-o", "--output-folder"}, "Specify output directory path");
+    clp.addOption("radius",                  {"-r", "--radius"}, "Radius to consider, in [m]");
+
+    clp.addDummyOption("Triggers");
+    clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
+
+    clp.addDummyOption();
+
+    // usage always displayed
+    LogInfo << clp.getDescription().str() << std::endl;
+
+    LogInfo << "Usage: " << std::endl;
+    LogInfo << clp.getConfigSummary() << std::endl << std::endl;
+
+    clp.parseCmdLine(argc, argv);
+
+    LogThrowIf( clp.isNoOptionTriggered(), "No option was provided." );
+
+    LogInfo << "Provided arguments: " << std::endl;
+    LogInfo << clp.getValueSummary() << std::endl << std::endl;
+  
+
+    std::string sig_cluster_filename = clp.getOptionVal<std::string>("sig_cluster_filename");
+    std::string bkg_cluster_filename = clp.getOptionVal<std::string>("bkg_cluster_filename");
+    std::string outfolder = clp.getOptionVal<std::string>("out_folder");
     
-    if (argc < 5) {
-        std::cout << "Usage: superimpose_root_files <sig_cluster_filename> <bkg_cluster_filename> <outfolder> <radius>" << std::endl;
-        return 1;        
-    } else {
-        sig_cluster_filename = argv[1];
-        bkg_cluster_filename = argv[2];
-        outfolder = argv[3];
-        radius = std::stof(argv[4]);
-    }
+    // default value 
+    float radius = 1.0; // m 
+    radius = clp.getOptionVal<double>("radius");
+    
+    // if (argc < 5) {
+    //     std::cout << "Usage: superimpose_root_files <sig_cluster_filename> <bkg_cluster_filename> <outfolder> <radius>" << std::endl;
+    //     return 1;        
+    // } else {
+    //     sig_cluster_filename = argv[1];
+    //     bkg_cluster_filename = argv[2];
+    //     outfolder = argv[3];
+    //     radius = std::stof(argv[4]);
+    // }
 
     // start the clock
     std::clock_t start;

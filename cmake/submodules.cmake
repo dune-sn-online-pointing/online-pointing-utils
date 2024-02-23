@@ -26,3 +26,18 @@ endfunction( checkSubmodule )
 cmessage( STATUS "Looking for simple-cpp-cmd-line-parser submodule..." )
 checkSubmodule( simple-cpp-cmd-line-parser )
 include_directories( ${SUBMODULE_DIR}/simple-cpp-cmd-line-parser/include )
+
+
+###################################
+# Simple C++ logger
+###################################
+cmessage( STATUS "Looking for simple-cpp-logger submodule..." )
+checkSubmodule( simple-cpp-logger )
+include_directories( ${SUBMODULE_DIR}/simple-cpp-logger/include )
+add_definitions( -D LOGGER_MAX_LOG_LEVEL_PRINTED=6 )
+add_definitions( -D LOGGER_PREFIX_LEVEL=3 )
+add_definitions( -D LOGGER_TIME_FORMAT="\\\"%d/%m/%Y %H:%M:%S"\\\" )
+add_definitions( -D LOGGER_ENABLE_COLORS=1 )
+add_definitions( -D LOGGER_ENABLE_COLORS_ON_USER_HEADER=1 )
+#add_definitions( -D LOGGER_PREFIX_FORMAT="\\\"{TIME} {USER_HEADER} {FILELINE}"\\\" )
+add_definitions( -D LOGGER_PREFIX_FORMAT="\\\"{TIME} {USER_HEADER}"\\\" )
