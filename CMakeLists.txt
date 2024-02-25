@@ -12,6 +12,8 @@ include( ${CMAKE_SOURCE_DIR}/cmake/submodules.cmake )
 add_subdirectory( ${CMAKE_SOURCE_DIR}/app )
 # add_subdirectory( ${CMAKE_SOURCE_DIR}/lib )
 
+################################################################
+# Link C++ libraries
 
 # for the libraries, that are in src and inc.
 # We could move src and inc under lib/, 
@@ -41,3 +43,8 @@ target_link_libraries(
 )
 
 install( TARGETS ${LIB_NAME} DESTINATION lib )
+
+################################################################
+# Link python libraries
+
+add_subdirectory(${CMAKE_SOURCE_DIR}/python)
