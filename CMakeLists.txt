@@ -47,4 +47,4 @@ install( TARGETS ${LIB_NAME} DESTINATION lib )
 ################################################################
 # Link python libraries
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/python)
+# add_subdirectory(${CMAKE_SOURCE_DIR}/python)
