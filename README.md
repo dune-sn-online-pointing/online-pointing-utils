@@ -1,25 +1,35 @@
-# online-pointing-utils
-Collection of tools used to read the data from online or offline frameworks.
+# Online-pointing-utils
 
-Code is mainly python, to run apps use the scripts. 
-Mind that different apps need different environments. 
-To generate images, you can have your own venv with matplotlib (seems like the easiest option).
+This repo contains a collection of tools that are being used for the online supernova pointing project.
+It includes some utilities to plot the Trigger Primitives, to handle samples and merge them together, to prepare datasets to be used in other stages.
 
-As of this commit, you can use `convert-hdf5-to-text.sh` and `create-images-from-tps.sh`. 
-They can be executed selecting just input file and output folder from command line. 
-Improvements will come.
+## Structure
 
-`generate-images-from-hdf5.sh` doesn't work yet, you have to run the two steps separately.
+In `inc/` and `src/` there are some libraries that are called by the apps in `app/`.
+You can create your own apps starting from the functions in the libraries.
 
-## Example of usage
-To make it simple, I work in lxplus in a shell with python 3.8, with `scl enable rh-python38 bash`.
-Then these steps work for me:
+Under `python` there are some python libraries. 
+There are some duplicates of functions that were then rewritten in cpp to be faster.
+
+Under `scripts/` you can find bash scripts to run the apps or a series of operations.
+
+## Install and use
+
+To install the repo, clone it: 
 
 ```
-./convert-hdf5-to-text.sh -i /eos/home-e/evilla/dune/tps/tpstream_run020638_0000_tpwriter_tpswriter_20230314T222757.hdf5 -o /eos/home-e/evilla/dune/tps/;
-source ../venv/bin/activate; # my venv containing matplotlib
-./create-images-from-tps.sh -i /eos/home-e/evilla/dune/tps/tpstream_run020638_0000_tpwriter_tpswriter_20230314T222757.txt -o /eos/home-e/evilla/dune/tps/; # output will be npy "images"
-deactivate;
+git clone https://github.com/dune-sn-online-pointing/online-pointing-utils.git
 ```
+
+Then, go to `build/` and do
+
+```
+cmake ../; make
+```
+
+If the machine you are working on meets the requirements, the process will complete (there might be non-fatal warnings).
+Under `build/app/` you will find the executables. 
+Just doing `./cluster_to_root` will display their usage, meaning what arguments they require. 
+The apps can also be run through bash scripts under `scripts/`, that will have the same name.
 
 

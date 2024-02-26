@@ -1,6 +1,7 @@
-venv/
-python/tps_text_to_image/__pycache__
-python/tps_text_to_image/*.pyc
-python/tpstream_hdf5_to_text/__pycache__
-python/tpstream_hdf5_to_text/*.pyc
-*.txt
+json/*
+build/*
+lists/
+*.o
+*.exe
+*/__pycache__/
+condor_test/
