@@ -4,38 +4,64 @@
 #include <string>
 #include <ctime>
 
+#include "CmdLineParser.h"
+#include "Logger.h"
+
 #include "position_calculator.h"
 #include "cluster_to_root_libs.h"
 #include "cluster.h"
 
+
+LoggerInit([]{
+  Logger::getUserHeader() << "[" << FILENAME << "]";
+});
+
 int main(int argc, char* argv[]) {
-    std::string filename;
-    std::string outfolder;
-    int ticks_limit = 3;
-    int channel_limit = 1;
-    int min_tps_to_cluster = 1;
-    int plane = 2;
-    int supernova_option = 0;
-    int main_track_option = 0;
-    int max_events_per_filename = INT_MAX;
-    int adc_integral_cut = 0;
+    CmdLineParser clp;
+
+    clp.getDescription() << "> cluster_to_root app."<< std::endl;
+
+    clp.addDummyOption("Main options");
+    clp.addOption("filename",    {"-f", "--filename"}, "Filename containing the filenames to read");
+    clp.addOption("outfolder",    {"-o", "--outfolder"}, "Output folder");
+    clp.addOption("ticks_limit",    {"-t", "--ticks-limit"}, "Ticks limit");
+    clp.addOption("channel_limit",    {"-c", "--channel-limit"}, "Channel limit");
+    clp.addOption("min_tps_to_cluster",    {"-m", "--min-tps-to-cluster"}, "Minimum number of TPs to form a cluster");
+    clp.addOption("plane",    {"-p", "--plane"}, "Plane");
+    clp.addOption("supernova_option",    {"-s", "--supernova-option"}, "Supernova option");
+    clp.addOption("main_track_option",    {"-mt", "--main-track-option"}, "Main track option");
+    clp.addOption("max_events_per_filename",    {"-me", "--max-events-per-filename"}, "Max events per filename");
+    clp.addOption("adc_integral_cut",    {"-a", "--adc-integral-cut"}, "ADC integral cut");
+
+    clp.addDummyOption("Triggers");
+    clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
+
+    clp.addDummyOption();
+    // usage always displayed
+    LogInfo << clp.getDescription().str() << std::endl;
+
+    LogInfo << "Usage: " << std::endl;
+    LogInfo << clp.getConfigSummary() << std::endl << std::endl;
+
+    clp.parseCmdLine(argc, argv);
+
+    LogThrowIf( clp.isNoOptionTriggered(), "No option was provided." );
+
+    LogInfo << "Provided arguments: " << std::endl;
+    LogInfo << clp.getValueSummary() << std::endl << std::endl;
+
+    std::string filename = clp.getOptionVal<std::string>("filename");
+    std::string outfolder = clp.getOptionVal<std::string>("outfolder");
+    int ticks_limit = clp.getOptionVal<int>("ticks_limit");
+    int channel_limit = clp.getOptionVal<int>("channel_limit");
+    int min_tps_to_cluster = clp.getOptionVal<int>("min_tps_to_cluster");
+    int plane = clp.getOptionVal<int>("plane");
+    int supernova_option = clp.getOptionVal<int>("supernova_option");
+    int main_track_option = clp.getOptionVal<int>("main_track_option");
+    int max_events_per_filename = clp.getOptionVal<int>("max_events_per_filename");
+    int adc_integral_cut = clp.getOptionVal<int>("adc_integral_cut");
     std::vector<std::string> plane_names = {"U", "V", "X"};
 
-    if (argc < 6) {
-        std::cout << "Usage: cluster_to_root <filename> <outfolder> <ticks_limit> <channel_limit> <min_tps_to_cluster> <plane> <supernova_option> <main_track_option> <max_events_per_filename> <adc_integral_cut>" << std::endl;
-        return 1;        
-    } else {
-        filename = argv[1];
-        outfolder = argv[2];
-        if (argc > 3) ticks_limit = std::stoi(argv[3]);
-        if (argc > 4) channel_limit = std::stoi(argv[4]);
-        if (argc > 5) min_tps_to_cluster = std::stoi(argv[5]);
-        if (argc > 6) plane = std::stoi(argv[6]);
-        if (argc > 7) supernova_option = std::stoi(argv[7]);
-        if (argc > 8) main_track_option = std::stoi(argv[8]);
-        if (argc > 9) max_events_per_filename = std::stoi(argv[9]);
-        if (argc > 10) adc_integral_cut = std::stoi(argv[10]);
-    }
 
     // start the clock
     std::clock_t start;
