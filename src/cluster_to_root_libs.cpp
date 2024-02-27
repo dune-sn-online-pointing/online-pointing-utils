@@ -257,7 +257,9 @@ std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters) { // val
     main_track = clusters[0];
     for (auto& g : clusters) {
         if (g.get_tp(0)[variables_to_index["event"]] != event) {
-            main_tracks.push_back(main_track);
+            if (main_track.get_min_distance_from_true_pos() < 5) {
+                main_tracks.push_back(main_track);
+            }
             main_track = g;
             event = g.get_tp(0)[variables_to_index["event"]];
         }
