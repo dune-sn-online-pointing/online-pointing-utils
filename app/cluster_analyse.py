@@ -22,7 +22,7 @@ sys.path.append('../python/')
 # from image_creator import save_image, show_image
 # from cluster_maker import make_clusters
 
-import cluster
+from cluster import read_root_file_to_clusters
 
 
 # parser for the arguments
