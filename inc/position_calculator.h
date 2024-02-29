@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cmath>
+#include "cluster.h"
 
 const int EVENTS_OFFSET = 5000;
 const double apa_lenght_in_cm = 230;
@@ -18,6 +19,7 @@ const int backtracker_error_margin = 4;
 const double apa_angular_coeff = tan(apa_angle * M_PI / 180);
 
 std::vector<int> calculate_position(std::vector<double> tp);
+std::vector<std::vector<int>> validate_position_calculation(std::vector<std::vector<double>> tps);
 
 #endif
 
