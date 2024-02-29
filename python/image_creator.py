@@ -111,6 +111,12 @@ def create_image_one_view(tps_to_draw, make_fixed_size=False, width=100, height=
                 y_end = (tp['time_start'] + tp['time_over_threshold'] - t_start) + y_margin
                 img[int(y_start)-1:int(y_end), int(x)-1] = tp['adc_integral']/(y_end - y_start)
    
+    # if the track is in one half of the detector, we have to flip the image both horizontally and vertically
+    # TODO: this is a temporary solution, in case it works we should do it before creating the image to save time
+    if (tps_to_draw[0]['channel'] % 2560 - 2080 > 0):
+        img = np.flip(img, 0)
+        img = np.flip(img, 1)
+    
     return img
 
 def create_images(tps_to_draw, channel_map, min_tps_to_create_img=2, make_fixed_size=False, width=500, height=1000, x_margin=10, y_margin=200, only_collection=False, verbose=False):

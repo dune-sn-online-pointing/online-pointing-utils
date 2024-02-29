@@ -6,6 +6,7 @@ from image_creator import *
 from utils import *
 from cluster import *
 
+np.random.seed(0)
 
 def create_dataset_img(clusters, channel_map, min_tps_to_create_img=1, make_fixed_size=False, width=300, height=100, x_margin=2, y_margin=10, only_collection=True):
     '''
@@ -65,7 +66,7 @@ def save_samples_from_ds(dataset, output_folder, name="img", n_samples=10):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
-    n_elements = dataset.shape[0]   
+    n_elements = dataset.shape[0] 
     indices = np.random.choice(n_elements, n_samples, replace=False)
     samples = dataset[indices]
     print(samples.shape)
