@@ -1,27 +1,29 @@
 import numpy as np
 import argparse
+import json
 import os
 
 seed = 42
 np.random.seed(seed)
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--datasets_img", help="input data file", default="", type=str)
-parser.add_argument("--datasets_process_label", help="input process label file", default="", type=str)
-parser.add_argument("--datasets_true_dir_label", help="input true direction label file", default="", type=str)
-parser.add_argument("--output_folder", help="save path", default="", type=str)
-parser.add_argument("--remove_process_labels", help="remove labels", default=[], nargs='+', type=int)
-parser.add_argument("--shuffle", help="shuffle data", default=1, type=int)
-parser.add_argument("--balance", help="balance data", default=1, type=int)
-
+parser = argparse.ArgumentParser(description='Mix datasets')
+parser.add_argument('--input_json', type=str, help='Input json file')
+parser.add_argument('--output_folder', type=str, help='Output folder')
 args = parser.parse_args()
-datasets_img = args.datasets_img
-datasets_process_label = args.datasets_process_label
-datasets_true_dir_label = args.datasets_true_dir_label
+
+input_json_file = args.input_json
 output_folder = args.output_folder
-remove_process_labels = args.remove_process_labels
-shuffle = args.shuffle
-balance = args.balance
+# Read input json
+with open(input_json_file) as f:
+    input_json = json.load(f)
+
+datasets_img = input_json['datasets_img']
+datasets_process_label = input_json['datasets_process_label']
+datasets_true_dir_label = input_json['datasets_true_dir_label']
+remove_process_labels = input_json['remove_process_labels']
+shuffle = input_json['shuffle']
+balance = input_json['balance']
+
 
 if __name__ == '__main__':
     # read data and labels    
