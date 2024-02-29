@@ -241,7 +241,7 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
         iss = std::istringstream(line);
         iss >> true_z;
 
-        std::cout << true_x << " " << true_y << " " << true_z << std::endl;
+        // std::cout << true_x << " " << true_y << " " << true_z << std::endl;
         file_idx_to_true_xyz[file_idx] = {true_x, true_y, true_z};
         }
         ++file_idx;

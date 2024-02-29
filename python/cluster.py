@@ -67,20 +67,20 @@ def read_root_file_to_clusters(filename):
             nrows = entry.nrows
             event = entry.event
             event_numbers.append(event )
-            m = np.empty((nrows), dtype=dt)
+            tps = np.empty((nrows), dtype=dt)
             for j in range(nrows):
-                m[j]["time_start"] = entry.matrix[j][0]
-                m[j]["time_over_threshold"] = entry.matrix[j][1]
-                m[j]["time_peak"] = entry.matrix[j][2]
-                m[j]["channel"] = entry.matrix[j][3]
-                m[j]["adc_integral"] = entry.matrix[j][4]
-                m[j]["adc_peak"] = entry.matrix[j][5]
-                m[j]["detid"] = entry.matrix[j][6]
-                m[j]["type"] = entry.matrix[j][7]
-                m[j]["algorithm"] = entry.matrix[j][8]
-                m[j]["version"] = entry.matrix[j][9]
-                m[j]["flag"] = entry.matrix[j][10]
-            this_cluster = cluster(m)
+                tps[j]["time_start"] = entry.matrix[j][0]
+                tps[j]["time_over_threshold"] = entry.matrix[j][1]
+                tps[j]["time_peak"] = entry.matrix[j][2]
+                tps[j]["channel"] = entry.matrix[j][3]
+                tps[j]["adc_integral"] = entry.matrix[j][4]
+                tps[j]["adc_peak"] = entry.matrix[j][5]
+                tps[j]["detid"] = entry.matrix[j][6]
+                tps[j]["type"] = entry.matrix[j][7]
+                tps[j]["algorithm"] = entry.matrix[j][8]
+                tps[j]["version"] = entry.matrix[j][9]
+                tps[j]["flag"] = entry.matrix[j][10]
+            this_cluster = cluster(tps) # construtor of the cluster
             reco_pos = np.array([entry.reco_pos_x, entry.reco_pos_y, entry.reco_pos_z])
             true_dir = np.array([entry.true_dir_x, entry.true_dir_y, entry.true_dir_z])
             this_cluster.set_variables(true_dir = true_dir, reco_pos = reco_pos, true_label = entry.true_label, supernova_tp_fraction = entry.supernova_tp_fraction, min_distance_from_true_pos = entry.min_distance_from_true_pos)
