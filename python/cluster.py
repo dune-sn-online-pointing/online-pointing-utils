@@ -1,6 +1,7 @@
 import numpy as np
 import sys
 import ROOT
+import functools
 
 class cluster: # Only good for HD geometry 1x2x6
     def __init__(self, tps):
@@ -36,7 +37,7 @@ class cluster: # Only good for HD geometry 1x2x6
         self.supernova_tp_fraction_ = supernova_tp_fraction
         self.min_distance_from_true_pos_ = min_distance_from_true_pos
 
-
+@functools.lru_cache(maxsize=None)
 def read_root_file_to_clusters(filename):
         # Create a structured array with column names
     dt = np.dtype([('time_start', float), 
