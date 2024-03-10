@@ -33,6 +33,9 @@ std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters);
 // take all the clusters and return only blips
 std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters);
 
+// assing a different label to the main tracks
+void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int new_label=77);
+
 // write the clusters to a root file
 void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_filename);
 

@@ -89,6 +89,8 @@ int main(int argc, char* argv[]) {
         clusters = filter_main_tracks(clusters);
     } else if (main_track_option == 2) {
         clusters = filter_out_main_track(clusters);
+    }else if (main_track_option == 3) {
+        assing_different_label_to_main_tracks(clusters);
     }
     std::cout << "Number of clusters after filtering: " << clusters.size() << std::endl;
     // add true x y z dir 

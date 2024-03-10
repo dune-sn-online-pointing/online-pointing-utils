@@ -305,6 +305,29 @@ std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // 
     return blips;
 }
 
+void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int new_label) {
+    int index = 0;
+    int best_idx = 0;
+    int event = clusters[0].get_tp(0)[variables_to_index["event"]];
+    for (auto& g : clusters) {
+        if (g.get_tp(0)[variables_to_index["event"]] != event) {
+            if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+                clusters[best_idx].set_true_label(new_label);
+            }
+            event = g.get_tp(0)[variables_to_index["event"]];
+            best_idx = index;
+        }
+        else {
+            if (g.get_true_label() == 1 and g.get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos()){
+                clusters[best_idx].set_true_label(0);
+                best_idx = index;
+            }
+        }
+        ++index;
+    }
+}
+
+
 void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_filename) {
     // create folder if it does not exist
     std::string folder = root_filename.substr(0, root_filename.find_last_of("/"));
