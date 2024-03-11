@@ -21,3 +21,14 @@ std::vector<std::vector<int>> validate_position_calculation(std::vector<std::vec
     }
     return positions;
 }
+
+float distance(cluster cluster1, cluster cluster2) {
+    float x1 = cluster1.get_reco_pos()[0];
+    float y1 = cluster1.get_reco_pos()[1];
+    float z1 = cluster1.get_reco_pos()[2];
+    float x2 = cluster2.get_reco_pos()[0];
+    float y2 = cluster2.get_reco_pos()[1];
+    float z2 = cluster2.get_reco_pos()[2];
+    return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
+}
+

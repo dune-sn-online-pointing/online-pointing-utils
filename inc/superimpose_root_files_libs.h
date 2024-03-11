@@ -19,7 +19,6 @@
 
 cluster filter_clusters_within_radius(std::vector<cluster>& clusters, float radius);
 
-float distance(cluster cluster1, cluster cluster2);
 
 
 
