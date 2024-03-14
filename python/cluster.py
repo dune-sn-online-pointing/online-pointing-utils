@@ -11,6 +11,7 @@ class cluster: # Only good for HD geometry 1x2x6
         self.min_distance_from_true_pos_ = None
         self.true_label_ = None
         self.supernova_tp_fraction_ = None
+        self.true_event_number_ = None
     def __len__(self):
         return self.n_tps_
     def __str__(self):
@@ -29,12 +30,15 @@ class cluster: # Only good for HD geometry 1x2x6
         return self.supernova_tp_fraction_
     def get_min_distance_from_true_pos(self):
         return self.min_distance_from_true_pos_
-    def set_variables(self, true_dir = np.array([0,0,0]), reco_pos = np.array([0,0,0]), true_label = 0, supernova_tp_fraction = 0, min_distance_from_true_pos = 0):
+    def get_true_event_number(self):
+        return self.true_event_number_
+    def set_variables(self, true_dir = np.array([0,0,0]), reco_pos = np.array([0,0,0]), true_label = 0, supernova_tp_fraction = 0, min_distance_from_true_pos = 0, true_event_number = 0):
         self.true_dir_ = true_dir
         self.reco_pos_ = reco_pos
         self.true_label_ = true_label
         self.supernova_tp_fraction_ = supernova_tp_fraction
         self.min_distance_from_true_pos_ = min_distance_from_true_pos
+        self.true_event_number_ = true_event_number
 
 
 def read_root_file_to_clusters(filename):
@@ -83,7 +87,7 @@ def read_root_file_to_clusters(filename):
             this_cluster = cluster(m)
             reco_pos = np.array([entry.reco_pos_x, entry.reco_pos_y, entry.reco_pos_z])
             true_dir = np.array([entry.true_dir_x, entry.true_dir_y, entry.true_dir_z])
-            this_cluster.set_variables(true_dir = true_dir, reco_pos = reco_pos, true_label = entry.true_label, supernova_tp_fraction = entry.supernova_tp_fraction, min_distance_from_true_pos = entry.min_distance_from_true_pos)
+            this_cluster.set_variables(true_dir = true_dir, reco_pos = reco_pos, true_label = entry.true_label, supernova_tp_fraction = entry.supernova_tp_fraction, min_distance_from_true_pos = entry.min_distance_from_true_pos, true_event_number = event)
             clusters.append(this_cluster)
         break
     return clusters, event_numbers
