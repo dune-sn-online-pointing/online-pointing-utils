@@ -10,6 +10,7 @@
 import numpy as np
 #import ROOT
 import matplotlib.pyplot as plt
+from scipy.stats import linregress
 import time
 import os
 import argparse
@@ -105,47 +106,117 @@ labels = {
     2: "kAr39GenInLAr", #beta
     3: "kKr85GenInLAr", #beta
     4: "kAr42GenInLAr", #beta
-    5: "kK42From42ArGenInLAr", #beta 
+    5: "kK42From42ArGenInLAr", #beta  3.525516MeV
     6: "kRn222ChainRn222GenInLAr", #alpha 5.59031MeV
-    7: "kRn222ChainPo218GenInLAr", #alpha .02%beta  6.11468MeV
+    7: "kRn222ChainPo218GenInLAr", #alpha 6.11468MeV
     8: "kRn222ChainPb214GenInLAr", #beta 1.0189 MeV
-    9: "kRn222ChainBi214GenInLAr",  #https://periodictable.com/Isotopes/083.214/index.full.dm.html
-    10: "kRn222ChainPb210GenInLAr",
-    11: "kK40GenInCPA",
+    9: "kRn222ChainBi214GenInLAr",  #beta 3.2697MeV
+    10: "kRn222ChainPb210GenInLAr", #beta 63.486keV
+    11: "kK40GenInCPA", #89.28%	β-	1.31107MeV	40Ca ------ 10.72%	β+	482.491keV	40Ar
     12: "kU238ChainGenInCPA",
-    13: "kK42From42ArGenInCPA",
-    14: "kRn222ChainPo218GenInCPA",
-    15: "kRn222ChainPb214GenInCPA",
-    16: "kRn222ChainBi214GenInCPA",
-    17: "kRn222ChainPb210GenInCPA",
-    18: "kRn222ChainFromBi210GenInCPA",
-    19: "kCo60GenInAPA",
+    13: "kK42From42ArGenInCPA", #beta 598.88keV
+    14: "kRn222ChainPo218GenInCPA",#alpha .02%beta  6.11468MeV
+    15: "kRn222ChainPb214GenInCPA",#beta 1.0189 MeV
+    16: "kRn222ChainBi214GenInCPA", #beta 3.2697MeV
+    17: "kRn222ChainPb210GenInCPA", #beta 63.486keV
+    18: "kRn222ChainFromBi210GenInCPA", #beta 1.161292MeV
+    19: "kCo60GenInAPA", #beta 2.823067MeV
     20: "kU238ChainGenInAPA",
     21: "kRn222ChainGenInPDS",
     22: "kNeutronGenInRock"
     }
 
-charge_lists = {key: [] for key in labels}
+'''
+new dic that matches background with its respective maximum decay energy 
+format: label: [decay type, decay energy [MeV]]
+beta = 0
+aplha = 1
+dont use = 2
+'''
+background_max_energy = {  
+    -1: [2,1 ],
+    0: [2,1 ],
+    1: [2,1 ],
+    2: [0,.565], #beta
+    3: [0,.68706], #beta
+    4: [0,.59888], #beta
+    5: [0,3.525516], #beta 
+    6: [1, 5.59031],  # alpha (MeV)
+    7: [1, 6.11468],  # alpha (MeV)
+    8: [0, 1.0189],   # beta (MeV)
+    9: [0, 3.2697],   # beta (MeV)
+    10: [0, 63.486e-3], # beta (MeV)
+    11: [0, 1.31107], # beta (MeV)
+    12: [2,1 ],       # No specified type or energy
+    13: [0, 598.88e-3], # beta (MeV)
+    14: [1, 6.11468],  # alpha (MeV)
+    15: [0, 1.0189],   # beta (MeV)
+    16: [0, 3.2697],   # beta (MeV)
+    17: [0, 63.486e-3], # beta (MeV)
+    18: [0, 1.161292],  # beta (MeV)
+    19: [0, 2.823067], #beta
+    20: [2,1 ],
+    21: [2,1 ],
+    22: [2,1 ]
+}
+
+charge_lists = {key: [] for key in labels} #lists of sum of charges in each cluster, for histograms
+max_charge = {key: 0 for key in labels} #max charge associated with each background, for best fit line
 true_labels = []
 total_charges = []
+
 for cluster in clusters:
     charge_sums = {key: 0 for key in labels}
     total_charge_sum = 0
+    
+    #summing ADC integral for each TP set in cluster
     for tp in cluster.tps_:
         charge_sums[cluster.true_label_] += tp['adc_integral']
         total_charge_sum = total_charge_sum + tp['adc_integral']
+    
+    #checking to see if new cluster charge is max    
+    if (charge_sums[cluster.true_label_] > max_charge[cluster.true_label_]):
+        max_charge[cluster.true_label_] = charge_sums[cluster.true_label_] 
 
     charge_lists[cluster.true_label_].append(charge_sums[cluster.true_label_])
     true_labels.append(cluster.true_label_)
     total_charges.append(total_charge_sum)
     
         
+#create two lists for beta and alpha decay background endpoints for linear fit
+beta_adc = []
+beta_MeV = []
+alpha_adc = []
+alpha_MeV = []
+for key in background_max_energy:
+    if background_max_energy[key][0] == 0:
+        beta_adc.append(max_charge[key])
+        beta_MeV.append(background_max_energy[key][1])
+    elif background_max_energy[key][0] == 1:
+        alpha_adc.append(max_charge[key])
+        alpha_MeV.append(background_max_energy[key][1])
+        
 
+#linear fit
+
+slope, intercept, r_value, p_value, std_err = linregress(beta_adc, beta_MeV)
+
+fig0 = plt.figure()
+
+
+plt.scatter(beta_adc, beta_MeV, label='Data')
+plt.plot(beta_adc, [slope * x + intercept for x in beta_adc], color='red', label='Linear fit')
+plt.xlabel('Beta ADC')
+plt.ylabel('Beta MeV')
+plt.legend()
+fig0.savefig('plots/beta_fit.png')
+plt.clf()
 
 #CONVERT ADC to Energy (KeV) via linear interpolation
 
 
-#energies from https://periodictable.com/Isotopes/018.39/index.dm.html
+#decay energies from https://periodictable.com/Isotopes/018.39/index.dm.html
+
 #point 1 is endpoint of Ar39 decay
 x1 = 41100 #ADC
 y1 = 565 #KeV  
@@ -153,7 +224,7 @@ y1 = 565 #KeV
 x2 = 50000 #ADC
 y2 = 687.06 #KeV
 
-m = (y2-y1)/(x2-x1)
+m = (y2-y1)/(x2-x1) #slope 
 
 def adc_to_energy(adc):
     return m*(adc-x1)+y1
@@ -206,9 +277,6 @@ bin_edges = [i - 0.5 for i in range(min(true_labels), max(true_labels) + 2)]
 
 
 colors = ['blue', 'orange', 'green', 'red', 'black', 'blue', 'orange', 'gray', 'blue', 'green', 'black', 'yellow', 'black', 'blue', 'orange', 'green', 'red', 'blue', 'brown', 'green', 'gray', 'olive', 'yellow']
-
-
-
 
 
 
