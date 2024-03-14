@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+import json
 import argparse
 
 sys.path.append('../python/') 
@@ -11,32 +12,31 @@ from dataset_creator import *
 
 
 parser = argparse.ArgumentParser(description='Tranforms Trigger Primitives to images.')
-parser.add_argument('--input_file', type=str, help='Input file name')
-parser.add_argument('--output_path', type=str, default='/eos/user/d/dapullia/tp_dataset/', help='path to save the image')
-parser.add_argument('--make_fixed_size', action='store_true', help='make the image size fixed')
-parser.add_argument('--img_width', type=int, default=70, help='width of the image')
-parser.add_argument('--img_height', type=int, default=300, help='height of the image')
-parser.add_argument('--x_margin', type=int, default=5, help='margin in x')
-parser.add_argument('--y_margin', type=int, default=10, help='margin in y')
-parser.add_argument('--drift_direction', type=int, default=0, help='0 for horizontal drift, 1 for vertical drift')
-parser.add_argument('--min_tps_to_cluster', type=int, default=2, help='minimum number of TPs to create a cluster')
-parser.add_argument('--save_img_dataset', type=int, default=0, help='save the image dataset')
-parser.add_argument('--save_process_label', type=int, default=0, help='label is process')
-parser.add_argument('--save_true_dir_label', type=int, default=0, help='label is true direction')
-
+parser.add_argument('--input_json', type=str, help='Input json file')
+parser.add_argument('--output_folder', type=str, help='Output folder')
 args = parser.parse_args()
-filename = args.input_file
-output_path = args.output_path
-make_fixed_size = args.make_fixed_size
-width = args.img_width
-height = args.img_height
-x_margin = args.x_margin
-y_margin = args.y_margin
-drift_direction = args.drift_direction
-min_tps_to_cluster = args.min_tps_to_cluster
-save_img_dataset = args.save_img_dataset
-save_process_label = args.save_process_label
-save_true_dir_label = args.save_true_dir_label
+
+input_json_file = args.input_json
+output_path = args.output_folder
+
+# Read input json
+with open(input_json_file) as f:
+    input_json = json.load(f)
+
+filename = input_json['input_file']
+make_fixed_size = input_json['make_fixed_size']
+width = input_json['img_width']
+height = input_json['img_height']
+min_tps_to_cluster = input_json['min_tps_to_cluster']
+drift_direction = input_json['drift_direction']
+save_img_dataset = input_json['save_img_dataset']
+save_process_label = input_json['save_label_process']
+save_true_dir_label = input_json['save_label_direction']
+x_margin = input_json['x_margin']
+y_margin = input_json['y_margin']
+
+
+
 dt = np.dtype([('time_start', float), 
                 ('time_over_threshold', float),
                 ('time_peak', float),

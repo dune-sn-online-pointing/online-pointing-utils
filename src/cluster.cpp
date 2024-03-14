@@ -55,6 +55,9 @@ void cluster::update_cluster_info() {
         reco_pos[2] += pos[2];
         if (tps_[i][variables_to_index["ptype"]] != true_label) {
             true_label = -1;
+            if (supernova_tp_fraction > 0) {
+                true_label = 1;
+            }
         }
     }
 

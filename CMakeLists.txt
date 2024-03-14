@@ -26,6 +26,7 @@ set( SRC_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/src/position_calculator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cluster_to_root_libs.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/superimpose_root_files_libs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/aggregate_clusters_within_volume_libs.cpp
 )
 
 add_library( ${LIB_NAME} SHARED ${SRC_FILES} )

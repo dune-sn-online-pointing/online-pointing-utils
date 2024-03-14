@@ -55,16 +55,6 @@ int main(int argc, char* argv[]) {
     // default value 
     float radius = 1.0; // m 
     radius = clp.getOptionVal<double>("radius");
-    
-    // if (argc < 5) {
-    //     std::cout << "Usage: superimpose_root_files <sig_cluster_filename> <bkg_cluster_filename> <outfolder> <radius>" << std::endl;
-    //     return 1;        
-    // } else {
-    //     sig_cluster_filename = argv[1];
-    //     bkg_cluster_filename = argv[2];
-    //     outfolder = argv[3];
-    //     radius = std::stof(argv[4]);
-    // }
 
     // start the clock
     std::clock_t start;
@@ -97,7 +87,6 @@ int main(int argc, char* argv[]) {
     std::vector<int> test_appo_vec;
 
     for (int i = 0; i < sig_list_of_event_numbers.size(); i++) {
-    // for (int i = 0; i < sig_list_of_event_numbers.size(); i++) {
         if (i%1000 ==0){
             std::cout<<"Event number: "<< i << std::endl;
         }
@@ -132,35 +121,9 @@ int main(int argc, char* argv[]) {
             }
             continue;
         }
-        // if (filtered_superimposed_cluster.get_supernova_tp_fraction() >0.9){
-        //     test_appo_vec.push_back(bkg_event_number);
-        //     // print the cluster
-        //     std::cout<<"Filtered superimposed cluster size: "<< filtered_superimposed_cluster.get_tps().size() << std::endl;
-        //     for (auto const& tp : filtered_superimposed_cluster.get_tps()){
-        //         std::cout<<"TP: ";
-        //         for (auto const& var : tp){
-        //             std::cout<<var<<" ";
-        //         }
-        //         std::cout<<std::endl;
-        //     }
-        //     std::cout<<"Sig pos: " << filtered_superimposed_cluster.get_reco_pos()[0] << " " << filtered_superimposed_cluster.get_reco_pos()[1] << " " << filtered_superimposed_cluster.get_reco_pos()[2] << std::endl;
-        //     std::vector<int> reco_pos = {0, 0, 0};
-        //     for (auto tp: filtered_superimposed_cluster.get_tps()){
-        //         std::cout<<"TP: "<< tp[0] << " " << tp[1] << " " << tp[2] << " " << tp[3] << " " << calculate_position(tp)[0] << " " << calculate_position(tp)[1] << " " << calculate_position(tp)[2] << std::endl;
-        //         reco_pos[0] += calculate_position(tp)[0];
-        //         reco_pos[1] += calculate_position(tp)[1];
-        //         reco_pos[2] += calculate_position(tp)[2];
-        //     }
-        //     reco_pos[0] /= int(filtered_superimposed_cluster.get_tps().size());            
-        //     reco_pos[1] /= int(filtered_superimposed_cluster.get_tps().size());       
-        //     reco_pos[2] /= int(filtered_superimposed_cluster.get_tps().size());
-        //     std::cout<<"Reco pos: " << reco_pos[0] << " " << reco_pos[1] << " " << reco_pos[2] << std::endl;
-
-        //     // break;
-        //     }
-
-
-
+        // else{
+        //     std::cout<<"Min distance from true pos: "<< filtered_superimposed_cluster.get_min_distance_from_true_pos() << std::endl;
+        // }
         superimposed_clusters.push_back(filtered_superimposed_cluster);
     }
     

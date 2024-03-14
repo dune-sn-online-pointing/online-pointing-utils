@@ -251,48 +251,93 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
 }
 
 std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
+    int best_idx = INT_MAX;
+
     std::vector<cluster> main_tracks;
-    cluster main_track;
     int event = clusters[0].get_tp(0)[variables_to_index["event"]];
-    main_track = clusters[0];
-    for (auto& g : clusters) {
-        if (g.get_tp(0)[variables_to_index["event"]] != event) {
-            main_tracks.push_back(main_track);
-            main_track = g;
-            event = g.get_tp(0)[variables_to_index["event"]];
+
+    for (int index = 0; index < clusters.size(); index++) {
+        if (clusters[index].get_tp(0)[variables_to_index["event"]] != event) {
+            if (best_idx < clusters.size() ){
+                if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+                    main_tracks.push_back(clusters[best_idx]);
+                }
+            }
+
+            event = clusters[index].get_tp(0)[variables_to_index["event"]];
+            if (clusters[index].get_true_label() == 1){
+                best_idx = index;
+            }
+            else {
+                best_idx = INT_MAX;
+            }
         }
         else {
-            if (g.get_true_label() == 1 and g.get_min_distance_from_true_pos() < main_track.get_min_distance_from_true_pos()){
-                main_track = g;
+            if (best_idx < clusters.size() ){
+                if (clusters[index].get_true_label() == 1 and clusters[index].get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos()){
+                    best_idx = index;
+                }
+            }
+            else {
+                if (clusters[index].get_true_label() == 1){
+                    best_idx = index;
+                }
             }
         }
     }
-    
+    if (best_idx < clusters.size() ){
+        if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+            main_tracks.push_back(clusters[best_idx]);
+        }
+    }
+
     return main_tracks;
 }
 
 std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
-    std::vector<cluster> blips;
-    int current_event = clusters[0].get_tp(0)[variables_to_index["event"]];
-    cluster main_cluster;
-    float min_distance = 100000000;
+    int best_idx = INT_MAX;
     std::vector<int> bad_idx_list;
+    int event = clusters[0].get_tp(0)[variables_to_index["event"]];
 
-    int idx = 0;
-    for (auto& cluster : clusters) {
-        if (cluster.get_tp(0)[variables_to_index["event"]] != current_event) {
-            bad_idx_list.push_back(idx);
-            main_cluster = cluster;
-            current_event = cluster.get_tp(0)[variables_to_index["event"]];
-        }
-        else {
-            if (cluster.get_min_distance_from_true_pos() < min_distance and cluster.get_true_label() == 1) {
-                main_cluster = cluster;
-                min_distance = cluster.get_min_distance_from_true_pos();
+    for (int index = 0; index < clusters.size(); index++) {
+        if (clusters[index].get_tp(0)[variables_to_index["event"]] != event) {
+            if (best_idx < clusters.size() ){
+                if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+                    bad_idx_list.push_back(best_idx);                    
+                }
+            }
+
+            event = clusters[index].get_tp(0)[variables_to_index["event"]];
+            if (clusters[index].get_true_label() == 1){
+                best_idx = index;
+            }
+            else {
+                best_idx = INT_MAX;
             }
         }
-    idx += 1;
+        else {
+            if (best_idx < clusters.size() ){
+                if (clusters[index].get_true_label() == 1 and clusters[index].get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos()){
+                    best_idx = index;
+                }
+            }
+            else {
+                if (clusters[index].get_true_label() == 1){
+                    best_idx = index;
+                }
+            }
+        }
     }
+    if (best_idx < clusters.size() ){
+        if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+            bad_idx_list.push_back(best_idx);
+        }
+    }
+
+
+
+    std::vector<cluster> blips;
+
     for (int i=0; i<clusters.size(); i++) {
         if (std::find(bad_idx_list.begin(), bad_idx_list.end(), i) == bad_idx_list.end()) {
             blips.push_back(clusters[i]);
@@ -301,6 +346,46 @@ std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // 
     
     std::cout << "Number of blips: " << blips.size() << std::endl;
     return blips;
+}
+
+void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int new_label) {
+    int best_idx = INT_MAX;
+    int event = clusters[0].get_tp(0)[variables_to_index["event"]];
+    for (int index = 0; index < clusters.size(); index++) {
+        if (clusters[index].get_tp(0)[variables_to_index["event"]] != event) {
+            if (best_idx < clusters.size() ){
+                if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+                    clusters[best_idx].set_true_label(new_label);
+                }
+            }
+
+            event = clusters[index].get_tp(0)[variables_to_index["event"]];
+            if (clusters[index].get_true_label() == 1){
+                best_idx = index;
+            }
+            else {
+                best_idx = INT_MAX;
+            }
+        }
+        else {
+            if (best_idx < clusters.size() ){
+                if (clusters[index].get_true_label() == 1 and clusters[index].get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos()){
+                    best_idx = index;
+                }
+            }
+            else {
+                if (clusters[index].get_true_label() == 1){
+                    best_idx = index;
+                }
+            }
+        }
+    }
+    if (best_idx < clusters.size() ){
+        if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+            clusters[best_idx].set_true_label(new_label);
+        }
+    }
+
 }
 
 void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_filename) {
