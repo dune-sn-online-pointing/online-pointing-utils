@@ -251,6 +251,7 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
 }
 
 std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
+    std::cout << "WARNING - FUNCTION WITH BUGS - DO NOT TRUST" << std::endl;
     std::vector<cluster> main_tracks;
     cluster main_track;
     int event = clusters[0].get_tp(0)[variables_to_index["event"]];
@@ -274,6 +275,7 @@ std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters) { // val
 }
 
 std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
+    std::cout << "WARNING - FUNCTION WITH BUGS - DO NOT TRUST" << std::endl;
     std::vector<cluster> blips;
     int current_event = clusters[0].get_tp(0)[variables_to_index["event"]];
     cluster main_cluster;
@@ -306,24 +308,36 @@ std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // 
 }
 
 void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int new_label) {
-    int index = 0;
-    int best_idx = 0;
+    int best_idx = INT_MAX;
     int event = clusters[0].get_tp(0)[variables_to_index["event"]];
-    for (auto& g : clusters) {
-        if (g.get_tp(0)[variables_to_index["event"]] != event) {
-            if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
-                clusters[best_idx].set_true_label(new_label);
+    for (int index = 0; index < clusters.size(); index++) {
+        if (clusters[index].get_tp(0)[variables_to_index["event"]] != event) {
+            if (best_idx < clusters.size() ){
+                if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+                    clusters[best_idx].set_true_label(new_label);
+                }
             }
-            event = g.get_tp(0)[variables_to_index["event"]];
-            best_idx = index;
-        }
-        else {
-            if (g.get_true_label() == 1 and g.get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos()){
-                clusters[best_idx].set_true_label(0);
+
+            event = clusters[index].get_tp(0)[variables_to_index["event"]];
+            if (clusters[index].get_true_label() == 1){
                 best_idx = index;
             }
+            else {
+                best_idx = INT_MAX;
+            }
         }
-        ++index;
+        else {
+            if (best_idx < clusters.size() ){
+                if (clusters[index].get_true_label() == 1 and clusters[index].get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos()){
+                    best_idx = index;
+                }
+            }
+            else {
+                if (clusters[index].get_true_label() == 1){
+                    best_idx = index;
+                }
+            }
+        }
     }
 }
 

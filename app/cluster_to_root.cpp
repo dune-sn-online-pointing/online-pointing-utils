@@ -97,6 +97,24 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < clusters.size(); i++) {
         clusters[i].set_true_dir(file_idx_to_true_xyz_map[clusters[i].get_tp(0)[clusters[i].get_tp(0).size() - 1]]);
     }
+    std::map<int, int> label_to_count;
+    for (int i = 0; i < clusters.size(); i++) {
+        if (label_to_count.find(clusters[i].get_true_label()) == label_to_count.end()) {
+            label_to_count[clusters[i].get_true_label()] = 0;
+        }
+        label_to_count[clusters[i].get_true_label()]++;
+    }
+    for (auto const& x : label_to_count) {
+        // std::cout << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
+        std::cout << x.first << " ";
+    }
+    std::cout << std::endl;
+    // if no clusters are found, return 0
+    for (auto const& x : label_to_count) {
+        // std::cout << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
+        std::cout << x.second << " ";
+    }
+    std::cout << std::endl;
 
     // write the clusters to a root file
     std::string root_filename = outfolder + "/" + plane_names[plane] + "/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
