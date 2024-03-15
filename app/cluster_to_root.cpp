@@ -80,10 +80,16 @@ int main(int argc, char* argv[]) {
     std::vector<std::vector<double>> tps = file_reader(filenames, plane, supernova_option, max_events_per_filename);
     std::cout << "Number of tps: " << tps.size() << std::endl;
     std::map<int, std::vector<float>> file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
+    std::map<int, int> file_idx_to_true_interaction_map = file_idx_to_true_interaction(filenames);
     std::cout << "XYZ map created" << std::endl;
     // cluster the tps
     std::vector<cluster> clusters = cluster_maker(tps, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut);
     std::cout << "Number of clusters: " << clusters.size() << std::endl;
+    // add true x y z dir 
+    for (int i = 0; i < clusters.size(); i++) {
+        clusters[i].set_true_dir(file_idx_to_true_xyz_map[clusters[i].get_tp(0)[clusters[i].get_tp(0).size() - 1]]);
+        clusters[i].set_true_interaction(file_idx_to_true_interaction_map[clusters[i].get_tp(0)[clusters[i].get_tp(0).size() - 1]]);
+    }
     // filter the clusters
     if (main_track_option == 1) {
         clusters = filter_main_tracks(clusters);
@@ -93,10 +99,7 @@ int main(int argc, char* argv[]) {
         assing_different_label_to_main_tracks(clusters);
     }
     std::cout << "Number of clusters after filtering: " << clusters.size() << std::endl;
-    // add true x y z dir 
-    for (int i = 0; i < clusters.size(); i++) {
-        clusters[i].set_true_dir(file_idx_to_true_xyz_map[clusters[i].get_tp(0)[clusters[i].get_tp(0).size() - 1]]);
-    }
+
     std::map<int, int> label_to_count;
     for (int i = 0; i < clusters.size(); i++) {
         if (label_to_count.find(clusters[i].get_true_label()) == label_to_count.end()) {

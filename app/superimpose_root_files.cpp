@@ -95,7 +95,8 @@ int main(int argc, char* argv[]) {
         // get a random background event
         int bkg_event_number = bkg_list_of_event_numbers[rand() % bkg_list_of_event_numbers.size()];
         std::vector<cluster> bkg_event_clusters = bkg_event_mapping[bkg_event_number];
-        while (int(bkg_event_clusters.size()) < 3000){
+        // while (int(bkg_event_clusters.size()) < 3000){
+        while (false){// TODO: account for the case when the background event is broken 
             std::cout << "WARNING: For cluster " << i << " Background event " << bkg_event_number << " has " << bkg_event_clusters.size() << " clusters" << std::endl;
             test_appo_vec.push_back(bkg_event_number);
             int bkg_event_number = bkg_list_of_event_numbers[rand() % bkg_list_of_event_numbers.size()];

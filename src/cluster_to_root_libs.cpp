@@ -188,7 +188,6 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
     int file_idx = 0;
     for (auto& filename : filenames) {
         std::ifstream infile(filename);
-        std::cout<<filename<<std::endl;
         // get the number between the last underscore and the .txt extension
         // Find the last underscore
         size_t lastUnderscorePos = filename.rfind('_');
@@ -224,6 +223,7 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
         }
         infile = std::ifstream(new_filename);
         if (!infile.good()) {
+            std::cout<<new_filename<<std::endl;
             std::cout << "Direction file does not exist" << std::endl;
             file_idx_to_true_xyz[file_idx] = {0, 0, 0};
         }
@@ -248,6 +248,31 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
     }
 
     return file_idx_to_true_xyz;
+}
+
+std::map<int, int> file_idx_to_true_interaction(std::vector<std::string> filenames) {
+    std::map<int, int> file_idx_to_true_interaction;
+    std::string line;
+    int n_events_offset = 0;
+    int file_idx = 0;
+    for (auto& filename : filenames) {
+        std::ifstream infile(filename);
+        // check if CC or ES are included into the file name
+        if (filename.find("CC") != std::string::npos) {
+            file_idx_to_true_interaction[file_idx] = 0;
+        }
+        else if (filename.find("ES") != std::string::npos) {
+            file_idx_to_true_interaction[file_idx] = 1;
+        }
+        else {
+            std::cout<<filename<<std::endl;
+            std::cerr << "Could not find CC or ES in the given string." << std::endl;
+            file_idx_to_true_interaction[file_idx] = -1;
+        }
+        ++file_idx;
+    }
+
+    return file_idx_to_true_interaction;
 }
 
 std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
@@ -355,7 +380,7 @@ void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int n
         if (clusters[index].get_tp(0)[variables_to_index["event"]] != event) {
             if (best_idx < clusters.size() ){
                 if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
-                    clusters[best_idx].set_true_label(new_label);
+            clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
                 }
             }
 
@@ -382,7 +407,7 @@ void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int n
     }
     if (best_idx < clusters.size() ){
         if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
-            clusters[best_idx].set_true_label(new_label);
+            clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
         }
     }
 
@@ -411,6 +436,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     int reco_pos_z;
     float min_distance_from_true_pos;
     float supernova_tp_fraction;
+    int true_interaction;
 
     // create the branches
     tree->Branch("matrix", &matrix);
@@ -426,6 +452,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     tree->Branch("reco_pos_z", &reco_pos_z);
     tree->Branch("min_distance_from_true_pos", &min_distance_from_true_pos);
     tree->Branch("supernova_tp_fraction", &supernova_tp_fraction);
+    tree->Branch("true_interaction", &true_interaction);
 
     // fill the tree
     for (auto& g : clusters) {
@@ -442,6 +469,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
         reco_pos_z = g.get_reco_pos()[2];
         min_distance_from_true_pos = g.get_min_distance_from_true_pos();
         supernova_tp_fraction = g.get_supernova_tp_fraction();
+        true_interaction = g.get_true_interaction();
         tree->Fill();
     }
     // write the tree
@@ -475,6 +503,7 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
     int reco_pos_z;
     float min_distance_from_true_pos;
     float supernova_tp_fraction;
+    int true_interaction;
     tree->SetBranchAddress("matrix", &matrix_ptr);
     // tree->SetBranchAddress("matrix", &matrix);
     tree->SetBranchAddress("nrows", &nrows);
@@ -489,6 +518,7 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
     tree->SetBranchAddress("reco_pos_z", &reco_pos_z);
     tree->SetBranchAddress("min_distance_from_true_pos", &min_distance_from_true_pos);
     tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
+    tree->SetBranchAddress("true_interaction", &true_interaction);
     for (int i = 0; i < tree->GetEntries(); i++) {
         tree->GetEntry(i);
         cluster g(matrix);
@@ -498,6 +528,7 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
         g.set_reco_pos({reco_pos_x, reco_pos_y, reco_pos_z});
         g.set_min_distance_from_true_pos(min_distance_from_true_pos);
         g.set_supernova_tp_fraction(supernova_tp_fraction);       
+        g.set_true_interaction(true_interaction);
         clusters.push_back(g);
     }
     f->Close();

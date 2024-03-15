@@ -71,12 +71,19 @@ def save_samples_from_ds(dataset, output_folder, name="img", n_samples=10):
     samples = dataset[indices]
     print(samples.shape)
     for i, sample in enumerate(samples):
-        plt.figure(figsize=(10, 30))
+        plt.figure(figsize=(5, 15))
         img = sample[:,:,0]
         print(img.shape)
         # print(np.unique(img))
         img = np.where(img == 0, np.nan, img)
         plt.imshow(img)
+        # make ticks bigger
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
+        # set labels
+        plt.xlabel('Channel', fontsize=20)
+        plt.ylabel('Time [ticks]', fontsize=20)
+
         plt.savefig(output_folder+name+str(i)+'.png')
         plt.clf()
 
