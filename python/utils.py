@@ -37,4 +37,14 @@ def create_channel_map_array(which_detector="APA"):
         channel_map[:, 1] = np.concatenate((np.zeros(39), np.ones(40), np.ones(49)*2))
     return channel_map
 
+def distance_between_clusters(cluster1, cluster2):
+    '''
+    :param cluster1: first cluster
+    :param cluster2: second cluster
+    :return: distance between the two clusters
+    '''
+    pos1 = cluster1.get_reco_pos()
+    pos2 = cluster2.get_reco_pos()
+    return np.linalg.norm(pos1 - pos2)
+
 
