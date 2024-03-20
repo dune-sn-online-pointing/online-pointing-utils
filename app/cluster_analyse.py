@@ -11,6 +11,7 @@ import numpy as np
 #import ROOT
 import matplotlib.pyplot as plt
 from scipy.stats import linregress
+from scipy.optimize import curve_fit
 import time
 import os
 import argparse
@@ -243,7 +244,27 @@ for label_num, charge_list in charge_lists.items():
     plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
     plt.xlabel('Total Charge per Cluster [ADC]')  
     plt.ylabel('Number of Clusters')  
+    def gaussian(x, amplitude, mean, stddev):
+        return amplitude * np.exp(-((x - mean) / stddev) ** 2 / 2)
+
+    # Find optimal parameters for the fit
+    bin_centers = (bins[:-1] + bins[1:]) / 2
+    popt, pcov = curve_fit(gaussian, bin_centers, hist, p0=[1, np.mean(charge_list), np.std(charge_list)])
+
+    # Plot the fitted curve
+    plt.plot(bin_centers, gaussian(bin_centers, *popt), 'r-', label='Fit')
+
+    # Save the plot
+    fig1.savefig(f'plots/test/{labels[label_num]}_ADC_with_fit.png')
+
+    # Show the plot
+    plt.legend()
     plt.show()
+    plt.clf()    
+    
+    
+    
+    '''
     for i in range(len(hist)):
         if (bins[i] > max_charge and hist[i] > 1) : #max ADC must have more than 3 entires, filter out the outliers
             max_charge = bins[i]
@@ -257,6 +278,10 @@ for label_num, charge_list in charge_lists.items():
     elif background_max_energy[label_num][0] == 1:
         alpha_adc.append(max_charge)
         alpha_MeV.append(background_max_energy[label_num][1])
+        
+    '''  
+    
+    
     '''
     fig1 = plt.figure()
     plt.hist(charge_list, bins=200)  
@@ -323,7 +348,7 @@ plt.plot(alpha_adc,[slope_a * x + intercept_a for x in alpha_adc], color='blue',
 plt.xlabel('ADC')
 plt.ylabel('MeV')
 plt.legend()
-fig0.savefig('plots/tests/beta_fit.png')
+fig0.savefig('plots/tests/beta_fit2.png')
 plt.clf()
 
 
