@@ -134,7 +134,7 @@ aplha = 1
 dont use = 2
 '''
 background_max_energy = {  
-    -1: [2,1 ],
+    -1: [2,1],
     0: [2,1 ],
     1: [2,1 ],
     2: [0,.565], #beta
@@ -148,7 +148,7 @@ background_max_energy = {
     10: [0, 63.486e-3], # beta (MeV)
     11: [0, 1.31107], # beta (MeV)
     12: [2,1 ],       # No specified type or energy
-    13: [0, 598.88e-3], # beta (MeV)
+    13: [0, .59888], # beta (MeV)
     14: [1, 6.11468],  # alpha (MeV)
     15: [0, 1.0189],   # beta (MeV)
     16: [0, 3.2697],   # beta (MeV)
@@ -159,7 +159,7 @@ background_max_energy = {
     21: [2,1 ],
     22: [2,1 ]
 }
-
+exlude = [19,13,] #backgrounds to exlude
 charge_lists = {key: [] for key in labels} #lists of sum of charges in each cluster, for histograms
 max_charge = {key: 0 for key in labels} #max charge associated with each background, for best fit line
 true_labels = []
@@ -183,34 +183,6 @@ for cluster in clusters:
     total_charges.append(total_charge_sum)
     
         
-#create two lists for beta and alpha decay background endpoints for linear fit
-beta_adc = []
-beta_MeV = []
-alpha_adc = []
-alpha_MeV = []
-for key in background_max_energy:
-    if background_max_energy[key][0] == 0:
-        beta_adc.append(max_charge[key])
-        beta_MeV.append(background_max_energy[key][1])
-    elif background_max_energy[key][0] == 1:
-        alpha_adc.append(max_charge[key])
-        alpha_MeV.append(background_max_energy[key][1])
-        
-
-#linear fit
-
-slope, intercept, r_value, p_value, std_err = linregress(beta_adc, beta_MeV)
-
-fig0 = plt.figure()
-
-
-plt.scatter(beta_adc, beta_MeV, label='Data')
-plt.plot(beta_adc, [slope * x + intercept for x in beta_adc], color='red', label='Linear fit')
-plt.xlabel('Beta ADC')
-plt.ylabel('Beta MeV')
-plt.legend()
-fig0.savefig('plots/beta_fit.png')
-plt.clf()
 
 #CONVERT ADC to Energy (KeV) via linear interpolation
 
@@ -228,46 +200,6 @@ m = (y2-y1)/(x2-x1) #slope
 
 def adc_to_energy(adc):
     return m*(adc-x1)+y1
-
-
-
-'''
-SN = 1
-Ar39LAr = 2
-Kr85LAr = 3
-
-total_charges = [] #array of total charges per cluster
-true_labels = []
-Ar39LAr_charges = []
-SN_charges = []
-
-
-for cluster in clusters:
-    charge_sum = 0
-    Ar39_charge_sum = 0
-    SN_charge_sum = 0
-
-    if (cluster.true_label_ == Ar39LAr):
-        for tp in cluster.tps_:
-            Ar39_charge_sum = Ar39_charge_sum + tp['adc_integral']
-        Ar39LAr_charges.append(Ar39_charge_sum)
-
-    if (cluster.true_label_ == SN):
-        for tp in cluster.tps_:
-            #print("Supernova Label Identified. TP charge: " + str(tp['adc_integral']))
-            #print("SN charge sum before adding: " + str(SN_charge_sum))
-            SN_charge_sum = SN_charge_sum + tp['adc_integral']
-            #print("SN charge sum just added: " + str(SN_charge_sum))
-        SN_charges.append(SN_charge_sum)
-
-    for tp in cluster.tps_:
-        charge_sum = charge_sum + tp['adc_integral']
-    
-
-    true_labels.append(cluster.true_label_)
-    total_charges.append(charge_sum)
-'''
-
 
 
 
@@ -291,15 +223,43 @@ plt.yscale("log")
 plt.xticks(range(min(true_labels), max(true_labels) + 1))
 plt.title("Frequency of Different Background Events")
 plt.savefig('plots/true_labels.png')
-#plot every background
 
+
+
+#plot every background and find max ADC values to fit beta spectrum to
+
+beta_adc = []
+beta_MeV = []
+alpha_adc = []
+alpha_MeV = []
 
 for label_num, charge_list in charge_lists.items():
     energy_list = [] #new list with converted adc to energy values
     for adc_charge in charge_list:
         energy_list.append(adc_to_energy(adc_charge))
+    max_charge = 0
     fig1 = plt.figure()
-    plt.hist(charge_list, bins=300)  
+    hist, bins, _ = plt.hist(charge_list, bins=200)  
+    plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
+    plt.xlabel('Total Charge per Cluster [ADC]')  
+    plt.ylabel('Number of Clusters')  
+    plt.show()
+    for i in range(len(hist)):
+        if (bins[i] > max_charge and hist[i] > 1) : #max ADC must have more than 3 entires, filter out the outliers
+            max_charge = bins[i]
+    # Save the plot
+    fig1.savefig(f'plots/tests/{labels[label_num]}_ADC_Sonk.png')
+    plt.clf()
+    
+    if background_max_energy[label_num][0] == 0:
+        beta_adc.append(max_charge)
+        beta_MeV.append(background_max_energy[label_num][1])
+    elif background_max_energy[label_num][0] == 1:
+        alpha_adc.append(max_charge)
+        alpha_MeV.append(background_max_energy[label_num][1])
+    '''
+    fig1 = plt.figure()
+    plt.hist(charge_list, bins=200)  
     plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
     plt.xlabel('Total Charge per Cluster [ADC]')  
     plt.ylabel('Number of Clusters')  
@@ -308,14 +268,14 @@ for label_num, charge_list in charge_lists.items():
     plt.clf()
     
     fig2 = plt.figure()
-    plt.hist(energy_list, bins=300)  
+    plt.hist(energy_list, bins=200)  
     plt.title(f'Total Charge per {labels[label_num]} Cluster [KeV]')  
     plt.xlabel('Total Charge per Cluster [KeV]')  
     plt.ylabel('Number of Clusters')  
     #plt.yscale("log")
     fig2.savefig(f'plots/{labels[label_num]}_KeV.png')
     plt.clf()
-    
+    '''
 
 fig4 = plt.figure()
 plt.hist(total_charges, bins = 100)
@@ -324,6 +284,53 @@ plt.xlabel("Total Charge per Cluster [ADC]")
 plt.yscale("log")
 plt.title("Cluster Charge for all Events")
 fig4.savefig('plots/total_charge.png')
+
+
+
+
+#create two lists for beta and alpha decay background endpoints for linear fit
+'''
+for key in background_max_energy:
+    if key not in exlude:
+        print("Key: " +str(key))
+        print("Max charge: " + str(max_charge[key]))
+        if background_max_energy[key][0] == 0:
+            beta_adc.append(max_charge[key])
+            beta_MeV.append(background_max_energy[key][1])
+        elif background_max_energy[key][0] == 1:
+            alpha_adc.append(max_charge[key])
+            alpha_MeV.append(background_max_energy[key][1])
+''' 
+
+#linear fit
+#error bars on points, use sigma of histogram
+
+slope_B, intercept_B, r_value_B, p_value_B, std_err_B = linregress(beta_adc, beta_MeV)
+slope_a, intercept_a, r_value_a, p_value_a, std_err_a = linregress(alpha_adc, alpha_MeV)
+
+fig0 = plt.figure()
+
+beta_fit_line = f'Beta Fit: MeV = {slope_B:.2f} * ADC + {intercept_B:.2f} (R²={r_value_B**2:.2f})'
+alpha_fit_line = f'Alpha Fit: MeV = {slope_a:.2f} * ADC + {intercept_a:.2f} (R²={r_value_a**2:.2f})'
+
+print("Beta slope: " + str(slope_B))
+print("Alpha slope: " + str(slope_a))
+
+plt.scatter(beta_adc, beta_MeV, color = 'red', label='Beta Decay Backgrounds')
+plt.scatter(alpha_adc,alpha_MeV, color = 'blue', label='Alpha Decay Backgrounds')
+plt.plot(beta_adc, [slope_B * x + intercept_B for x in beta_adc], color='red', label=beta_fit_line)
+plt.plot(alpha_adc,[slope_a * x + intercept_a for x in alpha_adc], color='blue', label=alpha_fit_line)
+plt.xlabel('ADC')
+plt.ylabel('MeV')
+plt.legend()
+fig0.savefig('plots/tests/beta_fit.png')
+plt.clf()
+
+
+
+
+
+
 
 '''
 # Plot 2: Ar39LAr # groups vs charge/group
