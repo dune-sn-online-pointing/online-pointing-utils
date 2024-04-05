@@ -12,6 +12,9 @@ from utils import *
 from cluster import *
 from dataset_creator import *
 
+# Set seed for reproducibility
+np.random.seed(0)
+
 
 parser = argparse.ArgumentParser(description='Plot Cluster Position')
 parser.add_argument('--input_json', type=str, help='Input json file')
@@ -56,6 +59,8 @@ for cluster in clusters:
 img_counter_cc = 0
 img_counter_es = 0
 
+fontsize = 17
+
 
 # take only the common keys
 unique_event_numbers = np.intersect1d(list(clusters_ev.keys()), list(main_clusters.keys()))
@@ -89,9 +94,12 @@ for event_number in unique_event_numbers:
             plt.scatter(main_cluster.get_reco_pos()[0], main_cluster.get_reco_pos()[2], s=30, label="Main cluster")
 
 
-            plt.legend()
-            plt.xlabel("X [cm]")
-            plt.ylabel("Z [cm]")
+            plt.legend(fontsize=fontsize)
+            plt.xlabel("X [cm]", fontsize=fontsize)
+            plt.ylabel("Z [cm]", fontsize=fontsize)
+            # set ticks font size
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
             plt.savefig(output_folder + f"cluster_positions_cc_{img_counter_cc}.png")
             plt.clf()
             plt.close()
@@ -107,9 +115,13 @@ for event_number in unique_event_numbers:
             plt.scatter(main_cluster.get_reco_pos()[0], main_cluster.get_reco_pos()[2], s=30, label="Main cluster")
 
 
-            plt.legend()
-            plt.xlabel("X [cm]")
-            plt.ylabel("Z [cm]")
+            plt.legend(fontsize=fontsize)
+            plt.xlabel("X [cm]", fontsize=fontsize)
+            plt.ylabel("Z [cm]", fontsize=fontsize)
+            # set ticks font size
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            
             plt.savefig(output_folder + f"cluster_positions_es_{img_counter_es}.png")
             plt.clf()
             plt.close()

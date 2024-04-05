@@ -229,19 +229,32 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
         }
         else {
         // read new filename and save the true x y z
-        std::getline(infile, line);
-        std::istringstream iss(line);
-        iss >> true_x;
-        // get next line
-        std::getline(infile, line);
-        iss = std::istringstream(line);
-        iss >> true_y;
-        // get next line
-        std::getline(infile, line);
-        iss = std::istringstream(line);
-        iss >> true_z;
+        // std::getline(infile, line);
+        // std::istringstream iss(line);
+        // iss >> true_x;
+        // // get next line
+        // std::getline(infile, line);
+        // iss = std::istringstream(line);
+        // iss >> true_y;
+        // // get next line
+        // std::getline(infile, line);
+        // iss = std::istringstream(line);
+        // iss >> true_z;
+        // This is to account for the fact that the file might have more than 3 lines
+        std::vector<float> all_directions;
+        while (std::getline(infile, line)) {
+            std::istringstream iss(line);
+            iss = std::istringstream(line);
+            float val;
+            iss >> val;
+            all_directions.push_back(val);
+        }
+        true_x = all_directions[all_directions.size()-3];
+        true_y = all_directions[all_directions.size()-2];
+        true_z = all_directions[all_directions.size()-1];
 
-        std::cout << true_x << " " << true_y << " " << true_z << std::endl;
+
+        // std::cout << true_x << " " << true_y << " " << true_z << std::endl;
         file_idx_to_true_xyz[file_idx] = {true_x, true_y, true_z};
         }
         ++file_idx;
@@ -376,11 +389,15 @@ std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // 
 void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int new_label) {
     int best_idx = INT_MAX;
     int event = clusters[0].get_tp(0)[variables_to_index["event"]];
+    std::vector<int> bad_event_list;
     for (int index = 0; index < clusters.size(); index++) {
         if (clusters[index].get_tp(0)[variables_to_index["event"]] != event) {
             if (best_idx < clusters.size() ){
                 if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
             clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
+                }
+                else{
+                    bad_event_list.push_back(event);
                 }
             }
 
@@ -408,6 +425,17 @@ void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int n
     if (best_idx < clusters.size() ){
         if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
             clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
+        }
+        else{
+            bad_event_list.push_back(event);
+        }
+    }
+
+    std::cout << "Number of bad events: " << bad_event_list.size() << std::endl;
+
+    for (int i=0; i<clusters.size(); i++) {
+        if (std::find(bad_event_list.begin(), bad_event_list.end(), clusters[i].get_tp(0)[variables_to_index["event"]]) != bad_event_list.end()) {
+            clusters[i].set_true_label(new_label);
         }
     }
 
