@@ -1,13 +1,25 @@
-FILENAME=/afs/cern.ch/work/d/dapullia/public/dune/data-selection-pipeline/output/2_test/clustering/cc-lab/X/clusters_tick_limits_3_channel_limits_1_min_tps_to_cluster_1.root
-OUTPUT_FOLDER=/eos/user/d/dapullia/root_cluster_files/eliminami/
-# OUTPUT_FOLDER=/eos/user/e/evilla/dune/
-PREDICTIONS=/afs/cern.ch/work/d/dapullia/public/dune/data-selection-pipeline/output/2_test/mt_id/cc-lab/predictions.txt
-RADIUS=50 # mention units somewhere TODO
-THRESHOLD=0.5
-
+#!bin/bash
+INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/aggregate_clusters/standard.json
 REPO_HOME=$(git rev-parse --show-toplevel)
-echo "REPO_HOME: ${REPO_HOME}"
 
+# parse the input
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --input_file)
+            INPUT_JSON="$2"
+            shift 2
+            ;;
+        -h|--help)
+            echo "Usage: ./aggregate_clusters.sh --input_file <input_json>"
+            exit 0
+            ;;  
+        *)
+            shift
+            ;;
+    esac
+done
+
+echo "REPO_HOME: ${REPO_HOME}"
 # compile
 echo "Compiling..."
 cd ${REPO_HOME}/build/
@@ -20,5 +32,5 @@ if [ $? -ne 0 ]; then
 fi
 
 # Run the app
-./app/aggregate_clusters_within_volume -f ${FILENAME} -o ${OUTPUT_FOLDER} -r ${RADIUS} -p ${PREDICTIONS} -t ${THRESHOLD}
+./app/aggregate_clusters_within_volume -j $INPUT_JSON
 cd ${REPO_HOME}/scripts/

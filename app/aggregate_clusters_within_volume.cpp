@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <ctime>
+#include <nlohmann/json.hpp>
 
 #include "CmdLineParser.h"
 #include "Logger.h"
@@ -23,11 +24,7 @@ int main(int argc, char* argv[]) {
     clp.getDescription() << "> cluster_to_root app."<< std::endl;
 
     clp.addDummyOption("Main options");
-    clp.addOption("filename",    {"-f", "--filename"}, "Filename containing the filenames to read");
-    clp.addOption("outfolder",    {"-o", "--outfolder"}, "Output folder");
-    clp.addOption("radius",    {"-r", "--radius"}, "Radius to consider for the clustering");
-    clp.addOption("prediction_file",    {"-p", "--prediction_file"}, "Prediction file to use for the clustering");
-    clp.addOption("threshold",    {"-t", "--threshold"}, "Threshold to consider for the clustering");
+    clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
 
     clp.addDummyOption("Triggers");
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
@@ -46,11 +43,18 @@ int main(int argc, char* argv[]) {
     LogInfo << "Provided arguments: " << std::endl;
     LogInfo << clp.getValueSummary() << std::endl << std::endl;
 
-    std::string filename = clp.getOptionVal<std::string>("filename");
-    std::string outfolder = clp.getOptionVal<std::string>("outfolder");
-    float radius = clp.getOptionVal<double>("radius");
-    std::string prediction_file = clp.getOptionVal<std::string>("prediction_file");
-    float threshold = clp.getOptionVal<double>("threshold");
+    std::string json = clp.getOptionVal<std::string>("json");
+    // read the configuration file
+    std::ifstream i(json);
+    nlohmann::json j;
+    i >> j;
+    std::string filename = j["filename"];
+    std::string outfolder = j["output_folder"];
+    float radius = j["radius"];
+    std::string prediction_file = j["predictions"];
+    float threshold = j["threshold"];
+
+
 
     std::cout << "filename: " << filename << std::endl;
     std::vector<cluster> clusters = read_clusters_from_root(filename);

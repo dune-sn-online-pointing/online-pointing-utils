@@ -1,14 +1,25 @@
-FILENAME_SIG_CC=/eos/user/d/dapullia/dune/root_group_files/cc-lab/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
-FILENAME_SIG_ES='/eos/user/d/dapullia/dune/root_group_files/es-lab/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root'
-FILENAME_BKG=/eos/user/d/dapullia/dune/root_group_files/es-cc-bkg-truth/bkg/X/groups_tick_limits_3_channel_limits_1_min_tps_to_group_1.root
-OUTPUT_FOLDER=/eos/user/d/dapullia/root_cluster_files/superimposed_files/eliminami/
-# OUTPUT_FOLDER=/eos/user/e/evilla/dune/
-
-RADIUS=50 # mention units somewhere TODO
-
+#!bin/bash
+INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/superimpose_root_files/standard.json
 REPO_HOME=$(git rev-parse --show-toplevel)
-echo "REPO_HOME: ${REPO_HOME}"
 
+# parse the input
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --input_file)
+            INPUT_JSON="$2"
+            shift 2
+            ;;
+        -h|--help)
+            echo "Usage: ./superimpose_root_files.sh --input_file <input_json>"
+            exit 0
+            ;;  
+        *)
+            shift
+            ;;
+    esac
+done
+
+echo "REPO_HOME: ${REPO_HOME}"
 # compile
 echo "Compiling..."
 cd ${REPO_HOME}/build/
@@ -21,14 +32,5 @@ if [ $? -ne 0 ]; then
 fi
 
 # Run the app
-# CC events
-# this is a bit dangerous, can it be avoided?
-# rm -rf $OUTPUT_FOLDER
-./app/superimpose_root_files -s $FILENAME_SIG_CC -b $FILENAME_BKG -o $OUTPUT_FOLDER -r $RADIUS
-
-# ES events
-# this is a bit dangerous, can it be avoided?
-# rm -rf $OUTPUT_FOLDER
-#./superimpose_root_files -s $FILENAME_SIG_ES -b $FILENAME_BKG -o $OUTPUT_FOLDER -r $RADIUS
-
+./app/superimpose_root_files -j $INPUT_JSON
 cd ${REPO_HOME}/scripts/

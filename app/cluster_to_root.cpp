@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <ctime>
+#include <nlohmann/json.hpp>
 
 #include "CmdLineParser.h"
 #include "Logger.h"
@@ -22,16 +23,7 @@ int main(int argc, char* argv[]) {
     clp.getDescription() << "> cluster_to_root app."<< std::endl;
 
     clp.addDummyOption("Main options");
-    clp.addOption("filename",    {"-f", "--filename"}, "Filename containing the filenames to read");
-    clp.addOption("outfolder",    {"-o", "--outfolder"}, "Output folder");
-    clp.addOption("ticks_limit",    {"-t", "--ticks-limit"}, "Ticks limit");
-    clp.addOption("channel_limit",    {"-c", "--channel-limit"}, "Channel limit");
-    clp.addOption("min_tps_to_cluster",    {"-m", "--min-tps-to-cluster"}, "Minimum number of TPs to form a cluster");
-    clp.addOption("plane",    {"-p", "--plane"}, "Plane");
-    clp.addOption("supernova_option",    {"-s", "--supernova-option"}, "Supernova option");
-    clp.addOption("main_track_option",    {"-mt", "--main-track-option"}, "Main track option");
-    clp.addOption("max_events_per_filename",    {"-me", "--max-events-per-filename"}, "Max events per filename");
-    clp.addOption("adc_integral_cut",    {"-a", "--adc-integral-cut"}, "ADC integral cut");
+    clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
 
     clp.addDummyOption("Triggers");
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
@@ -50,19 +42,22 @@ int main(int argc, char* argv[]) {
     LogInfo << "Provided arguments: " << std::endl;
     LogInfo << clp.getValueSummary() << std::endl << std::endl;
 
-    std::string filename = clp.getOptionVal<std::string>("filename");
-    std::string outfolder = clp.getOptionVal<std::string>("outfolder");
-    int ticks_limit = clp.getOptionVal<int>("ticks_limit");
-    int channel_limit = clp.getOptionVal<int>("channel_limit");
-    int min_tps_to_cluster = clp.getOptionVal<int>("min_tps_to_cluster");
-    int plane = clp.getOptionVal<int>("plane");
-    int supernova_option = clp.getOptionVal<int>("supernova_option");
-    int main_track_option = clp.getOptionVal<int>("main_track_option");
-    int max_events_per_filename = clp.getOptionVal<int>("max_events_per_filename");
-    int adc_integral_cut = clp.getOptionVal<int>("adc_integral_cut");
+    std::string json = clp.getOptionVal<std::string>("json");
+    // read the configuration file
+    std::ifstream i(json);
+    nlohmann::json j;
+    i >> j;
+    std::string filename = j["input_file"];
+    std::string outfolder = j["output_folder"];
+    int ticks_limit = j["tick_limit"];
+    int channel_limit = j["channel_limit"];
+    int min_tps_to_cluster = j["min_tps_to_cluster"];
+    int plane = j["plane"];
+    int supernova_option = j["supernova_option"];
+    int main_track_option = j["main_track_option"];
+    int max_events_per_filename = j["max_events_per_filename"];
+    int adc_integral_cut = j["adc_integral_cut"];
     std::vector<std::string> plane_names = {"U", "V", "X"};
-
-
     // start the clock
     std::clock_t start;
 

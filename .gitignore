@@ -5,3 +5,4 @@ lists/
 *.exe
 */__pycache__/
 */condor_stuff/
+*/old/
