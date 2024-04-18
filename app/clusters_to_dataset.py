@@ -16,8 +16,8 @@ parser.add_argument('--input_json', type=str, help='Input json file')
 parser.add_argument('--output_folder', type=str, help='Output folder')
 args = parser.parse_args()
 
-input_json_file = "/afs/cern.ch/work/h/hakins/private/json/ctds_bkg.json"
-output_path = "/afs/cern.ch/work/h/hakins/private/npy_datasets"
+input_json_file = args.input_json
+output_path = args.output_folder
 
 # Read input json
 with open(input_json_file) as f:

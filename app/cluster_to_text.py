@@ -11,7 +11,6 @@ import numpy as np
 #import ROOT
 import matplotlib.pyplot as plt
 from scipy.stats import linregress
-from scipy.optimize import curve_fit
 import time
 import os
 import argparse
@@ -94,9 +93,7 @@ print (" ")
 # create channel map to distinguish induction and collection
 # my_channel_map = create_channel_map_array(which_channel_map=channel_map)
 
-clusters, n_events = read_root_file_to_clusters('/afs/cern.ch/work/h/hakins/private/root_cluster_files/es-cc-bkg-truth/X/uniformBKG/X/clusters_tick_limits_3_channel_limits_1_min_tps_to_cluster_1.root')
-#clusters, n_events = read_root_file_to_clusters('/afs/cern.ch/work/h/hakins/private/online-pointing-utils/scripts/output/X/clusters_tick_limits_3_channel_limits_1_min_tps_to_cluster_1.root')
-
+clusters, n_events = read_root_file_to_clusters('/afs/cern.ch/work/h/hakins/private/online-pointing-utils/scripts/output/X/clusters_tick_limits_3_channel_limits_1_min_tps_to_cluster_1.root')
 
 print("Number of clusters: ", len(clusters))
 #print("First cluster entry: " + str(clusters[0]))
@@ -128,10 +125,10 @@ labels = {
     21: "kRn222ChainGenInPDS",
     22: "kNeutronGenInRock"
     }
-exlude_expo = [-1,0,1,22] #exlude these bacgkrounds when fitting the exponential function to the histograms
+
 '''
 new dic that matches background with its respective maximum decay energy 
-format: label: [decay type, max decay energy [MeV], charge of final state nucleus(Z)]
+format: label: [decay type, decay energy [MeV]]
 beta = 0
 aplha = 1
 dont use = 2
@@ -140,36 +137,33 @@ background_max_energy = {
     -1: [2,1],
     0: [2,1 ],
     1: [2,1 ],
-    2: [0,.565, 18], #beta
-    3: [0,.68706,36], #beta
-    4: [0,.59888,18], #beta
-    5: [0,3.525516,19], #beta 
+    2: [0,.565], #beta
+    3: [0,.68706], #beta
+    4: [0,.59888], #beta
+    5: [0,3.525516], #beta 
     6: [1, 5.59031],  # alpha (MeV)
     7: [1, 6.11468],  # alpha (MeV)
-    8: [0, 1.0189,82],   # beta (MeV)
-    9: [0, 3.2697,83],   # beta (MeV)
-    10: [0, 63.486e-3,82], # beta (MeV)
-    11: [0, 1.31107,19], # beta (MeV)
+    8: [0, 1.0189],   # beta (MeV)
+    9: [0, 3.2697],   # beta (MeV)
+    10: [0, 63.486e-3], # beta (MeV)
+    11: [0, 1.31107], # beta (MeV)
     12: [2,1 ],       # No specified type or energy
-    13: [0, .59888,19], # beta (MeV)
-    14: [2, 6.11468,84],  # alpha (MeV)  #temporarily disableing this, why would in CPA be different distrigution that LAr
-    15: [0, 1.0189,82],   # beta (MeV)
-    16: [0, 3.2697,83],   # beta (MeV)
-    17: [0, 63.486e-3,82], # beta (MeV)
-    18: [0, 1.161292,83],  # beta (MeV)
-    19: [0, 2.823067,27], #beta
+    13: [0, .59888], # beta (MeV)
+    14: [2, 6.11468],  # alpha (MeV)  #temporarily disableing this, why would in CPA be different distrigution that LAr
+    15: [0, 1.0189],   # beta (MeV)
+    16: [0, 3.2697],   # beta (MeV)
+    17: [0, 63.486e-3], # beta (MeV)
+    18: [0, 1.161292],  # beta (MeV)
+    19: [0, 2.823067], #beta
     20: [2,1 ],
     21: [2,1 ],
     22: [2,1 ]
 }
-exlude = [] #backgrounds to exlude 19,13,14
+exlude = [19,13,14] #backgrounds to exlude
 charge_lists = {key: [] for key in labels} #lists of sum of charges in each cluster, for histograms
-charge_lists_cut = {key: [] for key in labels} #same as above but with a charge cut applied for the purpose of fitting the background
 max_charge = {key: 0 for key in labels} #max charge associated with each background, for best fit line
 true_labels = []
 total_charges = []
-
-apply_cut = True #apply charge cut on 
 
 for cluster in clusters:
     charge_sums = {key: 0 for key in labels}
@@ -191,15 +185,14 @@ for cluster in clusters:
     
     
     
-    
 #manuel overwrite of max charge for outliers
-'''
+
 max_charge[2] = 41000
 #max_charge[19] = 90000
 max_charge[6] = 8000
 max_charge[7] = 10000
 max_charge[3] = 52000
-'''
+
 
 #CONVERT ADC to Energy (KeV) via linear interpolation
 
@@ -239,10 +232,7 @@ plt.xlabel("Backgrounds")
 plt.yscale("log")
 plt.xticks(range(min(true_labels), max(true_labels) + 1))
 plt.title("Frequency of Different Background Events")
-#plt.savefig('plots/backgrounds/true_labels.png')
-plt.savefig('plots/backgrounds_uniform/true_labels.png')
-
-
+plt.savefig('plots/true_labels.png')
 
 
 
@@ -270,33 +260,30 @@ for label_num, charge_list in charge_lists.items():
     plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
     plt.xlabel('Total Charge per Cluster [ADC]')  
     plt.ylabel('Number of Clusters')  
-    #fig1.savefig(f'plots/backgrounds/{labels[label_num]}_ADC.png')
-    fig1.savefig(f'plots/backgrounds_uniform/{labels[label_num]}_ADC.png')
+    
 
-    plt.clf()
-    
-    
+
     # Fit a polynomial to the histogram data
-
-    fig2 = plt.figure()
-    hist, bins, _ = plt.hist(charge_list, bins=200)  
-    plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
-    plt.xlabel('Total Charge per Cluster [ADC]')  
-    plt.ylabel('Number of Clusters') 
-    
-    if background_max_energy[label_num][0] == 0 and label_num not in exlude:
-        beta_adc_error.append(np.std(hist))
-        
-    elif background_max_energy[label_num][0] ==1 and label_num not in exlude:
-        alpha_adc_error.append(np.std(hist))
-
-
     degree = 5  
     coefficients = np.polyfit((bins[:-1] + bins[1:]) / 2, hist, degree)
     poly = np.poly1d(coefficients)
     zeros = np.roots(coefficients)
+    min = np.max(zeros)
+    for zero in zeros:
+        if zero < min and zero > 0:
+            min = zero
     
+    if background_max_energy[label_num][0] == 0:
+        beta_adc_error.append(np.std(hist))
+        beta_adc.append(min)
+        beta_MeV.append(background_max_energy[label_num][1])
+        
+    elif background_max_energy[label_num][0] ==1:
+        alpha_adc_error.append(np.std(hist))
+        alpha_adc.append(min)
+        alpha_MeV.append(background_max_energy[label_num][1])
 
+    
     # Plot the fitted curve
     x_values = np.linspace(bins.min(), bins.max(), 1000)
     plt.plot(x_values, poly(x_values), 'r-', label='Fit')
@@ -304,150 +291,13 @@ for label_num, charge_list in charge_lists.items():
     # Save the plot
     equation = str(poly)
     plt.text(0.5, 0.9, equation, horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes, fontsize=7)
-    #fig2.savefig(f'plots/polynomial_fits/{labels[label_num]}_ADC.png')
-    fig2.savefig(f'plots/polynomial_uniform/{labels[label_num]}_ADC.png')
+    fig1.savefig(f'plots/tests1/{labels[label_num]}_ADC_with_polyfit.png')
 
-
-    #    # Print the equation of the fitted polynomial
-
-    
-    plt.clf()
-    
-    
-    #fit exponential to hist data
-
-
-    if label_num not in exlude_expo:
-        cut = np.std(charge_list)
-        cut_charge_list = [x for x in charge_list if x >= cut] # charge cut to cut out spike at low energies
-        fig_expo = plt.figure()
-        hist, bins, _ = plt.hist(cut_charge_list, bins=60)  
-        plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
-        plt.xlabel('Total Charge per Cluster [ADC]')  
-        plt.ylabel('Number of Clusters') 
-        
-        def sigmoid(x, a, b, c, d):
-            return a / (1 + np.exp(-b * (x - c))) + d
-
-        x = (bins[:-1] + bins[1:]) / 2  # Get x values for the center of each bin
-        params, pcov = curve_fit(sigmoid, x, hist, p0=[-hist[0], 1/np.std(hist), np.mean(hist), 100])
-        #print("Background: " + str(labels[label_num]))
-        #print("Parameters: " + str(params))
-        #print("hist[0]: " + str(hist[0]))
-        #print("STD: " + str(np.std(hist)))
-        #print("Mean: " + str(np.mean(hist)))
-        # Step 5: Plot fitted sigmoid curve
-        x_curve = np.linspace(min(x), max(x), 100)
-        plt.plot(x_curve, sigmoid(x_curve, *params), 'r-', label='Sigmoid Fit')
-        plt.text(0.65, 0.9, f'{round(params[0],2)}/[1+exp({round(params[1],2)} * (x-{round(params[2],2)}))] + {round(params[3],2)}', horizontalalignment='center', verticalalignment='center', transform=plt.gca().transAxes, fontsize=7)
-
-        plt.show()
-        #fig_expo.savefig(f'plots/exponential_fits/{labels[label_num]}_ADC.png')
-        fig_expo.savefig(f'plots/exponential_uniform/{labels[label_num]}_ADC.png')
-
-        plt.clf()
-        
-        #Fit Fermi Function
-        alpha = .007297
-        m = .511 #MeV
-        c = 1   #m/s
-        e = np.sqrt(4*np.pi*alpha) #C
-        h = 1 # Joules-s / rad
-        
-        def E(T): #total energy
-            return T + np.power(m,2)
-        def P(T): #momentum
-            return np.sqrt(np.power(E(T),2) - np.power(m,2))
-        
-        def eta(Z,T): #n
-            return (Z*E(T)*np.power(e,2))/P(T)
-        
-        def F(Z,T): #fermi function
-            numerator = (2*np.pi*eta(Z,T))
-            denominator = (1-np.exp(-2*np.pi*eta(Z,T)))  
-            return numerator/denominator    
-        
-        def N(T,Z,C,Q):
-            return C*F(Z,T)*P(T)*E(T)*np.power((Q-T),2)
-        
-    if (label_num not in exlude_expo) and (len(background_max_energy[label_num]) > 2):
-        scale = 100000
-        cut = (max(charge_list)/scale)/25 #cut out first 1st 1/25th of hist range
-        # to fit the expression for beta decay onto the ADC graph, I had to first modify the histogram because the expression does not scale
-        # Now just find endpoint, and reverse the modification to find on ADC graph 
-        # i.e. Find endpoint of fit, subtract .25, then multiply by 100,000 to find ADC endpoint
-        cut_charge_list = [x/100000 + .25 for x in charge_list if x/100000 > cut] # charge cut to cut out spike at low energies
-        fig_fermi = plt.figure()
-        hist, bins, _ = plt.hist(cut_charge_list, bins=50)  
-        plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
-        plt.xlabel('Total Charge per Cluster [ADC]')  
-        plt.ylabel('Number of Clusters') 
-        x = (bins[:-1] + bins[1:]) / 2  # Get x values for the center of each bin
-        params, pcov = curve_fit(N, x, hist, p0=[background_max_energy[label_num][2],4,background_max_energy[label_num][1]])
-        x_curve = np.linspace(min(x), max(x), 100)
-        plt.plot(x_curve, N(x_curve, *params), 'r-', label='Beta Fit')
-        plt.show()
-        #fig_fermi.savefig(f'plots/with_fermi/{labels[label_num]}_ADC.png')
-        fig_fermi.savefig(f'plots/with_fermi_uniform/{labels[label_num]}_ADC.png')
-        plt.clf()
-        
-        print("Background: " + str(labels[label_num]))
-        print("Background Z,Q: " + str(background_max_energy[label_num][2]) + " , " + str(background_max_energy[label_num][1]))
-        print("Params [Z,C,Q]: " + str(params))
-    
-    
-    
-    '''
-    fig1 = plt.figure()
-    hist, bins, _ = plt.hist(charge_list, bins=200)  
-    plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
-    plt.xlabel('Total Charge per Cluster [ADC]')  
-    plt.ylabel('Number of Clusters')  
-    plt.show()
-    
-    
-    fig1.savefig(f'plots/tests/{labels[label_num]}_ADC_Sonk.png')
     plt.clf()
     
     
     
-    
-     
-    for i in range(len(hist)):
-        if (bins[i] > max_charge and hist[i] > 1) : #max ADC must have more than 3 entires, filter out the outliers
-            max_charge = bins[i]
-    # Save the plot
-   
-    
-    
-    if background_max_energy[label_num][0] == 0:
-        beta_adc.append(max_charge)
-        beta_MeV.append(background_max_energy[label_num][1])
-    elif background_max_energy[label_num][0] == 1:
-        alpha_adc.append(max_charge)
-        alpha_MeV.append(background_max_energy[label_num][1])
-        
-    '''
 
-'''
-    fig1 = plt.figure()
-    plt.hist(charge_list, bins=200)  
-    plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
-    plt.xlabel('Total Charge per Cluster [ADC]')  
-    plt.ylabel('Number of Clusters')  
-    #plt.yscale("log")
-    fig1.savefig(f'plots/{labels[label_num]}_ADC.png')
-    plt.clf()
-    
-    fig2 = plt.figure()
-    plt.hist(energy_list, bins=200)  
-    plt.title(f'Total Charge per {labels[label_num]} Cluster [KeV]')  
-    plt.xlabel('Total Charge per Cluster [KeV]')  
-    plt.ylabel('Number of Clusters')  
-    #plt.yscale("log")
-    fig2.savefig(f'plots/{labels[label_num]}_KeV.png')
-    plt.clf()
-    '''
     
     
     
@@ -457,24 +307,12 @@ plt.ylabel("Number of Clusters")
 plt.xlabel("Total Charge per Cluster [ADC]")
 plt.yscale("log")
 plt.title("Cluster Charge for all Events")
-#fig4.savefig('plots/backgrounds/total_charge.png')
-fig4.savefig('plots/backgrounds_uniform/total_charge.png')
-
+fig4.savefig('plots/total_charge.png')
 
 
 
 
 #create two lists for beta and alpha decay background endpoints for linear fit
-
-for key in background_max_energy:
-    print("Background: " + labels[key] + " Max ADC: " + str(max_charge[key]))
-    if key not in exlude:
-        if background_max_energy[key][0] == 0:
-            beta_adc.append(max_charge[key])
-            beta_MeV.append(background_max_energy[key][1])
-        elif background_max_energy[key][0] == 1:
-            alpha_adc.append(max_charge[key])
-            alpha_MeV.append(background_max_energy[key][1])
 
 
 #linear fit
@@ -494,20 +332,13 @@ print("Alpha slope: " + str(slope_a))
 plt.scatter(beta_adc, beta_MeV, color = 'red', label='Beta Decay Backgrounds')
 #plt.errorbar(beta_adc,beta_MeV,xerr=beta_adc_error)
 plt.scatter(alpha_adc,alpha_MeV, color = 'blue', label='Alpha Decay Backgrounds')
-#plt.errorbar(alpha_adc,alpha_MeV,xerr=alpha_adc_error)
+#plt.errorbar(alpha_adc,alphas_MeV,xerr=alpha_adc_error)
 plt.plot(beta_adc, [slope_B * x + intercept_B for x in beta_adc], color='red', label=beta_fit_line)
 plt.plot(alpha_adc,[slope_a * x + intercept_a for x in alpha_adc], color='blue', label=alpha_fit_line)
-
-exclude_str = ', '.join(str(labels[val]) for val in exlude)
-
-# Create the plot title using the formatted string
-plt.title(f'ADC to MeV excluding {exclude_str}')
 plt.xlabel('ADC')
 plt.ylabel('MeV')
 plt.legend()
-#fig0.savefig('plots/ADC_KeV_fits/beta_fit_raw_endpoints.png')
-fig0.savefig('plots/ADC_KeV_uniform/beta_fit_raw_endpoints.png')
-
+fig0.savefig('plots/tests1/beta_fit_zeros.png')
 plt.clf()
 
 
