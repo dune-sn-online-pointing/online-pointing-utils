@@ -394,7 +394,7 @@ void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int n
         if (clusters[index].get_tp(0)[variables_to_index["event"]] != event) {
             if (best_idx < clusters.size() ){
                 if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
-            clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
+                    clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
                 }
                 else{
                     bad_event_list.push_back(event);
@@ -434,8 +434,17 @@ void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int n
     std::cout << "Number of bad events: " << bad_event_list.size() << std::endl;
 
     for (int i=0; i<clusters.size(); i++) {
-        if (std::find(bad_event_list.begin(), bad_event_list.end(), clusters[i].get_tp(0)[variables_to_index["event"]]) != bad_event_list.end()) {
+        if ((std::find(bad_event_list.begin(), bad_event_list.end(), clusters[i].get_tp(0)[variables_to_index["event"]]) != bad_event_list.end()) and clusters[i].get_true_label() == 1) {
             clusters[i].set_true_label(new_label);
+            // print the tps
+            for (auto& tp : clusters[i].get_tps()) {
+                for (auto& val : tp) {
+                    std::cout << val << " ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << clusters[i].get_reco_pos()[0] << " " << clusters[i].get_reco_pos()[1] << " " << clusters[i].get_reco_pos()[2] << std::endl;
+            std::cout << clusters[i].get_min_distance_from_true_pos() << std::endl;
         }
     }
 
