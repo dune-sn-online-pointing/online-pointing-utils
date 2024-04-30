@@ -95,7 +95,7 @@ print (" ")
 # my_channel_map = create_channel_map_array(which_channel_map=channel_map)
 
 #True means you want to use uniform background file, changing where images are saved etc..
-uniform = False
+uniform = True
 
 if uniform:
     clusters, n_events = read_root_file_to_clusters('/afs/cern.ch/work/h/hakins/private/root_cluster_files/es-cc-bkg-truth/X/uniformBKG/X/clusters_tick_limits_3_channel_limits_1_min_tps_to_cluster_1.root') #uniform backgrounds
@@ -133,7 +133,7 @@ exlude_expo = []#[-1,0,1,22,2] #exlude these bacgkrounds when fitting the expone
 
 '''
 new dic that matches background with its respective maximum decay energy 
-format: label: [decay type, max decay energy [MeV], charge of final state nucleus(Z)]
+format: label: [decay type, max decay energy [MeV], charge of final state nucleus(Z), uncertainty in endpoint]
 beta = 0
 aplha = 1
 dont use = 2
@@ -143,24 +143,24 @@ background_max_energy = {
     -1: [2,1],
     0: [2,1 ],
     1: [2,1 ],
-    2: [0,.565, 18], #beta
-    3: [0,.68706,36], #beta
-    4: [0,.59888,18], #beta
-    5: [0,3.525516,19], #beta 
-    6: [1, 5.59031],  # alpha (MeV)
-    7: [1, 6.11468],  # alpha (MeV)
-    8: [0, 1.0189,82],   # beta (MeV)
-    9: [0, 3.2697,83],   # beta (MeV)
-    10: [0, 63.486e-3,82], # beta (MeV)
-    11: [0, 1.31107,19], # beta (MeV)
+    2: [0,.565, 18,0], #beta
+    3: [0,.68706,36,0], #beta
+    4: [0,.59888,18,0], #beta
+    5: [0,3.525516,19,0], #beta 
+    6: [1, 5.59031,0],  # alpha (MeV)
+    7: [1, 6.11468,0],  # alpha (MeV)
+    8: [0, 1.0189,82,0],   # beta (MeV)
+    9: [0, 3.2697,83,0],   # beta (MeV)
+    10: [0, 63.486e-3,82,0], # beta (MeV)
+    11: [0, 1.31107,19,0], # beta (MeV)
     12: [2,1 ],       # No specified type or energy
-    13: [0, .59888,19], # beta (MeV)
-    14: [2, 6.11468,84],  # alpha (MeV)  #temporarily disableing this, why would in CPA be different distrigution that LAr
-    15: [0, 1.0189,82],   # beta (MeV)
-    16: [0, 3.2697,83],   # beta (MeV)
-    17: [0, 63.486e-3,82], # beta (MeV)
-    18: [0, 1.161292,83],  # beta (MeV)
-    19: [0, 2.823067,27], #beta
+    13: [0, .59888,19,0], # beta (MeV)
+    14: [2, 6.11468,84,0],  # alpha (MeV)  #temporarily disableing this, why would in CPA be different distrigution that LAr
+    15: [0, 1.0189,82,0],   # beta (MeV)
+    16: [0, 3.2697,83,0],   # beta (MeV)
+    17: [0, 63.486e-3,82,0], # beta (MeV)
+    18: [0, 1.161292,83,0],  # beta (MeV)
+    19: [0, 2.823067,27,0], #beta
     20: [2,1 ],
     21: [2,1 ],
     22: [2,1 ]
@@ -271,6 +271,7 @@ for label_num, charge_list in charge_lists.items():
     
     #fit sigmoid to hist data
     if label_num not in exlude_expo:
+        '''
         cut = np.std(charge_list)
         cut_charge_list = [x for x in charge_list if x >= cut] # charge cut to cut out spike at low energies
         fig_expo = plt.figure()
@@ -297,7 +298,7 @@ for label_num, charge_list in charge_lists.items():
         except RuntimeError as e:
             print(f'Could not fit exponential to {labels[label_num]}')
             
-        
+        '''
         #Fit Fermi Function
         alpha = .007297
         m = .511 #MeV
@@ -340,10 +341,11 @@ for label_num, charge_list in charge_lists.items():
         plt.xlabel('Total Charge per Cluster [-.25 + ADC/10^5 ]')  
         plt.ylabel('Number of Clusters') 
         x = (bins[:-1] + bins[1:]) / 2  # Get x values for the center of each bin
+     
         try:
             params, pcov = curve_fit(N, x, hist_fit, p0=[background_max_energy[label_num][2],4,background_max_energy[label_num][1]])
-            x_curve = np.linspace(min(x), max(x)+.2, 100)
-            plt.plot(x_curve, N(x_curve, *params), 'r-', label='Beta Fit')
+            x_curve = np.linspace(min(x), max(x)+.2, 100) 
+            plt.plot(x_curve, N(x_curve,background_max_energy[label_num][2], params[1],params[2]), 'r-', label='Beta Fit')
             plt.show()
             if uniform:
                 fig_fermi.savefig(f'plots/with_fermi_uniform/{labels[label_num]}_ADC.png')
@@ -352,14 +354,22 @@ for label_num, charge_list in charge_lists.items():
 
             plt.clf()
                     #find endpoint using fermi fit ^
-            start = .25
+            start = .5
             end = np.max(charge_list_plt) 
             step = .01
             max_adc = 0
+            unc_count = 0
+            fit_min = 100
             for x in range(int((end-start)/step)+1):
                 T = start + x*step
-                if N(T,*params) < 5:
-                    max_charge_fermi[label_num] = (T-.25)*scale
+                val = N(T,*params)
+                if val < 3:
+                    unc_count+=step #uncertainty measured by how "steep" the curve minimum is
+                    if val < fit_min: #find minimum of curve
+                        fit_min = val
+                        max_charge_fermi[label_num] = (T-.25)*scale #record energy at minimum value of curve
+            uncertainty = unc_count*scale
+            background_max_energy[label_num][3] = uncertainty
                     #print(f"Endpoint for {labels[label_num]} is {T}")
         except RuntimeError as e:
             print(f"Could not fit {labels[label_num]}")
@@ -385,6 +395,7 @@ else:
 #create two lists for beta and alpha decay background endpoints for linear fit
 beta_adc_fermi = []
 alpha_adc_fermi = []
+uncertainties = []
 
 for key in background_max_energy:
     print("Background: " + labels[key] + " Max ADC using Fermi: " + str(max_charge_fermi[key]))
@@ -392,11 +403,13 @@ for key in background_max_energy:
         beta_adc_fermi.append(41000)
         beta_MeV.append(background_max_energy[2][1])
         beta_adc.append(max_charge[key])
+        uncertainties.append(10000)
     if key not in exlude:
         if background_max_energy[key][0] == 0:
             beta_adc.append(max_charge[key])
             beta_adc_fermi.append(max_charge_fermi[key])
             beta_MeV.append(background_max_energy[key][1])
+            uncertainties.append(background_max_energy[key][3])
             
         elif background_max_energy[key][0] == 1:
             alpha_adc.append(max_charge[key])
@@ -419,8 +432,9 @@ beta_fit_line = f'Beta Fit: MeV = {slope_B:.2e} * ADC + {intercept_B:.2f} (R²={
 alpha_fit_line = f'Alpha Fit: MeV = {slope_a:.2e} * ADC + {intercept_a:.2f} (R²={r_value_a**2:.2f})'
 print("Beta slope: " + str(slope_B))
 print("Alpha slope: " + str(slope_a))
-plt.scatter(beta_adc_fermi, beta_MeV, color = 'red', label='Beta Decay Backgrounds')
+#plt.scatter(beta_adc_fermi, beta_MeV, xerr=uncertainties, color = 'red', label='Beta Decay Backgrounds')
 plt.scatter(alpha_adc_fermi,alpha_MeV, color = 'blue', label='Alpha Decay Backgrounds')
+plt.errorbar(beta_adc_fermi, beta_MeV, xerr=uncertainties, fmt='o', color='red', label='Beta Decay Backgrounds')
 plt.plot(beta_adc_fermi, [slope_B * x + intercept_B for x in beta_adc_fermi], color='red', label=beta_fit_line)
 plt.plot(alpha_adc_fermi,[slope_a * x + intercept_a for x in alpha_adc_fermi], color='blue', label=alpha_fit_line)
 
