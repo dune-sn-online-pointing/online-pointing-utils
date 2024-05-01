@@ -17,6 +17,7 @@ import os
 import argparse
 import warnings
 import gc
+from sklearn.metrics import r2_score
 
 import sys
 sys.path.append('../python/') 
@@ -140,9 +141,9 @@ dont use = 2
 '''
 #decay energies from https://periodictable.com/Isotopes/018.39/index.dm.html
 background_max_energy = {  
-    -1: [2,1],
-    0: [2,1 ],
-    1: [2,1 ],
+    -1: [2,1,0],
+    0: [2,1,0 ],
+    1: [2,1,0 ],
     2: [0,.565, 18,0], #beta
     3: [0,.68706,36,0], #beta
     4: [0,.59888,18,0], #beta
@@ -153,7 +154,7 @@ background_max_energy = {
     9: [0, 3.2697,83,0],   # beta (MeV)
     10: [0, 63.486e-3,82,0], # beta (MeV)
     11: [0, 1.31107,19,0], # beta (MeV)
-    12: [2,1 ],       # No specified type or energy
+    12: [2,1,0 ],       # No specified type or energy
     13: [0, .59888,19,0], # beta (MeV)
     14: [2, 6.11468,84,0],  # alpha (MeV)  #temporarily disableing this, why would in CPA be different distrigution that LAr
     15: [0, 1.0189,82,0],   # beta (MeV)
@@ -161,9 +162,9 @@ background_max_energy = {
     17: [0, 63.486e-3,82,0], # beta (MeV)
     18: [0, 1.161292,83,0],  # beta (MeV)
     19: [0, 2.823067,27,0], #beta
-    20: [2,1 ],
-    21: [2,1 ],
-    22: [2,1 ]
+    20: [2,1,0 ],
+    21: [2,1,0 ],
+    22: [2,1 ,0]
 }
 
 if uniform:
@@ -237,7 +238,7 @@ for label_num, charge_list in charge_lists.items():
     
     
     # Fit a polynomial to the histogram data
-
+    '''
     fig2 = plt.figure()
     hist, bins, _ = plt.hist(charge_list, bins=200)  
     plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
@@ -268,8 +269,10 @@ for label_num, charge_list in charge_lists.items():
    
     plt.clf()
     
-    
+  '''
+  
     #fit sigmoid to hist data
+    # 
     if label_num not in exlude_expo:
         '''
         cut = np.std(charge_list)
@@ -319,34 +322,49 @@ for label_num, charge_list in charge_lists.items():
             denominator = (1-np.exp(-2*np.pi*eta(Z,T)))  
             return numerator/denominator    
         
-        def N(T,Z,C,Q):
+        def N(T,C,Z=background_max_energy[label_num][2],Q=background_max_energy[label_num][1]):
             return C*F(Z,T)*P(T)*E(T)*np.power((Q-T),2)
         
     if (label_num not in exlude_expo) and (len(background_max_energy[label_num]) > 2):
         scale = 100000
         if (len(charge_list)>10):
-            cut = (max(charge_list)/scale)/30 #cut out first 1st 1/25th of hist range
+            cut = (max(charge_list)/scale)/10 #cut out first 1st 1/25th of hist range
         else:
-            cut = .2
+            cut = .4
+        start = .2
         # to fit the expression for beta decay onto the ADC graph, I had to first modify the histogram because the expression does not scale
         # Now just find endpoint, and reverse the modification to find on ADC graph 
         # i.e. Find endpoint of fit, subtract .25, then multiply by 100,000 to find ADC endpoint
-        cut_charge_list_fit = [x/scale + .25 for x in charge_list if x/scale > cut ] # charge cut to cut out spike at low energies
-        charge_list_plt = [x/scale + .25 for x in charge_list] #charge list to plot, doesnt have spike cut but has scale
+        cut_charge_list_fit = [x/scale + start for x in charge_list if x/scale + start > .32 ] # charge cut to cut out spike at low energies
+        #charge_list_plt = [x/scale + .25 for x in charge_list] #charge list to plot, doesnt have spike cut but has scale
         fig_fermi = plt.figure()
-        hist_fit, bins, _ = plt.hist(cut_charge_list_fit,bins = 50)
-        plt.clf()
-        hist, bins, _ = plt.hist(charge_list_plt, bins=50)  #plot the hist but fit fermi on the cut histogram
+        hist_fit, bins, _ = plt.hist(cut_charge_list_fit,bins = 35)
+        #plt.clf()
+        #hist, bins, _ = plt.hist(cut_charge_list_fit, bins=60)  #plot the hist but fit fermi on the cut histogram
         plt.title(f'Total Charge per {labels[label_num]} Cluster')  
         plt.xlabel('Total Charge per Cluster [-.25 + ADC/10^5 ]')  
         plt.ylabel('Number of Clusters') 
         x = (bins[:-1] + bins[1:]) / 2  # Get x values for the center of each bin
+       
+        #bounds = ([background_max_energy[label_num][2]-100000, -10000000, background_max_energy[label_num][1]-500],
+         # [background_max_energy[label_num][2]+100000, 100000000, background_max_energy[label_num][1]+500])
      
         try:
-            params, pcov = curve_fit(N, x, hist_fit, p0=[background_max_energy[label_num][2],4,background_max_energy[label_num][1]])
+            #params = [0,200,1]
+            #params, pcov = curve_fit(N, x, hist_fit, p0=[background_max_energy[label_num][2],4,background_max_energy[label_num][1]])
+            params, pcov = curve_fit(N, x, hist_fit, p0=200)
+            perr = np.sqrt(np.diag(pcov))
             x_curve = np.linspace(min(x), max(x)+.2, 100) 
-            plt.plot(x_curve, N(x_curve,background_max_energy[label_num][2], params[1],params[2]), 'r-', label='Beta Fit')
+            #y_pred = N(x, background_max_energy[label_num][2], params[1], background_max_energy[label_num][1])   #Fit with Z and Q constant
+            y_pred = N(x, *params)
+
+            R_squared = r2_score(hist_fit, y_pred)
+            #plt.plot(x_curve, N(x_curve,background_max_energy[label_num][2], params[1],background_max_energy[label_num][1]), 'r-', label='Beta Fit')
+            plt.plot(x_curve, N(x_curve,*params), 'r-', label='Beta Fit') #fit with Q and Z not constants, varied for fit
+
+            plt.text(0.6, 0.9, f'R-squared: {R_squared:.2f}', transform=plt.gca().transAxes, fontsize=12, verticalalignment='top')
             plt.show()
+            print(f'Params for {labels[label_num]}: {params}')
             if uniform:
                 fig_fermi.savefig(f'plots/with_fermi_uniform/{labels[label_num]}_ADC.png')
             else:
@@ -354,23 +372,44 @@ for label_num, charge_list in charge_lists.items():
 
             plt.clf()
                     #find endpoint using fermi fit ^
-            start = .5
-            end = np.max(charge_list_plt) 
+                    
+            #create parameter samples
+            sample_size = 15
+            sampled_params = []
+            for i in range(sample_size):
+                sample_a = np.random.normal(params[0], perr[0])
+                sampled_params.append(sample_a)
+                
+            end = np.max(cut_charge_list_fit) 
             step = .01
             max_adc = 0
-            unc_count = 0
-            fit_min = 100
-            for x in range(int((end-start)/step)+1):
-                T = start + x*step
-                val = N(T,*params)
-                if val < 3:
-                    unc_count+=step #uncertainty measured by how "steep" the curve minimum is
-                    if val < fit_min: #find minimum of curve
-                        fit_min = val
-                        max_charge_fermi[label_num] = (T-.25)*scale #record energy at minimum value of curve
-            uncertainty = unc_count*scale
-            background_max_energy[label_num][3] = uncertainty
+            #unc_count = 0
+            endpoints = []
+            
+            for parameter in sampled_params:
+                fit_min = 100
+                T_max = 0
+                print(f'starting parameter search')
+                for x in range(int((end-start)/step)+1):
+                    energy_adc = start + x*step
+                    val = N(energy_adc,parameter)
+                    if label_num == 9:
+                        print(f'{energy_adc},{val}')
+                    if val < 40:
+                        #print("val < 3")
+                        #unc_count+=step #uncertainty measured by how "steep" the curve minimum is
+                        if val < fit_min: #find minimum of curve
+                            fit_min = val
+                            T_max = energy_adc
+            #uncertainty = unc_count*scale
+                print(f'adding endpoint: {T_max} for {labels[label_num]}')
+                endpoints.append(T_max)
+                
+            
                     #print(f"Endpoint for {labels[label_num]} is {T}")
+            print(f'mean endpoint is {np.mean(endpoints)}')       
+            max_charge_fermi[label_num] = (np.mean(endpoints)-start)*scale #record energy at minimum value of curve  
+            background_max_energy[label_num][3] = np.std(endpoints)      
         except RuntimeError as e:
             print(f"Could not fit {labels[label_num]}")
     
