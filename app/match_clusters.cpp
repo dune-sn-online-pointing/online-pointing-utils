@@ -150,51 +150,114 @@ int main(int argc, char* argv[]) {
     }
     std::cout << std::endl;
     std::cout << "clusters written to " << file_clusters_u << " " << file_clusters_v << " " << file_clusters_x << std::endl;
+    std::cout << "Number of clusters: " << clusters_u.size() << " " << clusters_v.size() << " " << clusters_x.size() << std::endl;
+    std::vector<std::vector<cluster>> clusters;
+    std::vector<cluster> multiplane_clusters;
+    // std::map<int, std::vector<int>> index_used_u;
+    // std::map<int, std::vector<int>> index_used_v;
+    // std::map<int, std::vector<int>> index_used_x;
+    int start_j = 0;
+    int start_k = 0;
+    std::clock_t str;
 
-    int n = 0;
     for (int i = 0; i < clusters_x.size(); i++) {
-        for (int j = 0; j < clusters_u.size(); j++) {
-            for (int k = 0; k < clusters_v.size(); k++) {
-    // for (int i = 0; i < 3; i++) {
-    //     for (int j = 0; j < 3; j++) {
-    //         for (int k = 0; k < 3; k++) {
-                // if not in the same apa skip
-                if (int(clusters_u[j].get_tps()[0][3]/2560) != int(clusters_x[i].get_tps()[0][3]/2560)) {
+        if (i % 1000 == 0 && i != 0) {
+            str = std::clock();
+            std::cout << "Cluster " << i << " Time: " << (str - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+        }
+        if (clusters_x[i].get_true_label() != 101){
+            // std::cout << "CONT" << std::endl;
+            continue;
+        }  
+        int min_range_j = 0;
+        int max_range_j = clusters_u.size();
+        while (min_range_j < max_range_j) {
+            start_j = (min_range_j + max_range_j) / 2;
+            if (clusters_u[start_j].get_tps()[0][variables_to_index["time_start"]] < clusters_x[i].get_tps()[0][variables_to_index["time_start"]]) {
+                min_range_j = start_j + 1;
+            } else {
+                max_range_j = start_j;
+            }
+        }
+        start_j = std::max(start_j-10, 0);
+        for (int j = start_j; j < clusters_u.size(); j++) {
+
+            if (clusters_u[j].get_tps()[0][variables_to_index["time_start"]] > clusters_x[i].get_tps()[0][variables_to_index["time_start"]] + 5000) {
+                // std::cout << "continue" << std::endl;
+                break;
+            }
+
+            if (clusters_u[j].get_tps()[0][variables_to_index["time_start"]] < clusters_x[i].get_tps()[0][variables_to_index["time_start"]] - 5000) {
+                // std::cout << "continue" << std::endl;
+                continue;
+            }
+
+            // if not in the same apa skip
+            if (int(clusters_u[j].get_tps()[0][3]/2560) != int(clusters_x[i].get_tps()[0][3]/2560)) {
+                continue;
+            }
+            int min_range_k = 0;
+            int max_range_k = clusters_v.size();
+            while (min_range_k < max_range_k) {
+                start_k = (min_range_k + max_range_k) / 2;
+                if (clusters_v[start_k].get_tps()[0][variables_to_index["time_start"]] < clusters_x[i].get_tps()[0][variables_to_index["time_start"]]) {
+                    min_range_k = start_k + 1;
+                } else {
+                    max_range_k = start_k;
+                }
+            }
+            start_k = std::max(start_k-10, 0);
+            for (int k = start_k; k < clusters_v.size(); k++) {
+                if (clusters_v[k].get_tps()[0][variables_to_index["time_start"]] > clusters_u[j].get_tps()[0][variables_to_index["time_start"]] + 5000) {
+                    // std::cout << "break" << std::endl;
+                    break;
+                }
+                if (clusters_v[k].get_tps()[0][variables_to_index["time_start"]] < clusters_u[j].get_tps()[0][variables_to_index["time_start"]] - 5000) {
+                    // std::cout << "break" << std::endl;
                     continue;
                 }
+                
+
                 if (int(clusters_v[k].get_tps()[0][3]/2560) != int(clusters_x[i].get_tps()[0][3]/2560)) {
                     continue;
                 }
-            //     std::cout << "Event: " << clusters_x[i].get_tps()[0][variables_to_index["event"]] << " Cluster U: " << clusters_u[j].get_true_label() << " Cluster V: " << clusters_v[k].get_true_label() << " Cluster X: " << clusters_x[i].get_true_label() << std::endl;
-            // // print(f"Cluster U apa: {c_u.get_tps()[0][3]//2560}, Cluster V apa: {c_v.get_tps()[0][3]//2560}, Cluster X apa: {c_x.get_tps()[0][3]//2560}")
-            //     std::cout << "Cluster U apa: " << int(clusters_u[j].get_tps()[0][3]/2560) << " Cluster V apa: " << int(clusters_v[k].get_tps()[0][3]/2560) << " Cluster X apa: " << int(clusters_x[i].get_tps()[0][3]/2560) << std::endl;
-            //     int reco_y_u = eval_y_knowing_z_U_plane(clusters_u[j].get_tps(), clusters_x[i].get_reco_pos()[2], clusters_x[i].get_reco_pos()[0] > 0 ? 1 : -1)[0];
-            //     std::cout << "Cluster U: X: " << clusters_u[j].get_reco_pos()[0] << " Y: " << reco_y_u << std::endl;
-            //     int reco_y_v = eval_y_knowing_z_V_plane(clusters_v[k].get_tps(), clusters_x[i].get_reco_pos()[2], clusters_x[i].get_reco_pos()[0] > 0 ? 1 : -1)[0];
-            //     std::cout << "Cluster V: X: " << clusters_v[k].get_reco_pos()[0] << " Y: " << reco_y_v << std::endl;
-            //     std::cout << "Cluster X: X: " << clusters_x[i].get_reco_pos()[0] << " Z: " << clusters_x[i].get_reco_pos()[2] << std::endl;
-            //     std::cout << std::endl;
+
                 if (are_compatibles(clusters_u[j], clusters_v[k], clusters_x[i], 5)) {
-                    std::cout << "Compatible clusters found" << std::endl;
-                    std::cout << "Event: " << clusters_x[i].get_tps()[0][variables_to_index["event"]] << " Cluster U: " << clusters_u[j].get_true_label() << " Cluster V: " << clusters_v[k].get_true_label() << " Cluster X: " << clusters_x[i].get_true_label() << std::endl;
-                    std::cout << "Cluster U: X: " << clusters_u[j].get_reco_pos()[0] << " Y: " << eval_y_knowing_z_U_plane(clusters_u[j].get_tps(), clusters_x[i].get_reco_pos()[2], clusters_x[i].get_reco_pos()[0] > 0 ? 1 : -1)[0] << std::endl;
-                    std::cout << "Cluster V: X: " << clusters_v[k].get_reco_pos()[0] << " Y: " << eval_y_knowing_z_V_plane(clusters_v[k].get_tps(), clusters_x[i].get_reco_pos()[2], clusters_x[i].get_reco_pos()[0] > 0 ? 1 : -1)[0] << std::endl;
-                    std::cout << "Cluster X: X: " << clusters_x[i].get_reco_pos()[0] << " Z: " << clusters_x[i].get_reco_pos()[2] << std::endl;
-                    std::cout << j << " " << k << " " << i << std::endl;
-                    std::cout << std::endl; 
-                    n++;
+                    if (match_with_true_pos(clusters_u[j], clusters_v[k], clusters_x[i], 5)) {
+                        clusters.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
+                        cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
+                        multiplane_clusters.push_back(c);
+                    }
                 }
             }
         }
     }
 
-    std::cout << "Number of compatible clusters: " << n << std::endl;
 
+    std::cout << "Number of compatible clusters: " << clusters.size() << std::endl;
+    // return counts of label
+    std::map<int, int> label_to_count_compatible;
+    for (int i = 0; i < clusters.size(); i++) {
+        if (label_to_count_compatible.find(clusters[i][2].get_true_label()) == label_to_count_compatible.end()) {
+            label_to_count_compatible[clusters[i][2].get_true_label()] = 0;
+        }
+        label_to_count_compatible[clusters[i][2].get_true_label()]++;
+    }
+    for (auto const& x : label_to_count_compatible) {
+        // std::cout << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
+        std::cout << x.first << " ";
+    }
+    std::cout << std::endl;
+    for (auto const& x : label_to_count_compatible) {
+        // std::cout << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
+        std::cout << x.second << " ";
+    }
+    std::cout << std::endl;
 
-
-
-
-
+    // save the multiplane clusters to a root file
+    write_clusters_to_root(multiplane_clusters, outfolder + "multiplane_clusters.root");
+    std::cout << "multiplane clusters written to " << outfolder + "multiplane_clusters.root" << std::endl;
+       
 
     // stop the clock
     std::clock_t end;

@@ -26,6 +26,8 @@ def create_dataset_img(clusters, channel_map, min_tps_to_create_img=1, make_fixe
         dataset_img = np.empty((len(clusters), height, width, 3), dtype=np.uint16)
 
     for i, cluster in enumerate(clusters):
+        if i % 1000 == 0:
+            print(f"Creating image {i}")
         if len(cluster) >= min_tps_to_create_img:
             # img = create_image(cluster.get_tps(), channel_map, make_fixed_size, width, height, x_margin, y_margin, only_collection)
             tps_to_draw = cluster.get_tps()

@@ -21,8 +21,8 @@ const double apa_angular_coeff = tan(apa_angle * M_PI / 180);
 std::vector<float> calculate_position(std::vector<double> tp);
 std::vector<std::vector<float>> validate_position_calculation(std::vector<std::vector<double>> tps);
 float distance(cluster cluster1, cluster cluster2);
-std::vector<float> eval_y_knowing_z_U_plane(std::vector<std::vector<double>> tps, float z, float x_sign);
-std::vector<float> eval_y_knowing_z_V_plane(std::vector<std::vector<double>> tps, float z, float x_sign);
+float eval_y_knowing_z_U_plane(std::vector<std::vector<double>> tps, float z, float x_sign);
+float eval_y_knowing_z_V_plane(std::vector<std::vector<double>> tps, float z, float x_sign);
 
 #endif
 

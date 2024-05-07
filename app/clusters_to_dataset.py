@@ -64,7 +64,7 @@ if __name__ == '__main__':
     # Create the images
     if save_img_dataset:
         print("Creating the images")
-        dataset_img = create_dataset_img(clusters=clusters, channel_map=channel_map, min_tps_to_create_img=min_tps_to_cluster, make_fixed_size=True, width=width, height=height, x_margin=x_margin, y_margin=y_margin, only_collection=True)
+        dataset_img = create_dataset_img(clusters=clusters, channel_map=channel_map, min_tps_to_create_img=min_tps_to_cluster, make_fixed_size=True, width=width, height=height, x_margin=x_margin, y_margin=y_margin, only_collection=False)
         print(f"Shape of the dataset_img: {dataset_img.shape}")
         np.save(output_path + 'dataset/dataset_img.npy', dataset_img)
         save_samples_from_ds(dataset_img, output_path + 'samples/', n_samples=10)

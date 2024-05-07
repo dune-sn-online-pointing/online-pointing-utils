@@ -18,7 +18,28 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 # from scipy import sparse
 
 from utils import create_channel_map_array
+import time
 
+def eval_intermidiate_height(tp, frac):
+    ah = tp['time_peak'] - tp['time_start']
+    bh = tp['time_over_threshold'] - ah
+    ch = tp['adc_peak']
+    ad = ah*frac
+    dh = ah-ad
+    eb = bh*frac
+    he = bh-eb
+
+    # intermidiate_height = (tp['adc_integral']-(tp['adc_peak']*(tp['time_peak']-tp['time_start'])/2)/2-(tp['adc_peak']*(tp['time_over_threshold']-(tp['time_peak']-tp['time_start']))/2)/2)/(tp['time_over_threshold']/2)
+    # expected_tresh = (tp['adc_peak']/2)*((tp['time_over_threshold']/2))
+    intermidiate_height = (2*tp['adc_integral']-ch*dh-ch*he)/(tp['time_over_threshold'])
+    if intermidiate_height < 0:
+        frac = 1-0.5*(1-frac)
+        intermidiate_height = eval_intermidiate_height(tp, frac)
+    elif intermidiate_height > ch:
+        frac = 0.5*frac
+        intermidiate_height = eval_intermidiate_height(tp, frac)
+
+    return intermidiate_height
 
 def create_image_one_view(tps_to_draw, make_fixed_size=False, width=100, height=100, x_margin=10, y_margin=100, y_min_overall=-1, y_max_overall=-1, verbose=False):
     '''
@@ -91,25 +112,55 @@ def create_image_one_view(tps_to_draw, make_fixed_size=False, width=100, height=
                 x=(tp['channel'] - x_min)/x_range * (img_width - 2*x_margin) + x_margin
                 y_start = (tp['time_start'] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
                 y_end = (tp['time_start'] + tp['time_over_threshold'] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                img[int(y_start)-1:int(y_end), int(x)-1] = tp['adc_integral']/(y_end - y_start)
+                y_peak = (tp['time_peak'] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
+                y_int_1 = ((tp['time_peak'] - tp['time_start'])/2 +tp['time_start'] -t_start)/y_range * (img_height - 2*y_margin) + y_margin
+                y_int_2 = ((tp['time_start'] + tp['time_over_threshold'] - tp['time_peak'])/2 + tp['time_peak'] -t_start)/y_range * (img_height - 2*y_margin) + y_margin                
+                intermidiate_height = eval_intermidiate_height(tp, 0.5)
+                img[int(y_start):int(y_int_1), int(x)-1] = np.linspace(0, intermidiate_height, int(y_int_1)-int(y_start))
+                img[int(y_int_1):int(y_peak), int(x)-1] = np.linspace(intermidiate_height, tp['adc_peak'], int(y_peak)-int(y_int_1))
+                img[int(y_peak):int(y_int_2), int(x)-1] = np.linspace(tp['adc_peak'], intermidiate_height, int(y_int_2)-int(y_peak))
+                img[int(y_int_2):int(y_end), int(x)-1] = np.linspace(intermidiate_height, 0, int(y_end)-int(y_int_2))
+
         elif stretch_x:
             for tp in tps_to_draw:                
                 x=(tp['channel'] - x_min)/x_range * (img_width - 2*x_margin) + x_margin
                 y_start = (tp['time_start'] - t_start) + y_margin
                 y_end = (tp['time_start'] + tp['time_over_threshold'] - t_start) + y_margin
-                img[int(y_start)-1:int(y_end), int(x)-1] = tp['adc_integral']/(y_end - y_start)
+                y_peak = (tp['time_peak'] - t_start) + y_margin
+                y_int_1 = (tp['time_peak'] - tp['time_start'])/2 +tp['time_start'] -t_start + y_margin
+                y_int_2 = (tp['time_start'] + tp['time_over_threshold'] - tp['time_peak'])/2 + tp['time_peak'] -t_start + y_margin
+                intermidiate_height = eval_intermidiate_height(tp, 0.5)
+                img[int(y_start):int(y_int_1), int(x)-1] = np.linspace(0, intermidiate_height, int(y_int_1)-int(y_start))
+                img[int(y_int_1):int(y_peak), int(x)-1] = np.linspace(intermidiate_height, tp['adc_peak'], int(y_peak)-int(y_int_1))
+                img[int(y_peak):int(y_int_2), int(x)-1] = np.linspace(tp['adc_peak'], intermidiate_height, int(y_int_2)-int(y_peak))
+                img[int(y_int_2):int(y_end), int(x)-1] = np.linspace(intermidiate_height, 0, int(y_end)-int(y_int_2))
         elif stretch_y:
             for tp in tps_to_draw:
                 x = (tp['channel'] - x_min) + x_margin
                 y_start = (tp['time_start'] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
                 y_end = (tp['time_start'] + tp['time_over_threshold'] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                img[int(y_start):int(y_end), int(x)-1] = tp['adc_integral']/(y_end - y_start)
+                y_peak = (tp['time_peak'] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
+                y_int_1 = ((tp['time_peak'] - tp['time_start'])/2 +tp['time_start'] -t_start)/y_range * (img_height - 2*y_margin) + y_margin
+                y_int_2 = ((tp['time_start'] + tp['time_over_threshold'] - tp['time_peak'])/2 + tp['time_peak'] -t_start)/y_range * (img_height - 2*y_margin) + y_margin
+                intermidiate_height = eval_intermidiate_height(tp, 0.5)
+                img[int(y_start):int(y_int_1), int(x)-1] = np.linspace(0, intermidiate_height, int(y_int_1)-int(y_start))
+                img[int(y_int_1):int(y_peak), int(x)-1] = np.linspace(intermidiate_height, tp['adc_peak'], int(y_peak)-int(y_int_1))
+                img[int(y_peak):int(y_int_2), int(x)-1] = np.linspace(tp['adc_peak'], intermidiate_height, int(y_int_2)-int(y_peak))
+                img[int(y_int_2):int(y_end), int(x)-1] = np.linspace(intermidiate_height, 0, int(y_end)-int(y_int_2))
         else:
             for tp in tps_to_draw:
                 x = (tp['channel'] - x_min) + x_margin
                 y_start = (tp['time_start'] - t_start) + y_margin
                 y_end = (tp['time_start'] + tp['time_over_threshold'] - t_start) + y_margin
-                img[int(y_start)-1:int(y_end), int(x)-1] = tp['adc_integral']/(y_end - y_start)
+                y_peak = (tp['time_peak'] - t_start) + y_margin
+                y_int_1 = (tp['time_peak'] - tp['time_start'])/2 +tp['time_start'] -t_start + y_margin
+                y_int_2 = (tp['time_start'] + tp['time_over_threshold'] - tp['time_peak'])/2 + tp['time_peak'] -t_start + y_margin
+                intermidiate_height = eval_intermidiate_height(tp, 0.5)
+                img[int(y_start):int(y_int_1), int(x)-1] = np.linspace(0, intermidiate_height, int(y_int_1)-int(y_start))
+                img[int(y_int_1):int(y_peak), int(x)-1] = np.linspace(intermidiate_height, tp['adc_peak'], int(y_peak)-int(y_int_1))
+                img[int(y_peak):int(y_int_2), int(x)-1] = np.linspace(tp['adc_peak'], intermidiate_height, int(y_int_2)-int(y_peak))
+                img[int(y_int_2):int(y_end), int(x)-1] = np.linspace(intermidiate_height, 0, int(y_end)-int(y_int_2))
+
    
     # if the track is in one half of the detector, we have to flip the image both horizontally and vertically
     # TODO: this is a temporary solution, in case it works we should do it before creating the image to save time
@@ -132,7 +183,7 @@ def create_images(tps_to_draw, channel_map, min_tps_to_create_img=2, make_fixed_
     :return: images or -1 if there are not enough TPs
     '''
     # print ("Creating images...")
-    y_min_overall = tps_to_draw[0]["time_start"]
+    y_min_overall = np.min(tps_to_draw["time_start"])
     y_max_overall = np.max(tps_to_draw['time_start'] + tps_to_draw['time_over_threshold'])
     total_channels = channel_map.shape[0]
     img_u, img_v, img_x = np.array([[-1]]), np.array([[-1]]), np.array([[-1]])
@@ -150,18 +201,15 @@ def create_images(tps_to_draw, channel_map, min_tps_to_create_img=2, make_fixed_
         return img_u, img_v, img_x # calling here to avoid wasting execution time. U and V will be empty
     
     # U plane, take only the tps where the corrisponding position in the channel map is 0      
-    print ("Creating U plane images...")
     tps_u = tps_to_draw[np.where(channel_map[tps_to_draw['channel']% total_channels, 1] == 0)]
     if tps_u.shape[0] >= min_tps_to_create_img:
         img_u = create_image_one_view(tps_u, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, y_min_overall=y_min_overall, y_max_overall=y_max_overall)
     
     # V plane, take only the tps where the corrisponding position in the channel map is 1
-    print ("Creating V plane images...")
     tps_v = tps_to_draw[np.where(channel_map[tps_to_draw['channel']% total_channels, 1] == 1)]
     if tps_v.shape[0] >= min_tps_to_create_img: 
         img_v = create_image_one_view(tps_v, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, y_min_overall=y_min_overall, y_max_overall=y_max_overall)
     
-    print (" ")
     return img_u, img_v, img_x
 
 def show_image(tps_to_draw, channel_map, min_tps_to_create_img=2, make_fixed_size=False, width=500, height=1000, x_margin=10, y_margin=200, only_collection=False, img_u=None, img_v=None, img_x=None):

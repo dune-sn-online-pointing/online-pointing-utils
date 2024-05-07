@@ -40,7 +40,7 @@ float distance(cluster cluster1, cluster cluster2) {
     return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
 }
 
-std::vector<float> eval_y_knowing_z_U_plane(std::vector<std::vector<double>> tps, float z, float x_sign) {
+float eval_y_knowing_z_U_plane(std::vector<std::vector<double>> tps, float z, float x_sign) {
     z = z - int(tps[0][3]) / (2560*2) * (apa_lenght_in_cm + offset_between_apa_in_cm);
     float ordinate;
     std::vector<float> Y_pred;
@@ -110,11 +110,18 @@ std::vector<float> eval_y_knowing_z_U_plane(std::vector<std::vector<double>> tps
         }
         Y_pred.push_back(ordinate);
     }
-    return Y_pred;
+    // mean
+    float Y_pred_mean = 0;
+    for (auto& y : Y_pred) {
+        Y_pred_mean += y;
+    }
+    Y_pred_mean = Y_pred_mean / Y_pred.size();
+
+    return Y_pred_mean;
 }
 
 
-std::vector<float> eval_y_knowing_z_V_plane(std::vector<std::vector<double>> tps, float z, float x_sign) {
+float eval_y_knowing_z_V_plane(std::vector<std::vector<double>> tps, float z, float x_sign) {
     z = z - int(tps[0][3]) / (2560*2) * (apa_lenght_in_cm + offset_between_apa_in_cm);
     float ordinate;
     std::vector<float> Y_pred;
@@ -184,7 +191,14 @@ std::vector<float> eval_y_knowing_z_V_plane(std::vector<std::vector<double>> tps
 
         Y_pred.push_back(ordinate);
     }
-    return Y_pred;
+    // mean
+    float Y_pred_mean = 0;
+    for (auto& y : Y_pred) {
+        Y_pred_mean += y;
+    }
+    Y_pred_mean = Y_pred_mean / Y_pred.size();
+
+    return Y_pred_mean;
 }
 
 

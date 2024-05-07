@@ -20,3 +20,8 @@ add_executable( match_clusters ${CMAKE_CURRENT_SOURCE_DIR}/match_clusters.cpp )
 target_link_libraries( match_clusters utils-libraries )
 install( TARGETS match_clusters DESTINATION bin )
 
+cmessage( STATUS "Creating create_volume_clusters.cpp app..." )
+add_executable( create_volume_clusters ${CMAKE_CURRENT_SOURCE_DIR}/create_volume_clusters.cpp )
+target_link_libraries( create_volume_clusters utils-libraries )
+install( TARGETS create_volume_clusters DESTINATION bin )
+
