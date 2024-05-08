@@ -102,8 +102,8 @@ print (" ")
 uniform = True
 
 if uniform:
-    #clusters, n_events = read_root_file_to_clusters('/afs/cern.ch/work/h/hakins/private/root_cluster_files/es-cc-bkg-truth/X/clusters_tick_limits_3_channel_limits_1_min_tps_to_cluster_1.root') #uniform backgrounds updated
-    clusters, n_events = read_root_file_to_clusters('/afs/cern.ch/work/h/hakins/private/root_cluster_files/es-cc-bkg-truth/X/uniformBKG/X/clusters_tick_limits_3_channel_limits_1_min_tps_to_cluster_1.root') #uniform backgrounds with half missing
+    clusters, n_events = read_root_file_to_clusters('/afs/cern.ch/work/h/hakins/private/root_cluster_files/es-cc-bkg-truth/X/clusters_tick_limits_3_channel_limits_1_min_tps_to_cluster_1.root') #uniform backgrounds updated
+    #clusters, n_events = read_root_file_to_clusters('/afs/cern.ch/work/h/hakins/private/root_cluster_files/es-cc-bkg-truth/X/uniformBKG/X/clusters_tick_limits_3_channel_limits_1_min_tps_to_cluster_1.root') #uniform backgrounds with half missing
 else:
     clusters, n_events = read_root_file_to_clusters('/afs/cern.ch/work/h/hakins/private/online-pointing-utils/scripts/output/X/clusters_tick_limits_3_channel_limits_1_min_tps_to_cluster_1.root')
 
@@ -371,13 +371,11 @@ for label_num, charge_list in charge_lists.items():
         
      
         
-        gueses = 2000
+        gueses = 1000
         min_guess = 0
         if label_num==2:
             min_guess = 30
-        initial_guesses_C = [random.randint(min_guess, max(hist_fit)*100) for _ in range(gueses)]
-
-
+        initial_guesses_C = [random.randint(0, max(hist_fit)) for _ in range(gueses)]
         initial_guesses_Q = [random.uniform(0, 10) for _ in range(gueses)]
 
         best_r2 = -100
@@ -386,25 +384,25 @@ for label_num, charge_list in charge_lists.items():
         fit_fails = 0
         fit_success = 0
 
-        bounds = []
         for i in range(gueses):
             try:
+                
                 params, pcov = curve_fit(N, x, hist_fit, p0=[initial_guesses_C[i],initial_guesses_Q[i]])
                 fit_success+=1
-                print(f'r^2: {R_squared}. params: {params}')
-
+                #print(f'r^2: {R_squared}. params: {params}')
                 perr = np.sqrt(np.diag(pcov))
                 y_pred = N(x, *params)
                 R_squared = r2_score(hist_fit, y_pred)
-                Chi = chisquare(hist_fit, y_pred)
+                #Chi = chisquare(hist_fit, y_pred)
                 if R_squared > best_r2:
                     best_r2 = R_squared
                     #chi2 = Chi
                     best_C_param = params[0]
                     best_Q_param = params[1]
                     best_perr = perr
+                    
             except:
-                if fit_fails>30:
+                if fit_fails>100:
                     break
                 fit_fails+=1
         #best_Q_param=background_max_energy[label_num][1]
