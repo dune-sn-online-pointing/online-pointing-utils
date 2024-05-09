@@ -242,6 +242,7 @@ for label_num, charge_list in charge_lists.items():
     else:
         fig1.savefig(f'plots/backgrounds/{labels[label_num]}_ADC.png')
     plt.clf()
+    plt.close()
     
     
     # Fit a polynomial to the histogram data
@@ -311,7 +312,7 @@ for label_num, charge_list in charge_lists.items():
         '''
         #Fit Fermi Function
         alpha = .007297
-        m = .511 #MeV
+        m = 1 #KeV
         c = 1   #m/s
         e = np.sqrt(4*np.pi*alpha) #C
         h = 1 # Joules-s / rad
@@ -320,12 +321,13 @@ for label_num, charge_list in charge_lists.items():
             return np.sqrt(1-(alpha**2)*Z**2)
             
         def rho(label):
-            return 1
+            return 3.4093e-15
         
         def E(T): #total energy
             return T + np.power(m,2)
         def P(T): #momentum
             return np.sqrt(np.power(E(T),2) - np.power(m,2))
+         
         
         def eta(Z,T): #n
             return (Z*E(T)*np.power(e,2))/P(T)
@@ -343,18 +345,17 @@ for label_num, charge_list in charge_lists.items():
         
     if (label_num not in exlude_expo) and (len(background_max_energy[label_num]) > 2):
         scale = 100000
-        if (len(charge_list)>10):
-            cut = .28 #cut out first 1st 1/25th of hist range
-        else:
-            cut = .28
-        start = .2 
-        
-        if label_num == 9:
-            cut = .5
+        #if (len(charge_list)>10):
+         #   cut = .28 #cut out first 1st 1/25th of hist range
+        #else:
+          #  cut = .28
+        start = 0
+        cut = 0.09
+
         # to fit the expression for beta decay onto the ADC graph, I had to first modify the histogram because the expression does not scale
         # Now just find endpoint, and reverse the modification to find on ADC graph 
         # i.e. Find endpoint of fit, subtract .25, then multiply by 100,000 to find ADC endpoint
-        cut_charge_list_fit = [x/scale + start for x in charge_list if x/scale + start > cut ] # charge cut to cut out spike at low energies
+        cut_charge_list_fit = [x/scale for x in charge_list if x/scale + start > cut ] # charge cut to cut out spike at low energies
         cut_charge_list_display = [x/scale + start for x in charge_list]
         #charge_list_plt = [x/scale + .25 for x in charge_list] #charge list to plot, doesnt have spike cut but has scale
         fig_fermi = plt.figure()
@@ -376,7 +377,7 @@ for label_num, charge_list in charge_lists.items():
         if label_num==2:
             min_guess = 30
         initial_guesses_C = [random.randint(0, max(hist_fit)) for _ in range(gueses)]
-        initial_guesses_Q = [random.uniform(0, 10) for _ in range(gueses)]
+        initial_guesses_Q = [random.uniform(0, 6) for _ in range(gueses)]
 
         best_r2 = -100
         best_C_param = 200
@@ -405,7 +406,7 @@ for label_num, charge_list in charge_lists.items():
                 if fit_fails>100:
                     break
                 fit_fails+=1
-        #best_Q_param=background_max_energy[label_num][1]
+    
                        
         #find endpoint using fermi fit ^
         print(f'Fit sucess for {labels[label_num]}: {fit_success}, Fails: {fit_fails}')
@@ -459,6 +460,13 @@ for label_num, charge_list in charge_lists.items():
         print(f'labelnum: {label_num} with {background_max_energy[label_num]}')
         background_max_energy[label_num][3] = 0 # uncertainty 
         
+        #DEBUGGING nan values returned from N at values below x=.25
+        '''
+        for x in x_curve:
+            print(f'x: {x}')
+            print(f'N: {N(x,best_C_param,best_Q_param)}')
+            print(f'Inside P(T) square root:  {np.power(E(x),2) - np.power(m,2)} ')
+            '''
         #manuelly plug in conversion to display on graph. NEED TO CHANGE IF BACKGROUNDS CHANGE
         beta_slope = 9.61268413759387e-06
         def conversion(ADC):
@@ -486,7 +494,8 @@ for label_num, charge_list in charge_lists.items():
         else:
             fig_fermi.savefig(f'plots/with_fermi/{labels[label_num]}_ADC.png')
 
-        plt.clf() 
+        plt.clf()
+        plt.close() 
         
         #plot parameters vs endpoints
         fig_params = plt.figure()
@@ -501,6 +510,7 @@ for label_num, charge_list in charge_lists.items():
             fig_params.savefig(f'plots/with_fermi_uniform/parameters/parameter_vs_endpoints_{labels[label_num]}.png')
         else:
             print("bla")
+        plt.close() 
             
            
     
@@ -517,9 +527,7 @@ if uniform:
     fig4.savefig('plots/backgrounds_uniform/total_charge.png')
 else:
     fig4.savefig('plots/backgrounds/total_charge.png')
-
-
-
+plt.close() 
 
 
 
@@ -583,6 +591,7 @@ if uniform:
 else:
     fig_conv.savefig('plots/ADC_KeV_fits/beta_fit_FERMI.png')
 plt.clf()
+plt.close() 
 #linear fit
 #error bars on points, use sigma of histogram
 slope_B, intercept_B, r_value_B, p_value_B, std_err_B = linregress(beta_adc, beta_MeV)
@@ -613,4 +622,5 @@ else:
 
 
 plt.clf()
+plt.close() 
 #copy plot to local: scp hakins@lxplus.cern.ch:/afs/cern.ch/user/h/hakins/tpgtools/scripts/plots/histogram.png C:\Users\harry\Documents\Test_Plots
