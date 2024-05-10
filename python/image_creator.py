@@ -21,6 +21,11 @@ from utils import create_channel_map_array
 import time
 
 def eval_intermidiate_height(tp, frac):
+    if frac < 0.1:
+        return 0, 0.1
+    elif frac > 0.9:
+        return tp[5], 0.9
+
     ah = tp['time_peak'] - tp['time_start']
     bh = tp['time_over_threshold'] - ah
     ch = tp['adc_peak']
@@ -34,12 +39,12 @@ def eval_intermidiate_height(tp, frac):
     intermidiate_height = (2*tp['adc_integral']-ch*dh-ch*he)/(tp['time_over_threshold'])
     if intermidiate_height < 0:
         frac = 1-0.5*(1-frac)
-        intermidiate_height = eval_intermidiate_height(tp, frac)
+        intermidiate_height, frac = eval_intermidiate_height(tp, frac)
     elif intermidiate_height > ch:
         frac = 0.5*frac
-        intermidiate_height = eval_intermidiate_height(tp, frac)
+        intermidiate_height, frac = eval_intermidiate_height(tp, frac)
 
-    return intermidiate_height
+    return intermidiate_height, frac
 
 def create_image_one_view(tps_to_draw, make_fixed_size=False, width=100, height=100, x_margin=10, y_margin=100, y_min_overall=-1, y_max_overall=-1, verbose=False):
     '''
@@ -109,13 +114,13 @@ def create_image_one_view(tps_to_draw, make_fixed_size=False, width=100, height=
 
         if stretch_x & stretch_y:
             for tp in tps_to_draw:
+                intermidiate_height, frac = eval_intermidiate_height(tp, 0.5)
                 x=(tp['channel'] - x_min)/x_range * (img_width - 2*x_margin) + x_margin
                 y_start = (tp['time_start'] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
                 y_end = (tp['time_start'] + tp['time_over_threshold'] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
                 y_peak = (tp['time_peak'] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                y_int_1 = ((tp['time_peak'] - tp['time_start'])/2 +tp['time_start'] -t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                y_int_2 = ((tp['time_start'] + tp['time_over_threshold'] - tp['time_peak'])/2 + tp['time_peak'] -t_start)/y_range * (img_height - 2*y_margin) + y_margin                
-                intermidiate_height = eval_intermidiate_height(tp, 0.5)
+                y_int_1 = ((tp['time_peak'] - tp['time_start'])*frac +tp['time_start'] -t_start)/y_range * (img_height - 2*y_margin) + y_margin
+                y_int_2 = ((tp['time_start'] + tp['time_over_threshold'] - tp['time_peak'])*(1-frac) + tp['time_peak'] -t_start)/y_range * (img_height - 2*y_margin) + y_margin                
                 img[int(y_start):int(y_int_1), int(x)-1] = np.linspace(0, intermidiate_height, int(y_int_1)-int(y_start))
                 img[int(y_int_1):int(y_peak), int(x)-1] = np.linspace(intermidiate_height, tp['adc_peak'], int(y_peak)-int(y_int_1))
                 img[int(y_peak):int(y_int_2), int(x)-1] = np.linspace(tp['adc_peak'], intermidiate_height, int(y_int_2)-int(y_peak))
@@ -123,39 +128,39 @@ def create_image_one_view(tps_to_draw, make_fixed_size=False, width=100, height=
 
         elif stretch_x:
             for tp in tps_to_draw:                
+                intermidiate_height, frac = eval_intermidiate_height(tp, 0.5)
                 x=(tp['channel'] - x_min)/x_range * (img_width - 2*x_margin) + x_margin
                 y_start = (tp['time_start'] - t_start) + y_margin
                 y_end = (tp['time_start'] + tp['time_over_threshold'] - t_start) + y_margin
                 y_peak = (tp['time_peak'] - t_start) + y_margin
-                y_int_1 = (tp['time_peak'] - tp['time_start'])/2 +tp['time_start'] -t_start + y_margin
-                y_int_2 = (tp['time_start'] + tp['time_over_threshold'] - tp['time_peak'])/2 + tp['time_peak'] -t_start + y_margin
-                intermidiate_height = eval_intermidiate_height(tp, 0.5)
+                y_int_1 = (tp['time_peak'] - tp['time_start'])*frac +tp['time_start'] -t_start + y_margin
+                y_int_2 = (tp['time_start'] + tp['time_over_threshold'] - tp['time_peak'])*(1-frac) + tp['time_peak'] -t_start + y_margin
                 img[int(y_start):int(y_int_1), int(x)-1] = np.linspace(0, intermidiate_height, int(y_int_1)-int(y_start))
                 img[int(y_int_1):int(y_peak), int(x)-1] = np.linspace(intermidiate_height, tp['adc_peak'], int(y_peak)-int(y_int_1))
                 img[int(y_peak):int(y_int_2), int(x)-1] = np.linspace(tp['adc_peak'], intermidiate_height, int(y_int_2)-int(y_peak))
                 img[int(y_int_2):int(y_end), int(x)-1] = np.linspace(intermidiate_height, 0, int(y_end)-int(y_int_2))
         elif stretch_y:
             for tp in tps_to_draw:
+                intermidiate_height, frac = eval_intermidiate_height(tp, 0.5)
                 x = (tp['channel'] - x_min) + x_margin
                 y_start = (tp['time_start'] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
                 y_end = (tp['time_start'] + tp['time_over_threshold'] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
                 y_peak = (tp['time_peak'] - t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                y_int_1 = ((tp['time_peak'] - tp['time_start'])/2 +tp['time_start'] -t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                y_int_2 = ((tp['time_start'] + tp['time_over_threshold'] - tp['time_peak'])/2 + tp['time_peak'] -t_start)/y_range * (img_height - 2*y_margin) + y_margin
-                intermidiate_height = eval_intermidiate_height(tp, 0.5)
+                y_int_1 = ((tp['time_peak'] - tp['time_start'])*frac +tp['time_start'] -t_start)/y_range * (img_height - 2*y_margin) + y_margin
+                y_int_2 = ((tp['time_start'] + tp['time_over_threshold'] - tp['time_peak'])*(1-frac) + tp['time_peak'] -t_start)/y_range * (img_height - 2*y_margin) + y_margin
                 img[int(y_start):int(y_int_1), int(x)-1] = np.linspace(0, intermidiate_height, int(y_int_1)-int(y_start))
                 img[int(y_int_1):int(y_peak), int(x)-1] = np.linspace(intermidiate_height, tp['adc_peak'], int(y_peak)-int(y_int_1))
                 img[int(y_peak):int(y_int_2), int(x)-1] = np.linspace(tp['adc_peak'], intermidiate_height, int(y_int_2)-int(y_peak))
                 img[int(y_int_2):int(y_end), int(x)-1] = np.linspace(intermidiate_height, 0, int(y_end)-int(y_int_2))
         else:
             for tp in tps_to_draw:
+                intermidiate_height, frac = eval_intermidiate_height(tp, 0.5)
                 x = (tp['channel'] - x_min) + x_margin
                 y_start = (tp['time_start'] - t_start) + y_margin
                 y_end = (tp['time_start'] + tp['time_over_threshold'] - t_start) + y_margin
                 y_peak = (tp['time_peak'] - t_start) + y_margin
-                y_int_1 = (tp['time_peak'] - tp['time_start'])/2 +tp['time_start'] -t_start + y_margin
-                y_int_2 = (tp['time_start'] + tp['time_over_threshold'] - tp['time_peak'])/2 + tp['time_peak'] -t_start + y_margin
-                intermidiate_height = eval_intermidiate_height(tp, 0.5)
+                y_int_1 = (tp['time_peak'] - tp['time_start'])*frac+tp['time_start'] -t_start + y_margin
+                y_int_2 = (tp['time_start'] + tp['time_over_threshold'] - tp['time_peak'])*(1-frac) + tp['time_peak'] -t_start + y_margin
                 img[int(y_start):int(y_int_1), int(x)-1] = np.linspace(0, intermidiate_height, int(y_int_1)-int(y_start))
                 img[int(y_int_1):int(y_peak), int(x)-1] = np.linspace(intermidiate_height, tp['adc_peak'], int(y_peak)-int(y_int_1))
                 img[int(y_peak):int(y_int_2), int(x)-1] = np.linspace(tp['adc_peak'], intermidiate_height, int(y_int_2)-int(y_peak))
