@@ -40,10 +40,10 @@ if __name__ == '__main__':
     mix_true_dir_label = True
 
     if len(datasets_img) != len(datasets_process_label):
-        print("data and labels have different lengths!")
+        print("data and process labels have different lengths!")
         mix_process_label = False
     if len(datasets_img) != len(datasets_true_dir_label):
-        print("data and labels have different lengths!")
+        print("data and direction labels have different lengths!")
         mix_true_dir_label = False
     
     if not (mix_process_label or mix_true_dir_label):

@@ -41,6 +41,24 @@ cluster filter_clusters_within_radius(std::vector<cluster>& clusters, float radi
     idx++;
     }
 
+    if (clusters[idx_best].get_min_distance_from_true_pos()>5){
+        std::cout<<"WARNING: using adc integral for determining main track" << std::endl;
+        idx_best = -1;
+        int adc_integral_best = -1; 
+        int adc_integral = 0;
+        for (int i=0; i<clusters.size(); i++){
+            for (auto tp: clusters[i].get_tps()){
+                adc_integral+=tp[variables_to_index["adc_integral"]];                
+            }   
+            if (adc_integral>adc_integral_best){
+                adc_integral_best = adc_integral;
+                idx_best = i;
+            }
+            adc_integral = 0;
+        }
+    }
+
+
     if (idx_best == -1) {
         std::cout << "No supernova true positive found" << std::endl;
         // stop the program

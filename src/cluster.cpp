@@ -33,11 +33,11 @@ void cluster::update_cluster_info() {
     // we want to save the minimum distance from the true position
     float min_distance = 1000000;
     float supernova_tp_fraction = 0;
-    std::vector<int> reco_pos = {0, 0, 0};
+    std::vector<float> reco_pos = {0, 0, 0};
     int true_label = tps_[0][variables_to_index["ptype"]];
     for (int i = 0; i < tps_.size(); i++) {
-        std::vector<int> pos = calculate_position(tps_[i]);
-        std::vector<int> true_pos = {int(tps_[i][variables_to_index["true_x"]]), int(tps_[i][variables_to_index["true_y"]]), int(tps_[i][variables_to_index["true_z"]])};
+        std::vector<float> pos = calculate_position(tps_[i]);
+        std::vector<float> true_pos = {float(tps_[i][variables_to_index["true_x"]]), float(tps_[i][variables_to_index["true_y"]]), float(tps_[i][variables_to_index["true_z"]])};
         // std::vector<int> true_pos = {tps_[i][variables_to_index["true_x"]], tps_[i][variables_to_index["true_y"]], tps_[i][variables_to_index["true_z"]]};
         float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[2] - true_pos[2], 2));
         // float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[1] - true_pos[1], 2) + pow(pos[2] - true_pos[2], 2));

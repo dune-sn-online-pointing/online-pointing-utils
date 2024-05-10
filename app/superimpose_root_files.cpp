@@ -4,6 +4,7 @@
 #include <string>
 #include <random>
 #include <ctime>
+#include <nlohmann/json.hpp>
 
 #include "CmdLineParser.h"
 #include "Logger.h"
@@ -24,10 +25,7 @@ int main(int argc, char* argv[]) {
     clp.getDescription() << "> superimpose_root_files app."<< std::endl;
 
     clp.addDummyOption("Main options");
-    clp.addOption("sig_cluster_filename",    {"-s", "--sig-filename"}, "Signal clusters filename");
-    clp.addOption("bkg_cluster_filename",    {"-b", "--bkg-filename"}, "Background clusters filename");
-    clp.addOption("out_folder",               {"-o", "--output-folder"}, "Specify output directory path");
-    clp.addOption("radius",                  {"-r", "--radius"}, "Radius to consider, in [m]");
+    clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
 
     clp.addDummyOption("Triggers");
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
@@ -47,14 +45,16 @@ int main(int argc, char* argv[]) {
     LogInfo << "Provided arguments: " << std::endl;
     LogInfo << clp.getValueSummary() << std::endl << std::endl;
   
+    std::string json = clp.getOptionVal<std::string>("json");
+    // read the configuration file
+    std::ifstream i(json);
+    nlohmann::json j;
+    i >> j;
+    std::string sig_cluster_filename = j["filename_sig_cc"];
+    std::string bkg_cluster_filename = j["filename_bkg"];
+    std::string outfolder = j["output_folder"];
+    float radius = j["radius"];
 
-    std::string sig_cluster_filename = clp.getOptionVal<std::string>("sig_cluster_filename");
-    std::string bkg_cluster_filename = clp.getOptionVal<std::string>("bkg_cluster_filename");
-    std::string outfolder = clp.getOptionVal<std::string>("out_folder");
-    
-    // default value 
-    float radius = 1.0; // m 
-    radius = clp.getOptionVal<double>("radius");
 
     // start the clock
     std::clock_t start;
@@ -95,7 +95,8 @@ int main(int argc, char* argv[]) {
         // get a random background event
         int bkg_event_number = bkg_list_of_event_numbers[rand() % bkg_list_of_event_numbers.size()];
         std::vector<cluster> bkg_event_clusters = bkg_event_mapping[bkg_event_number];
-        while (int(bkg_event_clusters.size()) < 3000){
+        // while (int(bkg_event_clusters.size()) < 3000){
+        while (false){// TODO: account for the case when the background event is broken 
             std::cout << "WARNING: For cluster " << i << " Background event " << bkg_event_number << " has " << bkg_event_clusters.size() << " clusters" << std::endl;
             test_appo_vec.push_back(bkg_event_number);
             int bkg_event_number = bkg_list_of_event_numbers[rand() % bkg_list_of_event_numbers.size()];
