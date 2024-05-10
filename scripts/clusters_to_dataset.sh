@@ -17,7 +17,7 @@ cd ${REPO_HOME}/app/
 # python clusters_to_dataset.py --input_json ${REPO_HOME}/json/ctds_cc_100000-main_track.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/cc-lab/main_track/100000/X/
 # python clusters_to_dataset.py --input_json ${REPO_HOME}/json/ctds_es_100000-main_track.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/es-lab/main_track/100000/X/
 
-python clusters_to_dataset.py --input_json ${REPO_HOME}/json/ctds/ctds_main_tracks_direction.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/all_es_dir_list_1500_flat/main_tracks/X/
+python clusters_to_dataset.py --input_json ${REPO_HOME}/json/ctds/ctds_main_tracks_direction_multiplane_clusters.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/matched_clusters/pointing_high_E/main_tracks_direction_multiplane_clusters/new_img/
 
 
 # python clusters_to_dataset.py --input_json ${REPO_HOME}/json/ctds/ctds_bkg_rnd.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/my_random_bkg_cocktail/80000/bkg/X/
@@ -28,3 +28,4 @@ python clusters_to_dataset.py --input_json ${REPO_HOME}/json/ctds/ctds_main_trac
 cd ${REPO_HOME}/scripts/
 
 
+che sono in 182 

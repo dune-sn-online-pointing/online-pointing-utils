@@ -53,11 +53,12 @@ int main(int argc, char* argv[]) {
     std::string tps_filename = j["tps_filename"];
     std::string cluster_filename = j["cluster_filename"];
     std::string predictions = j["predictions"];
-    std::string output_dir = j["output_dir"];
+    std::string output_dir = j["output_folder"];
     int radius = j["radius"];
     int plane = j["plane"];
     int supernova_option = j["supernova_option"];
     int max_events_per_filename = j["max_events_per_filename"];
+    float threshold = j["threshold"];
 
     std::cout << "tps_filename: " << tps_filename << std::endl;
     std::cout << "cluster_filename: " << cluster_filename << std::endl;
@@ -67,6 +68,7 @@ int main(int argc, char* argv[]) {
     std::cout << "plane: " << plane << std::endl;
     std::cout << "supernova_option: " << supernova_option << std::endl;
     std::cout << "max_events_per_filename: " << max_events_per_filename << std::endl;
+    std::cout << "threshold: " << threshold << std::endl;
 
     std::vector<std::string> filenames;
     std::ifstream infile(tps_filename);
@@ -85,14 +87,16 @@ int main(int argc, char* argv[]) {
     std::cout << "Number of predictions: " << predictions_vector.size() << std::endl;
     std::cout << "Number of tps: " << tps.size() << std::endl;
 
-    double radius_in_ticks = radius/0.08;
 
     std::vector<cluster> clusters_in_volume;
     for (int i = 0; i < clusters.size(); i++) {
         if (i % 100 == 0) {
             std::cout << "Cluster number: " << i << std::endl;
         }
-        std::vector<std::vector<double>> tps_around_cluster = get_tps_around_cluster(tps, clusters[i], radius_in_ticks);
+        if (predictions_vector[i] < threshold) {
+            continue;
+        }
+        std::vector<std::vector<double>> tps_around_cluster = get_tps_around_cluster(tps, clusters[i], radius);
         cluster c(tps_around_cluster);
         c.set_true_pos(clusters[i].get_true_pos());
         c.set_true_dir(clusters[i].get_true_dir());

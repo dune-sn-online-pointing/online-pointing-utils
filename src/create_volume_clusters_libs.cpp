@@ -26,11 +26,12 @@ std::vector<std::vector<double>> get_tps_around_cluster(std::vector<std::vector<
     int min_time_start = cluster.get_tps()[0][variables_to_index["time_start"]];
     int max_time_end = cluster.get_tps()[cluster.get_tps().size() - 1][variables_to_index["time_start"]];
 
+    double radius_in_ticks = radius/0.08;
 
     int start = 0;
     int end = tps.size() - 1;
     int mid = 0;
-    int goal = min_time_start - 1.2*radius;
+    int goal = min_time_start - 1.2*radius_in_ticks;
 
     while (start < end) {
         mid = (start + end) / 2;
@@ -46,7 +47,7 @@ std::vector<std::vector<double>> get_tps_around_cluster(std::vector<std::vector<
     float cluster_z = cluster.get_reco_pos()[2];
 
 
-    while (tps[start][variables_to_index["time_start"]] < max_time_end + 1.2*radius) {
+    while (tps[start][variables_to_index["time_start"]] < max_time_end + 1.2*radius_in_ticks) {
         if (start == tps.size()) {
             break;
         }
