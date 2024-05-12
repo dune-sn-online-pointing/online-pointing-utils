@@ -1,16 +1,16 @@
-#!/bin/bash
+#!/usr/bin/bash
 echo "*****************************************************************************"
 echo "Running"
 
 #source /cvmfs/sft.cern.ch/lcg/views/LCG_104cuda/x86_64-el9-gcc11-opt/setup.sh
 #Before running this script, change the ADC Cut counts in each of the 3 cluster to root json files
-cut=20000
+cut=0
 
 setup
 cd /afs/cern.ch/work/h/hakins/private/online-pointing-utils/scripts
 #Main track dataset
 echo "Main track cluster to root"
-./cluster_to_root.sh --input_file /afs/cern.ch/work/h/hakins/private/json/cluster_to_root/main_track.json
+./cluster_to_root.sh -j /afs/cern.ch/work/h/hakins/private/json/cluster_to_root/main_track.json
 echo "Main track cluster to dataset"
 ./clusters_to_dataset.sh 0
 #blips

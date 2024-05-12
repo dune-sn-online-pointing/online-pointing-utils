@@ -1,5 +1,5 @@
-#!bin/bash
-INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/standard.json
+#!/usr/bin/bash
+#INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/standard.json
 REPO_HOME=$(git rev-parse --show-toplevel)
 
 # parse the input
