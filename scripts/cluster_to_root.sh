@@ -32,5 +32,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # Run the app
+INPUT_JSON="/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/main_tracks.json"
 ./app/cluster_to_root -j $INPUT_JSON
+INPUT_JSON="/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/blips.json"
+./app/cluster_to_root -j $INPUT_JSON
+INPUT_JSON="/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/backgrounds.json"
+./app/cluster_to_root -j $INPUT_JSON
+
 cd ${REPO_HOME}/scripts/
