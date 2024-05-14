@@ -45,6 +45,8 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename);
 
 std::map<int, std::vector<cluster>> create_event_mapping(std::vector<cluster>& clusters);
 
+std::map<int, std::vector<std::vector<double>>> create_background_event_mapping(std::vector<std::vector<double>>& bkg_tps);
+
 #endif
 
 
