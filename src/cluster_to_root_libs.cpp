@@ -587,3 +587,20 @@ std::map<int, std::vector<cluster>> create_event_mapping(std::vector<cluster>& c
     }
     return event_mapping;
 }
+
+std::map<int, std::vector<std::vector<double>>> create_background_event_mapping(std::vector<std::vector<double>>& bkg_tps){
+    std::map<int, std::vector<std::vector<double>>> event_mapping;
+    for (auto& tp : bkg_tps) {
+    // check if the event is already in the map
+        if (event_mapping.find(tp[variables_to_index["event"]]) == event_mapping.end()) {
+            std::vector<std::vector<double>> temp;
+            temp.push_back(tp);
+            event_mapping[tp[variables_to_index["event"]]] = temp;
+        }
+        else {
+            event_mapping[tp[variables_to_index["event"]]].push_back(tp);
+        }
+    }
+    return event_mapping;
+}
+
