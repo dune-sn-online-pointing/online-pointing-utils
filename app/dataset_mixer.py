@@ -23,6 +23,7 @@ datasets_true_dir_label = input_json['datasets_true_dir_label']
 remove_process_labels = input_json['remove_process_labels']
 shuffle = input_json['shuffle']
 balance = input_json['balance']
+cut = input_json['cut']
 
 
 if __name__ == '__main__':
@@ -130,10 +131,10 @@ if __name__ == '__main__':
     # save the data
     print("Saving the data")
     print("Shape of the dataset_img: ", dataset_img.shape)
-    np.save(output_folder + 'dataset_img.npy', dataset_img)
+    np.save(output_folder + f'dataset_img_{cut}.npy', dataset_img)
     if mix_process_label:
-        np.save(output_folder + 'dataset_label_process.npy', dataset_label_process)
+        np.save(output_folder + f'dataset_label_process_{cut}.npy', dataset_label_process)
     if mix_true_dir_label:
-        np.save(output_folder + 'dataset_label_true_dir.npy', dataset_label_true_dir)
+        np.save(output_folder + f'dataset_label_true_dir_{cut}.npy', dataset_label_true_dir)
 
 
