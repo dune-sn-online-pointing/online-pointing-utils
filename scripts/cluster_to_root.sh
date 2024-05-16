@@ -1,7 +1,6 @@
-#!/usr/bin/bash
+#!/bin/bash
 #INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/standard.json
 REPO_HOME=$(git rev-parse --show-toplevel)
-
 # parse the input
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -19,6 +18,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+
+
 echo "REPO_HOME: ${REPO_HOME}"
 # compile
 echo "Compiling..."
@@ -30,7 +31,7 @@ if [ $? -ne 0 ]; then
     echo "Compilation failed"
     exit 1
 fi
-
+echo "INput Json: ${INPUT_JSON}"
 # Run the app
 ./app/cluster_to_root -j $INPUT_JSON
 cd ${REPO_HOME}/scripts/

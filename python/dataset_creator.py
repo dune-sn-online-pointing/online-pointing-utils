@@ -26,6 +26,8 @@ def create_dataset_img(clusters, channel_map, min_tps_to_create_img=1, make_fixe
         dataset_img = np.empty((len(clusters), height, width, 3), dtype=np.uint16)
 
     for i, cluster in enumerate(clusters):
+        if i % 1000 == 0:
+            print(f"Creating image {i}")
         if len(cluster) >= min_tps_to_create_img:
             # img = create_image(cluster.get_tps(), channel_map, make_fixed_size, width, height, x_margin, y_margin, only_collection)
             tps_to_draw = cluster.get_tps()
@@ -71,12 +73,19 @@ def save_samples_from_ds(dataset, output_folder, name="img", n_samples=10):
     samples = dataset[indices]
     print(samples.shape)
     for i, sample in enumerate(samples):
-        plt.figure(figsize=(10, 30))
+        plt.figure(figsize=(5, 15))
         img = sample[:,:,0]
         print(img.shape)
         # print(np.unique(img))
         img = np.where(img == 0, np.nan, img)
         plt.imshow(img)
+        # make ticks bigger
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
+        # set labels
+        plt.xlabel('Channel', fontsize=20)
+        plt.ylabel('Time [ticks]', fontsize=20)
+
         plt.savefig(output_folder+name+str(i)+'.png')
         plt.clf()
 

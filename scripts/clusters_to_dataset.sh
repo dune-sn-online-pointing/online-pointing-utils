@@ -6,7 +6,6 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-#value of the first command-line argument
 script_number="$1"
 
 python_scripts=(

@@ -27,6 +27,8 @@ std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, in
 // create a map connectig the file index to the true x y z
 std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> filenames);
 
+std::map<int, int> file_idx_to_true_interaction(std::vector<std::string> filenames);
+
 // take all the clusters and return only main tracks
 std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters);
 
