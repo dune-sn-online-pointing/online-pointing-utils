@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
 
         // write the clusters to a root file
-        std::string root_filename = outfolder + "/" + plane_names[plane] + "/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
+        std::string root_filename = outfolder + "/" + plane_names[plane] + "/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + std::to_string(adc_integral_cut) +  ".root";
         write_clusters_to_root(clusters, root_filename);
         std::cout << "clusters written to " << root_filename << std::endl;
     }
