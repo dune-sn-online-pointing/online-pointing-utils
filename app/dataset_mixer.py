@@ -16,6 +16,7 @@ output_folder = args.output_folder
 # Read input json
 with open(input_json_file) as f:
     input_json = json.load(f)
+print(f"input json file for dataset_mixer: {input_json}")
 
 datasets_img = input_json['datasets_img']
 datasets_process_label = input_json['datasets_process_label']

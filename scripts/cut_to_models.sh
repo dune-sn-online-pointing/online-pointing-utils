@@ -1,10 +1,14 @@
 #!/bin/bash
 echo "*****************************************************************************"
 echo "Running"
-setup
+source /cvmfs/dunedaq.opensciencegrid.org/setup_dunedaq.sh 
+setup_dbt latest dbt-setup-release fddaq-v4.2.0
+export PYTHONPATH=/afs/cern.ch/user/h/hakins/private/matplotlib/lib/python3.10/site-packages/:$PYTHONPATH
+source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc13-opt/setup.sh
 while [[ $# -gt 0 ]]; do
+
     case "$1" in
-        -cut)
+        -cut| --cut)
             cut="$2"
             shift 2
             ;;
@@ -23,17 +27,17 @@ echo "Current cut value: $cut"
 cd /afs/cern.ch/work/h/hakins/private/online-pointing-utils/scripts
 #Main track dataset
 echo "Main track cluster to root"
-./cluster_to_root.sh --input_file /afs/cern.ch/work/h/hakins/private/json/cluster_to_root/main_tracks/main_track_${cut}.json
+./cluster_to_root.sh --cut "$cut" --type main_track 
 echo "Main track cluster to dataset"
 ./clusters_to_dataset.sh --cut "$cut" --type main_track
 #blips
 echo "Blips cluster to root"
-./cluster_to_root.sh --input_file /afs/cern.ch/work/h/hakins/private/json/cluster_to_root/blips/blips_${cut}.json
+./cluster_to_root.sh --cut "$cut" --type blip 
 echo "Blips cluster to dataset"
 ./clusters_to_dataset.sh --cut "$cut" --type blip
 #bkg
 echo "BKG cluster to root"
-./cluster_to_root.sh --input_file /afs/cern.ch/work/h/hakins/private/json/cluster_to_root/bkg/bkg_${cut}.json
+./cluster_to_root.sh --cut "$cut" --type bkg 
 echo "BKG cluster to dataset"
 ./clusters_to_dataset.sh --cut "$cut" --type bkg
 
