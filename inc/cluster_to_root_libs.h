@@ -20,6 +20,7 @@
 
 // read the tps from the files and save them in a vector
 std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames, int plane=2, int supernova_option=0, int max_events_per_filename = INT_MAX);
+std::vector<std::vector<std::vector<double>>> file_reader_all_planes(std::vector<std::string> filenames, int supernova_option=0, int max_events_per_filename= INT_MAX);
 
 // create the clusters from the tps
 std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, int ticks_limit=3, int channel_limit=1, int min_tps_to_cluster=1, int adc_integral_cut=0);

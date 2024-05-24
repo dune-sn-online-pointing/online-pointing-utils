@@ -143,9 +143,15 @@ int main(int argc, char* argv[]) {
         }
         std::cout << "Number of files: " << filenames.size() << std::endl;
         // TODO: parallelize this
-        std::vector<std::vector<double>> tps_u = file_reader(filenames, 0, supernova_option, max_events_per_filename);
-        std::vector<std::vector<double>> tps_v = file_reader(filenames, 1, supernova_option, max_events_per_filename);
-        std::vector<std::vector<double>> tps_x = file_reader(filenames, 2, supernova_option, max_events_per_filename);
+        // std::vector<std::vector<double>> tps_u = file_reader(filenames, 0, supernova_option, max_events_per_filename);
+        // std::vector<std::vector<double>> tps_v = file_reader(filenames, 1, supernova_option, max_events_per_filename);
+        // std::vector<std::vector<double>> tps_x = file_reader(filenames, 2, supernova_option, max_events_per_filename);
+
+        std::vector<std::vector<std::vector<double>>> tps = file_reader_all_planes(filenames, supernova_option, max_events_per_filename);
+        std::vector<std::vector<double>> tps_u = tps[0];
+        std::vector<std::vector<double>> tps_v = tps[1];
+        std::vector<std::vector<double>> tps_x = tps[2];
+
         std::cout << "Number of tps: " << tps_u.size() << " " << tps_v.size() << " " << tps_x.size() << std::endl;
         std::map<int, std::vector<float>> file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
         std::map<int, int> file_idx_to_true_interaction_map = file_idx_to_true_interaction(filenames);
