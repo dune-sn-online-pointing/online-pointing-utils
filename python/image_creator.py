@@ -245,7 +245,7 @@ def fix_V_orientation(img_v, x_sign, tps_v):
             img_v = np.flip(img_v, 1) 
     return img_v
 
-def fix_u_orientation(img_u, x_sign, tps_u):
+def fix_U_orientation(img_u, x_sign, tps_u):
     '''
     :param img_u: U plane image
     :param x_sign: sign of the x coordinate of the track
