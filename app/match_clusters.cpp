@@ -153,18 +153,18 @@ int main(int argc, char* argv[]) {
     std::cout << "Number of clusters: " << clusters_u.size() << " " << clusters_v.size() << " " << clusters_x.size() << std::endl;
     std::vector<std::vector<cluster>> clusters;
     std::vector<cluster> multiplane_clusters;
-    // std::map<int, std::vector<int>> index_used_u;
-    // std::map<int, std::vector<int>> index_used_v;
-    // std::map<int, std::vector<int>> index_used_x;
+
     int start_j = 0;
     int start_k = 0;
     std::clock_t str;
 
     for (int i = 0; i < clusters_x.size(); i++) {
-        if (i % 1000 == 0 && i != 0) {
+        if (i % 10000 == 0 && i != 0) {
             str = std::clock();
             std::cout << "Cluster " << i << " Time: " << (str - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+            std::cout << "Number of compatible clusters: " << multiplane_clusters.size() << std::endl;
         }
+
         if (clusters_x[i].get_true_label() != 101){
             // std::cout << "CONT" << std::endl;
             continue;
