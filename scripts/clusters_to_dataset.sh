@@ -12,6 +12,8 @@ cd ${REPO_HOME}/app/
 python clusters_to_dataset.py --input_json ${REPO_HOME}/json/ctds/ctds_es-lab_volume.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/superimposed_files/es-lab_volume/
 python clusters_to_dataset.py --input_json ${REPO_HOME}/json/ctds/ctds_cc-lab_volume.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/superimposed_files/cc-lab_volume/
 
+# python clusters_to_dataset.py --input_json ${REPO_HOME}/json/ctds/ctds_main_tracks_direction_multiplane_clusters.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/ctds_main_tracks_direction_multiplane_clusters-3d/
+
 
 
 cd ${REPO_HOME}/scripts/

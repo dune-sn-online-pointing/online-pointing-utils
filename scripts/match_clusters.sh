@@ -1,5 +1,5 @@
 #!bin/bash
-INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/match_clusters/pointing_high_E.json
+INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/match_clusters/pointing_high_E_3d_dir.json
 REPO_HOME=$(git rev-parse --show-toplevel)
 
 # parse the input
