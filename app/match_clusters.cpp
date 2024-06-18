@@ -223,11 +223,14 @@ int main(int argc, char* argv[]) {
                 }
 
                 if (are_compatibles(clusters_u[j], clusters_v[k], clusters_x[i], 5)) {
-                    if (match_with_true_pos(clusters_u[j], clusters_v[k], clusters_x[i], 5)) {
-                        clusters.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
-                        cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
-                        multiplane_clusters.push_back(c);
-                    }
+                    clusters.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
+                    cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
+                    multiplane_clusters.push_back(c);
+                    // if (match_with_true_pos(clusters_u[j], clusters_v[k], clusters_x[i], 5)) {
+                    //     clusters.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
+                    //     cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
+                    //     multiplane_clusters.push_back(c);
+                    // }
                 }
             }
         }
