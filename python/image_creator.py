@@ -168,7 +168,7 @@ def create_image_one_view(tps_to_draw, make_fixed_size=False, width=100, height=
 
     return img
 
-def create_images(tps_to_draw, channel_map, min_tps_to_create_img=2, make_fixed_size=False, width=500, height=1000, x_margin=10, y_margin=200, only_collection=False, verbose=False):
+def create_images(tps_to_draw, channel_map, min_tps_to_create_img=1, make_fixed_size=False, width=500, height=1000, x_margin=10, y_margin=200, only_collection=False, verbose=False):
     '''
     :param tps_to_draw: all trigger primitives to draw
     :param channel_map: channel map array
