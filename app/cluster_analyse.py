@@ -169,6 +169,32 @@ background_max_energy = {
     21: [2,1,0,0 ],
     22: [2,1,0,0]
 }
+#returns recovered area (not including adc_integral)
+threshold=30
+def recover_area(hit): 
+    x1,y1,x2,y2= hit['time_start'],threshold,hit['time_peak']+hit['time_start'],hit['adc_peak'] 
+    slope = (y2-y1)/(x2-x1)
+    start_x =(0-y1)/slope + x1
+    end_x = x1
+    
+    x_values = np.linspace(start_x, end_x, 100)
+    #y_values = slope * (x_values - x1) + y1
+    area_left = (np.abs(start_x-end_x)*threshold)/2  #formula for triangle area
+
+    #Find Equation of Negative Slope Line (Right Side)
+    x1,y1,x2,y2= hit['time_start']+hit['time_over_threshold']-1,threshold,hit['time_peak']+hit['time_start'],hit['adc_peak']
+    slope = (y2-y1)/(x2-x1)
+    start_x = x1
+    end_x = (0-y1)/slope + x1
+    x_values = np.linspace(start_x, end_x, 100)
+    #y_values = slope * (x_values - x1) + y1
+    area_right = (np.abs(start_x-end_x)*threshold)/2  #formula for triangle area
+    if hit['adc_integral'] > 2000: #5500 with 19 bins best so far
+        return hit['adc_integral']
+    total_area = area_right+area_left+hit['adc_integral']
+    if total_area>4*hit["adc_integral"]:
+        total_area=hit['adc_integral']/.6
+    return total_area 
 
 if uniform:
     exlude = [19,11,13,16,17,18,10,15,14] 
@@ -184,14 +210,17 @@ max_charge = {key: 0 for key in labels} #max charge associated with each backgro
 max_charge_fermi = {key: 0 for key in labels} #max charge using fermi fit
 true_labels = []
 total_charges = []
+charge_lists_recovered = {key: [] for key in labels}
 
 
 for cluster in clusters:
     charge_sums = {key: 0 for key in labels}
+    charge_sums_recovered = {key: 0 for key in labels}
     total_charge_sum = 0
     
     #summing ADC integral for each TP set in cluster
     for tp in cluster.tps_:
+        charge_sums_recovered[cluster.true_label_] += recover_area(tp)
         charge_sums[cluster.true_label_] += tp['adc_integral']
         total_charge_sum = total_charge_sum + tp['adc_integral']
     
@@ -200,6 +229,7 @@ for cluster in clusters:
         max_charge[cluster.true_label_] = charge_sums[cluster.true_label_] 
 
     charge_lists[cluster.true_label_].append(charge_sums[cluster.true_label_])
+    charge_lists_recovered[cluster.true_label_].append(charge_sums_recovered[cluster.true_label_])
     true_labels.append(cluster.true_label_)
     total_charges.append(total_charge_sum)
     
@@ -225,11 +255,27 @@ else:
 beta_adc = []
 beta_adc_error = []
 beta_MeV = []
+beta_MeV.append(0)
 alpha_adc = []
 alpha_adc_error = []
 alpha_MeV = []
 
 
+for label_num, charge_list in charge_lists.items():
+    bins = 26
+    if label_num == 3:
+        bins = 26
+    max_charge_num = 0   
+    fig2=plt.figure()
+    hist, bins, _ = plt.hist(charge_lists_recovered[label_num], bins=bins)  
+    plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
+    plt.xlabel('Total Charge per Cluster [ADC]')  
+    plt.ylabel('Number of Clusters')  
+    fig2.savefig(f'plots/backgrounds_recovered/{labels[label_num]}_ADC_.png')
+    plt.clf()
+    plt.close()
+
+exit()
 for label_num, charge_list in charge_lists.items():
     max_charge_num = 0   
     #histogram of each backgrouund
@@ -242,6 +288,14 @@ for label_num, charge_list in charge_lists.items():
         fig1.savefig(f'plots/backgrounds_uniform/{labels[label_num]}_ADC.png')
     else:
         fig1.savefig(f'plots/backgrounds/{labels[label_num]}_ADC.png')
+    plt.clf()
+    plt.close()
+    fig2=plt.figure()
+    hist, bins, _ = plt.hist(charge_lists_recovered[label_num], bins=30)  
+    plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
+    plt.xlabel('Total Charge per Cluster [ADC]')  
+    plt.ylabel('Number of Clusters')  
+    fig2.savefig(f'plots/backgrounds_recovered/{labels[label_num]}_ADC_.png')
     plt.clf()
     plt.close()
     
@@ -350,7 +404,7 @@ for label_num, charge_list in charge_lists.items():
     if (label_num not in exlude_expo) and (len(background_max_energy[label_num]) > 2):
         scale = 100000
         start = 0 #shift
-        cut = 0.09 #charge cut for fit
+        cut = 0 #charge cut for fit
 
         # to fit the expression for beta decay onto the ADC graph, I had to first modify the histogram because the expression does not scale
         # Now just find endpoint, and reverse the modification to find on ADC graph 
@@ -509,7 +563,6 @@ for label_num, charge_list in charge_lists.items():
             
            
     
-    
  
 #plot all background charges on same hist   
 fig4 = plt.figure()
@@ -528,8 +581,10 @@ plt.close()
 
 #create two lists for beta and alpha decay background endpoints for linear fit
 beta_adc_fermi = []
+beta_adc_fermi.append(0)
 alpha_adc_fermi = []
 uncertainties = []
+uncertainties.append(0)
 
 for key in background_max_energy:
     print("Background: " + labels[key] + " Max ADC using Fermi: " + str(max_charge_fermi[key]))
@@ -565,14 +620,14 @@ slope_B, intercept_B, r_value_B, p_value_B, std_err_B = linregress(beta_adc_ferm
 slope_a, intercept_a, r_value_a, p_value_a, std_err_a = linregress(alpha_adc_fermi, alpha_MeV)
 fig_conv = plt.figure()
 beta_fit_line = f'Beta Fit: MeV = {slope_B:.2e} * ADC + {intercept_B:.2f} (R²={r_value_B**2:.2f})'
-alpha_fit_line = f'Alpha Fit: MeV = {slope_a:.2e} * ADC + {intercept_a:.2f} (R²={r_value_a**2:.2f})'
+#alpha_fit_line = f'Alpha Fit: MeV = {slope_a:.2e} * ADC + {intercept_a:.2f} (R²={r_value_a**2:.2f})'
 print("Beta slope: " + str(slope_B))
 print("Alpha slope: " + str(slope_a))
 #plt.scatter(beta_adc_fermi, beta_MeV, xerr=uncertainties, color = 'red', label='Beta Decay Backgrounds')
-plt.scatter(alpha_adc_fermi,alpha_MeV, color = 'blue', label='Alpha Decay Backgrounds')
+#plt.scatter(alpha_adc_fermi,alpha_MeV, color = 'blue', label='Alpha Decay Backgrounds')
 plt.errorbar(beta_adc_fermi, beta_MeV, xerr=uncertainties, fmt='o', color='red', label='Beta Decay Backgrounds')
 plt.plot(beta_adc_fermi, [slope_B * x + intercept_B for x in beta_adc_fermi], color='red', label=beta_fit_line)
-plt.plot(alpha_adc_fermi,[slope_a * x + intercept_a for x in alpha_adc_fermi], color='blue', label=alpha_fit_line)
+#plt.plot(alpha_adc_fermi,[slope_a * x + intercept_a for x in alpha_adc_fermi], color='blue', label=alpha_fit_line)
 
 exclude_str = ', '.join(str(labels[val]) for val in exlude)
 
