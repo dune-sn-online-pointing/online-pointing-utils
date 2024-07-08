@@ -142,6 +142,8 @@ beta = 0
 aplha = 1
 dont use = 2
 '''
+
+counterr=0
 #decay energies from https://periodictable.com/Isotopes/018.39/index.dm.html
 background_max_energy = {  
     -1: [2,1,0,0],
@@ -196,6 +198,12 @@ def recover_area(hit):
         total_area=hit['adc_integral']/.6
     return total_area 
 
+
+def recover_formula(hit):
+    adc = hit['adc_integral']
+    true_area = .97*adc + 113.23
+    return true_area
+    
 if uniform:
     exlude = [19,11,13,16,17,18,10,15,14] 
 else:
@@ -208,19 +216,23 @@ charge_lists = {key: [] for key in labels} #lists of sum of charges in each clus
 charge_lists_cut = {key: [] for key in labels} #same as above but with a charge cut applied for the purpose of fitting the background
 max_charge = {key: 0 for key in labels} #max charge associated with each background, for best fit line using max adc
 max_charge_fermi = {key: 0 for key in labels} #max charge using fermi fit
+max_charge_fermi_r = {key: 0 for key in labels} 
 true_labels = []
 total_charges = []
 charge_lists_recovered = {key: [] for key in labels}
+charge_lists_recovered_formula = {key: [] for key in labels} #recovery using log fit to fraction vs adc integral plot
 
 
 for cluster in clusters:
     charge_sums = {key: 0 for key in labels}
     charge_sums_recovered = {key: 0 for key in labels}
+    charge_sums_recovered_formula = {key: 0 for key in labels}
     total_charge_sum = 0
     
     #summing ADC integral for each TP set in cluster
     for tp in cluster.tps_:
         charge_sums_recovered[cluster.true_label_] += recover_area(tp)
+        charge_sums_recovered_formula[cluster.true_label_] += recover_formula(tp)
         charge_sums[cluster.true_label_] += tp['adc_integral']
         total_charge_sum = total_charge_sum + tp['adc_integral']
     
@@ -230,6 +242,7 @@ for cluster in clusters:
 
     charge_lists[cluster.true_label_].append(charge_sums[cluster.true_label_])
     charge_lists_recovered[cluster.true_label_].append(charge_sums_recovered[cluster.true_label_])
+    charge_lists_recovered_formula[cluster.true_label_].append(charge_sums_recovered_formula[cluster.true_label_])
     true_labels.append(cluster.true_label_)
     total_charges.append(total_charge_sum)
     
@@ -250,7 +263,6 @@ if uniform:
 else:
     plt.savefig('plots/backgrounds/true_labels.png')
 
-
 #plot every background and find max ADC values to fit beta spectrum to
 beta_adc = []
 beta_adc_error = []
@@ -260,11 +272,10 @@ alpha_adc = []
 alpha_adc_error = []
 alpha_MeV = []
 
-
+exit()
 for label_num, charge_list in charge_lists.items():
-    bins = 26
-    if label_num == 3:
-        bins = 26
+    bins = 28
+    
     max_charge_num = 0   
     fig2=plt.figure()
     hist, bins, _ = plt.hist(charge_lists_recovered[label_num], bins=bins)  
@@ -274,13 +285,36 @@ for label_num, charge_list in charge_lists.items():
     fig2.savefig(f'plots/backgrounds_recovered/{labels[label_num]}_ADC_.png')
     plt.clf()
     plt.close()
+    
+    fig3=plt.figure()
+    hist, bins, _ = plt.hist(charge_lists_recovered_formula[label_num], bins=28)  
+    plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
+    plt.xlabel('Total Charge per Cluster [ADC]')  
+    plt.ylabel('Number of Clusters')  
+    fig3.savefig(f'plots/backgrounds_recovered_formula/{labels[label_num]}_ADC_.png')
+    plt.clf()
+    plt.close()
+    
+    max_charge_num = 0   
+    #histogram of each backgrouund
+    fig1 = plt.figure()
+    hist, bins, _ = plt.hist(charge_list, bins=bins)  
+    plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
+    plt.xlabel('Total Charge per Cluster [ADC]')  
+    plt.ylabel('Number of Clusters')  
+    if uniform:
+        fig1.savefig(f'plots/backgrounds_uniform/{labels[label_num]}_ADC.png')
+    else:
+        fig1.savefig(f'plots/backgrounds/{labels[label_num]}_ADC.png')
+    plt.clf()
+    plt.close()
 
 exit()
 for label_num, charge_list in charge_lists.items():
     max_charge_num = 0   
     #histogram of each backgrouund
     fig1 = plt.figure()
-    hist, bins, _ = plt.hist(charge_list, bins=60)  
+    hist, bins, _ = plt.hist(charge_list, bins=27)  
     plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
     plt.xlabel('Total Charge per Cluster [ADC]')  
     plt.ylabel('Number of Clusters')  
@@ -361,8 +395,8 @@ for label_num, charge_list in charge_lists.items():
             else:
                 fig_expo.savefig(f'plots/exponential_fits/{labels[label_num]}_ADC.png')
             plt.clf()
-        except RuntimeError as e:
-            print(f'Could not fit exponential to {labels[label_num]}')
+        
+            
             
         '''
         #Fit Fermi Function
@@ -411,20 +445,21 @@ for label_num, charge_list in charge_lists.items():
         # i.e. Find endpoint of fit then multiply by scale to find ADC endpoint
         cut_charge_list_fit = [x/scale + start for x in charge_list if x/scale + start > cut ] # charge cut to cut out spike at low energies
         cut_charge_list_display = [x/scale + start for x in charge_list] #used to make histogram of all charges, cut is illustrated on graph with dotted line
+        charge_list_recovered = [x/scale + start for x in charge_lists_recovered[label_num]]
         fig_fermi = plt.figure()
         hist_fit, bins, _ = plt.hist(cut_charge_list_fit,bins = 30)
+        hist_fit_recovered, bins_r, _, = plt.hist(charge_list_recovered,bins = 30)
+
+        #Not Recovered
         plt.clf()
         plt.hist(cut_charge_list_display,bins = 30)
         plt.title(f'Total Charge per {labels[label_num]} Cluster')  
         plt.xlabel(f'Total Charge per Cluster [{start} + ADC/10^5 ]')  
         plt.ylabel('Number of Clusters') 
-        x = (bins[:-1] + bins[1:]) / 2  # Get x values for the center of each bin
-       
-        
-     
+        x = (bins[:-1] + bins[1:]) / 2  # Get x values for the center of each bin   
+        x_r = (bins_r[:-1] + bins_r[1:]) / 2
         #Parameters vary widely
         #Initial parameter guessing 
-        
         gueses = 1000
         initial_guesses_C = [random.randint(0, max(hist_fit)) for _ in range(gueses)]
         initial_guesses_Q = [random.uniform(0, 6) for _ in range(gueses)]
@@ -435,6 +470,12 @@ for label_num, charge_list in charge_lists.items():
         fit_fails = 0
         fit_success = 0
         best_chi = 0
+        best_r2_r = -100
+        best_C_param_r = 200
+        best_Q_param_r = 1
+        fit_fails_r = 0
+        fit_success_r = 0
+        best_chi_r = 0
         
         #Using r^2 value as a general method to find best parameters
         for i in range(gueses):
@@ -450,16 +491,32 @@ for label_num, charge_list in charge_lists.items():
                     best_C_param = params[0]
                     best_Q_param = params[1]
                     best_perr = perr
-    
-                    
             except:
                 if fit_fails>100:
                     break
                 fit_fails+=1
     
-                       
+            try:
+                params_recovered, pcov_recovered = curve_fit(N, x_r, hist_fit_recovered, p0=[initial_guesses_C[i],initial_guesses_Q[i]])
+                fit_success_r+=1
+                perr_r = np.sqrt(np.diag(pcov_recovered))
+                y_pred_r = N(x_r, *params_recovered)
+                R_squared_r = r2_score(hist_fit_recovered, y_pred_r)
+                #Chi = chisquare(hist_fit, y_pred)
+                if R_squared_r > best_r2_r:
+                    best_r2_r = R_squared_r
+                    best_C_param_r = params_recovered[0]
+                    best_Q_param_r = params_recovered[1]
+                    best_perr_r = perr_r
+            except:
+                if fit_fails_r>100:
+                    break
+                fit_fails_r+=1
+            
         #find endpoint using fermi fit ^
         print(f'Fit sucess for {labels[label_num]}: {fit_success}, Fails: {fit_fails}')
+        print(f'Recovered Fit sucess for {labels[label_num]}: {fit_success_r}, Fails: {fit_fails_r}')
+
         
         x = (bins[:-1] + bins[1:]) / 2  # Get x values for the center of each bin
         x_curve = np.linspace(min(x), max(x)+ max(x)/6, 100)
@@ -502,13 +559,16 @@ for label_num, charge_list in charge_lists.items():
         
                 #print(f"Endpoint for {labels[label_num]} is {T}")
         max_endpoint = (best_Q_param-start)*scale
+        max_endpoint_r = (best_Q_param_r-start)*scale
 
         #uncertainty = np.std(endpoints*scale)
         print(f'Adding endpoint {max_endpoint} to {labels[label_num]}')
         max_charge_fermi[label_num] = max_endpoint #record energy at minimum value of curve 
+        max_charge_fermi_r[label_num] = max_endpoint_r
         print(f'labelnum: {label_num} with {background_max_energy[label_num]}')
         if fit_success>=1:
             background_max_energy[label_num][3] = best_perr[1] * scale # uncertainty as uncertainty in Q value
+            
         else:
             background_max_energy[label_num][3] = 0
             
@@ -544,8 +604,32 @@ for label_num, charge_list in charge_lists.items():
             fig_fermi.savefig(f'plots/with_fermi/{labels[label_num]}_ADC.png')
 
         plt.clf()
-        plt.close() 
         
+        #recovered
+        fig_fermi_recovered = plt.figure()
+        plt.hist(charge_list_recovered,bins = 30)
+        plt.title(f'Total Charge per {labels[label_num]} Cluster REcovered')  
+        plt.xlabel(f'Total Charge per Cluster [{start} + ADC/10^5 ]')  
+        plt.ylabel('Number of Clusters') 
+        x_r = (bins_r[:-1] + bins_r[1:]) / 2  # Get x values for the center of each bin
+        x_curve_r = np.linspace(min(x_r), best_Q_param_r, 100)
+        plt.plot(x_curve_r, N(x_curve_r,best_C_param_r,best_Q_param_r), 'r-', label='Beta Fit') #fit with Q and Z not constants, varied for fit
+        
+        plt.axvline(x=best_Q_param_r, linestyle='--', color='purple', label='Fitted Q value')
+        plt.axvline(x=cut, linestyle='--', color='black', label='Cut')
+
+        plt.text(1.05, 0.75, f'Label Number: {label_num}\nR-squared: {best_r2_r:.2f}\nFitted Q Value: {best_Q_param_r:.3f}\nADC: {max_endpoint_r:.0f} ADC\nActual: {background_max_energy[label_num][1]} MeV ', transform=plt.gca().transAxes, fontsize=8, verticalalignment='top')
+        plt.legend(loc='upper left', bbox_to_anchor=(1.02, 1),fontsize=8)
+        plt.subplots_adjust(right=0.74)
+        print(f'Params for recovered {labels[label_num]}: {best_C_param_r},{best_Q_param_r}')
+        if uniform:
+            fig_fermi_recovered.savefig(f'plots/with_fermi_uniform_recovered/{labels[label_num]}_ADC.png')
+        else:
+            print("No save location for non uniform")
+            #fig_fermi.savefig(f'plots/with_fermi/{labels[label_num]}_ADC.png')
+
+        plt.clf()
+        plt.close() 
         #plot parameters vs endpoints
         fig_params = plt.figure()
         #plt.scatter(sampled_Q_params,endpoints,color = 'blue', label='Q params')
@@ -561,7 +645,7 @@ for label_num, charge_list in charge_lists.items():
             print("bla")
         plt.close() 
             
-           
+
     
  
 #plot all background charges on same hist   
