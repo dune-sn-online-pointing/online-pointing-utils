@@ -89,79 +89,6 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
 
     return tps;
 }
-std::vector<std::vector<std::vector<double>>> file_reader_all_planes(std::vector<std::string> filenames, int supernova_option, int max_events_per_filename) {
-    std::vector<std::vector<std::vector<double>>> tps;
-    // add three empty vectors for the three planes
-    tps.push_back(std::vector<std::vector<double>>());
-    tps.push_back(std::vector<std::vector<double>>());
-    tps.push_back(std::vector<std::vector<double>>());
-    
-    std::string line;
-    int n_events_offset = 0;
-    int file_idx = 0;
-    for (auto& filename : filenames) {
-        // std::cout << filename << std::endl;
-        std::ifstream infile(filename);
-        // read and save the TPs
-        while (std::getline(infile, line)) {
-
-            std::istringstream iss(line);
-            std::vector<double> tp;
-            double val;
-            while (iss >> val) {
-                tp.push_back(val);
-            }
-            tp.push_back(file_idx);
-            if (tp[variables_to_index["event"]]>max_events_per_filename) {
-                break;
-            }
-
-
-            if (supernova_option == 1 && tp[variables_to_index["ptype"]] == 1) {
-                tp[variables_to_index["event"]] += n_events_offset;
-                tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-                tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-                tps[tp[variables_to_index["view"]]].push_back(tp);
-            }   
-            else if (supernova_option == 2 && tp[variables_to_index["ptype"]] != 1) {
-                tp[variables_to_index["event"]] += n_events_offset;
-                tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-                tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-                tps[tp[variables_to_index["view"]]].push_back(tp);
-
-            }
-            else if (supernova_option == 0) {
-                tp[variables_to_index["event"]] += n_events_offset;
-                tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];       
-                tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-                tps[tp[variables_to_index["view"]]].push_back(tp);
-            }
-        }
-        if (tps.size() > 0){
-            if (tps[0][tps[0].size()-1][variables_to_index["event"]] != n_events_offset) {
-                // std::cout << "File Works" << std::endl;
-            }
-            else {
-                std::cout << filename << std::endl;
-                std::cout << "File does not work" << std::endl;
-            }
-            n_events_offset = std::max(tps[0][tps[0].size()-1][variables_to_index["event"]], std::max(tps[1][tps[1].size()-1][variables_to_index["event"]], tps[2][tps[2].size()-1][variables_to_index["event"]]));
-        }
-        else {
-            std::cout << filename << std::endl;
-            std::cout << "File does not work" << std::endl;
-        }
-        ++file_idx;
-    }
-        // sort the TPs by time
-    for (int i = 0; i < 3; i++) {
-        std::sort(tps[i].begin(), tps[i].end(), [](const std::vector<double>& a, const std::vector<double>& b) {
-            return a[0] < b[0];
-        });
-    }
-
-    return tps;
-}
 
 std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
     std::vector<std::vector<std::vector<double>>> buffer;
@@ -499,12 +426,6 @@ void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int n
     if (best_idx < clusters.size() ){
         if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
             clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
-            // std::cout << clusters[best_idx].get_min_distance_from_true_pos() << std::endl;
-            // int total_charge = 0;
-            // for (auto& tp : clusters[best_idx].get_tps()) {
-            //     total_charge += tp[4];
-            // }
-            // std::cout << "Charge: " << total_charge << std::endl;
         }
         else{
             bad_event_list.push_back(event);
@@ -516,6 +437,15 @@ void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int n
     for (int i=0; i<clusters.size(); i++) {
         if ((std::find(bad_event_list.begin(), bad_event_list.end(), clusters[i].get_tp(0)[variables_to_index["event"]]) != bad_event_list.end()) and clusters[i].get_true_label() == 1) {
             clusters[i].set_true_label(new_label);
+            // print the tps
+            for (auto& tp : clusters[i].get_tps()) {
+                for (auto& val : tp) {
+                    std::cout << val << " ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << clusters[i].get_reco_pos()[0] << " " << clusters[i].get_reco_pos()[1] << " " << clusters[i].get_reco_pos()[2] << std::endl;
+            std::cout << clusters[i].get_min_distance_from_true_pos() << std::endl;
         }
     }
 
@@ -658,20 +588,3 @@ std::map<int, std::vector<cluster>> create_event_mapping(std::vector<cluster>& c
     }
     return event_mapping;
 }
-
-std::map<int, std::vector<std::vector<double>>> create_background_event_mapping(std::vector<std::vector<double>>& bkg_tps){
-    std::map<int, std::vector<std::vector<double>>> event_mapping;
-    for (auto& tp : bkg_tps) {
-    // check if the event is already in the map
-        if (event_mapping.find(tp[variables_to_index["event"]]) == event_mapping.end()) {
-            std::vector<std::vector<double>> temp;
-            temp.push_back(tp);
-            event_mapping[tp[variables_to_index["event"]]] = temp;
-        }
-        else {
-            event_mapping[tp[variables_to_index["event"]]].push_back(tp);
-        }
-    }
-    return event_mapping;
-}
-

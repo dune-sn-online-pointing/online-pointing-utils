@@ -27,10 +27,8 @@ python mix_dataset_json_creator.py --cut "$cut" --output_file "$output_file" #cr
 # move to the folder, run and come back to scripts
 echo calling dataset_mixer.py
 cd ${REPO_HOME}/app/
-# python dataset_mixer.py --input_json ${REPO_HOME}/json/ds_mix/ds-mix-mt-vs-all.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/ds-mix-mt-vs-all/adc_80000/
-
-python dataset_mixer.py --input_json ${REPO_HOME}/json/ds_mix/ds-mix-es-cc-volume.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/ds-mix-es-cc-volume/
-
+echo Output File: ${output_file}
+python dataset_mixer.py --input_json "$output_file" --output_folder /afs/cern.ch/work/h/hakins/private/npy_dataset/ds-mix-mt-vs-all/
 cd ${REPO_HOME}/scripts/
 
 

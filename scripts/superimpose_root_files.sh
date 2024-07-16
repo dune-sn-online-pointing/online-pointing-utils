@@ -1,5 +1,5 @@
 #!bin/bash
-INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/match_clusters/pointing_high_E.json
+INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/superimpose_root_files/standard.json
 REPO_HOME=$(git rev-parse --show-toplevel)
 
 # parse the input
@@ -10,7 +10,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -h|--help)
-            echo "Usage: ./match_clusters.sh --input_file <input_json>"
+            echo "Usage: ./superimpose_root_files.sh --input_file <input_json>"
             exit 0
             ;;  
         *)
@@ -28,9 +28,9 @@ make -j $(nproc)
 # if successful, run the app
 if [ $? -ne 0 ]; then
     echo "Compilation failed"
-    # exit 1
+    exit 1
 fi
 
 # Run the app
-./app/match_clusters -j $INPUT_JSON
+./app/superimpose_root_files -j $INPUT_JSON
 cd ${REPO_HOME}/scripts/
