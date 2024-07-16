@@ -39,5 +39,16 @@ if [ $? -ne 0 ]; then
 fi
 echo "INput Json: ${output_file}"
 # Run the app
-./app/cluster_to_root -j $output_file
+# INPUT_JSON="/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/main_tracks.json"
+# ./app/cluster_to_root -j $INPUT_JSON
+# INPUT_JSON="/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/blips.json"
+# ./app/cluster_to_root -j $INPUT_JSON
+# INPUT_JSON="/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/backgrounds.json"
+# ./app/cluster_to_root -j $INPUT_JSON
+
+INPUT_JSON="/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/es_lab.json"
+./app/cluster_to_root -j $INPUT_JSON
+INPUT_JSON="/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/cc_lab.json"
+./app/cluster_to_root -j $INPUT_JSON
+
 cd ${REPO_HOME}/scripts/
