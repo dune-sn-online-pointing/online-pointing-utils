@@ -166,16 +166,9 @@ def create_image_one_view(tps_to_draw, make_fixed_size=False, width=100, height=
                 img[int(y_peak):int(y_int_2), int(x)-1] = np.linspace(tp['adc_peak'], intermidiate_height, int(y_int_2)-int(y_peak))
                 img[int(y_int_2):int(y_end), int(x)-1] = np.linspace(intermidiate_height, 0, int(y_end)-int(y_int_2))
 
-   
-    # if the track is in one half of the detector, we have to flip the image both horizontally and vertically
-    # TODO: this is a temporary solution, in case it works we should do it before creating the image to save time
-    if (tps_to_draw[0]['channel'] % 2560 - 2080 > 0):
-        img = np.flip(img, 0)
-        img = np.flip(img, 1)
-    
     return img
 
-def create_images(tps_to_draw, channel_map, min_tps_to_create_img=2, make_fixed_size=False, width=500, height=1000, x_margin=10, y_margin=200, only_collection=False, verbose=False):
+def create_images(tps_to_draw, channel_map, min_tps_to_create_img=1, make_fixed_size=False, width=500, height=1000, x_margin=10, y_margin=200, only_collection=False, verbose=False):
     '''
     :param tps_to_draw: all trigger primitives to draw
     :param channel_map: channel map array
@@ -196,12 +189,15 @@ def create_images(tps_to_draw, channel_map, min_tps_to_create_img=2, make_fixed_
     # X plane, take only the tps where the corrisponding position in the channel map is 2
     # print ("Creating X plane images...")
     tps_x = tps_to_draw[np.where(channel_map[tps_to_draw['channel']% total_channels, 1] == 2)]
+    x_sign = 1 if tps_x[0]['channel'] % 2560 - 2080 > 0 else -1
+    
     if tps_x.shape[0] >= min_tps_to_create_img:
         if only_collection: 
             offset = tps_x["channel"]//5120
             shift = np.where(tps_x["channel"]%2560 < 2080, 1600, 2080)
             tps_x["channel"] = tps_x["channel"]%2560 - shift + offset*480
         img_x = create_image_one_view(tps_x, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, y_min_overall=y_min_overall, y_max_overall=y_max_overall)
+        img_x = fix_X_orientation(img_x, x_sign)
     if only_collection:
         return img_u, img_v, img_x # calling here to avoid wasting execution time. U and V will be empty
     
@@ -209,13 +205,67 @@ def create_images(tps_to_draw, channel_map, min_tps_to_create_img=2, make_fixed_
     tps_u = tps_to_draw[np.where(channel_map[tps_to_draw['channel']% total_channels, 1] == 0)]
     if tps_u.shape[0] >= min_tps_to_create_img:
         img_u = create_image_one_view(tps_u, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, y_min_overall=y_min_overall, y_max_overall=y_max_overall)
-    
+        img_u = fix_U_orientation(img_u, x_sign, tps_u)
+
     # V plane, take only the tps where the corrisponding position in the channel map is 1
     tps_v = tps_to_draw[np.where(channel_map[tps_to_draw['channel']% total_channels, 1] == 1)]
     if tps_v.shape[0] >= min_tps_to_create_img: 
         img_v = create_image_one_view(tps_v, make_fixed_size=make_fixed_size, width=width, height=height, x_margin=x_margin, y_margin=y_margin, y_min_overall=y_min_overall, y_max_overall=y_max_overall)
-    
+        img_v = fix_V_orientation(img_v, x_sign, tps_v)
+
     return img_u, img_v, img_x
+
+def fix_X_orientation(img_x, x_sign):
+    '''
+    :param img_x: X plane image
+    :param x_sign: sign of the x coordinate of the track
+    :return: fixed X plane image
+    '''
+    if x_sign == 1:
+        img_x = np.flip(img_x, 0)
+    return img_x
+
+def fix_V_orientation(img_v, x_sign, tps_v):
+    '''
+    :param img_v: V plane image
+    :param x_sign: sign of the x coordinate of the track
+    :param tps_v: all trigger primitives in the cluster
+    :return: fixed V plane image
+    '''
+    apa_v = tps_v[0]['channel']//2560
+    bottom_apa = 1 if apa_v%2 == 0 else 0
+    if bottom_apa:
+        if x_sign == -1:
+            img_v = np.flip(img_v, 1)
+        else:
+            img_v = np.flip(img_v, 0)
+    else:
+        if x_sign == 1:
+            img_v = np.flip(img_v, 0)
+            img_v = np.flip(img_v, 1) 
+    return img_v
+
+def fix_U_orientation(img_u, x_sign, tps_u):
+    '''
+    :param img_u: U plane image
+    :param x_sign: sign of the x coordinate of the track
+    :param tps_u: all trigger primitives in the cluster
+    :return: fixed U plane image
+    '''
+    apa_u = tps_u[0]['channel']//2560
+    bottom_apa = 1 if apa_u%2 == 0 else 0
+    if bottom_apa:
+        if x_sign == 1:
+            img_u = np.flip(img_u, 0)
+            img_u = np.flip(img_u, 1)
+    else:   
+        if x_sign == -1:
+            img_u = np.flip(img_u, 1)
+        else:
+            img_u = np.flip(img_u, 0)
+
+    return img_u
+
 
 def show_image(tps_to_draw, channel_map, min_tps_to_create_img=2, make_fixed_size=False, width=500, height=1000, x_margin=10, y_margin=200, only_collection=False, img_u=None, img_v=None, img_x=None):
     '''
