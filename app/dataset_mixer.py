@@ -16,7 +16,6 @@ output_folder = args.output_folder
 # Read input json
 with open(input_json_file) as f:
     input_json = json.load(f)
-print(f"input json file for dataset_mixer: {input_json}")
 
 datasets_img = input_json['datasets_img']
 datasets_process_label = input_json['datasets_process_label']
@@ -24,8 +23,7 @@ datasets_true_dir_label = input_json['datasets_true_dir_label']
 remove_process_labels = input_json['remove_process_labels']
 shuffle = input_json['shuffle']
 balance = input_json['balance']
-cut = input_json['cut']
-
+balance_across_files = input_json['balance_across_files']
 
 if __name__ == '__main__':
     # read data and labels    
@@ -78,12 +76,35 @@ if __name__ == '__main__':
             true_dir_labelset = np.load(datasets_true_dir_label[i])
             ds_label_true_dir.append(true_dir_labelset)
     
-    # concatenate the datasets
-    dataset_img = np.concatenate(ds_img, axis=0)
-    if mix_process_label:
-        dataset_label_process = np.concatenate(ds_label_process, axis=0)
-    if mix_true_dir_label:
-        dataset_label_true_dir = np.concatenate(ds_label_true_dir, axis=0)
+    if balance_across_files and mix_process_label:
+        uniques = []
+        for i in range(len(ds_label_process)):
+            uniques.append(np.unique(ds_label_process[i], return_counts=True))
+        # take the union of all unique labels
+        unique_labels = np.unique(np.concatenate([uniques[i][0] for i in range(len(ds_label_process))]))
+        indices_to_save = []
+        for lab in unique_labels:
+            counts = []
+            for i in range(len(ds_label_process)):
+                if lab in uniques[i][0]:
+                    counts.append(uniques[i][1][np.where(uniques[i][0] == lab)[0][0]])
+            min_count = np.min(counts)
+            for i in range(len(ds_label_process)):
+                indices = np.where(ds_label_process[i] == lab)[0]
+                np.random.shuffle(indices)
+                indices = indices[:min_count]
+                indices_to_save.append(indices)
+        dataset_img = np.concatenate([ds_img[i%len(ds_label_process)][indices_to_save[i]] for i in range(len(indices_to_save))], axis=0)
+        if mix_process_label:
+            dataset_label_process = np.concatenate([ds_label_process[i%len(ds_label_process)][indices_to_save[i]] for i in range(len(indices_to_save))], axis=0)
+        if mix_true_dir_label:
+            dataset_label_true_dir = np.concatenate([ds_label_true_dir[i%len(ds_label_process)][indices_to_save[i]] for i in range(len(indices_to_save))], axis=0)
+    else:
+        dataset_img = np.concatenate(ds_img, axis=0)
+        if mix_process_label:
+            dataset_label_process = np.concatenate(ds_label_process, axis=0)
+        if mix_true_dir_label:
+            dataset_label_true_dir = np.concatenate(ds_label_true_dir, axis=0)
 
     # remove labels
     if remove_process_labels:
@@ -132,10 +153,8 @@ if __name__ == '__main__':
     # save the data
     print("Saving the data")
     print("Shape of the dataset_img: ", dataset_img.shape)
-    np.save(output_folder + f'dataset_img_{cut}.npy', dataset_img)
+    np.save(output_folder + 'dataset_img.npy', dataset_img)
     if mix_process_label:
-        np.save(output_folder + f'dataset_label_process_{cut}.npy', dataset_label_process)
+        np.save(output_folder + 'dataset_label_process.npy', dataset_label_process)
     if mix_true_dir_label:
-        np.save(output_folder + f'dataset_label_true_dir_{cut}.npy', dataset_label_true_dir)
-
-
+        np.save(output_folder + 'dataset_label_true_dir.npy', dataset_label_true_dir)

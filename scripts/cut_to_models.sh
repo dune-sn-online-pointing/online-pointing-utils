@@ -5,6 +5,7 @@ source /cvmfs/dunedaq.opensciencegrid.org/setup_dunedaq.sh
 setup_dbt latest dbt-setup-release fddaq-v4.2.0
 export PYTHONPATH=/afs/cern.ch/user/h/hakins/private/matplotlib/lib/python3.10/site-packages/:$PYTHONPATH
 source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc13-opt/setup.sh
+
 while [[ $# -gt 0 ]]; do
 
     case "$1" in

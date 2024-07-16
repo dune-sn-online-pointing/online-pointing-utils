@@ -21,7 +21,7 @@ def main(args):
     },
     "model_parameters": {
         "input_shape": [250, 40, 1],   
-        "hp_max_evals": 1, 
+        "hp_max_evals": 5, 
         "space_options": {
             "n_conv_layers": [1, 2, 3, 4],
             "n_dense_layers": [2, 3, 4],

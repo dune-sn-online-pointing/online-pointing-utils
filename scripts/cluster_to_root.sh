@@ -1,5 +1,5 @@
 #!/bin/bash
-#INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/standard.json
+#_JSON=/afs/cern.ch/work/h/hakins/private/json/cluster_to_root/bkg/bkg_275000
 REPO_HOME=$(git rev-parse --show-toplevel)
 # parse the input
 while [[ $# -gt 0 ]]; do
@@ -14,7 +14,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -h|--help)
-            echo "Usage: ./cluster_to_root.sh --cut <cut> --type <type> [Either "main_track" "blip" or "bkg"]"
+            echo "Usage: ./cluster_to_root.sh --cut <cut> --type <type> [Either "main_track" "blip" "benchmark "or "bkg"]"
             exit 0
             ;;  
         *)

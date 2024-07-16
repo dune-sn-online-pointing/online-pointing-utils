@@ -165,10 +165,7 @@ int main(int argc, char* argv[]) {
             str = std::clock();
             std::cout << "Cluster " << i << " Time: " << (str - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
         }
-        if (clusters_x[i].get_true_label() != 101){
-            // std::cout << "CONT" << std::endl;
-            continue;
-        }  
+
         int min_range_j = 0;
         int max_range_j = clusters_u.size();
         while (min_range_j < max_range_j) {

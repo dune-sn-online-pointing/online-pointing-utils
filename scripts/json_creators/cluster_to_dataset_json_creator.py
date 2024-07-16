@@ -14,6 +14,9 @@ def main(args):
     elif args.type == "bkg":
         print("BKG")
         input_file =f"/afs/cern.ch/work/h/hakins/private/root_cluster_files/es-cc-bkg-truth/X/bkg/X/clusters_tick_limits_3_channel_limits_1_min_tps_to_cluster_1_cut_{args.cut}.root"
+    elif args.type == "benchmark":
+        print("Benchmark")
+        input_file =f"/afs/cern.ch/work/h/hakins/private/root_cluster_files/benchmark/X/clusters_tick_limits_3_channel_limits_1_min_tps_to_cluster_1_cut_{args.cut}.root"
 
     data = {
         "input_file": input_file,

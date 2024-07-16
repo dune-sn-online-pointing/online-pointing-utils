@@ -42,6 +42,7 @@ def main(args):
     "remove_process_labels": [99],
     "shuffle": 1,
     "balance": 1,
+    "balance_across_files": True,
     "cut": args.cut
 }
 

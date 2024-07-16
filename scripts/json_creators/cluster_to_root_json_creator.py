@@ -11,20 +11,33 @@ def main(args):
         print("MAIN TRACK")
         input_file = "/afs/cern.ch/work/h/hakins/private/online-pointing-utils/lists/text_files/es-cc_lab.txt"
         output_folder = "/afs/cern.ch/work/h/hakins/private/root_cluster_files/es-cc_lab/main_tracks/"
+        SN_option = 1
+        mt_option = 1
     elif args.type == "blip":
         print("Blip")
         input_file = "/afs/cern.ch/work/h/hakins/private/online-pointing-utils/lists/text_files/es-cc_lab.txt"
         output_folder="/afs/cern.ch/work/h/hakins/private/root_cluster_files/es-cc_lab/blips/"
+        SN_option = 1
+        mt_option = 2
     elif args.type == "bkg":
         print("BKG")
         input_file ="/afs/cern.ch/work/h/hakins/private/online-pointing-utils/lists/text_files/es-cc-bkg-truth.txt"
         output_folder = "/afs/cern.ch/work/h/hakins/private/root_cluster_files/es-cc-bkg-truth/X/bkg/"
+        SN_option = 2
+        mt_option = 0
+    elif args.type == "benchmark":
+        print("Benchmark")
+        input_file ="/afs/cern.ch/work/h/hakins/private/online-pointing-utils/lists/text_files/benchmark.txt"
+        output_folder = "/afs/cern.ch/work/h/hakins/private/root_cluster_files/benchmark/"
+        SN_option = 0
+        mt_option = 0
+    
 
     data = {
     "filename": input_file,
     "output_folder": output_folder,
-    "supernova_option": 1,
-    "main_track_option": 1,
+    "supernova_option": SN_option,
+    "main_track_option": mt_option,
     "tick_limit": 3,
     "channel_limit": 1,
     "min_tps_to_cluster": 1,

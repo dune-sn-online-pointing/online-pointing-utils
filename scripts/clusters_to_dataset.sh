@@ -14,7 +14,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         
         -h|--help)
-            echo "Usage: ./clusters_to_dataset.sh --cut <cut> --type <type> Options: main_track, blip, bkg"
+            echo "Usage: ./clusters_to_dataset.sh --cut <cut> --type <type> Options: main_track, blip, bkg, benchmark"
             exit 0
             ;;  
         *)
@@ -27,7 +27,9 @@ output_folder="/afs/cern.ch/work/h/hakins/private/npy_dataset/es-cc-bkg-truth/"
 
 if [ "$type" == "bkg" ]; then
     output_folder="/afs/cern.ch/work/h/hakins/private/npy_dataset/es-cc-bkg-truth/${cut}"
-else
+elif [ "$type" == "benchmark" ]; then
+    output_folder="/afs/cern.ch/work/h/hakins/private/npy_dataset/benchmark/${cut}"
+else    
     output_folder="/afs/cern.ch/work/h/hakins/private/npy_dataset/es-cc_lab/${type}/${cut}"
 fi
 
