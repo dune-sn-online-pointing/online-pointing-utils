@@ -7,6 +7,7 @@
 #include <climits>
 
 // include root libraries
+
 #include "TFile.h"
 #include "TTree.h"
 #include "TBranch.h"
@@ -16,6 +17,7 @@
 #include "cluster_to_root_libs.h"
 #include "cluster.h"
 #include "position_calculator.h"
+
 
 
 // read the tps from the files and save them in a vector
@@ -325,7 +327,6 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
         true_x = all_directions[all_directions.size()-3];
         true_y = all_directions[all_directions.size()-2];
         true_z = all_directions[all_directions.size()-1];
-
 
         // std::cout << true_x << " " << true_y << " " << true_z << std::endl;
         file_idx_to_true_xyz[file_idx] = {true_x, true_y, true_z};

@@ -158,5 +158,3 @@ if __name__ == '__main__':
         np.save(output_folder + 'dataset_label_process.npy', dataset_label_process)
     if mix_true_dir_label:
         np.save(output_folder + 'dataset_label_true_dir.npy', dataset_label_true_dir)
-
-
