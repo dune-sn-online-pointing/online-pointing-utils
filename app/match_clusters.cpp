@@ -165,10 +165,6 @@ int main(int argc, char* argv[]) {
             std::cout << "Number of compatible clusters: " << multiplane_clusters.size() << std::endl;
         }
 
-        if (clusters_x[i].get_true_label() != 101){
-            // std::cout << "CONT" << std::endl;
-            continue;
-        }  
         int min_range_j = 0;
         int max_range_j = clusters_u.size();
         while (min_range_j < max_range_j) {
@@ -226,6 +222,7 @@ int main(int argc, char* argv[]) {
                     clusters.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
                     cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
                     multiplane_clusters.push_back(c);
+                    // TODO: include option to use true information
                     // if (match_with_true_pos(clusters_u[j], clusters_v[k], clusters_x[i], 5)) {
                     //     clusters.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
                     //     cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
