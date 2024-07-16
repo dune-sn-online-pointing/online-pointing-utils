@@ -153,17 +153,16 @@ int main(int argc, char* argv[]) {
     std::cout << "Number of clusters: " << clusters_u.size() << " " << clusters_v.size() << " " << clusters_x.size() << std::endl;
     std::vector<std::vector<cluster>> clusters;
     std::vector<cluster> multiplane_clusters;
-    // std::map<int, std::vector<int>> index_used_u;
-    // std::map<int, std::vector<int>> index_used_v;
-    // std::map<int, std::vector<int>> index_used_x;
+
     int start_j = 0;
     int start_k = 0;
     std::clock_t str;
 
     for (int i = 0; i < clusters_x.size(); i++) {
-        if (i % 1000 == 0 && i != 0) {
+        if (i % 10000 == 0 && i != 0) {
             str = std::clock();
             std::cout << "Cluster " << i << " Time: " << (str - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+            std::cout << "Number of compatible clusters: " << multiplane_clusters.size() << std::endl;
         }
 
         int min_range_j = 0;
@@ -220,11 +219,15 @@ int main(int argc, char* argv[]) {
                 }
 
                 if (are_compatibles(clusters_u[j], clusters_v[k], clusters_x[i], 5)) {
-                    if (match_with_true_pos(clusters_u[j], clusters_v[k], clusters_x[i], 5)) {
-                        clusters.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
-                        cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
-                        multiplane_clusters.push_back(c);
-                    }
+                    clusters.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
+                    cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
+                    multiplane_clusters.push_back(c);
+                    // TODO: include option to use true information
+                    // if (match_with_true_pos(clusters_u[j], clusters_v[k], clusters_x[i], 5)) {
+                    //     clusters.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
+                    //     cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
+                    //     multiplane_clusters.push_back(c);
+                    // }
                 }
             }
         }
