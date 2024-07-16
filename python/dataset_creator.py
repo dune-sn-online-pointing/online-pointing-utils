@@ -21,9 +21,9 @@ def create_dataset_img(clusters, channel_map, min_tps_to_create_img=1, make_fixe
     :return: list of images
     '''
     if only_collection:
-        dataset_img = np.zeros((len(clusters), height, width, 1), dtype=np.uint16)
+        dataset_img = np.empty((len(clusters), height, width, 1), dtype=np.uint16)
     else:
-        dataset_img = np.zeros((len(clusters), height, width, 3), dtype=np.uint16)
+        dataset_img = np.empty((len(clusters), height, width, 3), dtype=np.uint16)
 
     for i, cluster in enumerate(clusters):
         if i % 1000 == 0:
@@ -35,18 +35,9 @@ def create_dataset_img(clusters, channel_map, min_tps_to_create_img=1, make_fixe
             tps_to_draw['time_peak'] = tps_to_draw['time_peak']%5000
 
             img_u, img_v, img_x = create_images(tps_to_draw = tps_to_draw, channel_map = channel_map, make_fixed_size = make_fixed_size, width = width, height = height, x_margin = x_margin, y_margin = y_margin, only_collection = only_collection)
-
             if only_collection:
-                if img_x[0,0] == -1:
-                    print("WARNING: Image creation failed for plane X")
                 dataset_img[i, :, :, 0] = img_x
             else:
-                if img_u[0,0] == -1:
-                    print("WARNING: Image creation failed for plane U")
-                if img_v[0,0] == -1:
-                    print("WARNING: Image creation failed for plane V")
-                if img_x[0,0] == -1:
-                    print("WARNING: Image creation failed for plane X")                    
                 dataset_img[i, :, :, 0] = img_u
                 dataset_img[i, :, :, 1] = img_v
                 dataset_img[i, :, :, 2] = img_x

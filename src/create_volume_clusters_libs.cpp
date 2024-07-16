@@ -22,10 +22,12 @@ std::vector<float> read_predictions(std::string predictions) {
 
 std::vector<std::vector<double>> get_tps_around_cluster(std::vector<std::vector<double>> tps, cluster cluster, int radius){
     std::vector<std::vector<double>> tps_around_cluster;
-    // search the region of interest with a binary search
+// search the region of interest with a binary search
     int min_time_start = cluster.get_tps()[0][variables_to_index["time_start"]];
     int max_time_end = cluster.get_tps()[cluster.get_tps().size() - 1][variables_to_index["time_start"]];
+
     double radius_in_ticks = radius/0.08;
+
     int start = 0;
     int end = tps.size() - 1;
     int mid = 0;
@@ -40,14 +42,15 @@ std::vector<std::vector<double>> get_tps_around_cluster(std::vector<std::vector<
         }
     }
 
-
     float cluster_x = cluster.get_reco_pos()[0];
     float cluster_y = cluster.get_reco_pos()[1];
     float cluster_z = cluster.get_reco_pos()[2];
 
 
     while (tps[start][variables_to_index["time_start"]] < max_time_end + 1.2*radius_in_ticks) {
-
+        if (start == tps.size()) {
+            break;
+        }
         std::vector<float> tp_pos = calculate_position(tps[start]);
         float tp_x = tp_pos[0];
         float tp_y = tp_pos[1];
@@ -59,10 +62,6 @@ std::vector<std::vector<double>> get_tps_around_cluster(std::vector<std::vector<
         }
 
         start++;
-        if (start == tps.size()) {
-            break;
-        }
-
     }
 
     return tps_around_cluster;
