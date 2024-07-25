@@ -498,12 +498,6 @@ void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int n
     if (best_idx < clusters.size() ){
         if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
             clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
-            // std::cout << clusters[best_idx].get_min_distance_from_true_pos() << std::endl;
-            // int total_charge = 0;
-            // for (auto& tp : clusters[best_idx].get_tps()) {
-            //     total_charge += tp[4];
-            // }
-            // std::cout << "Charge: " << total_charge << std::endl;
         }
         else{
             bad_event_list.push_back(event);

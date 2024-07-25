@@ -32,19 +32,26 @@ void cluster::update_cluster_info() {
     // the reconstructed position will be the average of the tps
     // we want to save the minimum distance from the true position
     float min_distance = 1000000;
+    std::vector<float> pos = calculate_position(tps_[0]);
+    min_distance = sqrt(pow(pos[0] - true_pos_[0], 2) + pow(pos[2] - true_pos_[2], 2));
+
     float supernova_tp_fraction = 0;
+    float total_charge = 0;
     std::vector<float> reco_pos = {0, 0, 0};
     int true_label = tps_[0][variables_to_index["ptype"]];
     for (int i = 0; i < tps_.size(); i++) {
+        total_charge += tps_[i][variables_to_index["adc_integral"]];
         std::vector<float> pos = calculate_position(tps_[i]);
         std::vector<float> true_pos = {float(tps_[i][variables_to_index["true_x"]]), float(tps_[i][variables_to_index["true_y"]]), float(tps_[i][variables_to_index["true_z"]])};
         // std::vector<int> true_pos = {tps_[i][variables_to_index["true_x"]], tps_[i][variables_to_index["true_y"]], tps_[i][variables_to_index["true_z"]]};
         float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[2] - true_pos[2], 2));
         // float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[1] - true_pos[1], 2) + pow(pos[2] - true_pos[2], 2));
         if (distance < min_distance and tps_[i][variables_to_index["ptype"]] == 1) {
-            min_distance = distance;
-            true_pos_ = true_pos;
-            true_energy_ = tps_[i][variables_to_index["true_energy"]];
+            if (true_pos[0] != 0 and true_pos[1] != 0 and true_pos[2] != 0) {
+                min_distance = distance;
+                true_pos_ = true_pos;
+                true_energy_ = tps_[i][variables_to_index["true_energy"]];
+            }
         }
         if (tps_[i][variables_to_index["ptype"]] == 1) {
             supernova_tp_fraction++;
@@ -63,6 +70,7 @@ void cluster::update_cluster_info() {
 
     supernova_tp_fraction_ = supernova_tp_fraction / tps_.size();
     min_distance_from_true_pos_ = min_distance;
+    total_charge_ = total_charge;
     int ntps = tps_.size();
     reco_pos[0] /= ntps;
     reco_pos[1] /= ntps;
@@ -70,7 +78,5 @@ void cluster::update_cluster_info() {
     reco_pos_ = reco_pos;
     true_label_ = true_label;
 }
-
-
 
 
