@@ -24,7 +24,11 @@ std::map<std::string, int> variables_to_index = {
     {"true_z", 16},
     {"true_energy", 17},
     {"n_electrons", 18},
-    {"track_id", 19}
+    {"track_id", 19},  
+    {"electron_energy", 20},
+    {"true_e_px", 21},
+    {"true_e_py", 22},
+    {"true_e_pz", 23}
 };
 
 
@@ -77,6 +81,9 @@ void cluster::update_cluster_info() {
     reco_pos[2] /= ntps;
     reco_pos_ = reco_pos;
     true_label_ = true_label;
+    if (tps_[0].size() >= variables_to_index["true_e_pz"]) {
+        true_dir_ = {tps_[0][variables_to_index["true_e_px"]], tps_[0][variables_to_index["true_e_py"]], tps_[0][variables_to_index["true_e_pz"]]};
+    }
 }
 
 

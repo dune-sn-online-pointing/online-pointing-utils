@@ -67,6 +67,9 @@ int main(int argc, char* argv[]) {
     std::cout << "Max events per filename: " << max_events_per_filename << std::endl;
     int adc_integral_cut = j["adc_integral_cut"];
     std::cout << "ADC integral cut: " << adc_integral_cut << std::endl;
+    int use_electron_direction = j["use_electron_direction"];
+    std::cout << "Use electron direction: " << use_electron_direction << std::endl;
+
     std::vector<std::string> plane_names = {"U", "V", "X"};
     // start the clock
     std::clock_t start;
@@ -85,7 +88,10 @@ int main(int argc, char* argv[]) {
         std::cout << "Number of files: " << filenames.size() << std::endl;
         std::vector<std::vector<double>> tps = file_reader(filenames, plane, supernova_option, max_events_per_filename);
         std::cout << "Number of tps: " << tps.size() << std::endl;
-        std::map<int, std::vector<float>> file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
+        std::map<int, std::vector<float>> file_idx_to_true_xyz_map;
+        if (use_electron_direction == 1) {
+            file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
+        }
         std::map<int, int> file_idx_to_true_interaction_map = file_idx_to_true_interaction(filenames);
         std::cout << "XYZ map created" << std::endl;
         // cluster the tps
@@ -96,7 +102,9 @@ int main(int argc, char* argv[]) {
         std::map<int, std::vector<float>> file_idx_to_true_pos;
 
         for (int i = 0; i < clusters.size(); i++) {
-            clusters[i].set_true_dir(file_idx_to_true_xyz_map[clusters[i].get_tp(0)[clusters[i].get_tp(0).size() - 1]]);
+            if (use_electron_direction == 1) {
+                clusters[i].set_true_dir(file_idx_to_true_xyz_map[clusters[i].get_tp(0)[clusters[i].get_tp(0).size() - 1]]);
+            }
             clusters[i].set_true_interaction(file_idx_to_true_interaction_map[clusters[i].get_tp(0)[clusters[i].get_tp(0).size() - 1]]);
             
             if (clusters[i].get_true_label() == 1) {
@@ -189,7 +197,10 @@ int main(int argc, char* argv[]) {
         std::vector<std::vector<double>> tps_x = tps[2];
 
         std::cout << "Number of tps: " << tps_u.size() << " " << tps_v.size() << " " << tps_x.size() << std::endl;
-        std::map<int, std::vector<float>> file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
+        std::map<int, std::vector<float>> file_idx_to_true_xyz_map;
+        if (use_electron_direction == 1) {
+            file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
+        }
         std::map<int, int> file_idx_to_true_interaction_map = file_idx_to_true_interaction(filenames);
         std::cout << "XYZ map created" << std::endl;
         
@@ -200,15 +211,24 @@ int main(int argc, char* argv[]) {
         std::cout << "Number of clusters: " << clusters_u.size() << " " << clusters_v.size() << " " << clusters_x.size() << std::endl;
         // add true x y z dir
         for (int i = 0; i < clusters_u.size(); i++) {
-            clusters_u[i].set_true_dir(file_idx_to_true_xyz_map[clusters_u[i].get_tp(0)[clusters_u[i].get_tp(0).size() - 1]]);
+            if (use_electron_direction == 1) {
+                clusters_u[i].set_true_dir(file_idx_to_true_xyz_map[clusters_u[i].get_tp(0)[clusters_u[i].get_tp(0).size() - 1]]);
+            }
+
             clusters_u[i].set_true_interaction(file_idx_to_true_interaction_map[clusters_u[i].get_tp(0)[clusters_u[i].get_tp(0).size() - 1]]);
         }
         for (int i = 0; i < clusters_v.size(); i++) {
-            clusters_v[i].set_true_dir(file_idx_to_true_xyz_map[clusters_v[i].get_tp(0)[clusters_v[i].get_tp(0).size() - 1]]);
+            if (use_electron_direction == 1) {
+                clusters_v[i].set_true_dir(file_idx_to_true_xyz_map[clusters_v[i].get_tp(0)[clusters_v[i].get_tp(0).size() - 1]]);
+            }
+
             clusters_v[i].set_true_interaction(file_idx_to_true_interaction_map[clusters_v[i].get_tp(0)[clusters_v[i].get_tp(0).size() - 1]]);
         }
         for (int i = 0; i < clusters_x.size(); i++) {
-            clusters_x[i].set_true_dir(file_idx_to_true_xyz_map[clusters_x[i].get_tp(0)[clusters_x[i].get_tp(0).size() - 1]]);
+            if (use_electron_direction == 1) {
+                clusters_x[i].set_true_dir(file_idx_to_true_xyz_map[clusters_x[i].get_tp(0)[clusters_x[i].get_tp(0).size() - 1]]);
+            }
+
             clusters_x[i].set_true_interaction(file_idx_to_true_interaction_map[clusters_x[i].get_tp(0)[clusters_x[i].get_tp(0).size() - 1]]);
         }
         // filter the clusters
