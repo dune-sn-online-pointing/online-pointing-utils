@@ -1,0 +1,14 @@
+{
+    "input_file": "", // Path to the input file
+    "make_fixed_size": true, // Flag to indicate if the output image should have a fixed size
+    "img_width": 200, // Width of the output image
+    "img_height": 1250, // Height of the output image
+    "min_tps_to_cluster": 1, // Minimum number of time points to form a cluster
+    "drift_direction": 0, // Direction of the drift
+    "save_img_dataset": 1, // Flag to indicate if the image dataset should be saved
+    "save_label_process": 1, // Flag to indicate if the label for the process should be saved
+    "save_label_direction": 0, // Flag to indicate if the label for the direction should be saved
+    "x_margin" : 2, // Margin in the x-direction for the output image
+    "y_margin" : 5, // Margin in the y-direction for the output image
+    "only_collection": 1 // Flag to indicate if only the collection plane should be used
+}

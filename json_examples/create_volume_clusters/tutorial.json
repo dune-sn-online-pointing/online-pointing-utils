@@ -1,0 +1,11 @@
+{
+    "tps_filename": "", // Path to the file containing the list of input files with the TPS
+    "cluster_filename": "", // Path to the file containing the clusters that passed trough the mt identifier
+    "predictions": "", // Path to the file containing predictions from the main track identifier
+    "output_dir": "", // Directory where the output files will be saved
+    "radius": 50, // Radius parameter for the volume 
+    "plane": 2, // Plane number for clustering
+    "supernova_option": 0, // Option for supernova clustering
+    "max_events_per_filename": 1000, // Maximum number of events per output file
+    "threshold": 0.5 // Threshold parameter to decide if a cluster is a main track
+}
