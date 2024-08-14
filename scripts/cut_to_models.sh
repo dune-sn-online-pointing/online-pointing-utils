@@ -1,4 +1,5 @@
 #!/bin/bash
+#script that runs every step from creating data to training model
 echo "*****************************************************************************"
 echo "Running"
 source /cvmfs/dunedaq.opensciencegrid.org/setup_dunedaq.sh 

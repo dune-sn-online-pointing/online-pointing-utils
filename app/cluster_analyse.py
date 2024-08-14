@@ -272,7 +272,6 @@ alpha_adc = []
 alpha_adc_error = []
 alpha_MeV = []
 
-exit()
 for label_num, charge_list in charge_lists.items():
     bins = 28
     
@@ -287,10 +286,11 @@ for label_num, charge_list in charge_lists.items():
     plt.close()
     
     fig3=plt.figure()
-    hist, bins, _ = plt.hist(charge_lists_recovered_formula[label_num], bins=28)  
+    hist, bins, _ = plt.hist(charge_lists_recovered_formula[label_num], bins=1400)  
     plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
     plt.xlabel('Total Charge per Cluster [ADC]')  
     plt.ylabel('Number of Clusters')  
+    plt.xlim(0,6000)
     fig3.savefig(f'plots/backgrounds_recovered_formula/{labels[label_num]}_ADC_.png')
     plt.clf()
     plt.close()
@@ -298,10 +298,11 @@ for label_num, charge_list in charge_lists.items():
     max_charge_num = 0   
     #histogram of each backgrouund
     fig1 = plt.figure()
-    hist, bins, _ = plt.hist(charge_list, bins=bins)  
+    hist, bins, _ = plt.hist(charge_list, bins=1400)  
     plt.title(f'Total Charge per {labels[label_num]} Cluster [ADC]')  
     plt.xlabel('Total Charge per Cluster [ADC]')  
-    plt.ylabel('Number of Clusters')  
+    plt.ylabel('Number of Clusters')
+    plt.xlim(0,6000)  
     if uniform:
         fig1.savefig(f'plots/backgrounds_uniform/{labels[label_num]}_ADC.png')
     else:
@@ -309,7 +310,6 @@ for label_num, charge_list in charge_lists.items():
     plt.clf()
     plt.close()
 
-exit()
 for label_num, charge_list in charge_lists.items():
     max_charge_num = 0   
     #histogram of each backgrouund
@@ -333,7 +333,7 @@ for label_num, charge_list in charge_lists.items():
     plt.clf()
     plt.close()
     
-    
+    exit()
     # Fit a polynomial to the histogram data
     '''
     fig2 = plt.figure()
@@ -502,14 +502,13 @@ for label_num, charge_list in charge_lists.items():
                 perr_r = np.sqrt(np.diag(pcov_recovered))
                 y_pred_r = N(x_r, *params_recovered)
                 R_squared_r = r2_score(hist_fit_recovered, y_pred_r)
-                #Chi = chisquare(hist_fit, y_pred)
                 if R_squared_r > best_r2_r:
                     best_r2_r = R_squared_r
                     best_C_param_r = params_recovered[0]
                     best_Q_param_r = params_recovered[1]
                     best_perr_r = perr_r
             except:
-                if fit_fails_r>100:
+                if fit_fails_r>100: #usually hopeless after 100 tries
                     break
                 fit_fails_r+=1
             
@@ -647,7 +646,7 @@ for label_num, charge_list in charge_lists.items():
             
 
     
- 
+exit()
 #plot all background charges on same hist   
 fig4 = plt.figure()
 plt.hist(total_charges, bins = 100)
