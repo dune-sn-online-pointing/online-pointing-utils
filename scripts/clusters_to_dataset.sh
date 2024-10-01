@@ -1,38 +1,35 @@
 #!/bin/bash
 
+REPO_HOME=$(git rev-parse --show-toplevel) # does not have / at the end
+
+# Initialize variables
+input_folder=""
+output_folder=""
+
+print_help() {
+    echo "*****************************************************************************"
+    echo "Usage: ./printMidasFile.sh -f <first_run> [-l <last_run>] -s <settings_file> [-n <nEventToPrint>] [--offset <offset>] [-h]"
+    echo "Options:"
+    # echo "  -j, --settings_file <settings_file>   Settings file""
+    echo " --cut <cut>                           Cut value"
+    echo " --type <type>                         Type of the dataset, either 'main_track', 'blip', 'bkg', 'benchmark'"
+    echo "  -h, --help                           Print this help message"
+    echo "*****************************************************************************"
+    exit 0
+}
+
 # Check if argument is provided
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --cut)
-            cut="$2"
-            shift 2
-            ;;
-
-        --type)
-            type="$2"
-            shift 2
-            ;;
-        
-        -h|--help)
-            echo "Usage: ./clusters_to_dataset.sh --cut <cut> --type <type> Options: main_track, blip, bkg, benchmark"
-            exit 0
-            ;;  
-        *)
-            shift
-            ;;
+        --output-folder) output_folder="$2"; shift 2 ;;
+        --cut)          cut="$2"; shift 2 ;;
+        --type)         type="$2"; shift 2 ;;
+        -h|--help)      print_help ;;
+        *)              shift ;;
     esac
 done
 
-output_folder="/afs/cern.ch/work/h/hakins/private/npy_dataset/es-cc-bkg-truth/"
-
-if [ "$type" == "bkg" ]; then
-    output_folder="/afs/cern.ch/work/h/hakins/private/npy_dataset/es-cc-bkg-truth/${cut}"
-elif [ "$type" == "benchmark" ]; then
-    output_folder="/afs/cern.ch/work/h/hakins/private/npy_dataset/benchmark/${cut}"
-else    
-    output_folder="/afs/cern.ch/work/h/hakins/private/npy_dataset/es-cc_lab/${type}/${cut}"
-fi
-
+output_folder=${output_folder}/${type}/${cut}
 
 # Create json file
 output_file="/afs/cern.ch/work/h/hakins/private/json/npy/${type}/ctds_${type}_${cut}.json"
