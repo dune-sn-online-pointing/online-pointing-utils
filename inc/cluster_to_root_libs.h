@@ -23,6 +23,7 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
 std::vector<std::vector<std::vector<double>>> file_reader_all_planes(std::vector<std::string> filenames, int supernova_option=0, int max_events_per_filename= INT_MAX);
 
 // create the clusters from the tps
+bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit);
 std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, int ticks_limit=3, int channel_limit=1, int min_tps_to_cluster=1, int adc_integral_cut=0);
 
 // create a map connectig the file index to the true x y z

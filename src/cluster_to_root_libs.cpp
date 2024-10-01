@@ -163,6 +163,52 @@ std::vector<std::vector<std::vector<double>>> file_reader_all_planes(std::vector
     return tps;
 }
 
+bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit) {
+    if (int(ch1/2560) != int(ch2/2560)) {
+        return false;
+    }
+
+    double diff = std::abs(ch1 - ch2);
+    int n_chan;
+    int mod_ch1 = int(ch1) % 2560;
+    if (mod_ch1 >= 0 and mod_ch1 <800) {
+        n_chan = 800;
+
+    }
+    else if (mod_ch1 >= 800 and mod_ch1 < 1600) {
+        n_chan = 800;
+
+    }
+    else {
+        n_chan = 960;
+        if (diff <= channel_limit) {
+            // std::cout << "chan" << std::endl;   
+            return true;
+        } else{
+            return false;
+        }
+
+    }
+
+
+    if (diff <= channel_limit) {
+        // std::cout << "chan" << std::endl;   
+        return true;
+    }
+    else if (diff >= n_chan - channel_limit) {
+        std::cout << "chan with PCB!" << std::endl;
+        std::cout << int(ch1) << " " << int(ch2) << std::endl;
+        // std::cout << ch1 << " " << ch2 << std::endl;
+        return true;
+    }
+    return false;
+}
+// no pcb
+// Number of tps: 7898 7622 6628
+// XYZ map created
+// Number of clusters: 2507 2521 2507
+// Number of bad events: 3
+
 std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
     std::vector<std::vector<std::vector<double>>> buffer;
     std::vector<cluster> clusters;
@@ -188,7 +234,8 @@ std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, in
                 if (time_cond) {
                     bool chan_cond = false;
                     for (auto& tp2 : candidate) {
-                        if (std::abs(tp[3] - tp2[3]) <= channel_limit) {
+                        if (channel_condition_with_pbc(tp[3], tp2[3], channel_limit)) {
+                        // if (std::abs(tp[3] - tp2[3]) <= channel_limit) {
                             chan_cond = true;
                             break;
                         }
@@ -214,7 +261,6 @@ std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, in
                     }
                 }
                 else {
-                    // std::cout << "not time" << std::endl<< std::endl<< std::endl<< std::endl;
                     if (candidate.size() >= min_tps_to_cluster) {
                         int adc_integral = 0;
                         for (auto& tp2 : candidate) {
@@ -303,18 +349,6 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
             file_idx_to_true_xyz[file_idx] = {0, 0, 0};
         }
         else {
-        // read new filename and save the true x y z
-        // std::getline(infile, line);
-        // std::istringstream iss(line);
-        // iss >> true_x;
-        // // get next line
-        // std::getline(infile, line);
-        // iss = std::istringstream(line);
-        // iss >> true_y;
-        // // get next line
-        // std::getline(infile, line);
-        // iss = std::istringstream(line);
-        // iss >> true_z;
         // This is to account for the fact that the file might have more than 3 lines
         std::vector<float> all_directions;
         while (std::getline(infile, line)) {
@@ -499,12 +533,6 @@ void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int n
     if (best_idx < clusters.size() ){
         if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
             clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
-            // std::cout << clusters[best_idx].get_min_distance_from_true_pos() << std::endl;
-            // int total_charge = 0;
-            // for (auto& tp : clusters[best_idx].get_tps()) {
-            //     total_charge += tp[4];
-            // }
-            // std::cout << "Charge: " << total_charge << std::endl;
         }
         else{
             bad_event_list.push_back(event);

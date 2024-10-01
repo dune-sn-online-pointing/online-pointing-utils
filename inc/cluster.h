@@ -37,6 +37,8 @@ public:
     void set_min_distance_from_true_pos(float min_distance) { min_distance_from_true_pos_ = min_distance; }
     void set_supernova_tp_fraction(float fraction) { supernova_tp_fraction_ = fraction; }
     void set_true_interaction(int interaction) { true_interaction_ = interaction; }
+    void set_total_charge(float charge) { total_charge_ = charge; }
+    float get_total_charge() { return total_charge_; }
 private:
     std::vector<std::vector<double>> tps_;
     std::vector<float> true_pos_;    
@@ -47,6 +49,7 @@ private:
     float true_energy_;
     int true_label_;
     float supernova_tp_fraction_;
+    float total_charge_;
 };
 
 #endif // CLUSTER_H
