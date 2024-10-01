@@ -12,6 +12,7 @@ Under `python` there are some python libraries.
 There are some duplicates of functions that were then rewritten in cpp to be faster.
 
 Under `scripts/` you can find bash scripts to run the apps or a series of operations.
+If you add more, make sure to set them up without local paths (which are supposed to be written only in json settings files).
 
 ## Install and use
 
@@ -21,10 +22,11 @@ To install the repo, clone it:
 git clone https://github.com/dune-sn-online-pointing/online-pointing-utils.git
 ```
 
-Then, go to `build/` and do
+Whenever running any of the scripts, the code is automatically compiled.
+If you want to compile the code manually, go to `build/` and do
 
 ```
-cmake ../; make
+cmake ../; make -j $(nproc)
 ```
 
 If the machine you are working on meets the requirements, the process will complete (there might be non-fatal warnings).
