@@ -1,0 +1,1 @@
+/exp/dune/app/users/emvilla/v10_05_00d00/output/standard/prodmarley_nue_spectrum_dune10kt_1x2x2_standard-triggerana_tree_1x2x2_simpleThr_simpleWin_simpleWin-10events_testMC/triggersim_hist.root
