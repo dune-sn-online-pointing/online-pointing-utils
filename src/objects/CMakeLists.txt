@@ -4,6 +4,7 @@ set( LIB_NAME "objectsLibs" )
 
 set( SRC_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cluster.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/utils.cpp
 )
 
 if( USE_STATIC_LINKS )
@@ -21,7 +22,6 @@ target_include_directories(
 
 target_link_libraries(
     ${LIB_NAME} PUBLIC
-    calculatePositionLibs
     ${ROOT_LIBRARIES}
 )
 

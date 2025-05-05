@@ -53,7 +53,8 @@ private:
 };
 
 
-const int EVENTS_OFFSET = 5000;
+// TODO make tables!!
+const int EVENTS_OFFSET = 0; // what for
 const double apa_lenght_in_cm = 230;
 const double wire_pitch_in_cm_collection = 0.479;
 const double wire_pitch_in_cm_induction_diagonal = 0.4669;
