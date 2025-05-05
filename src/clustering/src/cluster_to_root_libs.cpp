@@ -8,7 +8,8 @@
 
 #include "cluster_to_root_libs.h"
 #include "cluster.h"
-#include "position_calculator.h"
+#include "TriggerPrimitive.h"
+// #include "position_calculator.h"
 
 #include "Logger.h"
 
@@ -22,6 +23,8 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
     std::string line;
     int n_events_offset = 0;
     int file_idx = 0;
+    std::vector TriggerPrimitive tps;
+    
     for (auto& filename : filenames) {
         // LogInfo << filename << std::endl;
         // std::ifstream infile(filename);
@@ -33,23 +36,54 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
             return std::vector<std::vector<double>>{};
         }
 
-        std::string tree_path = "triggerAnaDumpAll/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2";
-        TTree *tree = dynamic_cast<TTree*>(file->Get(tree_path.c_str()));
-        if (!tree) {
-            LogError << "Tree not found: " << tree_path << std::endl;
+        std::string TPtree_path = "triggerAnaDumpAll/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
+        TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
+        if (!TPtree) {
+            LogError << "Tree not found: " << TPtree_path << std::endl;
             return std::vector<std::vector<double>>{};
         }
-
-        TObjArray *branches = tree->GetListOfBranches();
-        for (int i = 0; i < branches->GetEntries(); ++i) {
-            std::string name = branches->At(i)->GetName();
-            variables_to_index[name] = i;
-        }
         
-        for (const auto& [key, val] : variables_to_index) {
-            LogInfo << key << " -> " << val << std::endl;
+        tps.reserve(TPtree->GetEntries());
+
+        // Loop over the entries in the tree
+        for (Long64_t i = 0; i < TPtree->GetEntries(); ++i) {
+            TPtree->GetEntry(i);
+        
+            // Fill the TriggerPrimitive object with data from the tree
+            utint64_t this_version = TPtree->GetLeaf("version")->GetValue(); 
+            utint64_t this_time_start = TPtree->GetLeaf("time_start")->GetValue();
+            utint64_t this_channel = TPtree->GetLeaf("channel")->GetValue();
+            utint64_t this_adc_integral = TPtree->GetLeaf("adc_integral")->GetValue();
+            utint64_t this_adc_peak = TPtree->GetLeaf("adc_peak")->GetValue();
+            utint64_t this_detid = TPtree->GetLeaf("detid")->GetValue();
+            utint64_t this_samples_over_threshold = 0;
+            utint64_t this_samples_to_peak = 0;
+            if (this_version == 1) {
+                this_samples_over_threshold = (TPtree->GetLeaf("time_over_threshold")->GetValue() - this_time_start )/ TPC_sampling_rate;
+                this_samples_to_peak = (TPtree->GetLeaf("time_peak")->GetValue() - this_time_start )/ TPC_sampling_rate;
+            }
+            elif (this_version == 2) {
+                this_samples_over_threshold = TPtree->GetLeaf("samples_over_threshold")->GetValue();
+                this_samples_to_peak = TPtree->GetLeaf("samples_to_peak")->GetValue();
+            }
+            // skipping flag (useless), type, and algorithm (dropped from TP v2)
+            
+            TriggerPrimitive this_tp = TriggerPrimitive(
+                version,
+                0, // flag
+                this_detid,
+                this_channel,
+                this_samples_over_threshold,
+                this_time_start,
+                this_samples_to_peak,
+                this_adc_integral,
+                this_adc_peak
+            );
+            
+            tps.emplace_back(this_tp); // add to collection of TPs
         }
-    
+
+        
         file->Close();
 
         // while (std::getline(infile, line)) {
@@ -89,102 +123,110 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
             // }
         // }
         if (tps.size() > 0){
-            if (tps[tps.size()-1][variables_to_index["event"]] != n_events_offset) {
-                // LogInfo << "File Works" << std::endl;
-            }
-            else {
-                LogInfo << filename << std::endl;
-                LogInfo << "File does not work" << std::endl;
-            }
-            n_events_offset = tps[tps.size()-1][variables_to_index["event"]];
+            // if (tps[tps.size()-1][variables_to_index["event"]] != n_events_offset) {
+            //     // LogInfo << "File Works" << std::endl;
+            // }
+            // else {
+            //     LogInfo << filename << std::endl;
+            //     LogInfo << "File does not work" << std::endl;
+            // }
+            // n_events_offset = tps[tps.size()-1][variables_to_index["event"]];
+
+            LogInfo << "Found " << tps.size() << " TPs in file " << filename << std::endl;
         }
         else {
-            LogInfo << filename << std::endl;
-            LogInfo << "File does not work" << std::endl;
+            LogWarning << "Found no TPs in file " << filename << std::endl;
         }
-        ++file_idx;
+        // ++file_idx;
     }
-        // sort the TPs by time
-    std::sort(tps.begin(), tps.end(), [](const std::vector<double>& a, const std::vector<double>& b) {
-        return a[0] < b[0];
-    });
-
-    return tps;
-}
-std::vector<std::vector<std::vector<double>>> file_reader_all_planes(std::vector<std::string> filenames, int supernova_option, int max_events_per_filename) {
-    std::vector<std::vector<std::vector<double>>> tps;
-    // add three empty vectors for the three planes
-    tps.push_back(std::vector<std::vector<double>>());
-    tps.push_back(std::vector<std::vector<double>>());
-    tps.push_back(std::vector<std::vector<double>>());
     
-    std::string line;
-    int n_events_offset = 0;
-    int file_idx = 0;
-    for (auto& filename : filenames) {
-        // LogInfo << filename << std::endl;
-        std::ifstream infile(filename);
-        // read and save the TPs
-        while (std::getline(infile, line)) {
-
-            std::istringstream iss(line);
-            std::vector<double> tp;
-            double val;
-            while (iss >> val) {
-                tp.push_back(val);
-            }
-            tp.push_back(file_idx);
-            if (tp[variables_to_index["event"]]>max_events_per_filename) {
-                break;
-            }
-
-
-            if (supernova_option == 1 && tp[variables_to_index["ptype"]] == 1) {
-                tp[variables_to_index["event"]] += n_events_offset;
-                tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-                tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-                tps[tp[variables_to_index["view"]]].push_back(tp);
-            }   
-            else if (supernova_option == 2 && tp[variables_to_index["ptype"]] != 1) {
-                tp[variables_to_index["event"]] += n_events_offset;
-                tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-                tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-                tps[tp[variables_to_index["view"]]].push_back(tp);
-
-            }
-            else if (supernova_option == 0) {
-                tp[variables_to_index["event"]] += n_events_offset;
-                tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];       
-                tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-                tps[tp[variables_to_index["view"]]].push_back(tp);
-            }
-        }
-        if (tps.size() > 0){
-            if (tps[0][tps[0].size()-1][variables_to_index["event"]] != n_events_offset) {
-                // LogInfo << "File Works" << std::endl;
-            }
-            else {
-                LogInfo << filename << std::endl;
-                LogInfo << "File does not work" << std::endl;
-            }
-            n_events_offset = std::max(tps[0][tps[0].size()-1][variables_to_index["event"]], std::max(tps[1][tps[1].size()-1][variables_to_index["event"]], tps[2][tps[2].size()-1][variables_to_index["event"]]));
-        }
-        else {
-            LogInfo << filename << std::endl;
-            LogInfo << "File does not work" << std::endl;
-        }
-        ++file_idx;
-    }
-        // sort the TPs by time
-    for (int i = 0; i < 3; i++) {
-        std::sort(tps[i].begin(), tps[i].end(), [](const std::vector<double>& a, const std::vector<double>& b) {
-            return a[0] < b[0];
-        });
-    }
+    // sort the TPs by time
+    // C++ 17 has the parameter std::execution::par that handles parallelization, can try that out TODO
+    std::clock_t start_sorting = std::clock();
+    std::sort(tps.begin(), tps.end(), [](const TriggerPrimitive& a, const TriggerPrimitive& b) {
+        return a.time_start < b.time_start;
+    });
+    std::clock_t end_sorting = std::clock();
+    double elapsed_time = double(end_sorting - start_sorting) / CLOCKS_PER_SEC;
+    LogInfo << "Sorting TPs took " << elapsed_time << " seconds" << std::endl;
+    LogInfo << "or " << elapsed_time/60 << " minutes" << std::endl;
 
     return tps;
 }
 
+// std::vector<std::vector<std::vector<double>>> file_reader_all_planes(std::vector<std::string> filenames, int supernova_option, int max_events_per_filename) {
+//     std::vector<std::vector<std::vector<double>>> tps;
+//     // add three empty vectors for the three planes
+//     tps.push_back(std::vector<std::vector<double>>());
+//     tps.push_back(std::vector<std::vector<double>>());
+//     tps.push_back(std::vector<std::vector<double>>());
+    
+//     std::string line;
+//     int n_events_offset = 0;
+//     int file_idx = 0;
+//     for (auto& filename : filenames) {
+//         // LogInfo << filename << std::endl;
+//         std::ifstream infile(filename);
+//         // read and save the TPs
+//         while (std::getline(infile, line)) {
+
+//             std::istringstream iss(line);
+//             std::vector<double> tp;
+//             double val;
+//             while (iss >> val) {
+//                 tp.push_back(val);
+//             }
+//             tp.push_back(file_idx);
+//             if (tp[variables_to_index["event"]]>max_events_per_filename) {
+//                 break;
+//             }
+
+
+//             if (supernova_option == 1 && tp[variables_to_index["ptype"]] == 1) {
+//                 tp[variables_to_index["event"]] += n_events_offset;
+//                 tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+//                 tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+//                 tps[tp[variables_to_index["view"]]].push_back(tp);
+//             }   
+//             else if (supernova_option == 2 && tp[variables_to_index["ptype"]] != 1) {
+//                 tp[variables_to_index["event"]] += n_events_offset;
+//                 tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+//                 tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+//                 tps[tp[variables_to_index["view"]]].push_back(tp);
+
+//             }
+//             else if (supernova_option == 0) {
+//                 tp[variables_to_index["event"]] += n_events_offset;
+//                 tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];       
+//                 tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+//                 tps[tp[variables_to_index["view"]]].push_back(tp);
+//             }
+//         }
+//         if (tps.size() > 0){
+//             if (tps[0][tps[0].size()-1][variables_to_index["event"]] != n_events_offset) {
+//                 // LogInfo << "File Works" << std::endl;
+//             }
+//             else {
+//                 LogError << "Considering the event offset, no TPs found in " << filename << std::endl;
+//             }
+//             n_events_offset = std::max(tps[0][tps[0].size()-1][variables_to_index["event"]], std::max(tps[1][tps[1].size()-1][variables_to_index["event"]], tps[2][tps[2].size()-1][variables_to_index["event"]]));
+//         }
+//         else {
+//             LogError << "No TPs found in " << filename << std::endl;
+//         }
+//         ++file_idx;
+//     }
+//         // sort the TPs by time
+//     for (int i = 0; i < 3; i++) {
+//         std::sort(tps[i].begin(), tps[i].end(), [](const std::vector<double>& a, const std::vector<double>& b) {
+//             return a[0] < b[0];
+//         });
+//     }
+
+//     return tps;
+// }
+
+// PBC is periodic boundary condition
 bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit) {
     if (int(ch1/2560) != int(ch2/2560)) {
         return false;
@@ -195,11 +237,9 @@ bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit) {
     int mod_ch1 = int(ch1) % 2560;
     if (mod_ch1 >= 0 and mod_ch1 <800) {
         n_chan = 800;
-
     }
     else if (mod_ch1 >= 800 and mod_ch1 < 1600) {
         n_chan = 800;
-
     }
     else {
         n_chan = 960;
@@ -209,9 +249,7 @@ bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit) {
         } else{
             return false;
         }
-
     }
-
 
     if (diff <= channel_limit) {
         // LogInfo << "chan" << std::endl;   
@@ -225,11 +263,7 @@ bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit) {
     }
     return false;
 }
-// no pcb
-// Number of tps: 7898 7622 6628
-// XYZ map created
-// Number of clusters: 2507 2521 2507
-// Number of bad events: 3
+
 
 std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
     std::vector<std::vector<std::vector<double>>> buffer;
