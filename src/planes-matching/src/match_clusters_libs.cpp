@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "match_clusters_libs.h"
 #include "cluster.h"
-#include "position_calculator.h"
+// #include "position_calculator.h"
 
 
 bool are_compatibles(cluster& c_u, cluster& c_v, cluster& c_x, float radius) {
