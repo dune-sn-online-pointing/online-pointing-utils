@@ -2,7 +2,7 @@
 
 # Script to compile the code, stopping in case of error
 
-echo "***Script compile.sh***"
+echo "Starting script $0"
 
 # Initialize env variables
 export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -35,6 +35,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+pwd=$PWD
+
 # if HOME_DIR is empty, print help message and exit
 if [ -z "$HOME_DIR" ]; then
     echo "  Error: HOME_DIR is empty, meaning that you have not run from the repo and not given it as argument to the script."
@@ -61,21 +63,22 @@ else
     # check if cmake was successful
     if [ $? -ne 0 ]
     then
-        echo "  CMake failed. Stopping execution."
-        echo ""
-        exit 0
+        echo -e "  CMake failed. Stopping execution.\n"
+        cd $pwd # go back to the original directory
+        return 1
     fi
     nproc=$(nproc)
+    nproc_to_use=$((nproc-2))
 
-    make -j $nproc
+    make -j $nproc_to_use
     # check if make was successful
     if [ $? -ne 0 ]
     then
-        echo "  Make failed. Stopping execution."
-        echo ""
-        exit 0
+        echo -e "  Make failed. Stopping execution.\n"
+        cd $pwd # go back to the original directory
+        return 1
     fi
 
-    echo "  Compilation successful!"
-    echo ""
+    echo -e "  Compilation finished successfully!\n"
+    cd $pwd # go back to the original directory
 fi
