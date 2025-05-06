@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
     //         filenames.push_back(line);
     //     }
     //     LogInfo << "Number of files: " << filenames.size() << std::endl;
-    //     std::vector<std::vector<double>> tps = file_reader(filenames, plane, supernova_option, max_events_per_filename);
+    //     std::vector<TriggerPrimitive> tps = file_reader(filenames, plane, supernova_option, max_events_per_filename);
     //     LogInfo << "Number of tps: " << tps.size() << std::endl;
     //     std::map<int, std::vector<float>> file_idx_to_true_xyz_map;
     //     if (use_electron_direction == 0) {
@@ -184,71 +184,75 @@ int main(int argc, char* argv[]) {
         }
         LogInfo << "Number of files: " << filenames.size() << std::endl;
         // TODO: parallelize this
-        // std::vector<std::vector<std::vector<double>>> tps = file_reader_all_planes(filenames, supernova_option, max_events_per_filename);
-        std::vector<std::vector<std::vector<double>>> tps = file_reader(filenames, supernova_option, max_events_per_filename);
+        // std::vector<std::vector<TriggerPrimitive>> tps = file_reader_all_planes(filenames, supernova_option, max_events_per_filename);
+        std::vector<TriggerPrimitive> tps = file_reader(filenames, supernova_option, max_events_per_filename);
         
-        auto& tps_u = getPrimitivesForView("U", tps);
-        auto& tps_v = getPrimitivesForView("V", tps);
-        auto& tps_x = getPrimitivesForView("X", tps);
+        auto tps_u = getPrimitivesForView(&plane_names.at(0), tps);
+        auto tps_v = getPrimitivesForView(&plane_names.at(1), tps);
+        auto tps_x = getPrimitivesForView(&plane_names.at(2), tps);
         
-        // std::vector<std::vector<double>> tps_u = tps[0];
-        // std::vector<std::vector<double>> tps_v = tps[1];
-        // std::vector<std::vector<double>> tps_x = tps[2];
+        // std::vector<TriggerPrimitive> tps_u = tps[0];
+        // std::vector<TriggerPrimitive> tps_v = tps[1];
+        // std::vector<TriggerPrimitive> tps_x = tps[2];
 
         LogInfo << "Number of tps in U view: " << tps_u.size() << ", V: " << tps_v.size() << ", X: " << tps_x.size() << std::endl;
 
-        std::map<int, std::vector<float>> file_idx_to_true_xyz_map;
-        if (use_electron_direction == 0) {
-            file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
-        }
-        std::map<int, int> file_idx_to_true_interaction_map = file_idx_to_true_interaction(filenames);
-        LogInfo << "XYZ map created" << std::endl;
-        LogInfo << "U" << std::endl;
+        // std::map<int, std::vector<float>> file_idx_to_true_xyz_map;
+        // if (use_electron_direction == 0) {
+        //     file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
+        // }
+
+        // std::map<int, int> file_idx_to_true_interaction_map = file_idx_to_true_interaction(filenames);
+        // LogInfo << "XYZ map created" << std::endl;
+        
+        LogInfo << "Creating clusters on view U" << std::endl;
         std::vector<cluster> clusters_u = cluster_maker(tps_u, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut/4);
-        LogInfo << "V" << std::endl;
+        LogInfo << "Creating clusters on view V" << std::endl;
         std::vector<cluster> clusters_v = cluster_maker(tps_v, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut/4);
-        LogInfo << "Z" << std::endl;
+        LogInfo << "Creating clusters on view X" << std::endl;
         std::vector<cluster> clusters_x = cluster_maker(tps_x, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut);
 
-        LogInfo << "Number of clusters: " << clusters_u.size() << " " << clusters_v.size() << " " << clusters_x.size() << std::endl;
+        LogInfo << "Number of clusters, view U: " << clusters_u.size() << ", V: " << clusters_v.size() << ",X: " << clusters_x.size() << std::endl;
+
         // add true x y z dir
-        for (int i = 0; i < clusters_u.size(); i++) {
-            if (use_electron_direction == 0) {
-                clusters_u[i].set_true_dir(file_idx_to_true_xyz_map[clusters_u[i].get_tp(0)[clusters_u[i].get_tp(0).size() - 1]]);
-            }
+        // for (int i = 0; i < clusters_u.size(); i++) {
+        //     if (use_electron_direction == 0) {
+        //         clusters_u[i].set_true_dir(file_idx_to_true_xyz_map[clusters_u[i].get_tp(0)[clusters_u[i].get_tp(0).size() - 1]]);
+        //     }
 
-            clusters_u[i].set_true_interaction(file_idx_to_true_interaction_map[clusters_u[i].get_tp(0)[clusters_u[i].get_tp(0).size() - 1]]);
-        }
-        for (int i = 0; i < clusters_v.size(); i++) {
-            if (use_electron_direction == 0) {
-                clusters_v[i].set_true_dir(file_idx_to_true_xyz_map[clusters_v[i].get_tp(0)[clusters_v[i].get_tp(0).size() - 1]]);
-            }
+        //     clusters_u[i].set_true_interaction(file_idx_to_true_interaction_map[clusters_u[i].get_tp(0)[clusters_u[i].get_tp(0).size() - 1]]);
+        // }
+        // for (int i = 0; i < clusters_v.size(); i++) {
+        //     if (use_electron_direction == 0) {
+        //         clusters_v[i].set_true_dir(file_idx_to_true_xyz_map[clusters_v[i].get_tp(0)[clusters_v[i].get_tp(0).size() - 1]]);
+        //     }
 
-            clusters_v[i].set_true_interaction(file_idx_to_true_interaction_map[clusters_v[i].get_tp(0)[clusters_v[i].get_tp(0).size() - 1]]);
-        }
-        for (int i = 0; i < clusters_x.size(); i++) {
-            if (use_electron_direction == 0) {
-                clusters_x[i].set_true_dir(file_idx_to_true_xyz_map[clusters_x[i].get_tp(0)[clusters_x[i].get_tp(0).size() - 1]]);
-            }
+        //     clusters_v[i].set_true_interaction(file_idx_to_true_interaction_map[clusters_v[i].get_tp(0)[clusters_v[i].get_tp(0).size() - 1]]);
+        // }
+        // for (int i = 0; i < clusters_x.size(); i++) {
+        //     if (use_electron_direction == 0) {
+        //         clusters_x[i].set_true_dir(file_idx_to_true_xyz_map[clusters_x[i].get_tp(0)[clusters_x[i].get_tp(0).size() - 1]]);
+        //     }
 
-            clusters_x[i].set_true_interaction(file_idx_to_true_interaction_map[clusters_x[i].get_tp(0)[clusters_x[i].get_tp(0).size() - 1]]);
-        }
+        //     clusters_x[i].set_true_interaction(file_idx_to_true_interaction_map[clusters_x[i].get_tp(0)[clusters_x[i].get_tp(0).size() - 1]]);
+        // }
+
         // filter the clusters
-        if (main_track_option == 1) {
-            clusters_x = filter_main_tracks(clusters_x);
-        } else if (main_track_option == 2) {
-            clusters_x = filter_out_main_track(clusters_x);
-        }else if (main_track_option == 3) {
-            assing_different_label_to_main_tracks(clusters_x);
-        }
+        // if (main_track_option == 1) {
+        //     clusters_x = filter_main_tracks(clusters_x);
+        // } else if (main_track_option == 2) {
+        //     clusters_x = filter_out_main_track(clusters_x);
+        // }else if (main_track_option == 3) {
+        //     assing_different_label_to_main_tracks(clusters_x);
+        // }
 
         // write the clusters to a root file
         std::string root_filename_u = outfolder + "/U/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
         std::string root_filename_v = outfolder + "/V/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
         std::string root_filename_x = outfolder + "/X/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
-        write_clusters_to_root(clusters_u, root_filename_u);
-        write_clusters_to_root(clusters_v, root_filename_v);
-        write_clusters_to_root(clusters_x, root_filename_x);
+        // write_clusters_to_root(clusters_u, root_filename_u);
+        // write_clusters_to_root(clusters_v, root_filename_v);
+        // write_clusters_to_root(clusters_x, root_filename_x);
         LogInfo << "clusters written to " << root_filename_u << std::endl;
         LogInfo << "clusters written to " << root_filename_v << std::endl;
         LogInfo << "clusters written to " << root_filename_x << std::endl;

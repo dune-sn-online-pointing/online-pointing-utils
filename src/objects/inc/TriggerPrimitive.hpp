@@ -22,8 +22,6 @@ class TriggerPrimitive {
         
         // Physics data.
         uint64_t channel : 24;
-
-        char view : ""; // not a true TP variable, but easier to handle
     
         uint64_t samples_over_threshold : 16;
         uint64_t time_start : 64;
@@ -31,7 +29,12 @@ class TriggerPrimitive {
     
         uint64_t adc_integral : 32;
         uint64_t adc_peak : 16;
-    
+
+        // Additional variables
+        std::string view = ""; // easier to handle
+        std::string interaction_type = "";
+        int event = -1;
+
         TriggerPrimitive(
             uint64_t version,
             uint64_t flag,
@@ -61,10 +64,10 @@ class TriggerPrimitive {
 
             // associate the view, for easier handling. Could remove later
             // plane U is 0-799, V is 800-1599, and Z is 1600-2559
-            if (channel < 800) {view = "U"; } 
-            else if (channel < 1600) {view = "V";} 
-            else if (channel < 2559) { view = "X";}
-            else { LogError("Channel out of range! Critical, stopping execution."); return 1;}
+            if (channel < 800)          { view = "U"; } 
+            else if (channel < 1600)    { view = "V"; } 
+            else if (channel < 2559)    { view = "X"; }
+            else { LogError("Channel out of range! Critical, stopping execution."); return;}
         };
 
         // TODO? may switch to getters and setters and private members

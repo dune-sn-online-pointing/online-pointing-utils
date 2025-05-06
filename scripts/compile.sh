@@ -11,6 +11,9 @@ source $SCRIPTS_DIR/init.sh
 # Initialize variables
 cleanCompile=false
 noCompile=false
+pwd=$PWD
+nproc=$(nproc)
+nproc_to_use=$((nproc-2))
 
 # Function to print help message
 print_help() {
@@ -18,6 +21,7 @@ print_help() {
     echo "Usage: ./compile.sh [-p <home_path>] [--clean-compile <true, false>] [--no-compile <true, false>] [-h]"
     echo "  -p | --home-path      path to the code home directory (/your/path/tof-reco, no / at the end). There is no default."
     echo "  -n | --no-compile          do not recompile the code. Default is to recompile the code"
+    echo "  -j | --nproc            number of processors to use for compilation. Default is nproc-2"
     echo "  -c | --clean-compile       clean and recompile the code. Default is to recompile the code without cleaning"
     echo "  -h | --help           print this help message"
     echo "*****************************************************************************"
@@ -29,13 +33,13 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
     -p|--home-path)         HOME_DIR="$2"; echo " Got home path as argument";    shift 2 ;;
     -n|--no-compile)        noCompile="${2:-true}";      shift ;;
+    -j|--nproc)            nproc_to_use="${2:-$((nproc-2))}"; shift 2 ;;
     -c|--clean-compile)     cleanCompile="${2:-true}";   shift ;;
     -h|--help)              print_help ;;
     *)                      shift ;;
     esac
 done
 
-pwd=$PWD
 
 # if HOME_DIR is empty, print help message and exit
 if [ -z "$HOME_DIR" ]; then
@@ -67,8 +71,6 @@ else
         cd $pwd # go back to the original directory
         return 1
     fi
-    nproc=$(nproc)
-    nproc_to_use=$((nproc-2))
 
     make -j $nproc_to_use
     # check if make was successful

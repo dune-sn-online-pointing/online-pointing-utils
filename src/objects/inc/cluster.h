@@ -6,20 +6,24 @@
 #include <map>
 #include <string>
 
+#include "TriggerPrimitive.hpp"
+#include "utils.h"
+
 extern std::map<std::string, int> variables_to_index;
 
 
 class cluster {
 public:
     cluster() { true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = -99; true_interaction_ = -99; supernova_tp_fraction_ = 0; }
-    cluster(std::vector<std::vector<double>> tps) { tps_ = tps; true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = -99; true_interaction_ = -99; supernova_tp_fraction_ = 0; update_cluster_info(); }
+    // cluster(std::vector<std::vector<double>> tps) { tps_ = tps; true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = -99; true_interaction_ = -99; supernova_tp_fraction_ = 0; update_cluster_info(); }
+    cluster(std::vector<TriggerPrimitive*> tps) : tps_(tps) { true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = -99; true_interaction_ = -99; supernova_tp_fraction_ = 0; update_cluster_info(); }
     ~cluster() { }
 
     void update_cluster_info();
 
-    std::vector<std::vector<double>> get_tps() const { return tps_; }
-    void set_tps(std::vector<std::vector<double>> tps) { tps_ = tps; update_cluster_info();}
-    std::vector<double> get_tp(int i) { return tps_[i]; }
+    std::vector<TriggerPrimitive*> get_tps() const { return tps_; }
+    void set_tps(std::vector<TriggerPrimitive*> tps) { tps_ = tps;}; //update_cluster_info();} TODO
+    TriggerPrimitive* get_tp(int i) { return tps_[i]; }
     int get_size() { return tps_.size(); }
     std::vector<float> get_true_pos() { return true_pos_; }
     std::vector<float> get_reco_pos() { return reco_pos_; }
@@ -40,7 +44,8 @@ public:
     void set_total_charge(float charge) { total_charge_ = charge; }
     float get_total_charge() { return total_charge_; }
 private:
-    std::vector<std::vector<double>> tps_;
+    // std::vector<std::vector<double>> tps_;
+    std::vector<TriggerPrimitive*> tps_;
     std::vector<float> true_pos_;    
     std::vector<float> true_dir_;
     std::vector<float> reco_pos_;    
@@ -53,25 +58,11 @@ private:
 };
 
 
-// TODO make tables!!
-const int EVENTS_OFFSET = 0; // what for
-const double apa_lenght_in_cm = 230;
-const double wire_pitch_in_cm_collection = 0.479;
-const double wire_pitch_in_cm_induction_diagonal = 0.4669;
-const double apa_angle = (90 - 35.7);
-const double wire_pitch_in_cm_induction = wire_pitch_in_cm_induction_diagonal / sin(apa_angle * M_PI / 180);
-const double offset_between_apa_in_cm = 2.4;
-const double apa_height_in_cm = 598.4;
-const double time_tick_in_cm = 0.0805;
-const double apa_width_in_cm = 4.7;
-const int backtracker_error_margin = 4;
-const double apa_angular_coeff = tan(apa_angle * M_PI / 180);
-
-std::vector<float> calculate_position(std::vector<double> tp);
-std::vector<std::vector<float>> validate_position_calculation(std::vector<std::vector<double>> tps);
+std::vector<float> calculate_position(TriggerPrimitive *tp);
+std::vector<std::vector<float>> validate_position_calculation(std::vector<TriggerPrimitive> tps);
 float distance(cluster cluster1, cluster cluster2);
-float eval_y_knowing_z_U_plane(std::vector<std::vector<double>> tps, float z, float x_sign);
-float eval_y_knowing_z_V_plane(std::vector<std::vector<double>> tps, float z, float x_sign);
+float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign);
+float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign);
 
 
 #endif // CLUSTER_H

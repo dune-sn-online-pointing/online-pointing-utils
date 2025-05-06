@@ -8,7 +8,7 @@
 
 #include "cluster_to_root_libs.h"
 #include "cluster.h"
-#include "TriggerPrimitive.h"
+#include "TriggerPrimitive.hpp"
 // #include "position_calculator.h"
 
 #include "Logger.h"
@@ -18,12 +18,11 @@ LoggerInit([]{
 });
 
 // read the tps from the files and save them in a vector
-std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames, int plane, int supernova_option, int max_events_per_filename) {
-    std::vector<std::vector<double>> tps;
+std::vector<TriggerPrimitive> file_reader(std::vector<std::string> filenames, int plane, int supernova_option, int max_events_per_filename) {
     std::string line;
     int n_events_offset = 0;
     int file_idx = 0;
-    std::vector TriggerPrimitive tps;
+    std::vector<TriggerPrimitive> tps;
     
     for (auto& filename : filenames) {
         // LogInfo << filename << std::endl;
@@ -33,14 +32,14 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
         TFile *file = TFile::Open(filename.c_str());
         if (!file || file->IsZombie()) {
             LogError << "Error opening file: " << filename << std::endl;
-            return std::vector<std::vector<double>>{};
+            return std::vector<TriggerPrimitive>{};
         }
 
         std::string TPtree_path = "triggerAnaDumpAll/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
         TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
         if (!TPtree) {
             LogError << "Tree not found: " << TPtree_path << std::endl;
-            return std::vector<std::vector<double>>{};
+            return std::vector<TriggerPrimitive>{};
         }
         
         tps.reserve(TPtree->GetEntries());
@@ -50,26 +49,26 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
             TPtree->GetEntry(i);
         
             // Fill the TriggerPrimitive object with data from the tree
-            utint64_t this_version = TPtree->GetLeaf("version")->GetValue(); 
-            utint64_t this_time_start = TPtree->GetLeaf("time_start")->GetValue();
-            utint64_t this_channel = TPtree->GetLeaf("channel")->GetValue();
-            utint64_t this_adc_integral = TPtree->GetLeaf("adc_integral")->GetValue();
-            utint64_t this_adc_peak = TPtree->GetLeaf("adc_peak")->GetValue();
-            utint64_t this_detid = TPtree->GetLeaf("detid")->GetValue();
-            utint64_t this_samples_over_threshold = 0;
-            utint64_t this_samples_to_peak = 0;
+            uint64_t this_version = TPtree->GetLeaf("version")->GetValue(); 
+            uint64_t this_time_start = TPtree->GetLeaf("time_start")->GetValue();
+            uint64_t this_channel = TPtree->GetLeaf("channel")->GetValue();
+            uint64_t this_adc_integral = TPtree->GetLeaf("adc_integral")->GetValue();
+            uint64_t this_adc_peak = TPtree->GetLeaf("adc_peak")->GetValue();
+            uint64_t this_detid = TPtree->GetLeaf("detid")->GetValue();
+            uint64_t this_samples_over_threshold = 0;
+            uint64_t this_samples_to_peak = 0;
             if (this_version == 1) {
-                this_samples_over_threshold = (TPtree->GetLeaf("time_over_threshold")->GetValue() - this_time_start )/ TPC_sampling_rate;
+                this_samples_over_threshold = (TPtree->GetLeaf("time_over_threshold")->GetValue() )/ TPC_sampling_rate;
                 this_samples_to_peak = (TPtree->GetLeaf("time_peak")->GetValue() - this_time_start )/ TPC_sampling_rate;
             }
-            elif (this_version == 2) {
+            else if (this_version == 2) {
                 this_samples_over_threshold = TPtree->GetLeaf("samples_over_threshold")->GetValue();
                 this_samples_to_peak = TPtree->GetLeaf("samples_to_peak")->GetValue();
             }
             // skipping flag (useless), type, and algorithm (dropped from TP v2)
             
             TriggerPrimitive this_tp = TriggerPrimitive(
-                version,
+                this_version,
                 0, // flag
                 this_detid,
                 this_channel,
@@ -80,22 +79,27 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
                 this_adc_peak
             );
             
+            // if in the path of the file there is _es_, then se interaction_type to "ES", same with _cc_ and "CC"
+            // this is maybe not the best way to  do it, might find another way from metadata
+            if      (filename.find("_es_") != std::string::npos) {this_tp.interaction_type = "ES";}
+            else if (filename.find("_cc_") != std::string::npos) {this_tp.interaction_type = "CC";} 
+            else                                                 {this_tp.interaction_type = "UNKNOWN";}
+
             tps.emplace_back(this_tp); // add to collection of TPs
         }
-
         
         file->Close();
 
         // while (std::getline(infile, line)) {
 
             // std::istringstream iss(line);
-            // std::vector<double> tp;
+            // TriggerPrimitive tp;
             // double val;
             // while (iss >> val) {
             //     tp.push_back(val);
             // }
             // tp.push_back(file_idx);
-            // if (tp[variables_to_index["event"]]>max_events_per_filename) {
+            // if (tp.event>max_events_per_filename) {
             //     break;
             // }
 
@@ -104,33 +108,33 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
             // }
 
             // if (supernova_option == 1 && tp[variables_to_index["ptype"]] == 1) {
-            //     tp[variables_to_index["event"]] += n_events_offset;
-            //     tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-            //     tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+            //     tp.event += n_events_offset;
+            //     tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp.event;
+            //     tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp.event;
             //     tps.push_back(tp);
             // }   
             // else if (supernova_option == 2 && tp[variables_to_index["ptype"]] != 1) {
-            //     tp[variables_to_index["event"]] += n_events_offset;
-            //     tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-            //     tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+            //     tp.event += n_events_offset;
+            //     tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp.event;
+            //     tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp.event;
             //     tps.push_back(tp);
             // }
             // else if (supernova_option == 0) {
-            //     tp[variables_to_index["event"]] += n_events_offset;
-            //     tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];       
-            //     tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+            //     tp.event += n_events_offset;
+            //     tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp.event;       
+            //     tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp.event;
             //     tps.push_back(tp);
             // }
         // }
         if (tps.size() > 0){
-            // if (tps[tps.size()-1][variables_to_index["event"]] != n_events_offset) {
+            // if (tps[tps.size()-1].event != n_events_offset) {
             //     // LogInfo << "File Works" << std::endl;
             // }
             // else {
             //     LogInfo << filename << std::endl;
             //     LogInfo << "File does not work" << std::endl;
             // }
-            // n_events_offset = tps[tps.size()-1][variables_to_index["event"]];
+            // n_events_offset = tps[tps.size()-1].event;
 
             LogInfo << "Found " << tps.size() << " TPs in file " << filename << std::endl;
         }
@@ -154,12 +158,12 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
     return tps;
 }
 
-// std::vector<std::vector<std::vector<double>>> file_reader_all_planes(std::vector<std::string> filenames, int supernova_option, int max_events_per_filename) {
-//     std::vector<std::vector<std::vector<double>>> tps;
+// std::vector<std::vector<TriggerPrimitive>> file_reader_all_planes(std::vector<std::string> filenames, int supernova_option, int max_events_per_filename) {
+//     std::vector<std::vector<TriggerPrimitive>> tps;
 //     // add three empty vectors for the three planes
-//     tps.push_back(std::vector<std::vector<double>>());
-//     tps.push_back(std::vector<std::vector<double>>());
-//     tps.push_back(std::vector<std::vector<double>>());
+//     tps.push_back(std::vector<TriggerPrimitive>());
+//     tps.push_back(std::vector<TriggerPrimitive>());
+//     tps.push_back(std::vector<TriggerPrimitive>());
     
 //     std::string line;
 //     int n_events_offset = 0;
@@ -171,45 +175,45 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
 //         while (std::getline(infile, line)) {
 
 //             std::istringstream iss(line);
-//             std::vector<double> tp;
+//             TriggerPrimitive tp;
 //             double val;
 //             while (iss >> val) {
 //                 tp.push_back(val);
 //             }
 //             tp.push_back(file_idx);
-//             if (tp[variables_to_index["event"]]>max_events_per_filename) {
+//             if (tp.event>max_events_per_filename) {
 //                 break;
 //             }
 
 
 //             if (supernova_option == 1 && tp[variables_to_index["ptype"]] == 1) {
-//                 tp[variables_to_index["event"]] += n_events_offset;
-//                 tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-//                 tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+//                 tp.event += n_events_offset;
+//                 tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp.event;
+//                 tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp.event;
 //                 tps[tp[variables_to_index["view"]]].push_back(tp);
 //             }   
 //             else if (supernova_option == 2 && tp[variables_to_index["ptype"]] != 1) {
-//                 tp[variables_to_index["event"]] += n_events_offset;
-//                 tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
-//                 tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+//                 tp.event += n_events_offset;
+//                 tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp.event;
+//                 tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp.event;
 //                 tps[tp[variables_to_index["view"]]].push_back(tp);
 
 //             }
 //             else if (supernova_option == 0) {
-//                 tp[variables_to_index["event"]] += n_events_offset;
-//                 tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];       
-//                 tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp[variables_to_index["event"]];
+//                 tp.event += n_events_offset;
+//                 tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp.event;       
+//                 tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp.event;
 //                 tps[tp[variables_to_index["view"]]].push_back(tp);
 //             }
 //         }
 //         if (tps.size() > 0){
-//             if (tps[0][tps[0].size()-1][variables_to_index["event"]] != n_events_offset) {
+//             if (tps[0][tps[0].size()-1].event != n_events_offset) {
 //                 // LogInfo << "File Works" << std::endl;
 //             }
 //             else {
 //                 LogError << "Considering the event offset, no TPs found in " << filename << std::endl;
 //             }
-//             n_events_offset = std::max(tps[0][tps[0].size()-1][variables_to_index["event"]], std::max(tps[1][tps[1].size()-1][variables_to_index["event"]], tps[2][tps[2].size()-1][variables_to_index["event"]]));
+//             n_events_offset = std::max(tps[0][tps[0].size()-1].event, std::max(tps[1][tps[1].size()-1].event, tps[2][tps[2].size()-1].event));
 //         }
 //         else {
 //             LogError << "No TPs found in " << filename << std::endl;
@@ -218,7 +222,7 @@ std::vector<std::vector<double>> file_reader(std::vector<std::string> filenames,
 //     }
 //         // sort the TPs by time
 //     for (int i = 0; i < 3; i++) {
-//         std::sort(tps[i].begin(), tps[i].end(), [](const std::vector<double>& a, const std::vector<double>& b) {
+//         std::sort(tps[i].begin(), tps[i].end(), [](const TriggerPrimitive& a, const TriggerPrimitive& b) {
 //             return a[0] < b[0];
 //         });
 //     }
@@ -264,34 +268,34 @@ bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit) {
     return false;
 }
 
-
-std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
-    std::vector<std::vector<std::vector<double>>> buffer;
+// TODO optimize and refactor this function
+std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
+    std::vector<std::vector<TriggerPrimitive*>> buffer;
     std::vector<cluster> clusters;
     for (auto& tp : all_tps) {
         if (buffer.size() == 0) {
-            std::vector<std::vector<double>> temp;
+            std::vector<TriggerPrimitive*> temp;
             temp.push_back(tp);
             buffer.push_back(temp);
         }
         else {
-            std::vector<std::vector<std::vector<double>>> buffer_copy = buffer;
+            std::vector<std::vector<TriggerPrimitive*>> buffer_copy = buffer;
             buffer.clear();
             bool appended = false;
             int idx = 0;
             int idx_appended;
             for (auto& candidate : buffer_copy) {
                 // get a the max containing the times of the TPs in the candidate
-                double max_time = 0;
+                float max_time = 0;
                 for (auto& tp2 : candidate) {
-                    max_time = std::max(max_time, tp2[0] + tp2[1]);
+                    max_time = std::max(max_time,(tp2->time_start + tp2->samples_over_threshold * TPC_sampling_rate));
                 }
-                bool time_cond = (tp[0] - max_time) <= ticks_limit;
+                bool time_cond = (tp->time_start - max_time) <= ticks_limit;
                 if (time_cond) {
                     bool chan_cond = false;
                     for (auto& tp2 : candidate) {
-                        if (channel_condition_with_pbc(tp[3], tp2[3], channel_limit)) {
-                        // if (std::abs(tp[3] - tp2[3]) <= channel_limit) {
+                        if (channel_condition_with_pbc(tp->channel, tp2->channel, channel_limit)) {
+                        // if (std::abs(tp->channel - tp2.channel) <= channel_limit) {
                             chan_cond = true;
                             break;
                         }
@@ -320,7 +324,7 @@ std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, in
                     if (candidate.size() >= min_tps_to_cluster) {
                         int adc_integral = 0;
                         for (auto& tp2 : candidate) {
-                            adc_integral += tp2[4];
+                            adc_integral += tp2->adc_integral;
                         }
                         if (adc_integral > adc_integral_cut) {
                             cluster g(candidate);
@@ -330,7 +334,7 @@ std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, in
                 }
             }
             if (!appended) {
-                std::vector<std::vector<double>> temp;
+                std::vector<TriggerPrimitive*> temp;
                 temp.push_back(tp);
                 buffer.push_back(temp);
             }
@@ -341,7 +345,7 @@ std::vector<cluster> cluster_maker(std::vector<std::vector<double>>& all_tps, in
             if (candidate.size() >= min_tps_to_cluster) {
                 int adc_integral = 0;
                 for (auto& tp : candidate) {
-                    adc_integral += tp[4];
+                    adc_integral += tp->adc_integral;
                 }
                 if (adc_integral > adc_integral_cut) {
                     cluster g(candidate);
@@ -427,46 +431,46 @@ std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> 
     return file_idx_to_true_xyz;
 }
 
-std::map<int, int> file_idx_to_true_interaction(std::vector<std::string> filenames) {
-    std::map<int, int> file_idx_to_true_interaction;
-    std::string line;
-    int n_events_offset = 0;
-    int file_idx = 0;
-    for (auto& filename : filenames) {
-        std::ifstream infile(filename);
-        // check if CC or ES are included into the file name
-        if (filename.find("CC") != std::string::npos) {
-            file_idx_to_true_interaction[file_idx] = 0;
-        }
-        else if (filename.find("ES") != std::string::npos) {
-            file_idx_to_true_interaction[file_idx] = 1;
-        }
-        else {
-            LogInfo << filename << std::endl;
-            LogError << "Could not find CC or ES in the given string." << std::endl;
-            file_idx_to_true_interaction[file_idx] = -1;
-        }
-        ++file_idx;
-    }
+// std::map<int, int> file_idx_to_true_interaction(std::vector<std::string> filenames) {
+//     std::map<int, int> file_idx_to_true_interaction;
+//     std::string line;
+//     int n_events_offset = 0;
+//     int file_idx = 0;
+//     for (auto& filename : filenames) {
+//         std::ifstream infile(filename);
+//         // check if CC or ES are included into the file name
+//         if (filename.find("CC") != std::string::npos) {
+//             file_idx_to_true_interaction[file_idx] = 0;
+//         }
+//         else if (filename.find("ES") != std::string::npos) {
+//             file_idx_to_true_interaction[file_idx] = 1;
+//         }
+//         else {
+//             LogInfo << filename << std::endl;
+//             LogError << "Could not find CC or ES in the given string." << std::endl;
+//             file_idx_to_true_interaction[file_idx] = -1;
+//         }
+//         ++file_idx;
+//     }
 
-    return file_idx_to_true_interaction;
-}
+//     return file_idx_to_true_interaction;
+// }
 
 std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
     int best_idx = INT_MAX;
 
     std::vector<cluster> main_tracks;
-    int event = clusters[0].get_tp(0)[variables_to_index["event"]];
+    int event = clusters[0].get_tp(0)->event;
 
     for (int index = 0; index < clusters.size(); index++) {
-        if (clusters[index].get_tp(0)[variables_to_index["event"]] != event) {
+        if (clusters[index].get_tp(0)->event != event) {
             if (best_idx < clusters.size() ){
                 if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
                     main_tracks.push_back(clusters[best_idx]);
                 }
             }
 
-            event = clusters[index].get_tp(0)[variables_to_index["event"]];
+            event = clusters[index].get_tp(0)->event;
             if (clusters[index].get_true_label() == 1){
                 best_idx = index;
             }
@@ -499,17 +503,17 @@ std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters) { // val
 std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
     int best_idx = INT_MAX;
     std::vector<int> bad_idx_list;
-    int event = clusters[0].get_tp(0)[variables_to_index["event"]];
+    int event = clusters[0].get_tp(0)->event;
 
     for (int index = 0; index < clusters.size(); index++) {
-        if (clusters[index].get_tp(0)[variables_to_index["event"]] != event) {
+        if (clusters[index].get_tp(0)->event != event) {
             if (best_idx < clusters.size() ){
                 if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
                     bad_idx_list.push_back(best_idx);                    
                 }
             }
 
-            event = clusters[index].get_tp(0)[variables_to_index["event"]];
+            event = clusters[index].get_tp(0)->event;
             if (clusters[index].get_true_label() == 1){
                 best_idx = index;
             }
@@ -552,10 +556,10 @@ std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // 
 
 void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int new_label) {
     int best_idx = INT_MAX;
-    int event = clusters[0].get_tp(0)[variables_to_index["event"]];
+    int event = clusters[0].get_tp(0)->event;
     std::vector<int> bad_event_list;
     for (int index = 0; index < clusters.size(); index++) {
-        if (clusters[index].get_tp(0)[variables_to_index["event"]] != event) {
+        if (clusters[index].get_tp(0)->event != event) {
             if (best_idx < clusters.size() ){
                 if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
                     clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
@@ -565,7 +569,7 @@ void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int n
                 }
             }
 
-            event = clusters[index].get_tp(0)[variables_to_index["event"]];
+            event = clusters[index].get_tp(0)->event;
             if (clusters[index].get_true_label() == 1){
                 best_idx = index;
             }
@@ -598,7 +602,7 @@ void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int n
     LogInfo << "Number of bad events: " << bad_event_list.size() << std::endl;
 
     for (int i=0; i<clusters.size(); i++) {
-        if ((std::find(bad_event_list.begin(), bad_event_list.end(), clusters[i].get_tp(0)[variables_to_index["event"]]) != bad_event_list.end()) and clusters[i].get_true_label() == 1) {
+        if ((std::find(bad_event_list.begin(), bad_event_list.end(), clusters[i].get_tp(0)->event) != bad_event_list.end()) and clusters[i].get_true_label() == 1) {
             clusters[i].set_true_label(new_label);
         }
     }
@@ -615,7 +619,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     TTree *tree = new TTree("tree", "tree");
     // prepare objects to save the data
     // std::vector<std::vector<int>> matrix;
-    std::vector<std::vector<double>> matrix;
+    // std::vector<TriggerPrimitive> matrix;
     int nrows;
     int event;
     float true_dir_x;
@@ -631,7 +635,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     int true_interaction;
 
     // create the branches
-    tree->Branch("matrix", &matrix);
+    // tree->Branch("matrix", &matrix);
     tree->Branch("nrows", &nrows);
     tree->Branch("event", &event);
     tree->Branch("true_dir_x", &true_dir_x);
@@ -648,9 +652,9 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
 
     // fill the tree
     for (auto& g : clusters) {
-        matrix = g.get_tps();
+        // matrix = g.get_tps();
         nrows = g.get_size();
-        event = g.get_tp(0)[variables_to_index["event"]];
+        event = g.get_tp(0)->event;
         true_dir_x = g.get_true_dir()[0];
         true_dir_y = g.get_true_dir()[1];
         true_dir_z = g.get_true_dir()[2];
@@ -680,8 +684,8 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
     f->ls();
     TTree *tree = (TTree*)f->Get("tree");
     
-    std::vector<std::vector<double>> matrix;
-    std::vector<std::vector<double>>* matrix_ptr = &matrix;
+    // std::vector<TriggerPrimitive> matrix;
+    // std::vector<TriggerPrimitive>* matrix_ptr = &matrix;
 
     int nrows;
     int event;
@@ -696,7 +700,7 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
     float min_distance_from_true_pos;
     float supernova_tp_fraction;
     int true_interaction;
-    tree->SetBranchAddress("matrix", &matrix_ptr);
+    // tree->SetBranchAddress("matrix", &matrix_ptr);
     // tree->SetBranchAddress("matrix", &matrix);
     tree->SetBranchAddress("nrows", &nrows);
     tree->SetBranchAddress("event", &event);
@@ -713,15 +717,15 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
     tree->SetBranchAddress("true_interaction", &true_interaction);
     for (int i = 0; i < tree->GetEntries(); i++) {
         tree->GetEntry(i);
-        cluster g(matrix);
-        g.set_true_dir({true_dir_x, true_dir_y, true_dir_z});
-        g.set_true_energy(true_energy);
-        g.set_true_label(true_label);
-        g.set_reco_pos({reco_pos_x, reco_pos_y, reco_pos_z});
-        g.set_min_distance_from_true_pos(min_distance_from_true_pos);
-        g.set_supernova_tp_fraction(supernova_tp_fraction);       
-        g.set_true_interaction(true_interaction);
-        clusters.push_back(g);
+        // cluster g(matrix);
+        // g.set_true_dir({true_dir_x, true_dir_y, true_dir_z});
+        // g.set_true_energy(true_energy);
+        // g.set_true_label(true_label);
+        // g.set_reco_pos({reco_pos_x, reco_pos_y, reco_pos_z});
+        // g.set_min_distance_from_true_pos(min_distance_from_true_pos);
+        // g.set_supernova_tp_fraction(supernova_tp_fraction);       
+        // g.set_true_interaction(true_interaction);
+        // clusters.push_back(g);
     }
     f->Close();
     return clusters;
@@ -731,29 +735,29 @@ std::map<int, std::vector<cluster>> create_event_mapping(std::vector<cluster>& c
     std::map<int, std::vector<cluster>> event_mapping;
     for (auto& g : clusters) {
     // check if the event is already in the map
-        if (event_mapping.find(g.get_tp(0)[variables_to_index["event"]]) == event_mapping.end()) {
+        if (event_mapping.find(g.get_tp(0)->event) == event_mapping.end()) {
             std::vector<cluster> temp;
             temp.push_back(g);
-            event_mapping[g.get_tp(0)[variables_to_index["event"]]] = temp;
+            event_mapping[g.get_tp(0)->event] = temp;
         }
         else {
-            event_mapping[g.get_tp(0)[variables_to_index["event"]]].push_back(g);
+            event_mapping[g.get_tp(0)->event].push_back(g);
         }
     }
     return event_mapping;
 }
 
-std::map<int, std::vector<std::vector<double>>> create_background_event_mapping(std::vector<std::vector<double>>& bkg_tps){
-    std::map<int, std::vector<std::vector<double>>> event_mapping;
+std::map<int, std::vector<TriggerPrimitive>> create_background_event_mapping(std::vector<TriggerPrimitive>& bkg_tps){
+    std::map<int, std::vector<TriggerPrimitive>> event_mapping;
     for (auto& tp : bkg_tps) {
     // check if the event is already in the map
-        if (event_mapping.find(tp[variables_to_index["event"]]) == event_mapping.end()) {
-            std::vector<std::vector<double>> temp;
+        if (event_mapping.find(tp.event) == event_mapping.end()) {
+            std::vector<TriggerPrimitive> temp;
             temp.push_back(tp);
-            event_mapping[tp[variables_to_index["event"]]] = temp;
+            event_mapping[tp.event] = temp;
         }
         else {
-            event_mapping[tp[variables_to_index["event"]]].push_back(tp);
+            event_mapping[tp.event].push_back(tp);
         }
     }
     return event_mapping;

@@ -20,11 +20,11 @@ std::vector<float> read_predictions(std::string predictions) {
     return predictions_vector;
 }
 
-std::vector<std::vector<double>> get_tps_around_cluster(std::vector<std::vector<double>> tps, cluster cluster, int radius){
-    std::vector<std::vector<double>> tps_around_cluster;
+std::vector<TriggerPrimitive*> get_tps_around_cluster(std::vector<TriggerPrimitive*> tps, cluster cluster, int radius){
+    std::vector<TriggerPrimitive*> tps_around_cluster;
     // search the region of interest with a binary search
-    int min_time_start = cluster.get_tps()[0][variables_to_index["time_start"]];
-    int max_time_end = cluster.get_tps()[cluster.get_tps().size() - 1][variables_to_index["time_start"]];
+    int min_time_start = cluster.get_tps().at(0)->time_start;
+    int max_time_end = cluster.get_tps().at(cluster.get_tps().size() - 1)->time_start;
     double radius_in_ticks = radius/0.08;
     int start = 0;
     int end = tps.size() - 1;
@@ -33,7 +33,7 @@ std::vector<std::vector<double>> get_tps_around_cluster(std::vector<std::vector<
 
     while (start < end) {
         mid = (start + end) / 2;
-        if (tps[mid][variables_to_index["time_start"]] < goal) {
+        if (tps[mid]->time_start < goal) {
             start = mid + 1;
         } else {
             end = mid;
@@ -46,9 +46,9 @@ std::vector<std::vector<double>> get_tps_around_cluster(std::vector<std::vector<
     float cluster_z = cluster.get_reco_pos()[2];
 
 
-    while (tps[start][variables_to_index["time_start"]] < max_time_end + 1.2*radius_in_ticks) {
+    while (tps.at(start)->time_start < max_time_end + 1.2*radius_in_ticks) {
 
-        std::vector<float> tp_pos = calculate_position(tps[start]);
+        std::vector<float> tp_pos = calculate_position(tps.at(start));
         float tp_x = tp_pos[0];
         float tp_y = tp_pos[1];
         float tp_z = tp_pos[2];

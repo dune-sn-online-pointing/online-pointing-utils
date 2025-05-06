@@ -15,9 +15,7 @@
 #include "create_volume_clusters_libs.h"
 
 
-LoggerInit([]{
-  Logger::getUserHeader() << "[" << FILENAME << "]";
-});
+LoggerInit([]{ Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 int main(int argc, char* argv[]) {
     CmdLineParser clp;
@@ -60,43 +58,47 @@ int main(int argc, char* argv[]) {
     int max_events_per_filename = j["max_events_per_filename"];
     float threshold = j["threshold"];
 
-    std::cout << "tps_filename: " << tps_filename << std::endl;
-    std::cout << "cluster_filename: " << cluster_filename << std::endl;
-    std::cout << "predictions: " << predictions << std::endl;
-    std::cout << "output_dir: " << output_dir << std::endl;
-    std::cout << "radius: " << radius << std::endl;
-    std::cout << "plane: " << plane << std::endl;
-    std::cout << "supernova_option: " << supernova_option << std::endl;
-    std::cout << "max_events_per_filename: " << max_events_per_filename << std::endl;
-    std::cout << "threshold: " << threshold << std::endl;
+    LogInfo << "tps_filename: " << tps_filename << std::endl;
+    LogInfo << "cluster_filename: " << cluster_filename << std::endl;
+    LogInfo << "predictions: " << predictions << std::endl;
+    LogInfo << "output_dir: " << output_dir << std::endl;
+    LogInfo << "radius: " << radius << std::endl;
+    LogInfo << "plane: " << plane << std::endl;
+    LogInfo << "supernova_option: " << supernova_option << std::endl;
+    LogInfo << "max_events_per_filename: " << max_events_per_filename << std::endl;
+    LogInfo << "threshold: " << threshold << std::endl;
 
     std::vector<std::string> filenames;
     std::ifstream infile(tps_filename);
     std::string line;
-    std::cout<<"Opening file: "<< tps_filename << std::endl;
+    LogInfo<<"Opening file: "<< tps_filename << std::endl;
     while (std::getline(infile, line)) {
         filenames.push_back(line);
     }
-    std::cout << "Number of files: " << filenames.size() << std::endl;
+    LogInfo << "Number of files: " << filenames.size() << std::endl;
 
-    std::vector<std::vector<double>> tps = file_reader(filenames, plane, supernova_option, max_events_per_filename);
-    std::vector<cluster> clusters = read_clusters_from_root(cluster_filename);
-    std::vector<float> predictions_vector = read_predictions(predictions);
+    std::vector<TriggerPrimitive> tps_object       = file_reader(filenames, plane, supernova_option, max_events_per_filename);
+    // create a vector of TriggerPrimitive pointers
+    std::vector<TriggerPrimitive*> tps;
+    for (int i = 0; i < tps_object.size(); i++) tps.push_back(&tps_object[i]);
+    
+    std::vector<cluster> clusters           = read_clusters_from_root(cluster_filename);
+    std::vector<float> predictions_vector   = read_predictions(predictions);
 
-    std::cout << "Number of clusters: " << clusters.size() << std::endl;
-    std::cout << "Number of predictions: " << predictions_vector.size() << std::endl;
-    std::cout << "Number of tps: " << tps.size() << std::endl;
+    LogInfo << "Number of clusters: " << clusters.size() << std::endl;
+    LogInfo << "Number of predictions: " << predictions_vector.size() << std::endl;
+    LogInfo << "Number of tps: " << tps.size() << std::endl;
 
 
     std::vector<cluster> clusters_in_volume;
     for (int i = 0; i < clusters.size(); i++) {
         if (i % 100 == 0) {
-            std::cout << "Cluster number: " << i << std::endl;
+            LogInfo << "Cluster number: " << i << std::endl;
         }
         if (predictions_vector[i] < threshold) {
             continue;
         }
-        std::vector<std::vector<double>> tps_around_cluster = get_tps_around_cluster(tps, clusters[i], radius);
+        std::vector<TriggerPrimitive*> tps_around_cluster = get_tps_around_cluster(tps, clusters[i], radius);
         cluster c(tps_around_cluster);
         c.set_true_pos(clusters[i].get_true_pos());
         c.set_true_dir(clusters[i].get_true_dir());

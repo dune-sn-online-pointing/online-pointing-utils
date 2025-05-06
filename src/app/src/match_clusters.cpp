@@ -62,8 +62,6 @@ int main(int argc, char* argv[]) {
     int max_events_per_filename = j["max_events_per_filename"];
     int adc_integral_cut = j["adc_integral_cut"];
 
-    std::vector<std::string> plane_names = {"U", "V", "X"};
-
     // start the clock
     std::clock_t start;
     start = std::clock();
@@ -83,9 +81,9 @@ int main(int argc, char* argv[]) {
             filenames.push_back(line);
         }
         std::cout << "Number of files: " << filenames.size() << std::endl;
-        std::vector<std::vector<double>> tps_u = file_reader(filenames, 0, supernova_option, max_events_per_filename);
-        std::vector<std::vector<double>> tps_v = file_reader(filenames, 1, supernova_option, max_events_per_filename);
-        std::vector<std::vector<double>> tps_x = file_reader(filenames, 2, supernova_option, max_events_per_filename);
+        std::vector<TriggerPrimitive> tps_u = file_reader(filenames, 0, supernova_option, max_events_per_filename);
+        std::vector<TriggerPrimitive> tps_v = file_reader(filenames, 1, supernova_option, max_events_per_filename);
+        std::vector<TriggerPrimitive> tps_x = file_reader(filenames, 2, supernova_option, max_events_per_filename);
         std::cout << "Number of tps: " << tps_u.size() << " " << tps_v.size() << " " << tps_x.size() << std::endl;
         std::map<int, std::vector<float>> file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
         std::map<int, int> file_idx_to_true_interaction_map = file_idx_to_true_interaction(filenames);

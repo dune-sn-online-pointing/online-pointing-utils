@@ -7,10 +7,10 @@
 
 
 bool are_compatibles(cluster& c_u, cluster& c_v, cluster& c_x, float radius) {
-    if (int(c_u.get_tps()[0][3]/2560) != int(c_x.get_tps()[0][3]/2560)) {
+    if (int(c_u.get_tps().at(0)->channel/2560) != int(c_x.get_tps().at(0)->channel/2560)) {
         return false;
     }
-    if (int(c_v.get_tps()[0][3]/2560) != int(c_x.get_tps()[0][3]/2560)) {
+    if (int(c_v.get_tps().at(0)->channel/2560) != int(c_x.get_tps().at(0)->channel/2560)) {
         return false;
     }
 
@@ -64,7 +64,7 @@ bool match_with_true_pos(cluster& c_u, cluster& c_v, cluster& c_x, float radius)
 }
 
 cluster join_clusters(cluster c_u, cluster c_v, cluster c_x){
-    std::vector<std::vector<double>> tps;
+    std::vector<TriggerPrimitive*> tps;
     for (int i = 0; i < c_u.get_size(); i++) {
         tps.push_back(c_u.get_tps()[i]);
     }

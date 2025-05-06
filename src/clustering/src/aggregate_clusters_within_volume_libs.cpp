@@ -32,10 +32,10 @@ std::vector<cluster> aggregate_clusters_within_volume(std::vector<cluster> clust
 
     std::vector<cluster> aggregated_clusters;
     for (int i = 0; i < vec_aggregated_clusters.size(); i++) {
-        std::vector<std::vector<double>> aggregated_tps;
+        std::vector<TriggerPrimitive*> aggregated_tps;
         for (int j = 0; j < vec_aggregated_clusters[i].size(); j++) {
             for (int k = 0; k < vec_aggregated_clusters[i][j].get_tps().size(); k++) {
-                aggregated_tps.push_back(vec_aggregated_clusters[i][j].get_tps()[k]);
+                aggregated_tps.push_back(vec_aggregated_clusters[i][j].get_tps().at(k));
             }
         }
         cluster aggregated_cluster(aggregated_tps);

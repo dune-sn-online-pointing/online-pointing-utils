@@ -29,8 +29,8 @@ cluster filter_clusters_within_radius(std::vector<cluster>& clusters, float radi
         if (g.get_supernova_tp_fraction() > 0.) {
             if (idx_best == -1) {
                 idx_best = idx;
-                event_number = g.get_tp(0)[variables_to_index["event"]];
-                n_offsets = g.get_tp(0)[variables_to_index["time_start"]] / EVENTS_OFFSET;
+                event_number = g.get_tp(0)->event;
+                n_offsets = g.get_tp(0)->time_start / EVENTS_OFFSET;
             } 
             else {
                 if (g.get_min_distance_from_true_pos() < clusters[idx_best].get_min_distance_from_true_pos()) {
@@ -48,7 +48,7 @@ cluster filter_clusters_within_radius(std::vector<cluster>& clusters, float radi
         int adc_integral = 0;
         for (int i=0; i<clusters.size(); i++){
             for (auto tp: clusters[i].get_tps()){
-                adc_integral+=tp[variables_to_index["adc_integral"]];                
+                adc_integral+=tp->adc_integral;                
             }   
             if (adc_integral>adc_integral_best){
                 adc_integral_best = adc_integral;
@@ -72,20 +72,20 @@ cluster filter_clusters_within_radius(std::vector<cluster>& clusters, float radi
     }
 
     cluster final_collective_cluster;
-    std::vector<std::vector<double>> tps; // using double in cluster, need to keep consistency
-    std::vector<std::vector<double>> tps_all; // using double in cluster, need to keep consistency
+    std::vector<TriggerPrimitive*> tps; 
+    std::vector<TriggerPrimitive*> tps_all;
     for (auto const& g : filtered_clusters) {
         tps = g.get_tps();
         // fix the different offsets coming from different events
         for (int i = 0; i < tps.size(); i++) {
-            tps[i][variables_to_index["time_start"]] =  (int) tps[i][variables_to_index["time_start"]]%(EVENTS_OFFSET) + n_offsets*EVENTS_OFFSET;
-            tps[i][variables_to_index["time_peak"]] = (int) tps[i][variables_to_index["time_peak"]]%(EVENTS_OFFSET) + n_offsets*EVENTS_OFFSET;
+            tps.at(i)->time_start =  (int) tps.at(i)->time_start%(EVENTS_OFFSET) + n_offsets*EVENTS_OFFSET;
+            tps.at(i)->samples_to_peak = (int) tps.at(i)->samples_to_peak%(EVENTS_OFFSET) + n_offsets*EVENTS_OFFSET; // careful here TODO fix since def changed
         }
         tps_all.insert(tps_all.end(), tps.begin(), tps.end());
     }
     // set all the event numbers to the same value
     for (int i = 0; i < tps_all.size(); i++) {
-        tps_all[i][variables_to_index["event"]] = event_number;
+        tps_all[i]->event = event_number;
     }
 
     final_collective_cluster.set_tps(tps_all);
