@@ -5,6 +5,8 @@ set( LIB_NAME "objectsLibs" )
 set( SRC_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/src/cluster.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/src/utils.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/functions.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/Neutrino.cpp
 )
 
 if( USE_STATIC_LINKS )

@@ -89,15 +89,15 @@ void cluster::update_cluster_info() {
 std::vector<float> calculate_position(TriggerPrimitive* tp) { // only works for plane X
     float z;
     if (tp->view == "X") {
-        float z_apa_offset = int(tp->channel) / (2560*2) * (apa_lenght_in_cm + offset_between_apa_in_cm);
-        float z_channel_offset = ((int(tp->channel) % 2560 - 1600) % 480) * wire_pitch_in_cm_collection;
+        float z_apa_offset = int(tp->channel) / (APA::total_channels*2) * (apa_lenght_in_cm + offset_between_apa_in_cm);
+        float z_channel_offset = ((int(tp->channel) % APA::total_channels - 1600) % 480) * wire_pitch_in_cm_collection;
         z = wire_pitch_in_cm_collection + z_apa_offset + z_channel_offset;
     } else {
         z = 0;
     }
 
     float y = 0;
-    float x_signs = ((int(tp->channel) % 2560-2080<0) ? -1 : 1);
+    float x_signs = ((int(tp->channel) % APA::total_channels-2080<0) ? -1 : 1);
     float x = ((int(tp->time_start) % EVENTS_OFFSET )* time_tick_in_cm + apa_width_in_cm/2) * x_signs; // check this TODO
 
     return {x, y, z};
@@ -124,69 +124,69 @@ float distance(cluster cluster1, cluster cluster2) {
 }
 
 float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive> tps, float z, float x_sign) {
-    z = z - int(tps.at(0).channel) / (2560*2) * (apa_lenght_in_cm + offset_between_apa_in_cm); // not sure about the 0 TODO
+    z = z - int(tps.at(0).channel) / (APA::total_channels*2) * (apa_lenght_in_cm + offset_between_apa_in_cm); // not sure about the 0 TODO
     float ordinate;
     std::vector<float> Y_pred;
     for (auto& tp : tps) {
-        if ((int(tp.channel) / 2560) % 2 == 0) {
+        if ((int(tp.channel) / APA::total_channels) % 2 == 0) {
             if (x_sign < 0) {
-                if (int(tp.channel) % 2560 < 400) {
-                    if (z > (int(tp.channel) % 2560) * wire_pitch_in_cm_induction + backtracker_error_margin) {
-                        float until_turn = (int(tp.channel) % 2560) * wire_pitch_in_cm_induction;
+                if (int(tp.channel) % APA::total_channels < 400) {
+                    if (z > (int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction + backtracker_error_margin) {
+                        float until_turn = (int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = apa_lenght_in_cm - z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = ((int(tp.channel) % 2560) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
+                        ordinate = ((int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
                     }
-                } else if (int(tp.channel) % 2560 > 399) {
-                    ordinate = (apa_lenght_in_cm - z + (int(tp.channel) % 2560 - 400) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp.channel) % APA::total_channels > 399) {
+                    ordinate = (apa_lenght_in_cm - z + (int(tp.channel) % APA::total_channels - 400) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             } else if (x_sign > 0) {
-                if (int(tp.channel) % 2560 > 399) {
-                    if (z < (799 - int(tp.channel) % 2560) * wire_pitch_in_cm_induction - backtracker_error_margin) {
-                        float until_turn = (int(tp.channel) % 2560 - 400) * wire_pitch_in_cm_induction;
+                if (int(tp.channel) % APA::total_channels > 399) {
+                    if (z < (799 - int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction - backtracker_error_margin) {
+                        float until_turn = (int(tp.channel) % APA::total_channels - 400) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = (z - (799 - int(tp.channel) % 2560) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                        ordinate = (z - (799 - int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                     }
-                } else if (int(tp.channel) % 2560 < 400) {
-                    ordinate = (z + (int(tp.channel) % 2560) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp.channel) % APA::total_channels < 400) {
+                    ordinate = (z + (int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             }
-        } else if ((int(tp.channel) / 2560) % 2 == 1) {
+        } else if ((int(tp.channel) / APA::total_channels) % 2 == 1) {
             if (x_sign < 0) {
-                if (int(tp.channel) % 2560 < 400) {
-                    if (z < (399 - int(tp.channel) % 2560) * wire_pitch_in_cm_induction - backtracker_error_margin) {
-                        float until_turn = (int(tp.channel) % 2560) * wire_pitch_in_cm_induction;
+                if (int(tp.channel) % APA::total_channels < 400) {
+                    if (z < (399 - int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction - backtracker_error_margin) {
+                        float until_turn = (int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = (z - (399 - int(tp.channel) % 2560) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                        ordinate = (z - (399 - int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                     }
-                } else if (int(tp.channel) % 2560 > 399) {
-                    ordinate = (z + (int(tp.channel) % 2560 - 400) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp.channel) % APA::total_channels > 399) {
+                    ordinate = (z + (int(tp.channel) % APA::total_channels - 400) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             } else if (x_sign > 0) {
-                if (int(tp.channel) % 2560 > 399) {
-                    if (z > (int(tp.channel) % 2560 - 400) * wire_pitch_in_cm_induction + backtracker_error_margin) {
-                        float until_turn = (int(tp.channel) % 2560 - 400) * wire_pitch_in_cm_induction;
+                if (int(tp.channel) % APA::total_channels > 399) {
+                    if (z > (int(tp.channel) % APA::total_channels - 400) * wire_pitch_in_cm_induction + backtracker_error_margin) {
+                        float until_turn = (int(tp.channel) % APA::total_channels - 400) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = apa_lenght_in_cm - z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = ((int(tp.channel) % 2560 - 400) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
+                        ordinate = ((int(tp.channel) % APA::total_channels - 400) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
                     }
-                } else if (int(tp.channel) % 2560 < 400) {
-                    ordinate = (apa_lenght_in_cm - z + (int(tp.channel) % 2560) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp.channel) % APA::total_channels < 400) {
+                    ordinate = (apa_lenght_in_cm - z + (int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             }
         }
-        // ordinate = (ordinate) - apa_height_in_cm if (tp[idx['channel']] / 2560) % 2 < 1 else apa_height_in_cm - (ordinate);
-        if ((int(tp.channel) / 2560) % 2 < 1) {
+        // ordinate = (ordinate) - apa_height_in_cm if (tp[idx['channel']] / APA::total_channels) % 2 < 1 else apa_height_in_cm - (ordinate);
+        if ((int(tp.channel) / APA::total_channels) % 2 < 1) {
             ordinate = (ordinate) - apa_height_in_cm;
         } else {
             ordinate = apa_height_in_cm - (ordinate);
@@ -206,68 +206,68 @@ float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive> tps, float z, float
 
 float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign) {
     
-    z = z - int(tps.at(0)->channel) / (2560*2) * (apa_lenght_in_cm + offset_between_apa_in_cm);
+    z = z - int(tps.at(0)->channel) / (APA::total_channels*2) * (apa_lenght_in_cm + offset_between_apa_in_cm);
     float ordinate;
     std::vector<float> Y_pred;
     for (auto& tp : tps) {
-        if ((int(tp->channel) / 2560) % 2 == 0) {
+        if ((int(tp->channel) / APA::total_channels) % 2 == 0) {
             if (x_sign < 0) {
-                if (int(tp->channel) % 2560 < 1200) {
-                    if (z < (1199 - int(tp->channel) % 2560) * wire_pitch_in_cm_induction - backtracker_error_margin) {
-                        float until_turn = (int(tp->channel) % 2560 - 800) * wire_pitch_in_cm_induction;
+                if (int(tp->channel) % APA::total_channels < 1200) {
+                    if (z < (1199 - int(tp->channel) % APA::total_channels) * wire_pitch_in_cm_induction - backtracker_error_margin) {
+                        float until_turn = (int(tp->channel) % APA::total_channels - 800) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = (z - (1199 - int(tp->channel) % 2560) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                        ordinate = (z - (1199 - int(tp->channel) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                     }
-                } else if (int(tp->channel) % 2560 > 1199) {
-                    ordinate = (z + (int(tp->channel) % 2560 - 1200) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp->channel) % APA::total_channels > 1199) {
+                    ordinate = (z + (int(tp->channel) % APA::total_channels - 1200) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             } else if (x_sign > 0) {
-                if (int(tp->channel) % 2560 > 1199) {
-                    if (z > (int(tp->channel) % 2560 - 1200) * wire_pitch_in_cm_induction + backtracker_error_margin) {
-                        float until_turn = (int(tp->channel) % 2560 - 1200) * wire_pitch_in_cm_induction;
+                if (int(tp->channel) % APA::total_channels > 1199) {
+                    if (z > (int(tp->channel) % APA::total_channels - 1200) * wire_pitch_in_cm_induction + backtracker_error_margin) {
+                        float until_turn = (int(tp->channel) % APA::total_channels - 1200) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = apa_lenght_in_cm - z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = ((int(tp->channel) % 2560 - 1200) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
+                        ordinate = ((int(tp->channel) % APA::total_channels - 1200) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
                     }
-                } else if (int(tp->channel) % 2560 < 1200) {
-                    ordinate = (apa_lenght_in_cm - z + (int(tp->channel) % 2560 - 800) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp->channel) % APA::total_channels < 1200) {
+                    ordinate = (apa_lenght_in_cm - z + (int(tp->channel) % APA::total_channels - 800) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             } 
-        } else if ((int(tp->channel) / 2560) % 2 == 1) {
+        } else if ((int(tp->channel) / APA::total_channels) % 2 == 1) {
             if (x_sign < 0) {
-                if (int(tp->channel) % 2560 < 1200) {
-                    if (z > (int(tp->channel) % 2560 - 800) * wire_pitch_in_cm_induction + backtracker_error_margin) {
-                        float until_turn = (int(tp->channel) % 2560 - 800) * wire_pitch_in_cm_induction;
+                if (int(tp->channel) % APA::total_channels < 1200) {
+                    if (z > (int(tp->channel) % APA::total_channels - 800) * wire_pitch_in_cm_induction + backtracker_error_margin) {
+                        float until_turn = (int(tp->channel) % APA::total_channels - 800) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = apa_lenght_in_cm - z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = ((int(tp->channel) % 2560 - 800) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
+                        ordinate = ((int(tp->channel) % APA::total_channels - 800) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
                     }
-                } else if (int(tp->channel) % 2560 > 1199) {
-                    ordinate = (apa_lenght_in_cm - z + (int(tp->channel) % 2560 - 1200) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp->channel) % APA::total_channels > 1199) {
+                    ordinate = (apa_lenght_in_cm - z + (int(tp->channel) % APA::total_channels - 1200) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             } else if (x_sign > 0) {
-                if (int(tp->channel) % 2560 > 1199) {
-                    if (z < (1599 - int(tp->channel) % 2560) * wire_pitch_in_cm_induction - backtracker_error_margin) {
-                        float until_turn = (int(tp->channel) % 2560 - 1200) * wire_pitch_in_cm_induction;
+                if (int(tp->channel) % APA::total_channels > 1199) {
+                    if (z < (1599 - int(tp->channel) % APA::total_channels) * wire_pitch_in_cm_induction - backtracker_error_margin) {
+                        float until_turn = (int(tp->channel) % APA::total_channels - 1200) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = (z - (1599 - int(tp->channel) % 2560) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                        ordinate = (z - (1599 - int(tp->channel) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                     }
-                } else if (int(tp->channel) % 2560 < 1200) {
-                    ordinate = (z + (int(tp->channel) % 2560 - 800) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp->channel) % APA::total_channels < 1200) {
+                    ordinate = (z + (int(tp->channel) % APA::total_channels - 800) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             }
         }
-        if ((int(tp->channel) / 2560) % 2 < 1) {
+        if ((int(tp->channel) / APA::total_channels) % 2 < 1) {
             ordinate = (ordinate) - apa_height_in_cm;
         } else {
             ordinate = apa_height_in_cm - (ordinate);
