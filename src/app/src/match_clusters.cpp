@@ -187,7 +187,7 @@ int main(int argc, char* argv[]) {
             }
 
             // if not in the same apa skip
-            if (int(clusters_u[j].get_tps()[0][3]/2560) != int(clusters_x[i].get_tps()[0][3]/2560)) {
+            if (int(clusters_u[j].get_tps()[0][3]/APA::total_channels) != int(clusters_x[i].get_tps()[0][3]/APA::total_channels)) {
                 continue;
             }
             int min_range_k = 0;
@@ -212,7 +212,7 @@ int main(int argc, char* argv[]) {
                 }
                 
 
-                if (int(clusters_v[k].get_tps()[0][3]/2560) != int(clusters_x[i].get_tps()[0][3]/2560)) {
+                if (int(clusters_v[k].get_tps()[0][3]/APA::total_channels) != int(clusters_x[i].get_tps()[0][3]/APA::total_channels)) {
                     continue;
                 }
 

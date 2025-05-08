@@ -18,28 +18,38 @@ LoggerInit([]{
 });
 
 // read the tps from the files and save them in a vector
-std::vector<TriggerPrimitive> file_reader(std::vector<std::string> filenames, int plane, int supernova_option, int max_events_per_filename) {
+void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitive>& tps, std::vector <TrueParticle> &true_particles, std::vector <Neutrino>& neutrinos, int supernova_option, int max_events_per_filename) {
     std::string line;
     int n_events_offset = 0;
     int file_idx = 0;
-    std::vector<TriggerPrimitive> tps;
+    // std::vector<TriggerPrimitive> tps;
     
     for (auto& filename : filenames) {
-        // LogInfo << filename << std::endl;
-        // std::ifstream infile(filename);
-        // read and save the TPs
+
+        LogInfo << "Reading file: " << filename << std::endl;
         
         TFile *file = TFile::Open(filename.c_str());
         if (!file || file->IsZombie()) {
             LogError << "Error opening file: " << filename << std::endl;
-            return std::vector<TriggerPrimitive>{};
+            return;
+        }
+        
+        std::string this_interaction = "UNKNOWN";
+        // if in the path there is _es_, then se interaction_type to "ES", same with _cc_ and "CC"
+        // this is maybe not the best way to  do it, might find another way from metadata
+        if (filename.find("_es_") != std::string::npos || filename.find("_ES_") != std::string::npos) {
+            this_interaction = "ES";
+        } else if (filename.find("_cc_") != std::string::npos || filename.find("_CC_") != std::string::npos) {
+            this_interaction = "CC";
+        } else {
+            this_interaction = "UNKNOWN"; // not sure TODO
         }
 
         std::string TPtree_path = "triggerAnaDumpAll/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
         TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
         if (!TPtree) {
             LogError << "Tree not found: " << TPtree_path << std::endl;
-            return std::vector<TriggerPrimitive>{};
+            return;
         }
         
         tps.reserve(TPtree->GetEntries());
@@ -49,6 +59,7 @@ std::vector<TriggerPrimitive> file_reader(std::vector<std::string> filenames, in
             TPtree->GetEntry(i);
         
             // Fill the TriggerPrimitive object with data from the tree
+            // this is a bit verbose, but gives more clarity
             uint64_t this_version = TPtree->GetLeaf("version")->GetValue(); 
             uint64_t this_time_start = TPtree->GetLeaf("time_start")->GetValue();
             uint64_t this_channel = TPtree->GetLeaf("channel")->GetValue();
@@ -58,8 +69,8 @@ std::vector<TriggerPrimitive> file_reader(std::vector<std::string> filenames, in
             uint64_t this_samples_over_threshold = 0;
             uint64_t this_samples_to_peak = 0;
             if (this_version == 1) {
-                this_samples_over_threshold = (TPtree->GetLeaf("time_over_threshold")->GetValue() )/ TPC_sampling_rate;
-                this_samples_to_peak = (TPtree->GetLeaf("time_peak")->GetValue() - this_time_start )/ TPC_sampling_rate;
+                this_samples_over_threshold = (TPtree->GetLeaf("time_over_threshold")->GetValue() )/ TPC_sample_length;
+                this_samples_to_peak = (TPtree->GetLeaf("time_peak")->GetValue() - this_time_start )/ TPC_sample_length;
             }
             else if (this_version == 2) {
                 this_samples_over_threshold = TPtree->GetLeaf("samples_over_threshold")->GetValue();
@@ -81,67 +92,221 @@ std::vector<TriggerPrimitive> file_reader(std::vector<std::string> filenames, in
             
             // if in the path of the file there is _es_, then se interaction_type to "ES", same with _cc_ and "CC"
             // this is maybe not the best way to  do it, might find another way from metadata
-            if      (filename.find("_es_") != std::string::npos) {this_tp.interaction_type = "ES";}
-            else if (filename.find("_cc_") != std::string::npos) {this_tp.interaction_type = "CC";} 
-            else                                                 {this_tp.interaction_type = "UNKNOWN";}
+            // if      (filename.find("_es_") != std::string::npos) {this_tp.interaction_type = "ES";}
+            // else if (filename.find("_cc_") != std::string::npos) {this_tp.interaction_type = "CC";} 
+            // else                                                 {this_tp.interaction_type = "UNKNOWN";}
 
             tps.emplace_back(this_tp); // add to collection of TPs
         }
         
         file->Close();
 
-        // while (std::getline(infile, line)) {
-
-            // std::istringstream iss(line);
-            // TriggerPrimitive tp;
-            // double val;
-            // while (iss >> val) {
-            //     tp.push_back(val);
-            // }
-            // tp.push_back(file_idx);
-            // if (tp.event>max_events_per_filename) {
-            //     break;
-            // }
-
-            // if (tp[variables_to_index["view"]] != plane) {
-            //     continue;
-            // }
-
-            // if (supernova_option == 1 && tp[variables_to_index["ptype"]] == 1) {
-            //     tp.event += n_events_offset;
-            //     tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp.event;
-            //     tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp.event;
-            //     tps.push_back(tp);
-            // }   
-            // else if (supernova_option == 2 && tp[variables_to_index["ptype"]] != 1) {
-            //     tp.event += n_events_offset;
-            //     tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp.event;
-            //     tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp.event;
-            //     tps.push_back(tp);
-            // }
-            // else if (supernova_option == 0) {
-            //     tp.event += n_events_offset;
-            //     tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp.event;       
-            //     tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp.event;
-            //     tps.push_back(tp);
-            // }
-        // }
+        
         if (tps.size() > 0){
-            // if (tps[tps.size()-1].event != n_events_offset) {
-            //     // LogInfo << "File Works" << std::endl;
-            // }
-            // else {
-            //     LogInfo << filename << std::endl;
-            //     LogInfo << "File does not work" << std::endl;
-            // }
-            // n_events_offset = tps[tps.size()-1].event;
-
             LogInfo << "Found " << tps.size() << " TPs in file " << filename << std::endl;
         }
         else {
             LogWarning << "Found no TPs in file " << filename << std::endl;
         }
         // ++file_idx;
+
+        // connect MC truth
+        std::string MCtruthtree_path = "triggerAnaDumpAll/mctruths"; // TODO make flexible for 1x2x6 and maybe else
+        TTree *MCtruthtree = dynamic_cast<TTree*>(file->Get(MCtruthtree_path.c_str()));
+        if (!MCtruthtree) {
+            LogError << "Tree not found: " << MCtruthtree_path << std::endl;
+            return;
+        }
+
+        // this is a scope vector, just to put somewhere the generator name before
+        // associating to the final true particles 
+        std::vector <TrueParticle> mc_true_particles; 
+        
+        for (Long64_t i = 0; i < MCtruthtree->GetEntries(); ++i) {
+            MCtruthtree->GetEntry(i);
+            
+            // if generator_name is "marley", it's  a neutrino, 
+            // otherwise not
+
+            if (static_cast<const char*>(MCtruthtree->GetLeaf("generator_name")->GetValuePointer()) == "marley") {
+                // Add to the vector of Neutrinos
+                neutrinos.emplace_back(Neutrino(
+                    MCtruthtree->GetLeaf("Event")->GetValue(),
+                    this_interaction,
+                    MCtruthtree->GetLeaf("x")->GetValue(),
+                    MCtruthtree->GetLeaf("y")->GetValue(),
+                    MCtruthtree->GetLeaf("z")->GetValue(),
+                    MCtruthtree->GetLeaf("Px")->GetValue(),
+                    MCtruthtree->GetLeaf("Py")->GetValue(),
+                    MCtruthtree->GetLeaf("Pz")->GetValue(),
+                    MCtruthtree->GetLeaf("en")->GetValue(),
+                    MCtruthtree->GetLeaf("truth_id")->GetValue()
+                ));
+            }
+            else {
+                mc_true_particles.emplace_back(
+                    TrueParticle(
+                        MCtruthtree->GetLeaf("Event")->GetValue(),
+                        static_cast<const char*>(MCtruthtree->GetLeaf("generator_name")->GetValuePointer()),
+                        MCtruthtree->GetLeaf("block_id")->GetValue()
+                    )
+                );
+            }
+        }
+        
+
+        // read mcparticles (geant)
+        std::string MCparticlestree_path = "triggerAnaDumpAll/mctruths"; // TODO make flexible for 1x2x6 and maybe else
+        TTree *MCparticlestree = dynamic_cast<TTree*>(file->Get(MCparticlestree_path.c_str()));
+        if (!MCparticlestree) {
+            LogError << "Tree not found: " << MCparticlestree_path << std::endl;
+            return;
+        }
+
+        // we will have as many true particles as entries in this tree, 
+        // including both geant and gen particles
+        true_particles.reserve(MCparticlestree->GetEntries());
+        for (Long64_t i = 0; i < MCparticlestree->GetEntries(); ++i) {
+            MCparticlestree->GetEntry(i);
+            
+            true_particles.emplace_back( TrueParticle(
+                MCparticlestree->GetLeaf("Event")->GetValue(),
+                MCparticlestree->GetLeaf("x")->GetValue(),
+                MCparticlestree->GetLeaf("y")->GetValue(),
+                MCparticlestree->GetLeaf("z")->GetValue(),
+                MCparticlestree->GetLeaf("Px")->GetValue(),
+                MCparticlestree->GetLeaf("Py")->GetValue(),
+                MCparticlestree->GetLeaf("Pz")->GetValue(),
+                MCparticlestree->GetLeaf("en")->GetValue(),
+                std::string(static_cast<const char*>(MCparticlestree->GetLeaf("generator_name")->GetValuePointer())),
+                MCparticlestree->GetLeaf("pdg")->GetValue(),
+                std::string(static_cast<const char*>(MCparticlestree->GetLeaf("process")->GetValuePointer())),
+                MCparticlestree->GetLeaf("track_id")->GetValue(),
+                MCparticlestree->GetLeaf("truth_id")->GetValue()
+            ));
+            
+        }
+        
+        // now simides
+        std::string simidestree_path = "triggerAnaDumpAll/simides"; // TODO make flexible for 1x2x6 and maybe else
+        TTree *simidestree = dynamic_cast<TTree*>(file->Get(simidestree_path.c_str()));
+        if (!simidestree) {
+            LogError << "Tree not found: " << simidestree_path << std::endl;
+            return;
+        }   
+        int event_number_simides;
+        int ChannelID;
+        int Timestamp;
+        int numElectrons_simides;
+        int energy_simides;
+        int x_position_simides;
+        int y_position_simides;
+        int z_position_simides;
+        int trackID_simides;
+        int origTrackID_simides;
+
+        for (Long64_t i = 0; i < simidestree->GetEntries(); ++i) {
+            simidestree->GetEntry(i);
+        
+            // see trackID and find the correspondent TrueParticle
+            // if the trackID is not in the true particles, then skip it but print a watning
+
+            // I think that 0 is noise
+            // if (simidestree->GetLeaf("trackID")->GetValue() == 0) {
+            //     continue;
+            // }
+            
+            // find the true particle with the same trackID
+            // if not found, then skip it but print a warning
+            // if found, then add the simide to the true particle
+            // if the trackID is not in the true particles, then skip it but print a warning
+            if (true_particles.size() == 0) {
+                LogWarning << "No true particles in this event" << std::endl;
+                continue;
+            }
+            
+        
+            // find the true particle with the same trackID and add the timestamp as min(timestamp, time_start)
+            // and max(timestamp, time_end)
+
+            bool found = false;
+            for (auto& particle : true_particles) {
+                if ( particle.GetEvent() == simidestree->GetLeaf("Event")->GetValue() 
+                    || particle.GetTrackId() == simidestree->GetLeaf("trackID")->GetValue()) 
+                {
+                    particle.SetTimeStart(std::min(particle.GetTimeStart(), simidestree->GetLeaf("Timestamp")->GetValue()));
+                    particle.SetTimeEnd(std::max(particle.GetTimeEnd(), simidestree->GetLeaf("Timestamp")->GetValue()));
+                    // Add the channels to the list of channels in the true particle
+                    particle.AddChannel(simidestree->GetLeaf("ChannelID")->GetValue());
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                LogWarning << "TrackID " << simidestree->GetLeaf("trackID")->GetValue() << " not found in true particles." << std::endl;
+            }
+        } // end of simides, not used anywhere anymore
+
+        // now connect trueparticles to mctruths using the truth_id
+
+        for (auto& particle : true_particles) {
+            // find the mctruth with the same truth_id
+            // if not found, then skip it but print a warning
+            // if found, then add the mctruth to the true particle
+            // if the trackID is not in the true particles, then skip it but print a warning
+            if (particle.GetTruthId() == 0) {
+                continue;
+            }
+            
+            // find the true particle with the same trackID and add the timestamp as min(timestamp, time_start)
+            // and max(timestamp, time_end)
+            // if not found, then skip it with no warning. 
+
+            bool found = false;
+            for (auto& neutrino : neutrinos) {
+                if (neutrino.GetEvent() == particle.GetEvent() && neutrino.GetTruthId() == particle.GetTruthId()) {
+                    particle.SetNeutrino(&neutrino);
+                    particle.SetGeneratorName("marley");
+                    found = true;
+                    break;
+                }
+            }
+            // if it's not from a neutrino, it is from bkg
+            if (!found){
+                for (auto& mc_true_particle : mc_true_particles) {
+                    if (mc_true_particle.GetEvent() == particle.GetEvent() && mc_true_particle.GetTruthId() == particle.GetTruthId()) {
+                        particle.SetGeneratorName(mc_true_particle.GetGeneratorName());
+                        particle.SetProcess(mc_true_particle.GetProcess());
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!found) {
+                LogWarning << "TruthID " << particle.GetTruthId() << " not found in true particles." << std::endl;
+            }
+        }
+
+        // connect the TPs with the MC truth and MC particles. 
+        // This is done by comparing the time_start to the Timestamp and Channel of the simides. 
+        // Once the connection is done, the simides are connected to MCparticles using the trackID
+        // and then the MC particles to the MCtruths 
+
+        // fix the event, for that event loop over TPs to find the SimIDE using time and channel
+        // then associate the simIde to the MCparticles using the trackid
+        // then associate the MCparticle to the MCtruth
+        // when the mctruth is found, store the variable generator_name and process in the TP
+
+        // just connect simides to mcparticles
+        
+
+        
+
+
+
+
+
     }
     
     // sort the TPs by time
@@ -155,7 +320,6 @@ std::vector<TriggerPrimitive> file_reader(std::vector<std::string> filenames, in
     LogInfo << "Sorting TPs took " << elapsed_time << " seconds" << std::endl;
     LogInfo << "or " << elapsed_time/60 << " minutes" << std::endl;
 
-    return tps;
 }
 
 // std::vector<std::vector<TriggerPrimitive>> file_reader_all_planes(std::vector<std::string> filenames, int supernova_option, int max_events_per_filename) {
@@ -232,13 +396,13 @@ std::vector<TriggerPrimitive> file_reader(std::vector<std::string> filenames, in
 
 // PBC is periodic boundary condition
 bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit) {
-    if (int(ch1/2560) != int(ch2/2560)) {
+    if (int(ch1/APA::total_channels) != int(ch2/APA::total_channels)) {
         return false;
     }
 
     double diff = std::abs(ch1 - ch2);
     int n_chan;
-    int mod_ch1 = int(ch1) % 2560;
+    int mod_ch1 = int(ch1) % APA::total_channels;
     if (mod_ch1 >= 0 and mod_ch1 <800) {
         n_chan = 800;
     }
@@ -288,7 +452,7 @@ std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int t
                 // get a the max containing the times of the TPs in the candidate
                 float max_time = 0;
                 for (auto& tp2 : candidate) {
-                    max_time = std::max(max_time,(tp2->time_start + tp2->samples_over_threshold * TPC_sampling_rate));
+                    max_time = std::max(max_time,(tp2->time_start + tp2->samples_over_threshold * TPC_sample_length));
                 }
                 bool time_cond = (tp->time_start - max_time) <= ticks_limit;
                 if (time_cond) {

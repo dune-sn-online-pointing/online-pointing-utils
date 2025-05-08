@@ -77,7 +77,10 @@ int main(int argc, char* argv[]) {
     }
     LogInfo << "Number of files: " << filenames.size() << std::endl;
 
-    std::vector<TriggerPrimitive> tps_object       = file_reader(filenames, plane, supernova_option, max_events_per_filename);
+    std::vector<TriggerPrimitive> tps_object; 
+    std::vector<Neutrino> neutrinos;
+    std::vector<TrueParticle> true_particles;
+    file_reader(filenames, tps_object, true_particles, neutrinos ,supernova_option, max_events_per_filename);
     // create a vector of TriggerPrimitive pointers
     std::vector<TriggerPrimitive*> tps;
     for (int i = 0; i < tps_object.size(); i++) tps.push_back(&tps_object[i]);

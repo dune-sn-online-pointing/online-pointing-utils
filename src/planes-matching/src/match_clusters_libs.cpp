@@ -7,10 +7,10 @@
 
 
 bool are_compatibles(cluster& c_u, cluster& c_v, cluster& c_x, float radius) {
-    if (int(c_u.get_tps().at(0)->channel/2560) != int(c_x.get_tps().at(0)->channel/2560)) {
+    if (int(c_u.get_tps().at(0)->channel/APA::total_channels) != int(c_x.get_tps().at(0)->channel/APA::total_channels)) {
         return false;
     }
-    if (int(c_v.get_tps().at(0)->channel/2560) != int(c_x.get_tps().at(0)->channel/2560)) {
+    if (int(c_v.get_tps().at(0)->channel/APA::total_channels) != int(c_x.get_tps().at(0)->channel/APA::total_channels)) {
         return false;
     }
 
