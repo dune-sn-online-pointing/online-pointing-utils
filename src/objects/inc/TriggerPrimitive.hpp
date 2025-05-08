@@ -8,7 +8,6 @@
 #include <Logger.h>
 #include <TrueParticle.h>
 
-LoggerInit([]{ Logger::getUserHeader() << "[" << FILENAME << "]"; });
     
 class TriggerPrimitive {
 
@@ -23,7 +22,7 @@ class TriggerPrimitive {
         // Physics data.
         uint64_t channel : 24;
         uint64_t samples_over_threshold : 16;
-        uint64_t time_start : 64;
+        uint64_t time_start : 16; // in larsoft it's much shorter 
         uint64_t samples_to_peak : 16;
         uint64_t adc_integral : 32;
         uint64_t adc_peak : 16;
@@ -34,10 +33,10 @@ class TriggerPrimitive {
         std::string view = "";
         int event = -1;
 
-        TrueParticle * true_particle = nullptr;
+        const TrueParticle * true_particle = nullptr;
 
         // Setters
-        void SetTrueParticle(TrueParticle *true_particle) { this->true_particle = true_particle; }
+        void SetTrueParticle(const TrueParticle * true_particle) { this->true_particle = true_particle; }
         void SetTimeStart(uint64_t time_start) { this->time_start = time_start; }
         void SetSamplesOverThreshold(uint64_t samples_over_threshold) { this->samples_over_threshold = samples_over_threshold; }
         void SetSamplesToPeak(uint64_t samples_to_peak) { this->samples_to_peak = samples_to_peak; }
@@ -49,8 +48,8 @@ class TriggerPrimitive {
         void SetEvent(int event) { this->event = event; }
 
         // Getters
-        double TimeStart() const { return time_start; }
-        double TimeEnd() const { return time_start + samples_over_threshold * TPC_sample_length; }
+        double GetTimeStart() const { return time_start; }
+        double GetTimeEnd() const { return time_start + samples_over_threshold * TPC_sample_length; }
         std::string GetView() const { return view; }
         int GetDetector() const { return detector; }
         int GetDetectorChannel() const { return detector_channel; }
@@ -59,6 +58,7 @@ class TriggerPrimitive {
         int GetSamplesToPeak() const { return samples_to_peak; }
         int GetAdcIntegral() const { return adc_integral; }
         int GetAdcPeak() const { return adc_peak; }
+        const TrueParticle * GetTrueParticle() const { return true_particle; }
 
         TriggerPrimitive(
             uint64_t version,

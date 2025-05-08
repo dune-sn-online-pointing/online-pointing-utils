@@ -51,14 +51,15 @@ echo -e "Settings file found, full path is: $settingsFile \n"
 
 ################################################
 # Compile the code if requested
-compile_command="source $SCRIPTS_DIR/compile.sh -p $HOME_DIR --no-compile $noCompile --clean-compile $cleanCompile"
+compile_command="$SCRIPTS_DIR/compile.sh -p $HOME_DIR --no-compile $noCompile --clean-compile $cleanCompile"
 echo "Compiling the code with the following command:"
 echo $compile_command
-. $compile_command
+. $compile_command || exit
 
 ################################################
 # Run this app
 command_to_run="$BUILD_DIR/src/app/clustering -j $settingsFile"
+# command_to_run="valgrind --leak-check=full $BUILD_DIR/src/app/clustering -j $settingsFile"
 echo "Running command: ${command_to_run}"
 eval $command_to_run
 

@@ -191,30 +191,42 @@ int main(int argc, char* argv[]) {
     std::vector<Neutrino> neutrinos;
 
     file_reader(filenames, tps, true_particles, neutrinos, supernova_option, max_events_per_filename);
+
+    // connect TPs to the true particles
+    int time_window = 32; // in ticks, TODO move from here
+    for (int i = 0; i < tps.size(); i++) {
+        for (int j = 0; j < true_particles.size(); j++) {
+            if (tps.at(i).GetEvent() == true_particles.at(j).GetEvent()) {
+                
+                if (isTimeCompatible(true_particles.at(j), tps.at(i), time_window) 
+                    && isChannelCompatible(true_particles.at(j), tps.at(i))) 
+                {
+                    tps.at(i).SetTrueParticle(&true_particles.at(j));
+                }
+            }
+        }
+    }
     
+    LogInfo << "The views are " << APA::views.size() << std::endl;
+
     std::vector <std::vector<TriggerPrimitive*>> tps_per_view;
-    tps_per_view.resize(APA::views.size());
+    tps_per_view.reserve(APA::views.size());
+    
+
     std::vector <std::vector<cluster>> clusters_per_view;
-    clusters_per_view.resize(APA::views.size());
+    clusters_per_view.reserve(APA::views.size());
 
     for (uint i = 0; i < APA::views.size(); i++) {
         // divide the tps in views
-        getPrimitivesForView(APA::views.at(i), tps, tps_per_view[i]);
-        LogInfo << "Number of tps in " << views.at(i) << " view: " << tps_per_view.back().size() << std::endl;
+        std::vector<TriggerPrimitive*> these_tps_per_view;
+        getPrimitivesForView(APA::views.at(i), tps, these_tps_per_view);
+        tps_per_view.emplace_back(these_tps_per_view);
+        LogInfo << "Number of tps in " << views.at(i) << " view: " << tps_per_view.at(i).size() << std::endl;
         // cluster the tps
-        clusters_per_view.push_back(cluster_maker(tps_per_view.back(), ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut));
-        LogInfo << "Number of clusters in " << views.at(i) << " view: " << clusters_per_view.back().size() << std::endl;
+        clusters_per_view.emplace_back(cluster_maker(tps_per_view.at(i), ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut));
+        LogInfo << "Number of clusters in " << views.at(i) << " view: " << clusters_per_view.at(i).size() << std::endl;
     }
         
-
-    // auto tps_u = getPrimitivesForView(&APA::views.at(0), tps);
-    // auto tps_v = getPrimitivesForView(&APA::views.at(1), tps);
-    // auto tps_x = getPrimitivesForView(&APA::views.at(2), tps);
-    
-    // std::map<int, std::vector<float>> file_idx_to_true_xyz_map;
-    // if (use_electron_direction == 0) {
-    //     file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
-    // }
 
     // std::map<int, int> file_idx_to_true_interaction_map = file_idx_to_true_interaction(filenames);
     // LogInfo << "XYZ map created" << std::endl;
@@ -261,23 +273,41 @@ int main(int argc, char* argv[]) {
     // }
 
     // write the clusters to a root file
-    std::string root_filename_u = outfolder + "/U/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
-    std::string root_filename_v = outfolder + "/V/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
-    std::string root_filename_x = outfolder + "/X/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
-    // write_clusters_to_root(clusters_u, root_filename_u);
-    // write_clusters_to_root(clusters_v, root_filename_v);
-    // write_clusters_to_root(clusters_x, root_filename_x);
-    LogInfo << "clusters written to " << root_filename_u << std::endl;
-    LogInfo << "clusters written to " << root_filename_v << std::endl;
-    LogInfo << "clusters written to " << root_filename_x << std::endl;
-    // }
+    // std::string root_filename_u = outfolder + "/U/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
+    // std::string root_filename_v = outfolder + "/V/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
+    // std::string root_filename_x = outfolder + "/X/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
+    // // write_clusters_to_root(clusters_u, root_filename_u);
+    // // write_clusters_to_root(clusters_v, root_filename_v);
+    // // write_clusters_to_root(clusters_x, root_filename_x);
+    // LogInfo << "clusters written to " << root_filename_u << std::endl;
+    // LogInfo << "clusters written to " << root_filename_v << std::endl;
+    // LogInfo << "clusters written to " << root_filename_x << std::endl;
+    // // }
+
+
+    // write clusters to root files, 
+    // create the root file
     
+    for (int i = 0; i < APA::views.size(); i++) {
+        std::string clusters_filename = outfolder + "/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + "_"+ APA::views.at(i) + ".root";
+        LogInfo << "Writing " << APA::views.at(i) << " clusters to " << clusters_filename << std::endl;
+        write_clusters_to_root(clusters_per_view.at(i), clusters_filename);
+    }
+
     // stop the clock
     std::clock_t end = std::clock();
 
+    // std::setprecision(3);
     LogInfo << "Time take  in seconds: " << float(end - start) / CLOCKS_PER_SEC << std::endl;
     LogInfo << "Time taken in minutes: " << float(end - start) / CLOCKS_PER_SEC / 60  << std::endl;
     LogInfo << "Time taken in hours: " << float(end - start) / CLOCKS_PER_SEC / 3600 << std::endl;
+
+
+    // free the memory
+    for (auto& view_tps : tps_per_view)
+        view_tps.clear();
+    tps_per_view.clear();
+
 
     return 0;
 }

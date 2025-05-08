@@ -5,10 +5,6 @@
 #include <vector>
 #include <string>
 
-#include <Logger.h>
-
-LoggerInit([]{ Logger::getUserHeader() << "[" << FILENAME << "]"; });
-
 // the idea is  to associate a neutrino to each TrueParticle 
 // having generator_name == "marley"
 

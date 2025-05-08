@@ -5,12 +5,7 @@
 #include <iostream>
 #include <climits>
 
-#include <Logger.h> 
-
 #include <Neutrino.h>
-
-LoggerInit([]{ Logger::getUserHeader() << "[" << FILENAME << "]"; });
-
 
 // both particles from neutrino interactions and backgrounds
 // will have a TrueParticle object
@@ -76,11 +71,7 @@ class TrueParticle {
         };
         
         // destructor
-        ~TrueParticle() {
-            if (neutrino != nullptr) {
-                delete neutrino;
-            }
-        };
+        ~TrueParticle() {};
 
         // Setters
         void SetEvent(int event) { this->event = event; }
@@ -96,7 +87,7 @@ class TrueParticle {
         void SetProcess(std::string process) { this->process = process; }
         void SetTrackId(int track_id) { this->track_id = track_id; }
         void SetTruthId(int truth_id) { this->truth_id = truth_id; }
-        void SetNeutrino(Neutrino * neutrino) { this->neutrino = neutrino; }
+        void SetNeutrino(const Neutrino *neutrino) { this->neutrino = neutrino; }
         void SetTimeStart(double time_start) { this->time_start = time_start; }
         void SetTimeEnd(double time_end) { this->time_end = time_end; }
         // void SetChannels(std::vector<int> channels) { this->channels = channels; }
@@ -115,10 +106,10 @@ class TrueParticle {
         std::string GetProcess() const { return process; }
         int GetTrackId() const { return track_id; }
         int GetTruthId() const { return truth_id; }
-        Neutrino * GetNeutrino() const { return neutrino; }
+        const Neutrino* GetNeutrino() const { return neutrino; }
         double GetTimeStart() const { return time_start; }
         double GetTimeEnd() const { return time_end; }
-        std::vector<int> GetChannelStart() const { return channels; }
+        std::vector<int> GetChannels() const { return channels; }
 
         void AddChannel(int channel){
             // check if the channel is already in the vector
@@ -128,6 +119,20 @@ class TrueParticle {
             std::sort(channels.begin(), channels.end());
         };
 
+        void Print() const {
+            std::cout << "TrueParticle: " << std::endl;
+            std::cout << "Event: " << event << std::endl;
+            std::cout << "X: " << x << std::endl;
+            std::cout << "Y: " << y << std::endl;
+            std::cout << "Z: " << z << std::endl;
+            std::cout << "Px: " << Px << std::endl;
+            std::cout << "Py: " << Py << std::endl;
+            std::cout << "Pz: " << Pz << std::endl;
+            std::cout << "Energy: " << energy << std::endl;
+            std::cout << "Generator name: " << generator_name << std::endl;
+            std::cout << "Pdg: " << pdg << std::endl;
+            std::cout << "Process: " << process << std::endl;
+        };
 
     private:
         int event {0};
@@ -144,7 +149,7 @@ class TrueParticle {
         
         int track_id {-1}; // needed for association
         int truth_id {-1}; // needed for association
-        Neutrino * neutrino = nullptr; // this is the neutrino that generated the particle, if any. For bkg, it will stay empty
+        const Neutrino * neutrino = nullptr; // this is the neutrino that generated the particle, if any. For bkg, it will stay empty
 
         // these are needed to make associations
         double time_start {0};

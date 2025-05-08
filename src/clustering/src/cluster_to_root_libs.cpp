@@ -26,11 +26,11 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
     
     for (auto& filename : filenames) {
 
-        LogInfo << "Reading file: " << filename << std::endl;
+        LogInfo << " Reading file: " << filename << std::endl;
         
         TFile *file = TFile::Open(filename.c_str());
         if (!file || file->IsZombie()) {
-            LogError << "Error opening file: " << filename << std::endl;
+            LogError << " Error opening file: " << filename << std::endl;
             return;
         }
         
@@ -48,7 +48,7 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
         std::string TPtree_path = "triggerAnaDumpAll/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
         TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
         if (!TPtree) {
-            LogError << "Tree not found: " << TPtree_path << std::endl;
+            LogError << " Tree not found: " << TPtree_path << std::endl;
             return;
         }
         
@@ -90,31 +90,24 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
                 this_adc_peak
             );
             
-            // if in the path of the file there is _es_, then se interaction_type to "ES", same with _cc_ and "CC"
-            // this is maybe not the best way to  do it, might find another way from metadata
-            // if      (filename.find("_es_") != std::string::npos) {this_tp.interaction_type = "ES";}
-            // else if (filename.find("_cc_") != std::string::npos) {this_tp.interaction_type = "CC";} 
-            // else                                                 {this_tp.interaction_type = "UNKNOWN";}
-
             tps.emplace_back(this_tp); // add to collection of TPs
         }
         
-        file->Close();
 
         
         if (tps.size() > 0){
-            LogInfo << "Found " << tps.size() << " TPs in file " << filename << std::endl;
+            LogInfo << " Found " << tps.size() << " TPs in file " << filename << std::endl;
         }
-        else {
-            LogWarning << "Found no TPs in file " << filename << std::endl;
+        else { 
+            LogWarning << " Found no TPs in file " << filename << std::endl;
         }
         // ++file_idx;
 
         // connect MC truth
-        std::string MCtruthtree_path = "triggerAnaDumpAll/mctruths"; // TODO make flexible for 1x2x6 and maybe else
+        std::string MCtruthtree_path = "triggerAnaDumpAll/mctruths"; 
         TTree *MCtruthtree = dynamic_cast<TTree*>(file->Get(MCtruthtree_path.c_str()));
         if (!MCtruthtree) {
-            LogError << "Tree not found: " << MCtruthtree_path << std::endl;
+            LogError << " Tree not found: " << MCtruthtree_path << std::endl;
             return;
         }
 
@@ -122,13 +115,29 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
         // associating to the final true particles 
         std::vector <TrueParticle> mc_true_particles; 
         
-        for (Long64_t i = 0; i < MCtruthtree->GetEntries(); ++i) {
-            MCtruthtree->GetEntry(i);
-            
-            // if generator_name is "marley", it's  a neutrino, 
-            // otherwise not
+        LogInfo << " Reading tree of MCtruths" << std::endl;
 
-            if (static_cast<const char*>(MCtruthtree->GetLeaf("generator_name")->GetValuePointer()) == "marley") {
+        for (Long64_t i = 0; i < MCtruthtree->GetEntries(); ++i) {
+            
+            MCtruthtree->GetEntry(i);
+
+            // print all variables 
+            // MCtruthtree->Print();
+            // std::cout << "Printing entry " << i << std::endl;
+            // std::cout << MCtruthtree->GetLeaf("Event")->GetValue() << " "
+            //         //   << MCtruthtree->GetLeaf("x")->GetValue() << " "
+            //         //   << MCtruthtree->GetLeaf("y")->GetValue() << " "
+            //         //   << MCtruthtree->GetLeaf("z")->GetValue() << " "
+            //         //   << MCtruthtree->GetLeaf("Px")->GetValue() << " "
+            //         //   << MCtruthtree->GetLeaf("Py")->GetValue() << " "
+            //         //   << MCtruthtree->GetLeaf("Pz")->GetValue() << " "
+            //           <<" PDG: " << MCtruthtree->GetLeaf("pdg")->GetValue() << " "
+            //           << " EN: "<< MCtruthtree->GetLeaf("en")->GetValue() << " GEN: "
+            //           << std::string(static_cast<const char*>(MCtruthtree->GetLeaf("generator_name")->GetValuePointer())) << std::endl;
+            
+            neutrinos.reserve(MCtruthtree->GetEntries());
+            
+            if (MCtruthtree->GetLeaf("pdg")->GetValue() == PDG::nue) { 
                 // Add to the vector of Neutrinos
                 neutrinos.emplace_back(Neutrino(
                     MCtruthtree->GetLeaf("Event")->GetValue(),
@@ -139,11 +148,11 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
                     MCtruthtree->GetLeaf("Px")->GetValue(),
                     MCtruthtree->GetLeaf("Py")->GetValue(),
                     MCtruthtree->GetLeaf("Pz")->GetValue(),
-                    MCtruthtree->GetLeaf("en")->GetValue(),
-                    MCtruthtree->GetLeaf("truth_id")->GetValue()
+                    MCtruthtree->GetLeaf("en")->GetValue()*1e3, // converting to MeV
+                    MCtruthtree->GetLeaf("block_id")->GetValue()
                 ));
             }
-            else {
+            else { // particles from neutrino interaction or backgrounds
                 mc_true_particles.emplace_back(
                     TrueParticle(
                         MCtruthtree->GetLeaf("Event")->GetValue(),
@@ -153,10 +162,11 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
                 );
             }
         }
-        
 
+        LogInfo << " Loaded all  MC truths" << std::endl;
+        
         // read mcparticles (geant)
-        std::string MCparticlestree_path = "triggerAnaDumpAll/mctruths"; // TODO make flexible for 1x2x6 and maybe else
+        std::string MCparticlestree_path = "triggerAnaDumpAll/mcparticles"; // TODO make flexible for 1x2x6 and maybe else
         TTree *MCparticlestree = dynamic_cast<TTree*>(file->Get(MCparticlestree_path.c_str()));
         if (!MCparticlestree) {
             LogError << "Tree not found: " << MCparticlestree_path << std::endl;
@@ -177,136 +187,96 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
                 MCparticlestree->GetLeaf("Px")->GetValue(),
                 MCparticlestree->GetLeaf("Py")->GetValue(),
                 MCparticlestree->GetLeaf("Pz")->GetValue(),
-                MCparticlestree->GetLeaf("en")->GetValue(),
+                MCparticlestree->GetLeaf("en")->GetValue()*1e3, // converting to MeV
                 std::string(static_cast<const char*>(MCparticlestree->GetLeaf("generator_name")->GetValuePointer())),
                 MCparticlestree->GetLeaf("pdg")->GetValue(),
                 std::string(static_cast<const char*>(MCparticlestree->GetLeaf("process")->GetValuePointer())),
                 MCparticlestree->GetLeaf("track_id")->GetValue(),
                 MCparticlestree->GetLeaf("truth_id")->GetValue()
             ));
-            
+
+            // true_particles.back().Print();
         }
         
-        // now simides
-        std::string simidestree_path = "triggerAnaDumpAll/simides"; // TODO make flexible for 1x2x6 and maybe else
+        // now read simides, used to find the channel and time and later associate TPs to MCparticles 
+        std::string simidestree_path = "triggerAnaDumpAll/simides"; 
         TTree *simidestree = dynamic_cast<TTree*>(file->Get(simidestree_path.c_str()));
         if (!simidestree) {
             LogError << "Tree not found: " << simidestree_path << std::endl;
             return;
         }   
-        int event_number_simides;
-        int ChannelID;
-        int Timestamp;
-        int numElectrons_simides;
-        int energy_simides;
-        int x_position_simides;
-        int y_position_simides;
-        int z_position_simides;
-        int trackID_simides;
-        int origTrackID_simides;
 
+        Int_t event_number_simides;
+        UInt_t ChannelID;
+        UShort_t Timestamp;
+        Float_t trackID;
+
+        simidestree->SetBranchAddress("Event", &event_number_simides);
+        simidestree->SetBranchAddress("ChannelID", &ChannelID);
+        simidestree->SetBranchAddress("Timestamp", &Timestamp);
+        simidestree->SetBranchAddress("trackID", &trackID);
+
+        LogInfo << " Reading tree of SimIDEs to find channels and timestamps associated to MC particles" << std::endl;
+        LogInfo << " Number of SimIDEs: " << simidestree->GetEntries() << std::endl;
         for (Long64_t i = 0; i < simidestree->GetEntries(); ++i) {
             simidestree->GetEntry(i);
-        
-            // see trackID and find the correspondent TrueParticle
-            // if the trackID is not in the true particles, then skip it but print a watning
 
-            // I think that 0 is noise
-            // if (simidestree->GetLeaf("trackID")->GetValue() == 0) {
-            //     continue;
-            // }
-            
-            // find the true particle with the same trackID
-            // if not found, then skip it but print a warning
-            // if found, then add the simide to the true particle
-            // if the trackID is not in the true particles, then skip it but print a warning
-            if (true_particles.size() == 0) {
-                LogWarning << "No true particles in this event" << std::endl;
-                continue;
-            }
-            
-        
             // find the true particle with the same trackID and add the timestamp as min(timestamp, time_start)
             // and max(timestamp, time_end)
-
             bool found = false;
             for (auto& particle : true_particles) {
-                if ( particle.GetEvent() == simidestree->GetLeaf("Event")->GetValue() 
-                    || particle.GetTrackId() == simidestree->GetLeaf("trackID")->GetValue()) 
+                if (particle.GetEvent() == event_number_simides 
+                    || particle.GetTrackId() == trackID) 
                 {
-                    particle.SetTimeStart(std::min(particle.GetTimeStart(), simidestree->GetLeaf("Timestamp")->GetValue()));
-                    particle.SetTimeEnd(std::max(particle.GetTimeEnd(), simidestree->GetLeaf("Timestamp")->GetValue()));
+                    particle.SetTimeStart(std::min(particle.GetTimeStart(), (double)Timestamp));
+                    particle.SetTimeEnd(std::max(particle.GetTimeEnd(), (double)Timestamp));
                     // Add the channels to the list of channels in the true particle
-                    particle.AddChannel(simidestree->GetLeaf("ChannelID")->GetValue());
+                    particle.AddChannel(ChannelID);
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                LogWarning << "TrackID " << simidestree->GetLeaf("trackID")->GetValue() << " not found in true particles." << std::endl;
+                // LogWarning << "TrackID " << trackID << " not found in MC particles." << std::endl;
             }
         } // end of simides, not used anywhere anymore
 
+        // file->Close(); // don't need anymore
+
         // now connect trueparticles to mctruths using the truth_id
-
+        LogInfo << " Connecting MC particles to mctruths, there are " << true_particles.size() << " particles" << std::endl;
+        LogInfo << " There are " << neutrinos.size() << " neutrinos" << std::endl;
         for (auto& particle : true_particles) {
-            // find the mctruth with the same truth_id
-            // if not found, then skip it but print a warning
-            // if found, then add the mctruth to the true particle
-            // if the trackID is not in the true particles, then skip it but print a warning
-            if (particle.GetTruthId() == 0) {
-                continue;
-            }
             
-            // find the true particle with the same trackID and add the timestamp as min(timestamp, time_start)
-            // and max(timestamp, time_end)
-            // if not found, then skip it with no warning. 
-
+            // if a particle  is associated to a neutrino, add the neutrino to the particle
             bool found = false;
             for (auto& neutrino : neutrinos) {
-                if (neutrino.GetEvent() == particle.GetEvent() && neutrino.GetTruthId() == particle.GetTruthId()) {
+                if (neutrino.GetEvent() == particle.GetEvent() 
+                && neutrino.GetTruthId() == particle.GetTruthId()) 
+                {
                     particle.SetNeutrino(&neutrino);
-                    particle.SetGeneratorName("marley");
+                    // particle.SetGeneratorName("marley");
+                    // found = true;
+                    break;
+                }
+            }
+            
+            // associate MC particles to their MC truth
+            for (auto& mc_true_particle : mc_true_particles) {
+                if (mc_true_particle.GetEvent() == particle.GetEvent() 
+                && mc_true_particle.GetTruthId() == particle.GetTruthId()) 
+            {
+                    particle.SetGeneratorName(mc_true_particle.GetGeneratorName());
+                    particle.SetProcess(mc_true_particle.GetProcess());
                     found = true;
                     break;
                 }
             }
-            // if it's not from a neutrino, it is from bkg
-            if (!found){
-                for (auto& mc_true_particle : mc_true_particles) {
-                    if (mc_true_particle.GetEvent() == particle.GetEvent() && mc_true_particle.GetTruthId() == particle.GetTruthId()) {
-                        particle.SetGeneratorName(mc_true_particle.GetGeneratorName());
-                        particle.SetProcess(mc_true_particle.GetProcess());
-                        found = true;
-                        break;
-                    }
-                }
-            }
 
             if (!found) {
-                LogWarning << "TruthID " << particle.GetTruthId() << " not found in true particles." << std::endl;
+                // LogWarning << "TruthID " << particle.GetTruthId() << " not found in MC truths." << std::endl;
             }
         }
-
-        // connect the TPs with the MC truth and MC particles. 
-        // This is done by comparing the time_start to the Timestamp and Channel of the simides. 
-        // Once the connection is done, the simides are connected to MCparticles using the trackID
-        // and then the MC particles to the MCtruths 
-
-        // fix the event, for that event loop over TPs to find the SimIDE using time and channel
-        // then associate the simIde to the MCparticles using the trackid
-        // then associate the MCparticle to the MCtruth
-        // when the mctruth is found, store the variable generator_name and process in the TP
-
-        // just connect simides to mcparticles
-        
-
-        
-
-
-
-
-
     }
     
     // sort the TPs by time
@@ -780,7 +750,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     system(command.c_str());
     // create the root file
     TFile *f = new TFile(root_filename.c_str(), "recreate");
-    TTree *tree = new TTree("tree", "tree");
+    TTree *clusters_tree = new TTree("clusters", "clusters");
     // prepare objects to save the data
     // std::vector<std::vector<int>> matrix;
     // std::vector<TriggerPrimitive> matrix;
@@ -800,19 +770,19 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
 
     // create the branches
     // tree->Branch("matrix", &matrix);
-    tree->Branch("nrows", &nrows);
-    tree->Branch("event", &event);
-    tree->Branch("true_dir_x", &true_dir_x);
-    tree->Branch("true_dir_y", &true_dir_y);
-    tree->Branch("true_dir_z", &true_dir_z);
-    tree->Branch("true_energy", &true_energy);
-    tree->Branch("true_label", &true_label);
-    tree->Branch("reco_pos_x", &reco_pos_x);
-    tree->Branch("reco_pos_y", &reco_pos_y);
-    tree->Branch("reco_pos_z", &reco_pos_z);
-    tree->Branch("min_distance_from_true_pos", &min_distance_from_true_pos);
-    tree->Branch("supernova_tp_fraction", &supernova_tp_fraction);
-    tree->Branch("true_interaction", &true_interaction);
+    clusters_tree->Branch("nrows", &nrows);
+    clusters_tree->Branch("event", &event);
+    clusters_tree->Branch("true_dir_x", &true_dir_x);
+    clusters_tree->Branch("true_dir_y", &true_dir_y);
+    clusters_tree->Branch("true_dir_z", &true_dir_z);
+    clusters_tree->Branch("true_energy", &true_energy);
+    clusters_tree->Branch("true_label", &true_label);
+    clusters_tree->Branch("reco_pos_x", &reco_pos_x);
+    clusters_tree->Branch("reco_pos_y", &reco_pos_y);
+    clusters_tree->Branch("reco_pos_z", &reco_pos_z);
+    clusters_tree->Branch("min_distance_from_true_pos", &min_distance_from_true_pos);
+    clusters_tree->Branch("supernova_tp_fraction", &supernova_tp_fraction);
+    clusters_tree->Branch("true_interaction", &true_interaction);
 
     // fill the tree
     for (auto& g : clusters) {
@@ -830,10 +800,10 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
         min_distance_from_true_pos = g.get_min_distance_from_true_pos();
         supernova_tp_fraction = g.get_supernova_tp_fraction();
         true_interaction = g.get_true_interaction();
-        tree->Fill();
+        clusters_tree->Fill();
     }
     // write the tree
-    tree->Write();
+    clusters_tree->Write();
     f->Close();
 
     return;   
@@ -846,7 +816,7 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
     f = TFile::Open(root_filename.c_str());
     // print the list of objects in the file
     f->ls();
-    TTree *tree = (TTree*)f->Get("tree");
+    TTree *clusters_tree = (TTree*)f->Get("clusters_tree");
     
     // std::vector<TriggerPrimitive> matrix;
     // std::vector<TriggerPrimitive>* matrix_ptr = &matrix;
@@ -866,21 +836,21 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
     int true_interaction;
     // tree->SetBranchAddress("matrix", &matrix_ptr);
     // tree->SetBranchAddress("matrix", &matrix);
-    tree->SetBranchAddress("nrows", &nrows);
-    tree->SetBranchAddress("event", &event);
-    tree->SetBranchAddress("true_dir_x", &true_dir_x);
-    tree->SetBranchAddress("true_dir_y", &true_dir_y);
-    tree->SetBranchAddress("true_dir_z", &true_dir_z);
-    tree->SetBranchAddress("true_energy", &true_energy);
-    tree->SetBranchAddress("true_label", &true_label);
-    tree->SetBranchAddress("reco_pos_x", &reco_pos_x);
-    tree->SetBranchAddress("reco_pos_y", &reco_pos_y);
-    tree->SetBranchAddress("reco_pos_z", &reco_pos_z);
-    tree->SetBranchAddress("min_distance_from_true_pos", &min_distance_from_true_pos);
-    tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
-    tree->SetBranchAddress("true_interaction", &true_interaction);
-    for (int i = 0; i < tree->GetEntries(); i++) {
-        tree->GetEntry(i);
+    clusters_tree->SetBranchAddress("nrows", &nrows);
+    clusters_tree->SetBranchAddress("event", &event);
+    clusters_tree->SetBranchAddress("true_dir_x", &true_dir_x);
+    clusters_tree->SetBranchAddress("true_dir_y", &true_dir_y);
+    clusters_tree->SetBranchAddress("true_dir_z", &true_dir_z);
+    clusters_tree->SetBranchAddress("true_energy", &true_energy);
+    clusters_tree->SetBranchAddress("true_label", &true_label);
+    clusters_tree->SetBranchAddress("reco_pos_x", &reco_pos_x);
+    clusters_tree->SetBranchAddress("reco_pos_y", &reco_pos_y);
+    clusters_tree->SetBranchAddress("reco_pos_z", &reco_pos_z);
+    clusters_tree->SetBranchAddress("min_distance_from_true_pos", &min_distance_from_true_pos);
+    clusters_tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
+    clusters_tree->SetBranchAddress("true_interaction", &true_interaction);
+    for (int i = 0; i < clusters_tree->GetEntries(); i++) {
+        clusters_tree->GetEntry(i);
         // cluster g(matrix);
         // g.set_true_dir({true_dir_x, true_dir_y, true_dir_z});
         // g.set_true_energy(true_energy);
