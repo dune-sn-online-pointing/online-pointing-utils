@@ -7,12 +7,13 @@
 
 
 bool are_compatibles(cluster& c_u, cluster& c_v, cluster& c_x, float radius) {
-    if (int(c_u.get_tps().at(0)->channel/APA::total_channels) != int(c_x.get_tps().at(0)->channel/APA::total_channels)) {
+
+    // check if they come from the same detector
+
+
+    if (!(int(c_u.get_tp(0)->GetDetector()) == int(c_v.get_tp(0)->GetDetector()) && 
+            int(c_u.get_tp(0)->GetDetector()) == int(c_x.get_tp(0)->GetDetector())))
         return false;
-    }
-    if (int(c_v.get_tps().at(0)->channel/APA::total_channels) != int(c_x.get_tps().at(0)->channel/APA::total_channels)) {
-        return false;
-    }
 
     float z = c_x.get_reco_pos()[2];
     float x_sign = c_x.get_reco_pos()[0] > 0 ? 1 : -1;

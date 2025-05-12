@@ -45,6 +45,8 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
             this_interaction = "UNKNOWN"; // not sure TODO
         }
 
+        LogInfo << " For this file, interaction type: " << this_interaction << std::endl;
+
         std::string TPtree_path = "triggerAnaDumpAll/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
         TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
         if (!TPtree) {
@@ -53,6 +55,8 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
         }
         
         tps.reserve(TPtree->GetEntries());
+
+        LogInfo << " Reading tree of TriggerPrimitives" << std::endl;
 
         // Loop over the entries in the tree
         for (Long64_t i = 0; i < TPtree->GetEntries(); ++i) {
@@ -101,7 +105,6 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
         else { 
             LogWarning << " Found no TPs in file " << filename << std::endl;
         }
-        // ++file_idx;
 
         // connect MC truth
         std::string MCtruthtree_path = "triggerAnaDumpAll/mctruths"; 
@@ -283,7 +286,7 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
     // C++ 17 has the parameter std::execution::par that handles parallelization, can try that out TODO
     std::clock_t start_sorting = std::clock();
     std::sort(tps.begin(), tps.end(), [](const TriggerPrimitive& a, const TriggerPrimitive& b) {
-        return a.time_start < b.time_start;
+        return a.GetTimeStart() < b.GetTimeStart();
     });
     std::clock_t end_sorting = std::clock();
     double elapsed_time = double(end_sorting - start_sorting) / CLOCKS_PER_SEC;
@@ -291,78 +294,6 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
     LogInfo << "or " << elapsed_time/60 << " minutes" << std::endl;
 
 }
-
-// std::vector<std::vector<TriggerPrimitive>> file_reader_all_planes(std::vector<std::string> filenames, int supernova_option, int max_events_per_filename) {
-//     std::vector<std::vector<TriggerPrimitive>> tps;
-//     // add three empty vectors for the three planes
-//     tps.push_back(std::vector<TriggerPrimitive>());
-//     tps.push_back(std::vector<TriggerPrimitive>());
-//     tps.push_back(std::vector<TriggerPrimitive>());
-    
-//     std::string line;
-//     int n_events_offset = 0;
-//     int file_idx = 0;
-//     for (auto& filename : filenames) {
-//         // LogInfo << filename << std::endl;
-//         std::ifstream infile(filename);
-//         // read and save the TPs
-//         while (std::getline(infile, line)) {
-
-//             std::istringstream iss(line);
-//             TriggerPrimitive tp;
-//             double val;
-//             while (iss >> val) {
-//                 tp.push_back(val);
-//             }
-//             tp.push_back(file_idx);
-//             if (tp.event>max_events_per_filename) {
-//                 break;
-//             }
-
-
-//             if (supernova_option == 1 && tp[variables_to_index["ptype"]] == 1) {
-//                 tp.event += n_events_offset;
-//                 tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp.event;
-//                 tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp.event;
-//                 tps[tp[variables_to_index["view"]]].push_back(tp);
-//             }   
-//             else if (supernova_option == 2 && tp[variables_to_index["ptype"]] != 1) {
-//                 tp.event += n_events_offset;
-//                 tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp.event;
-//                 tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp.event;
-//                 tps[tp[variables_to_index["view"]]].push_back(tp);
-
-//             }
-//             else if (supernova_option == 0) {
-//                 tp.event += n_events_offset;
-//                 tp[variables_to_index["time_start"]] += EVENTS_OFFSET*tp.event;       
-//                 tp[variables_to_index["time_peak"]] += EVENTS_OFFSET*tp.event;
-//                 tps[tp[variables_to_index["view"]]].push_back(tp);
-//             }
-//         }
-//         if (tps.size() > 0){
-//             if (tps[0][tps[0].size()-1].event != n_events_offset) {
-//                 // LogInfo << "File Works" << std::endl;
-//             }
-//             else {
-//                 LogError << "Considering the event offset, no TPs found in " << filename << std::endl;
-//             }
-//             n_events_offset = std::max(tps[0][tps[0].size()-1].event, std::max(tps[1][tps[1].size()-1].event, tps[2][tps[2].size()-1].event));
-//         }
-//         else {
-//             LogError << "No TPs found in " << filename << std::endl;
-//         }
-//         ++file_idx;
-//     }
-//         // sort the TPs by time
-//     for (int i = 0; i < 3; i++) {
-//         std::sort(tps[i].begin(), tps[i].end(), [](const TriggerPrimitive& a, const TriggerPrimitive& b) {
-//             return a[0] < b[0];
-//         });
-//     }
-
-//     return tps;
-// }
 
 // PBC is periodic boundary condition
 bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit) {
@@ -403,11 +334,16 @@ bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit) {
 }
 
 // TODO optimize and refactor this function
+// TODO add number to save fraction of TPs removed with the cut
 std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
+    
+    LogInfo << "Creating clusters from TPs" << std::endl;
+
     std::vector<std::vector<TriggerPrimitive*>> buffer;
     std::vector<cluster> clusters;
     for (auto& tp : all_tps) {
         if (buffer.size() == 0) {
+            LogInfo << "Buffer empty, creating it" << std::endl;
             std::vector<TriggerPrimitive*> temp;
             temp.push_back(tp);
             buffer.push_back(temp);
@@ -420,16 +356,16 @@ std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int t
             int idx_appended;
             for (auto& candidate : buffer_copy) {
                 // get a the max containing the times of the TPs in the candidate
-                float max_time = 0;
+                double  max_time = 0;
                 for (auto& tp2 : candidate) {
-                    max_time = std::max(max_time,(tp2->time_start + tp2->samples_over_threshold * TPC_sample_length));
+                    max_time = std::max(max_time,(tp2->GetTimeStart() + tp2->GetSamplesOverThreshold() * TPC_sample_length));
                 }
-                bool time_cond = (tp->time_start - max_time) <= ticks_limit;
+                bool time_cond = (tp->GetTimeStart() - max_time) <= ticks_limit;
                 if (time_cond) {
                     bool chan_cond = false;
                     for (auto& tp2 : candidate) {
-                        if (channel_condition_with_pbc(tp->channel, tp2->channel, channel_limit)) {
-                        // if (std::abs(tp->channel - tp2.channel) <= channel_limit) {
+                        if (channel_condition_with_pbc(tp->GetDetectorChannel(), tp2->GetDetectorChannel(), channel_limit)) {
+                        // if (std::abs(tp->GetDetectorChannel() - tp2.channel) <= channel_limit) {
                             chan_cond = true;
                             break;
                         }
@@ -458,7 +394,7 @@ std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int t
                     if (candidate.size() >= min_tps_to_cluster) {
                         int adc_integral = 0;
                         for (auto& tp2 : candidate) {
-                            adc_integral += tp2->adc_integral;
+                            adc_integral += tp2->GetAdcIntegral();
                         }
                         if (adc_integral > adc_integral_cut) {
                             cluster g(candidate);
@@ -479,11 +415,12 @@ std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int t
             if (candidate.size() >= min_tps_to_cluster) {
                 int adc_integral = 0;
                 for (auto& tp : candidate) {
-                    adc_integral += tp->adc_integral;
+                    adc_integral += tp->GetAdcIntegral();
                 }
                 if (adc_integral > adc_integral_cut) {
                     cluster g(candidate);
                     clusters.push_back(g);
+                    LogInfo << "Cluster size: " << candidate.size() << std::endl;
                 }
             }
         }
@@ -492,119 +429,94 @@ std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int t
     return clusters;
 }
 
-// create a map connectig the file index to the true x y z
-std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> filenames) {
-    std::map<int, std::vector<float>> file_idx_to_true_xyz;
-    std::string line;
-    float true_x;
-    float true_y;
-    float true_z;
-    int n_events_offset = 0;
-    int file_idx = 0;
-    for (auto& filename : filenames) {
-        std::ifstream infile(filename);
-        // get the number between the last underscore and the .txt extension
-        // Find the last underscore
-        size_t lastUnderscorePos = filename.rfind('_');
-
-        // Find the position of ".txt"
-        size_t txtExtensionPos = filename.find(".txt");
-        std::string new_filename = "";
-        // Extract the number between the last underscore and ".txt"
-        if (lastUnderscorePos != std::string::npos && txtExtensionPos != std::string::npos) {
-            std::string numberStr = filename.substr(lastUnderscorePos + 1, txtExtensionPos - lastUnderscorePos - 1);
-
-        // split the filename by / and change the last element to this_custom_direction.txt
-        std::vector<std::string> split_filename;
-        std::string delimiter = "/";
-        size_t pos = 0;
-        std::string token;
-        while ((pos = filename.find(delimiter)) != std::string::npos) {
-            token = filename.substr(0, pos);
-            split_filename.push_back(token);
-            filename.erase(0, pos + delimiter.length());
-        }
-        split_filename.push_back("customDirection_" + numberStr + ".txt");
-        
-        for (auto& split : split_filename) {
-            new_filename += split + "/";
-        }
-        new_filename.pop_back();
-        // LogInfo << new_filename << std::endl;
-        // check if the file exists      
-        }
-        else{
-            LogError << "Could not find underscore or .txt extension in the given string." << std::endl;
-        }
-        infile = std::ifstream(new_filename);
-        if (!infile.good()) {
-            LogInfo<<new_filename<<std::endl;
-            LogInfo << "Direction file does not exist" << std::endl;
-            file_idx_to_true_xyz[file_idx] = {0, 0, 0};
-        }
-        else {
-        // This is to account for the fact that the file might have more than 3 lines
-        std::vector<float> all_directions;
-        while (std::getline(infile, line)) {
-            std::istringstream iss(line);
-            iss = std::istringstream(line);
-            float val;
-            iss >> val;
-            all_directions.push_back(val);
-        }
-        true_x = all_directions[all_directions.size()-3];
-        true_y = all_directions[all_directions.size()-2];
-        true_z = all_directions[all_directions.size()-1];
-
-        // LogInfo << true_x << " " << true_y << " " << true_z << std::endl;
-        file_idx_to_true_xyz[file_idx] = {true_x, true_y, true_z};
-        }
-        ++file_idx;
-    }
-
-    return file_idx_to_true_xyz;
-}
-
-// std::map<int, int> file_idx_to_true_interaction(std::vector<std::string> filenames) {
-//     std::map<int, int> file_idx_to_true_interaction;
+// create a map connectig the file index to the true x y z TODO remove
+// std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> filenames) {
+//     std::map<int, std::vector<float>> file_idx_to_true_xyz;
 //     std::string line;
+//     float true_x;
+//     float true_y;
+//     float true_z;
 //     int n_events_offset = 0;
 //     int file_idx = 0;
 //     for (auto& filename : filenames) {
 //         std::ifstream infile(filename);
-//         // check if CC or ES are included into the file name
-//         if (filename.find("CC") != std::string::npos) {
-//             file_idx_to_true_interaction[file_idx] = 0;
+//         // get the number between the last underscore and the .txt extension
+//         // Find the last underscore
+//         size_t lastUnderscorePos = filename.rfind('_');
+
+//         // Find the position of ".txt"
+//         size_t txtExtensionPos = filename.find(".txt");
+//         std::string new_filename = "";
+//         // Extract the number between the last underscore and ".txt"
+//         if (lastUnderscorePos != std::string::npos && txtExtensionPos != std::string::npos) {
+//             std::string numberStr = filename.substr(lastUnderscorePos + 1, txtExtensionPos - lastUnderscorePos - 1);
+
+//         // split the filename by / and change the last element to this_custom_direction.txt
+//         std::vector<std::string> split_filename;
+//         std::string delimiter = "/";
+//         size_t pos = 0;
+//         std::string token;
+//         while ((pos = filename.find(delimiter)) != std::string::npos) {
+//             token = filename.substr(0, pos);
+//             split_filename.push_back(token);
+//             filename.erase(0, pos + delimiter.length());
 //         }
-//         else if (filename.find("ES") != std::string::npos) {
-//             file_idx_to_true_interaction[file_idx] = 1;
+//         split_filename.push_back("customDirection_" + numberStr + ".txt");
+        
+//         for (auto& split : split_filename) {
+//             new_filename += split + "/";
+//         }
+//         new_filename.pop_back();
+//         // LogInfo << new_filename << std::endl;
+//         // check if the file exists      
+//         }
+//         else{
+//             LogError << "Could not find underscore or .txt extension in the given string." << std::endl;
+//         }
+//         infile = std::ifstream(new_filename);
+//         if (!infile.good()) {
+//             LogInfo<<new_filename<<std::endl;
+//             LogInfo << "Direction file does not exist" << std::endl;
+//             file_idx_to_true_xyz[file_idx] = {0, 0, 0};
 //         }
 //         else {
-//             LogInfo << filename << std::endl;
-//             LogError << "Could not find CC or ES in the given string." << std::endl;
-//             file_idx_to_true_interaction[file_idx] = -1;
+//         // This is to account for the fact that the file might have more than 3 lines
+//         std::vector<float> all_directions;
+//         while (std::getline(infile, line)) {
+//             std::istringstream iss(line);
+//             iss = std::istringstream(line);
+//             float val;
+//             iss >> val;
+//             all_directions.push_back(val);
+//         }
+//         true_x = all_directions[all_directions.size()-3];
+//         true_y = all_directions[all_directions.size()-2];
+//         true_z = all_directions[all_directions.size()-1];
+
+//         // LogInfo << true_x << " " << true_y << " " << true_z << std::endl;
+//         file_idx_to_true_xyz[file_idx] = {true_x, true_y, true_z};
 //         }
 //         ++file_idx;
 //     }
 
-//     return file_idx_to_true_interaction;
+//     return file_idx_to_true_xyz;
 // }
 
 std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
     int best_idx = INT_MAX;
 
     std::vector<cluster> main_tracks;
-    int event = clusters[0].get_tp(0)->event;
+    int event = clusters[0].get_tp(0)->GetEvent();
 
     for (int index = 0; index < clusters.size(); index++) {
-        if (clusters[index].get_tp(0)->event != event) {
+        if (clusters[index].get_tp(0)->GetEvent() != event) {
             if (best_idx < clusters.size() ){
                 if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
                     main_tracks.push_back(clusters[best_idx]);
                 }
             }
 
-            event = clusters[index].get_tp(0)->event;
+            event = clusters[index].get_tp(0)->GetEvent();
             if (clusters[index].get_true_label() == 1){
                 best_idx = index;
             }
@@ -637,17 +549,17 @@ std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters) { // val
 std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
     int best_idx = INT_MAX;
     std::vector<int> bad_idx_list;
-    int event = clusters[0].get_tp(0)->event;
+    int event = clusters[0].get_tp(0)->GetEvent();
 
     for (int index = 0; index < clusters.size(); index++) {
-        if (clusters[index].get_tp(0)->event != event) {
+        if (clusters[index].get_tp(0)->GetEvent() != event) {
             if (best_idx < clusters.size() ){
                 if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
                     bad_idx_list.push_back(best_idx);                    
                 }
             }
 
-            event = clusters[index].get_tp(0)->event;
+            event = clusters[index].get_tp(0)->GetEvent();
             if (clusters[index].get_true_label() == 1){
                 best_idx = index;
             }
@@ -688,60 +600,60 @@ std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // 
     return blips;
 }
 
-void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int new_label) {
-    int best_idx = INT_MAX;
-    int event = clusters[0].get_tp(0)->event;
-    std::vector<int> bad_event_list;
-    for (int index = 0; index < clusters.size(); index++) {
-        if (clusters[index].get_tp(0)->event != event) {
-            if (best_idx < clusters.size() ){
-                if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
-                    clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
-                }
-                else{
-                    bad_event_list.push_back(event);
-                }
-            }
+// void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int new_label) {
+//     int best_idx = INT_MAX;
+//     int event = clusters[0].get_tp(0)->GetEvent();
+//     std::vector<int> bad_event_list;
+//     for (int index = 0; index < clusters.size(); index++) {
+//         if (clusters[index].get_tp(0)->GetEvent() != event) {
+//             if (best_idx < clusters.size() ){
+//                 if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+//                     clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
+//                 }
+//                 else{
+//                     bad_event_list.push_back(event);
+//                 }
+//             }
 
-            event = clusters[index].get_tp(0)->event;
-            if (clusters[index].get_true_label() == 1){
-                best_idx = index;
-            }
-            else {
-                best_idx = INT_MAX;
-            }
-        }
-        else {
-            if (best_idx < clusters.size() ){
-                if (clusters[index].get_true_label() == 1 and clusters[index].get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos()){
-                    best_idx = index;
-                }
-            }
-            else {
-                if (clusters[index].get_true_label() == 1){
-                    best_idx = index;
-                }
-            }
-        }
-    }
-    if (best_idx < clusters.size() ){
-        if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
-            clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
-        }
-        else{
-            bad_event_list.push_back(event);
-        }
-    }
+//             event = clusters[index].get_tp(0)->GetEvent();
+//             if (clusters[index].get_true_label() == 1){
+//                 best_idx = index;
+//             }
+//             else {
+//                 best_idx = INT_MAX;
+//             }
+//         }
+//         else {
+//             if (best_idx < clusters.size() ){
+//                 if (clusters[index].get_true_label() == 1 and clusters[index].get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos()){
+//                     best_idx = index;
+//                 }
+//             }
+//             else {
+//                 if (clusters[index].get_true_label() == 1){
+//                     best_idx = index;
+//                 }
+//             }
+//         }
+//     }
+//     if (best_idx < clusters.size() ){
+//         if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+//             clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
+//         }
+//         else{
+//             bad_event_list.push_back(event);
+//         }
+//     }
 
-    LogInfo << "Number of bad events: " << bad_event_list.size() << std::endl;
+//     LogInfo << "Number of bad events: " << bad_event_list.size() << std::endl;
 
-    for (int i=0; i<clusters.size(); i++) {
-        if ((std::find(bad_event_list.begin(), bad_event_list.end(), clusters[i].get_tp(0)->event) != bad_event_list.end()) and clusters[i].get_true_label() == 1) {
-            clusters[i].set_true_label(new_label);
-        }
-    }
+//     for (int i=0; i<clusters.size(); i++) {
+//         if ((std::find(bad_event_list.begin(), bad_event_list.end(), clusters[i].get_tp(0)->GetEvent()) != bad_event_list.end()) and clusters[i].get_true_label() == 1) {
+//             clusters[i].set_true_label(new_label);
+//         }
+//     }
 
-}
+// }
 
 void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_filename) {
     // create folder if it does not exist
@@ -749,28 +661,38 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     std::string command = "mkdir -p " + folder;
     system(command.c_str());
     // create the root file
-    TFile *f = new TFile(root_filename.c_str(), "recreate");
+    TFile *clusters_file = new TFile(root_filename.c_str(), "recreate");
     TTree *clusters_tree = new TTree("clusters", "clusters");
     // prepare objects to save the data
     // std::vector<std::vector<int>> matrix;
     // std::vector<TriggerPrimitive> matrix;
-    int nrows;
+    // int nrows;
     int event;
     float true_dir_x;
     float true_dir_y;
     float true_dir_z;
     float true_energy;
-    int true_label;
+    std::string true_label;
+    std::string true_interaction;
     int reco_pos_x; 
     int reco_pos_y;
     int reco_pos_z;
     float min_distance_from_true_pos;
     float supernova_tp_fraction;
-    int true_interaction;
+    double total_charge;
+    double total_energy;    
+    int conversion_factor;
+    
+    // TP information
+    std::vector <int> tp_detector_channel;
+    std::vector <int> tp_detector;
+    std::vector <int> tp_samples_over_threshold;
+    std::vector <int> tp_time_start;
+    std::vector <int> tp_samples_to_peak;
+    std::vector <int> tp_adc_peak;
+    std::vector <int> tp_adc_integral;
 
     // create the branches
-    // tree->Branch("matrix", &matrix);
-    clusters_tree->Branch("nrows", &nrows);
     clusters_tree->Branch("event", &event);
     clusters_tree->Branch("true_dir_x", &true_dir_x);
     clusters_tree->Branch("true_dir_y", &true_dir_y);
@@ -783,12 +705,24 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     clusters_tree->Branch("min_distance_from_true_pos", &min_distance_from_true_pos);
     clusters_tree->Branch("supernova_tp_fraction", &supernova_tp_fraction);
     clusters_tree->Branch("true_interaction", &true_interaction);
+    clusters_tree->Branch("total_charge", &total_charge);
+    clusters_tree->Branch("total_energy", &total_energy);
+    clusters_tree->Branch("conversion_factor", &conversion_factor);
+
+
+    clusters_tree->Branch("tp_detector_channel", &tp_detector_channel);
+    clusters_tree->Branch("tp_detector", &tp_detector);
+    clusters_tree->Branch("tp_samples_over_threshold", &tp_samples_over_threshold);
+    clusters_tree->Branch("tp_time_start", &tp_time_start);
+    clusters_tree->Branch("tp_samples_to_peak", &tp_samples_to_peak);
+    clusters_tree->Branch("tp_adc_peak", &tp_adc_peak);
+    clusters_tree->Branch("tp_samples_to_peak", &tp_samples_to_peak);
+    clusters_tree->Branch("tp_adc_integral", &tp_adc_integral);
+    
 
     // fill the tree
     for (auto& g : clusters) {
-        // matrix = g.get_tps();
-        nrows = g.get_size();
-        event = g.get_tp(0)->event;
+        event = g.get_event();
         true_dir_x = g.get_true_dir()[0];
         true_dir_y = g.get_true_dir()[1];
         true_dir_z = g.get_true_dir()[2];
@@ -800,11 +734,34 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
         min_distance_from_true_pos = g.get_min_distance_from_true_pos();
         supernova_tp_fraction = g.get_supernova_tp_fraction();
         true_interaction = g.get_true_interaction();
+        total_charge = g.get_total_charge();
+        total_energy = g.get_total_energy();
+        conversion_factor = adc_to_energy_conversion_factor; // should be in settings, still keep as metadata
+        // TODO create different tree for metadata? Currently in filename
+
+        tp_detector_channel.clear();
+        tp_detector.clear();
+        tp_samples_over_threshold.clear();
+        tp_time_start.clear();
+        tp_samples_to_peak.clear();
+        tp_adc_peak.clear();
+        tp_samples_to_peak.clear();
+        tp_adc_integral.clear();
+        for (auto& tp : g.get_tps()) {
+            tp_detector_channel.push_back(tp->GetDetectorChannel());
+            tp_detector.push_back(tp->GetDetector());
+            tp_samples_over_threshold.push_back(tp->GetSamplesOverThreshold());
+            tp_time_start.push_back(tp->GetTimeStart());
+            tp_samples_to_peak.push_back(tp->GetSamplesToPeak());
+            tp_adc_peak.push_back(tp->GetAdcPeak());
+            tp_samples_to_peak.push_back(tp->GetSamplesToPeak());
+            tp_adc_integral.push_back(tp->GetAdcIntegral());
+        }
         clusters_tree->Fill();
     }
     // write the tree
     clusters_tree->Write();
-    f->Close();
+    clusters_file->Close();
 
     return;   
 }
@@ -869,13 +826,13 @@ std::map<int, std::vector<cluster>> create_event_mapping(std::vector<cluster>& c
     std::map<int, std::vector<cluster>> event_mapping;
     for (auto& g : clusters) {
     // check if the event is already in the map
-        if (event_mapping.find(g.get_tp(0)->event) == event_mapping.end()) {
+        if (event_mapping.find(g.get_tp(0)->GetEvent()) == event_mapping.end()) {
             std::vector<cluster> temp;
             temp.push_back(g);
-            event_mapping[g.get_tp(0)->event] = temp;
+            event_mapping[g.get_tp(0)->GetEvent()] = temp;
         }
         else {
-            event_mapping[g.get_tp(0)->event].push_back(g);
+            event_mapping[g.get_tp(0)->GetEvent()].push_back(g);
         }
     }
     return event_mapping;
@@ -885,13 +842,13 @@ std::map<int, std::vector<TriggerPrimitive>> create_background_event_mapping(std
     std::map<int, std::vector<TriggerPrimitive>> event_mapping;
     for (auto& tp : bkg_tps) {
     // check if the event is already in the map
-        if (event_mapping.find(tp.event) == event_mapping.end()) {
+        if (event_mapping.find(tp.GetEvent()) == event_mapping.end()) {
             std::vector<TriggerPrimitive> temp;
             temp.push_back(tp);
-            event_mapping[tp.event] = temp;
+            event_mapping[tp.GetEvent()] = temp;
         }
         else {
-            event_mapping[tp.event].push_back(tp);
+            event_mapping[tp.GetEvent()].push_back(tp);
         }
     }
     return event_mapping;

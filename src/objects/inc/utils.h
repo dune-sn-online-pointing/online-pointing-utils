@@ -53,5 +53,8 @@ static const double apa_width_in_cm = 4.7;
 static const int backtracker_error_margin = 4;
 static const double apa_angular_coeff = tan(apa_angle * M_PI / 180);
 
+// TODO very temporary, these should be configurable parameters
+static const double adc_to_energy_conversion_factor = 250000; // ADC to MeV conversion factor
+static int time_window = 32; // in ticks
 
 #endif // UTILS_H

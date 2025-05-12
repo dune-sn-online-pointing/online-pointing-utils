@@ -13,4 +13,6 @@ bool isTimeCompatible(TrueParticle true_particle, TriggerPrimitive tp, int time_
 
 bool isChannelCompatible (TrueParticle true_particle, TriggerPrimitive tp);
 
+
+
 #endif // FUNCTIONS_H

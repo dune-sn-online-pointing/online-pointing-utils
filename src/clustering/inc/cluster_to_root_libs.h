@@ -28,9 +28,9 @@ bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit);
 std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int ticks_limit=3, int channel_limit=1, int min_tps_to_cluster=1, int adc_integral_cut=0);
 
 // create a map connectig the file index to the true x y z
-std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> filenames);
+// std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> filenames);
 
-std::map<int, int> file_idx_to_true_interaction(std::vector<std::string> filenames);
+// std::map<int, int> file_idx_to_true_interaction(std::vector<std::string> filenames);
 
 // take all the clusters and return only main tracks
 std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters);
@@ -39,7 +39,7 @@ std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters);
 std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters);
 
 // assing a different label to the main tracks
-void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int new_label=77);
+// void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int new_label=77);
 
 // write the clusters to a root file
 void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_filename);

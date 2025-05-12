@@ -72,49 +72,6 @@ int main(int argc, char* argv[]) {
     // start the clock
     std::clock_t start = std::clock();
 
-    // if (plane !=3){ // this means all planes TODO change to a string probably       
-    //     // filename is the name of the file containing the filenames to read
-    //     std::vector<std::string> filenames;
-    //     // read the file containing the filenames and save them in a vector
-    //     std::ifstream infile(filename);
-    //     std::string line;
-    //     LogInfo<<"Opening file: "<< filename << std::endl;
-    //     // read and save the TPs
-    //     while (std::getline(infile, line)) {
-    //         filenames.push_back(line);
-    //     }
-    //     LogInfo << "Number of files: " << filenames.size() << std::endl;
-    //     std::vector<TriggerPrimitive> tps = file_reader(filenames, plane, supernova_option, max_events_per_filename);
-    //     LogInfo << "Number of tps: " << tps.size() << std::endl;
-    //     std::map<int, std::vector<float>> file_idx_to_true_xyz_map;
-    //     if (use_electron_direction == 0) {
-    //         file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
-    //     }
-    //     std::map<int, int> file_idx_to_true_interaction_map = file_idx_to_true_interaction(filenames);
-    //     LogInfo << "XYZ map created" << std::endl;
-    //     // cluster the tps
-    //     std::vector<cluster> clusters = cluster_maker(tps, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut);
-    //     LogInfo << "Number of clusters: " << clusters.size() << std::endl;
-    //     // add true x y z dir 
-        
-    //     std::map<int, std::vector<float>> file_idx_to_true_pos;
-
-    //     for (int i = 0; i < clusters.size(); i++) {
-    //         if (use_electron_direction == 0) {
-    //             clusters[i].set_true_dir(file_idx_to_true_xyz_map[clusters[i].get_tp(0)[clusters[i].get_tp(0).size() - 1]]);
-    //         }
-    //         clusters[i].set_true_interaction(file_idx_to_true_interaction_map[clusters[i].get_tp(0)[clusters[i].get_tp(0).size() - 1]]);
-            
-    //         if (clusters[i].get_true_label() == 1) {
-    //             if (file_idx_to_true_pos.find(clusters[i].get_tp(0)[variables_to_index["event"]]) == file_idx_to_true_pos.end()) {
-    //                 if (clusters[i].get_true_pos()[0] != 0 and clusters[i].get_true_pos()[1] != 0 and clusters[i].get_true_pos()[2] != 0) {
-    //                     file_idx_to_true_pos[clusters[i].get_tp(0)[variables_to_index["event"]]]= clusters[i].get_true_pos();
-    //                 }
-    //             }
-    //         }
-    //     }
-
-
     //     // update the clusters
     //     int errors = 0;
     //     for (int i = 0; i < clusters.size(); i++) {
@@ -132,11 +89,6 @@ int main(int argc, char* argv[]) {
     //             if (new_min > old_min) {
     //                 if (old_pos[0] != 0 and old_pos[1] != 0 and old_pos[2] != 0) {
     //                     errors++;
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     LogInfo << "Errors: " << errors << std::endl;
 
     //     // filter the clusters
     //     if (main_track_option == 1) {
@@ -184,6 +136,7 @@ int main(int argc, char* argv[]) {
         filenames.push_back(line);
     }
     LogInfo << "Number of files: " << filenames.size() << std::endl;
+    
     // TODO: parallelize this
     // std::vector<std::vector<TriggerPrimitive>> tps = file_reader_all_planes(filenames, supernova_option, max_events_per_filename);
     std::vector<TriggerPrimitive> tps;
@@ -192,8 +145,10 @@ int main(int argc, char* argv[]) {
 
     file_reader(filenames, tps, true_particles, neutrinos, supernova_option, max_events_per_filename);
 
+    LogInfo << "Loaded TPs and true particles from file. Number of TPs: " << tps.size() << std::endl;
+
     // connect TPs to the true particles
-    int time_window = 32; // in ticks, TODO move from here
+    LogInfo << "Connecting TPs to true particles" << std::endl;
     for (int i = 0; i < tps.size(); i++) {
         for (int j = 0; j < true_particles.size(); j++) {
             if (tps.at(i).GetEvent() == true_particles.at(j).GetEvent()) {
@@ -227,42 +182,6 @@ int main(int argc, char* argv[]) {
         LogInfo << "Number of clusters in " << views.at(i) << " view: " << clusters_per_view.at(i).size() << std::endl;
     }
         
-
-    // std::map<int, int> file_idx_to_true_interaction_map = file_idx_to_true_interaction(filenames);
-    // LogInfo << "XYZ map created" << std::endl;
-    
-    // LogInfo << "Creating clusters on view U" << std::endl;
-    // std::vector<cluster> clusters_u = cluster_maker(tps_u, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut/4);
-    // LogInfo << "Creating clusters on view V" << std::endl;
-    // std::vector<cluster> clusters_v = cluster_maker(tps_v, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut/4);
-    // LogInfo << "Creating clusters on view X" << std::endl;
-    // std::vector<cluster> clusters_x = cluster_maker(tps_x, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut);
-
-    // LogInfo << "Number of clusters, view U: " << clusters_u.size() << ", V: " << clusters_v.size() << ",X: " << clusters_x.size() << std::endl;
-
-    // add true x y z dir
-    // for (int i = 0; i < clusters_u.size(); i++) {
-    //     if (use_electron_direction == 0) {
-    //         clusters_u[i].set_true_dir(file_idx_to_true_xyz_map[clusters_u[i].get_tp(0)[clusters_u[i].get_tp(0).size() - 1]]);
-    //     }
-
-    //     clusters_u[i].set_true_interaction(file_idx_to_true_interaction_map[clusters_u[i].get_tp(0)[clusters_u[i].get_tp(0).size() - 1]]);
-    // }
-    // for (int i = 0; i < clusters_v.size(); i++) {
-    //     if (use_electron_direction == 0) {
-    //         clusters_v[i].set_true_dir(file_idx_to_true_xyz_map[clusters_v[i].get_tp(0)[clusters_v[i].get_tp(0).size() - 1]]);
-    //     }
-
-    //     clusters_v[i].set_true_interaction(file_idx_to_true_interaction_map[clusters_v[i].get_tp(0)[clusters_v[i].get_tp(0).size() - 1]]);
-    // }
-    // for (int i = 0; i < clusters_x.size(); i++) {
-    //     if (use_electron_direction == 0) {
-    //         clusters_x[i].set_true_dir(file_idx_to_true_xyz_map[clusters_x[i].get_tp(0)[clusters_x[i].get_tp(0).size() - 1]]);
-    //     }
-
-    //     clusters_x[i].set_true_interaction(file_idx_to_true_interaction_map[clusters_x[i].get_tp(0)[clusters_x[i].get_tp(0).size() - 1]]);
-    // }
-
     // filter the clusters
     // if (main_track_option == 1) {
     //     clusters_x = filter_main_tracks(clusters_x);
@@ -271,19 +190,6 @@ int main(int argc, char* argv[]) {
     // }else if (main_track_option == 3) {
     //     assing_different_label_to_main_tracks(clusters_x);
     // }
-
-    // write the clusters to a root file
-    // std::string root_filename_u = outfolder + "/U/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
-    // std::string root_filename_v = outfolder + "/V/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
-    // std::string root_filename_x = outfolder + "/X/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + ".root";
-    // // write_clusters_to_root(clusters_u, root_filename_u);
-    // // write_clusters_to_root(clusters_v, root_filename_v);
-    // // write_clusters_to_root(clusters_x, root_filename_x);
-    // LogInfo << "clusters written to " << root_filename_u << std::endl;
-    // LogInfo << "clusters written to " << root_filename_v << std::endl;
-    // LogInfo << "clusters written to " << root_filename_x << std::endl;
-    // // }
-
 
     // write clusters to root files, 
     // create the root file

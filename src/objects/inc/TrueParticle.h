@@ -94,6 +94,8 @@ class TrueParticle {
 
         // Getters
         int GetEvent() const { return event; }
+        std::vector <float> GetPosition() const { return {x, y, z}; }
+        std::vector <float> GetMomentum() const { return {Px, Py, Pz}; }
         float GetX() const { return x; }
         float GetY() const { return y; }
         float GetZ() const { return z; }
@@ -106,7 +108,12 @@ class TrueParticle {
         std::string GetProcess() const { return process; }
         int GetTrackId() const { return track_id; }
         int GetTruthId() const { return truth_id; }
-        const Neutrino* GetNeutrino() const { return neutrino; }
+        const Neutrino* GetNeutrino() const {
+            if (neutrino == nullptr) {
+                LogWarning << "No neutrino associated to this TrueParticle" << std::endl;
+            }
+            return neutrino;
+        }
         double GetTimeStart() const { return time_start; }
         double GetTimeEnd() const { return time_end; }
         std::vector<int> GetChannels() const { return channels; }
@@ -120,18 +127,18 @@ class TrueParticle {
         };
 
         void Print() const {
-            std::cout << "TrueParticle: " << std::endl;
-            std::cout << "Event: " << event << std::endl;
-            std::cout << "X: " << x << std::endl;
-            std::cout << "Y: " << y << std::endl;
-            std::cout << "Z: " << z << std::endl;
-            std::cout << "Px: " << Px << std::endl;
-            std::cout << "Py: " << Py << std::endl;
-            std::cout << "Pz: " << Pz << std::endl;
-            std::cout << "Energy: " << energy << std::endl;
-            std::cout << "Generator name: " << generator_name << std::endl;
-            std::cout << "Pdg: " << pdg << std::endl;
-            std::cout << "Process: " << process << std::endl;
+            LogInfo << "TrueParticle: " << std::endl;
+            LogInfo << "Event: " << event << std::endl;
+            LogInfo << "X: " << x << std::endl;
+            LogInfo << "Y: " << y << std::endl;
+            LogInfo << "Z: " << z << std::endl;
+            LogInfo << "Px: " << Px << std::endl;
+            LogInfo << "Py: " << Py << std::endl;
+            LogInfo << "Pz: " << Pz << std::endl;
+            LogInfo << "Energy: " << energy << std::endl;
+            LogInfo << "Generator name: " << generator_name << std::endl;
+            LogInfo << "Pdg: " << pdg << std::endl;
+            LogInfo << "Process: " << process << std::endl;
         };
 
     private:

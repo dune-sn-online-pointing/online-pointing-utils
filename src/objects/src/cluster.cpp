@@ -3,102 +3,185 @@
 
 #include "cluster.h"
 
-// std::map<std::string, int> variables_to_index = {
-//     {"time_start", 0},
-//     {"time_over_threshold", 1},
-//     {"time_peak", 2},
-//     {"channel", 3},
-//     {"adc_integral", 4},
-//     {"adc_peak", 5},
-//     {"detid", 6},
-//     {"type", 7},
-//     {"algorithm", 8},
-//     {"version", 9},
-//     {"flag", 10},
-//     {"ptype", 11},
-//     {"Event", 12},
-//     {"view", 13},
-//     {"true_x", 14},
-//     {"true_y", 15},
-//     {"true_z", 16},
-//     {"true_energy", 17},
-//     {"n_electrons", 18},
-//     {"track_id", 19},  
-//     {"electron_energy", 20},
-//     {"true_e_px", 21},
-//     {"true_e_py", 22},
-//     {"true_e_pz", 23}
-// };
 
+
+// class cluster  
+
+cluster::cluster(std::vector<TriggerPrimitive*> tps) : tps_(tps) { 
+    // check that all tps come from same event
+    // check that all tps come from same view
+
+    if (tps_.size() == 0) {
+        LogError << "Cluster has no TPs!" << std::endl;
+        return;
+    }
+
+    int first_event = tps_[0]->GetEvent();
+    std::string first_view = tps_[0]->GetView();
+
+    for (auto& tp : tps_) {
+        if (tp == nullptr) {
+            LogError << "Cluster has null TP!" << std::endl;
+            return;
+        }
+        
+        if (tp->GetEvent() != first_event) {
+            LogError << "Cluster has TPs from different events!" << std::endl;
+            return;
+        }
+
+        if (tp->GetView() != first_view) {
+            LogError << "Cluster has TPs from different views!" << std::endl;
+            return;
+        }
+    }
+
+    update_cluster_info();
+}
+
+// this is in ADC count times ticks
+float cluster::get_total_charge() {
+    float total_charge = 0;
+    for (auto& tp : tps_) {
+        total_charge += tp->GetAdcIntegral();
+    }
+    return total_charge;
+}
+
+float cluster::get_total_energy() {
+    return get_total_charge() / adc_to_energy_conversion_factor;
+}
+
+
+bool cluster::isCleanCluster (){
+    if (tps_.size() == 0) return false;
+    // check if all tps are from the same event
+    int event = tps_[0]->GetEvent();
+    for (int i = 0; i < tps_.size(); i++) {
+        if (tps_.at(i)->GetEvent() != event) {
+            return false;
+        }
+    }
+    // check if all tps are from the same view
+    std::string view = tps_[0]->GetView();
+    for (int i = 0; i < tps_.size(); i++) {
+        if (tps_.at(i)->GetView() != view) {
+            return false;
+        }
+    }
+    // check if all tps are from the same generator
+    std::string generator = tps_[0]->GetTrueParticle()->GetGeneratorName();
+    for (int i = 0; i < tps_.size(); i++) {
+        if (tps_.at(i)->GetTrueParticle()->GetGeneratorName() != generator) {
+            return false;
+        }
+    }
+}
 
 void cluster::update_cluster_info() {
+
+    if (tps_.size() == 0) return; 
+
+    // if all tps are from the same TrueParticle, we can just set the true label straight away, skip  some computing
+    if (isCleanCluster()) {
+        true_label_ = tps_[0]->GetTrueParticle()->GetGeneratorName();
+        if (true_label_ == "marley"){
+            true_interaction_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetInteraction(); // check if ok
+            true_energy_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetEnergy();
+            true_pos_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetPosition();
+            true_dir_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetMomentum();
+            supernova_tp_fraction_ = 1;
+        }
+    }
+    else {
+        // find the most common label
+        std::map<std::string, int> label_count;
+        for (int i = 0; i < tps_.size(); i++) {
+            std::string label = tps_.at(i)->GetTrueParticle()->GetGeneratorName();
+            if (label_count.find(label) == label_count.end()) {
+                label_count[label] = 1;
+            }
+            else {
+                label_count[label]++;
+            }
+        }
+        // find the label with the most counts
+        int max_count = 0;
+        for (auto const& x : label_count) {
+            if (x.second > max_count) {
+                max_count = x.second;
+                true_label_ = x.first;
+            }
+        }
+
+        // if there is at least one marley, set true information
+        if (label_count.find("marley") != label_count.end()) {
+            true_interaction_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetInteraction(); // check if ok
+            true_energy_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetEnergy();
+            true_pos_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetPosition();
+            true_dir_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetMomentum();
+            supernova_tp_fraction_ = 0;
+            // TODO could do better than this
+            for (int i = 0; i < tps_.size(); i++) {
+                if (tps_.at(i)->GetTrueParticle()->GetGeneratorName() == "marley") {
+                    supernova_tp_fraction_++;
+                }
+            }
+            supernova_tp_fraction_ /= tps_.size();
+        }
+    }
+
     // the reconstructed position will be the average of the tps
     // we want to save the minimum distance from the true position
-    // float min_distance = 1000000;
-    // std::vector<float> pos = calculate_position(tps_[0]);
-    // min_distance = sqrt(pow(pos[0] - true_pos_[0], 2) + pow(pos[2] - true_pos_[2], 2));
+    float min_distance = INT_MAX;
+    std::vector<float> pos = calculate_position(tps_[0]); // using first TP
+    // reco_pos_ = pos;
+    min_distance = sqrt(pow(pos[0] - true_pos_[0], 2) + pow(pos[2] - true_pos_[2], 2));
 
-    // float supernova_tp_fraction = 0;
     // float total_charge = 0;
-    // std::vector<float> reco_pos = {0, 0, 0};
-    // int true_label = tps_[0][variables_to_index["ptype"]];
-    // for (int i = 0; i < tps_.size(); i++) {
-    //     total_charge += tps_[i][tp.adc_integral];
-    //     std::vector<float> pos = calculate_position(tps_[i]);
-    //     std::vector<float> true_pos = {float(tps_[i][variables_to_index["true_x"]]), float(tps_[i][variables_to_index["true_y"]]), float(tps_[i][variables_to_index["true_z"]])};
-    //     // std::vector<int> true_pos = {tps_[i][variables_to_index["true_x"]], tps_[i][variables_to_index["true_y"]], tps_[i][variables_to_index["true_z"]]};
-    //     float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[2] - true_pos[2], 2));
-    //     // float distance = sqrt(pow(pos[0] - true_pos[0], 2) + pow(pos[1] - true_pos[1], 2) + pow(pos[2] - true_pos[2], 2));
-    //     if (distance < min_distance and tps_[i][variables_to_index["ptype"]] == 1) {
-    //         if (true_pos[0] != 0 and true_pos[1] != 0 and true_pos[2] != 0) {
-    //             min_distance = distance;
-    //             true_pos_ = true_pos;
-    //             true_energy_ = tps_[i][variables_to_index["true_energy"]];
-    //         }
-    //     }
-    //     if (tps_[i][variables_to_index["ptype"]] == 1) {
-    //         supernova_tp_fraction++;
-    //     }
+    std::vector<float> reco_pos = {0, 0, 0};
+    for (int i = 0; i < tps_.size(); i++) {
+        // total_charge += tps_.at(i)[tp.adc_integral];
+        std::vector<float> pos = calculate_position(tps_.at(i));
+        std::vector<float> true_pos = tps_.at(i)->GetTrueParticle()->GetPosition();
+        float distance = vectorDistance(pos, true_pos);
+        if (distance < min_distance ) {
+            if (true_pos != std::vector<float>{0, 0, 0}) {
+                min_distance = distance;
+                // true_pos_ = true_pos;
+            }
+        }
 
-    //     reco_pos[0] += pos[0];
-    //     reco_pos[1] += pos[1];
-    //     reco_pos[2] += pos[2];
-    //     if (tps_[i][variables_to_index["ptype"]] != true_label) {
-    //         true_label = -1;
-    //         if (supernova_tp_fraction > 0) {
-    //             true_label = 1;
-    //         }
-    //     }
-    // }
+        reco_pos[0] += pos[0];
+        reco_pos[1] += pos[1];
+        reco_pos[2] += pos[2];
+    }
+    reco_pos[0] /= get_number_of_tps();
+    reco_pos[1] /= get_number_of_tps();
+    reco_pos[2] /= get_number_of_tps();
+    reco_pos_ = reco_pos;
 
-    // supernova_tp_fraction_ = supernova_tp_fraction / tps_.size();
-    // min_distance_from_true_pos_ = min_distance;
+    min_distance_from_true_pos_ = min_distance;
     // total_charge_ = total_charge;
-    // int ntps = tps_.size();
-    // reco_pos[0] /= ntps;
-    // reco_pos[1] /= ntps;
-    // reco_pos[2] /= ntps;
-    // reco_pos_ = reco_pos;
-    // true_label_ = true_label;
-    // if (tps_[0].size() >= variables_to_index["true_e_pz"]) {
-    //     true_dir_ = {tps_[0][variables_to_index["true_e_px"]], tps_[0][variables_to_index["true_e_py"]], tps_[0][variables_to_index["true_e_pz"]]};
-    // }
 }
 
 
 std::vector<float> calculate_position(TriggerPrimitive* tp) { // only works for plane X
-    float z;
-    if (tp->view == "X") {
-        float z_apa_offset = int(tp->channel) / (APA::total_channels*2) * (apa_lenght_in_cm + offset_between_apa_in_cm);
-        float z_channel_offset = ((int(tp->channel) % APA::total_channels - 1600) % 480) * wire_pitch_in_cm_collection;
-        z = wire_pitch_in_cm_collection + z_apa_offset + z_channel_offset;
-    } else {
-        z = 0;
-    }
 
-    float y = 0;
-    float x_signs = ((int(tp->channel) % APA::total_channels-2080<0) ? -1 : 1);
-    float x = ((int(tp->time_start) % EVENTS_OFFSET )* time_tick_in_cm + apa_width_in_cm/2) * x_signs; // check this TODO
+    // from the channel  we can know which side of the APA we are
+    float x_signs = (int(tp->GetDetectorChannel()) % APA::total_channels < (APA::induction_channels * 2 + APA::collection_channels)) ? -1.0f : 1.0f;
+    float x = ((int(tp->GetTimeStart()) ) * time_tick_in_cm + apa_width_in_cm/2) * x_signs; 
+
+    float y = 0; // need to combine views to compute
+
+    float z = 0; // can't easily compute for induction at this stage
+    if (tp->GetView() == "X") {
+        // the 2 here is because the first 2 APAs are one on top of the other, so they have the same z
+        float z_apa_offset = int( tp->GetDetector() / 2 ) * (apa_lenght_in_cm + offset_between_apa_in_cm);
+        // half of collection wires on each side
+        float z_channel_offset = ((int(tp->GetDetectorChannel()) - APA::induction_channels*2) % APA::collection_channels/2) * wire_pitch_in_cm_collection;
+        z = wire_pitch_in_cm_collection + z_apa_offset + z_channel_offset;
+    } 
 
     return {x, y, z};
 }
@@ -113,6 +196,8 @@ std::vector<std::vector<float>> validate_position_calculation(std::vector<Trigge
     return positions;
 }
 
+
+// TODO remove?
 float distance(cluster cluster1, cluster cluster2) {
     float x1 = cluster1.get_reco_pos()[0];
     float y1 = cluster1.get_reco_pos()[1];
@@ -124,69 +209,69 @@ float distance(cluster cluster1, cluster cluster2) {
 }
 
 float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive> tps, float z, float x_sign) {
-    z = z - int(tps.at(0).channel) / (APA::total_channels*2) * (apa_lenght_in_cm + offset_between_apa_in_cm); // not sure about the 0 TODO
+    z = z - int(tps.at(0).GetDetectorChannel()) / (APA::total_channels*2) * (apa_lenght_in_cm + offset_between_apa_in_cm); // not sure about the 0 TODO
     float ordinate;
     std::vector<float> Y_pred;
     for (auto& tp : tps) {
-        if ((int(tp.channel) / APA::total_channels) % 2 == 0) {
+        if ((int(tp.GetDetectorChannel()) / APA::total_channels) % 2 == 0) {
             if (x_sign < 0) {
-                if (int(tp.channel) % APA::total_channels < 400) {
-                    if (z > (int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction + backtracker_error_margin) {
-                        float until_turn = (int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction;
+                if (int(tp.GetDetectorChannel()) % APA::total_channels < 400) {
+                    if (z > (int(tp.GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction + backtracker_error_margin) {
+                        float until_turn = (int(tp.GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = apa_lenght_in_cm - z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = ((int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
+                        ordinate = ((int(tp.GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
                     }
-                } else if (int(tp.channel) % APA::total_channels > 399) {
-                    ordinate = (apa_lenght_in_cm - z + (int(tp.channel) % APA::total_channels - 400) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp.GetDetectorChannel()) % APA::total_channels > 399) {
+                    ordinate = (apa_lenght_in_cm - z + (int(tp.GetDetectorChannel()) % APA::total_channels - 400) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             } else if (x_sign > 0) {
-                if (int(tp.channel) % APA::total_channels > 399) {
-                    if (z < (799 - int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction - backtracker_error_margin) {
-                        float until_turn = (int(tp.channel) % APA::total_channels - 400) * wire_pitch_in_cm_induction;
+                if (int(tp.GetDetectorChannel()) % APA::total_channels > 399) {
+                    if (z < (799 - int(tp.GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction - backtracker_error_margin) {
+                        float until_turn = (int(tp.GetDetectorChannel()) % APA::total_channels - 400) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = (z - (799 - int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                        ordinate = (z - (799 - int(tp.GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                     }
-                } else if (int(tp.channel) % APA::total_channels < 400) {
-                    ordinate = (z + (int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp.GetDetectorChannel()) % APA::total_channels < 400) {
+                    ordinate = (z + (int(tp.GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             }
-        } else if ((int(tp.channel) / APA::total_channels) % 2 == 1) {
+        } else if ((int(tp.GetDetectorChannel()) / APA::total_channels) % 2 == 1) {
             if (x_sign < 0) {
-                if (int(tp.channel) % APA::total_channels < 400) {
-                    if (z < (399 - int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction - backtracker_error_margin) {
-                        float until_turn = (int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction;
+                if (int(tp.GetDetectorChannel()) % APA::total_channels < 400) {
+                    if (z < (399 - int(tp.GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction - backtracker_error_margin) {
+                        float until_turn = (int(tp.GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = (z - (399 - int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                        ordinate = (z - (399 - int(tp.GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                     }
-                } else if (int(tp.channel) % APA::total_channels > 399) {
-                    ordinate = (z + (int(tp.channel) % APA::total_channels - 400) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp.GetDetectorChannel()) % APA::total_channels > 399) {
+                    ordinate = (z + (int(tp.GetDetectorChannel()) % APA::total_channels - 400) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             } else if (x_sign > 0) {
-                if (int(tp.channel) % APA::total_channels > 399) {
-                    if (z > (int(tp.channel) % APA::total_channels - 400) * wire_pitch_in_cm_induction + backtracker_error_margin) {
-                        float until_turn = (int(tp.channel) % APA::total_channels - 400) * wire_pitch_in_cm_induction;
+                if (int(tp.GetDetectorChannel()) % APA::total_channels > 399) {
+                    if (z > (int(tp.GetDetectorChannel()) % APA::total_channels - 400) * wire_pitch_in_cm_induction + backtracker_error_margin) {
+                        float until_turn = (int(tp.GetDetectorChannel()) % APA::total_channels - 400) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = apa_lenght_in_cm - z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = ((int(tp.channel) % APA::total_channels - 400) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
+                        ordinate = ((int(tp.GetDetectorChannel()) % APA::total_channels - 400) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
                     }
-                } else if (int(tp.channel) % APA::total_channels < 400) {
-                    ordinate = (apa_lenght_in_cm - z + (int(tp.channel) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp.GetDetectorChannel()) % APA::total_channels < 400) {
+                    ordinate = (apa_lenght_in_cm - z + (int(tp.GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             }
         }
         // ordinate = (ordinate) - apa_height_in_cm if (tp[idx['channel']] / APA::total_channels) % 2 < 1 else apa_height_in_cm - (ordinate);
-        if ((int(tp.channel) / APA::total_channels) % 2 < 1) {
+        if ((int(tp.GetDetectorChannel()) / APA::total_channels) % 2 < 1) {
             ordinate = (ordinate) - apa_height_in_cm;
         } else {
             ordinate = apa_height_in_cm - (ordinate);
@@ -206,68 +291,68 @@ float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive> tps, float z, float
 
 float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign) {
     
-    z = z - int(tps.at(0)->channel) / (APA::total_channels*2) * (apa_lenght_in_cm + offset_between_apa_in_cm);
+    z = z - int(tps.at(0)->GetDetectorChannel()) / (APA::total_channels*2) * (apa_lenght_in_cm + offset_between_apa_in_cm);
     float ordinate;
     std::vector<float> Y_pred;
     for (auto& tp : tps) {
-        if ((int(tp->channel) / APA::total_channels) % 2 == 0) {
+        if ((int(tp->GetDetectorChannel()) / APA::total_channels) % 2 == 0) {
             if (x_sign < 0) {
-                if (int(tp->channel) % APA::total_channels < 1200) {
-                    if (z < (1199 - int(tp->channel) % APA::total_channels) * wire_pitch_in_cm_induction - backtracker_error_margin) {
-                        float until_turn = (int(tp->channel) % APA::total_channels - 800) * wire_pitch_in_cm_induction;
+                if (int(tp->GetDetectorChannel()) % APA::total_channels < 1200) {
+                    if (z < (1199 - int(tp->GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction - backtracker_error_margin) {
+                        float until_turn = (int(tp->GetDetectorChannel()) % APA::total_channels - 800) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = (z - (1199 - int(tp->channel) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                        ordinate = (z - (1199 - int(tp->GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                     }
-                } else if (int(tp->channel) % APA::total_channels > 1199) {
-                    ordinate = (z + (int(tp->channel) % APA::total_channels - 1200) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp->GetDetectorChannel()) % APA::total_channels > 1199) {
+                    ordinate = (z + (int(tp->GetDetectorChannel()) % APA::total_channels - 1200) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             } else if (x_sign > 0) {
-                if (int(tp->channel) % APA::total_channels > 1199) {
-                    if (z > (int(tp->channel) % APA::total_channels - 1200) * wire_pitch_in_cm_induction + backtracker_error_margin) {
-                        float until_turn = (int(tp->channel) % APA::total_channels - 1200) * wire_pitch_in_cm_induction;
+                if (int(tp->GetDetectorChannel()) % APA::total_channels > 1199) {
+                    if (z > (int(tp->GetDetectorChannel()) % APA::total_channels - 1200) * wire_pitch_in_cm_induction + backtracker_error_margin) {
+                        float until_turn = (int(tp->GetDetectorChannel()) % APA::total_channels - 1200) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = apa_lenght_in_cm - z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = ((int(tp->channel) % APA::total_channels - 1200) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
+                        ordinate = ((int(tp->GetDetectorChannel()) % APA::total_channels - 1200) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
                     }
-                } else if (int(tp->channel) % APA::total_channels < 1200) {
-                    ordinate = (apa_lenght_in_cm - z + (int(tp->channel) % APA::total_channels - 800) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp->GetDetectorChannel()) % APA::total_channels < 1200) {
+                    ordinate = (apa_lenght_in_cm - z + (int(tp->GetDetectorChannel()) % APA::total_channels - 800) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             } 
-        } else if ((int(tp->channel) / APA::total_channels) % 2 == 1) {
+        } else if ((int(tp->GetDetectorChannel()) / APA::total_channels) % 2 == 1) {
             if (x_sign < 0) {
-                if (int(tp->channel) % APA::total_channels < 1200) {
-                    if (z > (int(tp->channel) % APA::total_channels - 800) * wire_pitch_in_cm_induction + backtracker_error_margin) {
-                        float until_turn = (int(tp->channel) % APA::total_channels - 800) * wire_pitch_in_cm_induction;
+                if (int(tp->GetDetectorChannel()) % APA::total_channels < 1200) {
+                    if (z > (int(tp->GetDetectorChannel()) % APA::total_channels - 800) * wire_pitch_in_cm_induction + backtracker_error_margin) {
+                        float until_turn = (int(tp->GetDetectorChannel()) % APA::total_channels - 800) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = apa_lenght_in_cm - z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = ((int(tp->channel) % APA::total_channels - 800) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
+                        ordinate = ((int(tp->GetDetectorChannel()) % APA::total_channels - 800) * wire_pitch_in_cm_induction - z) * apa_angular_coeff;
                     }
-                } else if (int(tp->channel) % APA::total_channels > 1199) {
-                    ordinate = (apa_lenght_in_cm - z + (int(tp->channel) % APA::total_channels - 1200) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp->GetDetectorChannel()) % APA::total_channels > 1199) {
+                    ordinate = (apa_lenght_in_cm - z + (int(tp->GetDetectorChannel()) % APA::total_channels - 1200) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             } else if (x_sign > 0) {
-                if (int(tp->channel) % APA::total_channels > 1199) {
-                    if (z < (1599 - int(tp->channel) % APA::total_channels) * wire_pitch_in_cm_induction - backtracker_error_margin) {
-                        float until_turn = (int(tp->channel) % APA::total_channels - 1200) * wire_pitch_in_cm_induction;
+                if (int(tp->GetDetectorChannel()) % APA::total_channels > 1199) {
+                    if (z < (1599 - int(tp->GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction - backtracker_error_margin) {
+                        float until_turn = (int(tp->GetDetectorChannel()) % APA::total_channels - 1200) * wire_pitch_in_cm_induction;
                         float all_the_way_behind = apa_lenght_in_cm;
                         float the_last_piece = z;
                         ordinate = (until_turn + all_the_way_behind + the_last_piece) * apa_angular_coeff;
                     } else {
-                        ordinate = (z - (1599 - int(tp->channel) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                        ordinate = (z - (1599 - int(tp->GetDetectorChannel()) % APA::total_channels) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                     }
-                } else if (int(tp->channel) % APA::total_channels < 1200) {
-                    ordinate = (z + (int(tp->channel) % APA::total_channels - 800) * wire_pitch_in_cm_induction) * apa_angular_coeff;
+                } else if (int(tp->GetDetectorChannel()) % APA::total_channels < 1200) {
+                    ordinate = (z + (int(tp->GetDetectorChannel()) % APA::total_channels - 800) * wire_pitch_in_cm_induction) * apa_angular_coeff;
                 }
             }
         }
-        if ((int(tp->channel) / APA::total_channels) % 2 < 1) {
+        if ((int(tp->GetDetectorChannel()) / APA::total_channels) % 2 < 1) {
             ordinate = (ordinate) - apa_height_in_cm;
         } else {
             ordinate = apa_height_in_cm - (ordinate);
@@ -284,3 +369,10 @@ float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitive*> tps, float z, floa
 
     return Y_pred_mean;
 }
+
+
+
+
+float vectorDistance(std::vector<float> a, std::vector<float> b){
+    return sqrt(pow(a[0] - b[0], 2) + pow(a[1] - b[1], 2) + pow(a[2] - b[2], 2));
+};

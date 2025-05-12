@@ -65,6 +65,8 @@ class Neutrino {
         // Getters
         int GetEvent() const { return event; }
         std::string GetInteraction() const { return interaction; }
+        std::vector <float> GetPosition() const { return {x, y, z}; }
+        std::vector <float> GetMomentum() const { return {Px, Py, Pz}; }
         float GetX() const { return x; }
         float GetY() const { return y; }
         float GetZ() const { return z; }

@@ -7,7 +7,7 @@ void getPrimitivesForView(
     std::vector<TriggerPrimitive*>& tps_per_view) 
 {
     for (auto & tp : tps)
-        if (tp.view == view)
+        if (tp.GetView() == view)
             tps_per_view.push_back(&tp);
 };
 
