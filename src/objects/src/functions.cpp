@@ -11,18 +11,19 @@ void getPrimitivesForView(
             tps_per_view.push_back(&tp);
 };
 
-bool isTimeCompatible(TrueParticle true_particle, TriggerPrimitive tp, int time_window){
+bool isTimeCompatible(TrueParticle* true_particle, TriggerPrimitive* tp, int time_window){
     
-    if (tp.GetTimeStart() < true_particle.GetTimeEnd() + time_window 
-        && tp.GetTimeStart() > true_particle.GetTimeStart() - time_window) {
+    if (tp->GetTimeStart() < true_particle->GetTimeEnd() + time_window 
+        && tp->GetTimeStart() > true_particle->GetTimeStart() - time_window) {
+        // LogInfo << "TP is time compatible with true particle, tp time start: " << tp->GetTimeStart() << ", true particle time start: " << true_particle->GetTimeStart() << ", end: " << true_particle->GetTimeEnd() << std::endl;
         return true;
     }
     else 
         return false;   
 
     // // compute the interval going form time_start to time_start + samples_over_threshold
-    // int start_time = tp.GetTimeStart() ;
-    // int end_time = tp.GetTimeStart() + tp.GetSamplesOverThreshold()* TPC_sample_length;
+    // int start_time = tp->GetTimeStart() ;
+    // int end_time = tp->GetTimeStart() + tp->GetSamplesOverThreshold()* TPC_sample_length;
     
     // if (tueP_start_time >= (start_time - time_window) && tueP_start_time <= (end_time  + time_window) ) // this is very loose, think  again in case
     //     return true;
@@ -32,10 +33,20 @@ bool isTimeCompatible(TrueParticle true_particle, TriggerPrimitive tp, int time_
 };
 
 
-bool isChannelCompatible (TrueParticle true_particle, TriggerPrimitive tp){
+bool isChannelCompatible (TrueParticle* true_particle, TriggerPrimitive* tp){
     // check if the channel of the tp is in the vector of channels of the true particle
-    if (std::find(true_particle.GetChannels().begin(), true_particle.GetChannels().end(), tp.GetDetectorChannel()) != true_particle.GetChannels().end()) {
-        return true;
+    // note that here we need the Channel of the true particle, not the detector channel
+    // if (std::find(true_particle->GetChannels().begin(), true_particle->GetChannels().end(), tp->GetChannel()) != true_particle->GetChannels().end()) {
+    //     // LogInfo << "TP is detector " << tp->GetDetector() << ", channel " << tp->GetDetectorChannel() << ", true particle has channels list ";
+    //     // for (auto& channel : true_particle->GetChannels()) {
+    //     //     LogInfo << channel << " ";
+    //     // }
+    //     // LogInfo << std::endl;
+    //     return true;
+    // }
+
+    if (true_particle->GetChannels().count(tp->GetChannel())) {
+       return true; 
     }
     else {
         return false;

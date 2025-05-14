@@ -32,6 +32,7 @@ class TriggerPrimitive {
                 LogError << "Channel out of range: " << ch << "! Critical, stopping execution.\n"; 
                 throw std::runtime_error("Channel out of range: ");
             }
+            // LogInfo << "Set view to: " << view_ << std::endl;
         }
 
         // Getters
@@ -41,6 +42,7 @@ class TriggerPrimitive {
         std::string GetView() const     { return view_; }
         int GetDetector()                   const { return detector_; }
         int GetDetectorChannel()            const { return detector_channel_; }
+        int GetChannel()                    const { return channel_; } // this is the original channel for larsoft
         int GetEvent()                      const { return event_; }
         uint64_t GetSamplesOverThreshold()  const { return samples_over_threshold_; }
         uint64_t GetSamplesToPeak()         const { return samples_to_peak_; }
@@ -74,12 +76,27 @@ class TriggerPrimitive {
                     LogWarning("TriggerPrimitive version is not 2, be sure to have converted time_peak to samples_to_peak");
                 });
             }
-            
+
             detector_channel_ = channel_ % APA::total_channels;
             detector_ = channel_ / APA::total_channels;
-
             SetView(detector_channel_);
             // LogInfo << "TriggerPrimitive created with channel: " << channel_ << ", detector: " << detector_ << ", view: " << view_ << std::endl;
+        }
+
+        // Methods
+        void Print() const {
+            LogInfo << "TriggerPrimitive: " << std::endl;
+            LogInfo << "  event: " << event_ << std::endl;
+            LogInfo << "  version: " << version_ << std::endl;
+            LogInfo << "  channel: " << channel_ << std::endl;
+            LogInfo << "  samples_over_threshold: " << samples_over_threshold_ << std::endl;
+            LogInfo << "  time_start: " << time_start_ << std::endl;
+            LogInfo << "  samples_to_peak: " << samples_to_peak_ << std::endl;
+            LogInfo << "  adc_integral: " << adc_integral_ << std::endl;
+            LogInfo << "  adc_peak: " << adc_peak_ << std::endl;
+            LogInfo << "  detector: " << detector_ << std::endl;
+            LogInfo << "  detector_channel: " << detector_channel_ << std::endl;
+            LogInfo << "  view: " << view_ << std::endl;
         }
 
     private:

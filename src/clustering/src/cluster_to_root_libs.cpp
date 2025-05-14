@@ -6,12 +6,15 @@
 #include <sstream>
 #include <climits>
 
+// #include <TLeaf.h>
+
 #include "cluster_to_root_libs.h"
 #include "cluster.h"
 #include "TriggerPrimitive.hpp"
 // #include "position_calculator.h"
 
 #include "Logger.h"
+#include "GenericToolbox.Utils.h"
 
 LoggerInit([]{
     Logger::getUserHeader() << "[" << FILENAME << "]";
@@ -47,39 +50,58 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
 
         LogInfo << " For this file, interaction type: " << this_interaction << std::endl;
 
-        std::string TPtree_path = "triggerAnaDumpAll/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
+        std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
         TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
         if (!TPtree) {
             LogError << " Tree not found: " << TPtree_path << std::endl;
-            return;
+            continue; // can still go to next file
         }
         
-        tps.reserve(TPtree->GetEntries());
+        
+        tps.reserve(TPtree->GetEntries());  
+
+        UShort_t this_version = 0;
+        uint64_t this_time_start = 0;
+        Int_t this_channel = 0;
+        UInt_t this_adc_integral = 0;
+        UShort_t this_adc_peak = 0;
+        UShort_t this_detid = 0;
+        int this_event_number = 0;
+        TPtree->SetBranchAddress("version", &this_version);
+        TPtree->SetBranchAddress("time_start", &this_time_start);
+        TPtree->SetBranchAddress("channel", &this_channel);
+        TPtree->SetBranchAddress("adc_integral", &this_adc_integral);
+        TPtree->SetBranchAddress("adc_peak", &this_adc_peak);
+        TPtree->SetBranchAddress("detid", &this_detid);
+        TPtree->SetBranchAddress("Event", &this_event_number);
+        
+        // For version 1
+        uint64_t this_time_over_threshold = 0;
+        uint64_t this_time_peak = 0;
+        TPtree->SetBranchAddress("time_over_threshold", &this_time_over_threshold);
+        TPtree->SetBranchAddress("time_peak", &this_time_peak);
+
+        // For version 2
+        uint64_t this_samples_over_threshold = 0;
+        uint64_t this_samples_to_peak = 0;
+        TPtree->SetBranchAddress("samples_over_threshold", &this_samples_over_threshold);
+        TPtree->SetBranchAddress("samples_to_peak", &this_samples_to_peak);
+        
+        LogInfo << "  If the TOT or peak branches are not found, it is because the TPs are not that version" << std::endl;
 
         LogInfo << " Reading tree of TriggerPrimitives" << std::endl;
 
         // Loop over the entries in the tree
         for (Long64_t i = 0; i < TPtree->GetEntries(); ++i) {
             TPtree->GetEntry(i);
-        
-            // Fill the TriggerPrimitive object with data from the tree
-            // this is a bit verbose, but gives more clarity
-            uint64_t this_version = TPtree->GetLeaf("version")->GetValue(); 
-            uint64_t this_time_start = TPtree->GetLeaf("time_start")->GetValue();
-            uint64_t this_channel = TPtree->GetLeaf("channel")->GetValue();
-            uint64_t this_adc_integral = TPtree->GetLeaf("adc_integral")->GetValue();
-            uint64_t this_adc_peak = TPtree->GetLeaf("adc_peak")->GetValue();
-            uint64_t this_detid = TPtree->GetLeaf("detid")->GetValue();
-            uint64_t this_samples_over_threshold = 0;
-            uint64_t this_samples_to_peak = 0;
-            if (this_version == 1) {
-                this_samples_over_threshold = (TPtree->GetLeaf("time_over_threshold")->GetValue() )/ TPC_sample_length;
-                this_samples_to_peak = (TPtree->GetLeaf("time_peak")->GetValue() - this_time_start )/ TPC_sample_length;
+
+            // in v1 the variables were different, so adapt to version 2
+            if (this_version == 1){
+                int clock_to_TPC_ticks = 32; // TODO move to namespace
+                this_samples_over_threshold = (this_time_over_threshold / clock_to_TPC_ticks); // converting from clock to TPC ticks TODO better
+                this_samples_to_peak = (this_time_peak - this_time_start ) / clock_to_TPC_ticks;    // converting from clock to TPC ticks TODO better
             }
-            else if (this_version == 2) {
-                this_samples_over_threshold = TPtree->GetLeaf("samples_over_threshold")->GetValue();
-                this_samples_to_peak = TPtree->GetLeaf("samples_to_peak")->GetValue();
-            }
+
             // skipping flag (useless), type, and algorithm (dropped from TP v2)
             
             TriggerPrimitive this_tp = TriggerPrimitive(
@@ -93,21 +115,85 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
                 this_adc_integral,
                 this_adc_peak
             );
+            this_tp.SetEvent(this_event_number);
             
             tps.emplace_back(this_tp); // add to collection of TPs
         }
         
-
-        
-        if (tps.size() > 0){
+        if (tps.size() > 0)
             LogInfo << " Found " << tps.size() << " TPs in file " << filename << std::endl;
-        }
-        else { 
+        else 
             LogWarning << " Found no TPs in file " << filename << std::endl;
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////
+        // Read mcparticles (geant)
+
+        std::string MCparticlestree_path = "triggerAnaDumpTPs/mcparticles";
+        TTree *MCparticlestree = dynamic_cast<TTree*>(file->Get(MCparticlestree_path.c_str()));
+        if (!MCparticlestree) {
+            LogError << "Tree not found: " << MCparticlestree_path << std::endl;
+            return;
         }
 
-        // connect MC truth
-        std::string MCtruthtree_path = "triggerAnaDumpAll/mctruths"; 
+        // we will have as many true particles as entries in this tree, 
+        // including both geant and gen particles
+        true_particles.reserve(MCparticlestree->GetEntries());
+
+        std::map<int, std::vector<int>> truthId_to_mcparticleIdx;
+        std::string* generator_name = new std::string();
+        
+        // TODO tidy up this mess
+        Double_t x = 0.0, y = 0.0, z = 0.0;
+        Double_t px = 0.0, py = 0.0, pz = 0.0;
+        Double_t energy = 0.0;
+        int pdg = 0, event = 0, block_id = 0, track_id = 0;
+        int truth_id = 0;
+
+        std::string* process = new std::string();
+        MCparticlestree->SetBranchAddress("process", &process);
+        MCparticlestree->SetBranchAddress("generator_name", &generator_name);
+        MCparticlestree->SetBranchAddress("x", &x);
+        MCparticlestree->SetBranchAddress("y", &y);
+        MCparticlestree->SetBranchAddress("z", &z);
+        MCparticlestree->SetBranchAddress("Px", &px);
+        MCparticlestree->SetBranchAddress("Py", &py);
+        MCparticlestree->SetBranchAddress("Pz", &pz);
+        MCparticlestree->SetBranchAddress("en", &energy);
+        MCparticlestree->SetBranchAddress("pdg", &pdg);
+        MCparticlestree->SetBranchAddress("Event", &event);
+        // MCparticlestree->SetBranchAddress("block_id", &block_id);
+        MCparticlestree->SetBranchAddress("track_id", &track_id);
+        MCparticlestree->SetBranchAddress("truth_id", &truth_id);
+
+
+        for (Long64_t i = 0; i < MCparticlestree->GetEntries(); ++i) {
+            MCparticlestree->GetEntry(i);
+            
+            true_particles.emplace_back( TrueParticle(
+                event,
+                x,
+                y,
+                z,
+                px,
+                py,
+                pz,
+                energy*1e3, // converting to MeV
+                *generator_name,
+                pdg,
+                *process,
+                track_id,
+                truth_id
+            ));
+
+            // truthId_to_mcparticleIdx[truth_id].push_back(i);
+
+            // true_particles.back().Print();
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+        // Read MC truth
+
+        std::string MCtruthtree_path = "triggerAnaDumpTPs/mctruths"; 
         TTree *MCtruthtree = dynamic_cast<TTree*>(file->Get(MCtruthtree_path.c_str()));
         if (!MCtruthtree) {
             LogError << " Tree not found: " << MCtruthtree_path << std::endl;
@@ -118,91 +204,67 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
         // associating to the final true particles 
         std::vector <TrueParticle> mc_true_particles; 
         
-        LogInfo << " Reading tree of MCtruths" << std::endl;
+        LogInfo << " Reading tree of MCtruths, there are " << MCtruthtree->GetEntries() << " entries" << std::endl;
 
+        MCtruthtree->SetBranchAddress("generator_name", &generator_name);
+        MCtruthtree->SetBranchAddress("x", &x);
+        MCtruthtree->SetBranchAddress("y", &y);
+        MCtruthtree->SetBranchAddress("z", &z);
+        MCtruthtree->SetBranchAddress("Px", &px);
+        MCtruthtree->SetBranchAddress("Py", &py);
+        MCtruthtree->SetBranchAddress("Pz", &pz);
+        MCtruthtree->SetBranchAddress("en", &energy);
+        MCtruthtree->SetBranchAddress("pdg", &pdg);
+        MCtruthtree->SetBranchAddress("Event", &event);
+        MCtruthtree->SetBranchAddress("block_id", &block_id);
+        
         for (Long64_t i = 0; i < MCtruthtree->GetEntries(); ++i) {
             
             MCtruthtree->GetEntry(i);
 
-            // print all variables 
-            // MCtruthtree->Print();
-            // std::cout << "Printing entry " << i << std::endl;
-            // std::cout << MCtruthtree->GetLeaf("Event")->GetValue() << " "
-            //         //   << MCtruthtree->GetLeaf("x")->GetValue() << " "
-            //         //   << MCtruthtree->GetLeaf("y")->GetValue() << " "
-            //         //   << MCtruthtree->GetLeaf("z")->GetValue() << " "
-            //         //   << MCtruthtree->GetLeaf("Px")->GetValue() << " "
-            //         //   << MCtruthtree->GetLeaf("Py")->GetValue() << " "
-            //         //   << MCtruthtree->GetLeaf("Pz")->GetValue() << " "
-            //           <<" PDG: " << MCtruthtree->GetLeaf("pdg")->GetValue() << " "
-            //           << " EN: "<< MCtruthtree->GetLeaf("en")->GetValue() << " GEN: "
-            //           << std::string(static_cast<const char*>(MCtruthtree->GetLeaf("generator_name")->GetValuePointer())) << std::endl;
+
+            // neutrinos.reserve(MCtruthtree->GetEntries());
+
+            // LogInfo << "  Generator is " << *generator_name << std::endl;
             
-            neutrinos.reserve(MCtruthtree->GetEntries());
-            
-            if (MCtruthtree->GetLeaf("pdg")->GetValue() == PDG::nue) { 
+            if ( pdg == PDG::nue) { 
+                // LogInfo << "This is a nu_e" << std::endl;
                 // Add to the vector of Neutrinos
                 neutrinos.emplace_back(Neutrino(
-                    MCtruthtree->GetLeaf("Event")->GetValue(),
+                    event,
                     this_interaction,
-                    MCtruthtree->GetLeaf("x")->GetValue(),
-                    MCtruthtree->GetLeaf("y")->GetValue(),
-                    MCtruthtree->GetLeaf("z")->GetValue(),
-                    MCtruthtree->GetLeaf("Px")->GetValue(),
-                    MCtruthtree->GetLeaf("Py")->GetValue(),
-                    MCtruthtree->GetLeaf("Pz")->GetValue(),
-                    MCtruthtree->GetLeaf("en")->GetValue()*1e3, // converting to MeV
-                    MCtruthtree->GetLeaf("block_id")->GetValue()
+                    x,
+                    y,
+                    z,
+                    px,
+                    py,
+                    pz,
+                    energy*1e3, // converting to MeV
+                    block_id
                 ));
+                
             }
             else { // particles from neutrino interaction or backgrounds
+                // LogInfo << " Found a true particle with generator " << *generator_name << std::endl;
                 mc_true_particles.emplace_back(
                     TrueParticle(
-                        MCtruthtree->GetLeaf("Event")->GetValue(),
-                        static_cast<const char*>(MCtruthtree->GetLeaf("generator_name")->GetValuePointer()),
-                        MCtruthtree->GetLeaf("block_id")->GetValue()
+                        event,
+                        // std::string(static_cast<const char*>(MCtruthtree->GetLeaf("generator_name")->GetValuePointer())),
+                        *generator_name,
+                        block_id
                     )
                 );
             }
         }
 
-        LogInfo << " Loaded all  MC truths" << std::endl;
+        LogInfo << " Loaded all  MC truths, there are " << mc_true_particles.size() << " true particles" << std::endl;
+        LogInfo << " Loaded all  neutrinos, there are " << neutrinos.size() << " neutrinos" << std::endl;
         
-        // read mcparticles (geant)
-        std::string MCparticlestree_path = "triggerAnaDumpAll/mcparticles"; // TODO make flexible for 1x2x6 and maybe else
-        TTree *MCparticlestree = dynamic_cast<TTree*>(file->Get(MCparticlestree_path.c_str()));
-        if (!MCparticlestree) {
-            LogError << "Tree not found: " << MCparticlestree_path << std::endl;
-            return;
-        }
-
-        // we will have as many true particles as entries in this tree, 
-        // including both geant and gen particles
-        true_particles.reserve(MCparticlestree->GetEntries());
-        for (Long64_t i = 0; i < MCparticlestree->GetEntries(); ++i) {
-            MCparticlestree->GetEntry(i);
-            
-            true_particles.emplace_back( TrueParticle(
-                MCparticlestree->GetLeaf("Event")->GetValue(),
-                MCparticlestree->GetLeaf("x")->GetValue(),
-                MCparticlestree->GetLeaf("y")->GetValue(),
-                MCparticlestree->GetLeaf("z")->GetValue(),
-                MCparticlestree->GetLeaf("Px")->GetValue(),
-                MCparticlestree->GetLeaf("Py")->GetValue(),
-                MCparticlestree->GetLeaf("Pz")->GetValue(),
-                MCparticlestree->GetLeaf("en")->GetValue()*1e3, // converting to MeV
-                std::string(static_cast<const char*>(MCparticlestree->GetLeaf("generator_name")->GetValuePointer())),
-                MCparticlestree->GetLeaf("pdg")->GetValue(),
-                std::string(static_cast<const char*>(MCparticlestree->GetLeaf("process")->GetValuePointer())),
-                MCparticlestree->GetLeaf("track_id")->GetValue(),
-                MCparticlestree->GetLeaf("truth_id")->GetValue()
-            ));
-
-            // true_particles.back().Print();
-        }
         
-        // now read simides, used to find the channel and time and later associate TPs to MCparticles 
-        std::string simidestree_path = "triggerAnaDumpAll/simides"; 
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+        // Read simides, used to find the channel and time and later associate TPs to MCparticles 
+
+        std::string simidestree_path = "triggerAnaDumpTPs/simides"; 
         TTree *simidestree = dynamic_cast<TTree*>(file->Get(simidestree_path.c_str()));
         if (!simidestree) {
             LogError << "Tree not found: " << simidestree_path << std::endl;
@@ -212,7 +274,7 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
         Int_t event_number_simides;
         UInt_t ChannelID;
         UShort_t Timestamp;
-        Float_t trackID;
+        Int_t trackID;
 
         simidestree->SetBranchAddress("Event", &event_number_simides);
         simidestree->SetBranchAddress("ChannelID", &ChannelID);
@@ -221,21 +283,29 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
 
         LogInfo << " Reading tree of SimIDEs to find channels and timestamps associated to MC particles" << std::endl;
         LogInfo << " Number of SimIDEs: " << simidestree->GetEntries() << std::endl;
+
+        int match_count = 0;
         for (Long64_t i = 0; i < simidestree->GetEntries(); ++i) {
             simidestree->GetEntry(i);
+            if (i % 10000 == 0)
+                GenericToolbox::displayProgressBar(i, simidestree->GetEntries(), "Matching SimIDEs to true particles...");
 
             // find the true particle with the same trackID and add the timestamp as min(timestamp, time_start)
             // and max(timestamp, time_end)
             bool found = false;
             for (auto& particle : true_particles) {
                 if (particle.GetEvent() == event_number_simides 
-                    || particle.GetTrackId() == trackID) 
+                    && particle.GetTrackId() == trackID) 
                 {
+                    // LogInfo << "Track id " << trackID << " found in true particle having trackID " << particle.GetTrackId() << std::endl;
+                    // LogInfo << "  ChannelID: " << ChannelID << std::endl;
+                    // LogInfo << "  Timestamp: " << Timestamp << std::endl;
                     particle.SetTimeStart(std::min(particle.GetTimeStart(), (double)Timestamp));
                     particle.SetTimeEnd(std::max(particle.GetTimeEnd(), (double)Timestamp));
                     // Add the channels to the list of channels in the true particle
                     particle.AddChannel(ChannelID);
                     found = true;
+                    match_count++;
                     break;
                 }
             }
@@ -244,22 +314,27 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
             }
         } // end of simides, not used anywhere anymore
 
-        // file->Close(); // don't need anymore
+        LogInfo << " Matched " << float(match_count)/simidestree->GetEntries()*100. << "% SimIDEs to true particles" << std::endl;
 
-        // now connect trueparticles to mctruths using the truth_id
+        file->Close(); // don't need anymore
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+        // Connect trueparticles to mctruths using the truth_id
+
         LogInfo << " Connecting MC particles to mctruths, there are " << true_particles.size() << " particles" << std::endl;
         LogInfo << " There are " << neutrinos.size() << " neutrinos" << std::endl;
-        for (auto& particle : true_particles) {
-            
+        
+        for (auto& particle : true_particles) {    
             // if a particle  is associated to a neutrino, add the neutrino to the particle
             bool found = false;
             for (auto& neutrino : neutrinos) {
                 if (neutrino.GetEvent() == particle.GetEvent() 
                 && neutrino.GetTruthId() == particle.GetTruthId()) 
                 {
+                    // LogInfo << " This particle comes from a neutrino" << std::endl;
                     particle.SetNeutrino(&neutrino);
                     // particle.SetGeneratorName("marley");
-                    // found = true;
+                    found = true;
                     break;
                 }
             }
@@ -269,15 +344,17 @@ void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitiv
                 if (mc_true_particle.GetEvent() == particle.GetEvent() 
                 && mc_true_particle.GetTruthId() == particle.GetTruthId()) 
             {
+                    // LogInfo << " Found a match, generator name: " << mc_true_particle.GetGeneratorName() << std::endl;
                     particle.SetGeneratorName(mc_true_particle.GetGeneratorName());
                     particle.SetProcess(mc_true_particle.GetProcess());
                     found = true;
+                    // LogInfo << "Found a match for truth ID " << particle.GetTruthId() << std::endl;
                     break;
                 }
             }
 
             if (!found) {
-                // LogWarning << "TruthID " << particle.GetTruthId() << " not found in MC truths." << std::endl;
+                LogWarning << "TruthID " << particle.GetTruthId() << " not found in MC truths." << std::endl;
             }
         }
     }
@@ -325,8 +402,8 @@ bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit) {
         return true;
     }
     else if (diff >= n_chan - channel_limit) {
-        LogInfo << "chan with PCB!" << std::endl;
-        LogInfo << int(ch1) << " " << int(ch2) << std::endl;
+        // LogInfo << "chan with PCB!" << std::endl;
+        // LogInfo << int(ch1) << " " << int(ch2) << std::endl;
         // LogInfo << ch1 << " " << ch2 << std::endl;
         return true;
     }
@@ -336,81 +413,75 @@ bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit) {
 // TODO optimize and refactor this function
 // TODO add number to save fraction of TPs removed with the cut
 std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
-    
     LogInfo << "Creating clusters from TPs" << std::endl;
 
     std::vector<std::vector<TriggerPrimitive*>> buffer;
     std::vector<cluster> clusters;
+
+    int last_event_number = -1, first_event_number = 1;
+    // Loop over all TPs
     for (auto& tp : all_tps) {
-        if (buffer.size() == 0) {
-            LogInfo << "Buffer empty, creating it" << std::endl;
-            std::vector<TriggerPrimitive*> temp;
-            temp.push_back(tp);
-            buffer.push_back(temp);
-        }
-        else {
-            std::vector<std::vector<TriggerPrimitive*>> buffer_copy = buffer;
-            buffer.clear();
+
+        if (tp->GetEvent() <= first_event_number) 
+            first_event_number = tp->GetEvent();
+
+        if (tp->GetEvent() > last_event_number) 
+            last_event_number = tp->GetEvent();
+    }
+
+    LogInfo << "First event number: " << first_event_number << std::endl;
+    LogInfo << "Last event number: " << last_event_number << std::endl;
+
+    // one event at the time, for online can do things differently
+    for (int event = first_event_number; event <= last_event_number; event++) {
+        LogInfo << "Processing event: " << event << std::endl;
+
+        // Reset the buffer for each event
+        buffer.clear();
+
+        for (int iTP = 0; iTP < all_tps.size(); iTP++) {
+            TriggerPrimitive* tp = all_tps.at(iTP);
+            
+            // GenericToolbox::displayProgressBar(iTP, all_tps.size(), "Clustering...");
+            
+            if (tp->GetEvent() != event) continue;
+            
+            // TODO add verbode mode
+            // LogInfo << "Processing TP: " << tp->GetTimeStart() << " " << tp->GetDetectorChannel() << std::endl;
+            // tp->Print();
+
             bool appended = false;
-            int idx = 0;
-            int idx_appended;
-            for (auto& candidate : buffer_copy) {
-                // get a the max containing the times of the TPs in the candidate
-                double  max_time = 0;
+
+            for (auto& candidate : buffer) {
+                // Calculate the maximum time in the current candidate
+                double max_time = 0;
                 for (auto& tp2 : candidate) {
-                    max_time = std::max(max_time,(tp2->GetTimeStart() + tp2->GetSamplesOverThreshold() * TPC_sample_length));
+                    max_time = std::max(max_time, tp2->GetTimeStart() + tp2->GetSamplesOverThreshold() * TPC_sample_length);
                 }
-                bool time_cond = (tp->GetTimeStart() - max_time) <= ticks_limit;
-                if (time_cond) {
-                    bool chan_cond = false;
+
+                // Check time and channel conditions
+                if ((tp->GetTimeStart() - max_time) <= ticks_limit) {
                     for (auto& tp2 : candidate) {
                         if (channel_condition_with_pbc(tp->GetDetectorChannel(), tp2->GetDetectorChannel(), channel_limit)) {
-                        // if (std::abs(tp->GetDetectorChannel() - tp2.channel) <= channel_limit) {
-                            chan_cond = true;
+                            candidate.push_back(tp);
+                            appended = true;
+                            // LogInfo << "Appended TP to candidate cluster" << std::endl;
                             break;
                         }
                     }
-                    if (chan_cond) {
-                        // LogInfo << "chan" << std::endl;
-                        if (!appended) {
-                            candidate.push_back(tp);
-                            buffer.push_back(candidate);
-                            appended = true;
-                            idx_appended = idx;
-                            // LogInfo << "appended" << std::endl;
-                        }
-                        else {
-                            for (auto& tp2 : candidate) {
-                                buffer[idx_appended].push_back(tp2);
-                            }
-                        }
-                    }
-                    else {
-                        buffer.push_back(candidate);
-                        ++idx;
-                    }
-                }
-                else {
-                    if (candidate.size() >= min_tps_to_cluster) {
-                        int adc_integral = 0;
-                        for (auto& tp2 : candidate) {
-                            adc_integral += tp2->GetAdcIntegral();
-                        }
-                        if (adc_integral > adc_integral_cut) {
-                            cluster g(candidate);
-                            clusters.push_back(g);
-                        }
-                    }
+                    if (appended) break;
+                    // LogInfo << "Not appended to candidate cluster" << std::endl;
                 }
             }
+
+            // If not appended to any candidate, create a new cluster in the buffer
             if (!appended) {
-                std::vector<TriggerPrimitive*> temp;
-                temp.push_back(tp);
-                buffer.push_back(temp);
+                // LogInfo << "Creating new candidate cluster" << std::endl;
+                buffer.push_back({tp});
             }
         }
-    }
-    if (buffer.size() > 0) {
+
+        // Process remaining candidates in the buffer
         for (auto& candidate : buffer) {
             if (candidate.size() >= min_tps_to_cluster) {
                 int adc_integral = 0;
@@ -418,12 +489,17 @@ std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int t
                     adc_integral += tp->GetAdcIntegral();
                 }
                 if (adc_integral > adc_integral_cut) {
-                    cluster g(candidate);
-                    clusters.push_back(g);
-                    LogInfo << "Cluster size: " << candidate.size() << std::endl;
+                    // check validity of tps in candidate
+                    // LogInfo << "Candidate cluster has " << candidate.size() << " TPs" << std::endl;
+                    clusters.emplace_back(cluster(std::move(candidate)));
+                    // LogInfo << "Cluster created with " << clusters.back().get_tps().size() << " TPs" << std::endl;
+                }
+                else {
                 }
             }
         }
+
+        LogInfo << "Finished clustering. Number of clusters: " << clusters.size() << std::endl;
     }
 
     return clusters;
@@ -713,10 +789,9 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     clusters_tree->Branch("tp_detector_channel", &tp_detector_channel);
     clusters_tree->Branch("tp_detector", &tp_detector);
     clusters_tree->Branch("tp_samples_over_threshold", &tp_samples_over_threshold);
+    clusters_tree->Branch("tp_samples_to_peak", &tp_samples_to_peak);
     clusters_tree->Branch("tp_time_start", &tp_time_start);
-    clusters_tree->Branch("tp_samples_to_peak", &tp_samples_to_peak);
     clusters_tree->Branch("tp_adc_peak", &tp_adc_peak);
-    clusters_tree->Branch("tp_samples_to_peak", &tp_samples_to_peak);
     clusters_tree->Branch("tp_adc_integral", &tp_adc_integral);
     
 

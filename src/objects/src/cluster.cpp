@@ -3,38 +3,40 @@
 
 #include "cluster.h"
 
+#include <Logger.h>
 
+LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 // class cluster  
 
-cluster::cluster(std::vector<TriggerPrimitive*> tps) : tps_(tps) { 
+cluster::cluster(std::vector<TriggerPrimitive*> tps) { 
     // check that all tps come from same event
     // check that all tps come from same view
 
-    if (tps_.size() == 0) {
+    if (tps.size() == 0) {
         LogError << "Cluster has no TPs!" << std::endl;
         return;
     }
 
-    int first_event = tps_[0]->GetEvent();
-    std::string first_view = tps_[0]->GetView();
-
-    for (auto& tp : tps_) {
+    for (auto& tp : tps) {
         if (tp == nullptr) {
             LogError << "Cluster has null TP!" << std::endl;
             return;
         }
         
-        if (tp->GetEvent() != first_event) {
+        if (tp->GetEvent() != tps.at(0)->GetEvent()) {
             LogError << "Cluster has TPs from different events!" << std::endl;
             return;
         }
 
-        if (tp->GetView() != first_view) {
+        if (tp->GetView() != tps.at(0)->GetView()) {
             LogError << "Cluster has TPs from different views!" << std::endl;
             return;
         }
     }
+
+    // If all the above was ok, we're good to go
+    tps_ = tps;
 
     update_cluster_info();
 }
@@ -71,11 +73,16 @@ bool cluster::isCleanCluster (){
     }
     // check if all tps are from the same generator
     std::string generator = tps_[0]->GetTrueParticle()->GetGeneratorName();
+    LogInfo << "Generator of first TP: " << generator << std::endl;
     for (int i = 0; i < tps_.size(); i++) {
         if (tps_.at(i)->GetTrueParticle()->GetGeneratorName() != generator) {
+            LogInfo << "Generator of TP " << i << ": " << tps_.at(i)->GetTrueParticle()->GetGeneratorName() << std::endl;
             return false;
         }
     }
+
+    LogInfo << "Cluster is clean" << std::endl;
+    return true;
 }
 
 void cluster::update_cluster_info() {
@@ -84,8 +91,11 @@ void cluster::update_cluster_info() {
 
     // if all tps are from the same TrueParticle, we can just set the true label straight away, skip  some computing
     if (isCleanCluster()) {
+        // LogInfo << "All TPs are from the same TrueParticle, and generator is " << tps_[0]->GetTrueParticle()->GetGeneratorName() << std::endl;
         true_label_ = tps_[0]->GetTrueParticle()->GetGeneratorName();
+        // LogInfo << "True label, meaning generator, of this cluster: " << true_label_ << std::endl;
         if (true_label_ == "marley"){
+            // LogInfo << "This is a pure marley cluster" << std::endl;
             true_interaction_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetInteraction(); // check if ok
             true_energy_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetEnergy();
             true_pos_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetPosition();
@@ -95,6 +105,7 @@ void cluster::update_cluster_info() {
     }
     else {
         // find the most common label
+        // LogInfo << "Not all TPs are from the same TrueParticle, finding the most frequent one" << std::endl;
         std::map<std::string, int> label_count;
         for (int i = 0; i < tps_.size(); i++) {
             std::string label = tps_.at(i)->GetTrueParticle()->GetGeneratorName();
@@ -114,8 +125,11 @@ void cluster::update_cluster_info() {
             }
         }
 
+        LogInfo << "Most common label: " << true_label_ << std::endl;
+
         // if there is at least one marley, set true information
         if (label_count.find("marley") != label_count.end()) {
+            LogInfo << "Found at least one marley TP" << std::endl;
             true_interaction_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetInteraction(); // check if ok
             true_energy_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetEnergy();
             true_pos_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetPosition();
@@ -165,6 +179,8 @@ void cluster::update_cluster_info() {
     // total_charge_ = total_charge;
 }
 
+////////////////////////////////////////////////////////////////////////
+// Other functions
 
 std::vector<float> calculate_position(TriggerPrimitive* tp) { // only works for plane X
 

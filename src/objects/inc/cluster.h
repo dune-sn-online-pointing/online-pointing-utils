@@ -17,11 +17,7 @@ class cluster {
         cluster() {}
         // cluster(std::vector<std::vector<double>> tps) { tps_ = tps; true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = -99; true_interaction_ = -99; supernova_tp_fraction_ = 0; update_cluster_info(); }
         cluster(std::vector<TriggerPrimitive*> tps);// : tps_(tps) { true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_energy_ = 0; true_label_ = -99; true_interaction_ = -99; supernova_tp_fraction_ = 0; update_cluster_info(); }
-        ~cluster() { // needed?
-            for (auto& tp : tps_) {
-                delete tp;
-            }
-        }
+        ~cluster() {}
 
         void update_cluster_info();
         
@@ -64,10 +60,10 @@ class cluster {
         std::vector<float> true_pos_ {0.0f, 0.0f, 0.0f};    
         std::vector<float> true_dir_ {0.0f, 0.0f, 0.0f};
         std::vector<float> reco_pos_ {0.0f, 0.0f, 0.0f};    
-        std::string true_interaction_  {""}; // ES or CC
+        std::string true_interaction_  {"UNKNOWN"}; // ES or CC
         float min_distance_from_true_pos_ {0.0f};
         float true_energy_ {0.0f};
-        std::string true_label_ = {""};
+        std::string true_label_ = {"UNKNOWN"}; // could be nicer than this TODO
         float supernova_tp_fraction_ {0.0f};
         // float total_charge_; // could keep 
 };

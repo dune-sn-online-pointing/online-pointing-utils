@@ -3,10 +3,16 @@
 #include <fstream>
 #include <string>
 #include <ctime>
+#include <map>
+#include <sstream>
+#include <climits>
+#include <algorithm>
+#include <set>
 #include <nlohmann/json.hpp>
 
 #include "CmdLineParser.h"
 #include "Logger.h"
+#include "GenericToolbox.Utils.h"
 
 // #include "position_calculator.h"
 #include "cluster_to_root_libs.h"
@@ -147,16 +153,65 @@ int main(int argc, char* argv[]) {
 
     LogInfo << "Loaded TPs and true particles from file. Number of TPs: " << tps.size() << std::endl;
 
+    // print generator of all true particles
+    // for (int i = 0; i < true_particles.size(); i++) {
+    //     std::cout << "True particle " << i << ": " << true_particles.at(i).GetGeneratorName();
+    //     true_particles.at(i).Print();
+    // }
+
+    // return 0;
+
     // connect TPs to the true particles
     LogInfo << "Connecting TPs to true particles" << std::endl;
-    for (int i = 0; i < tps.size(); i++) {
-        for (int j = 0; j < true_particles.size(); j++) {
-            if (tps.at(i).GetEvent() == true_particles.at(j).GetEvent()) {
-                
-                if (isTimeCompatible(true_particles.at(j), tps.at(i), time_window) 
-                    && isChannelCompatible(true_particles.at(j), tps.at(i))) 
-                {
-                    tps.at(i).SetTrueParticle(&true_particles.at(j));
+
+    // count numnber of events, meaning unique values of event
+    std::set<int> events;
+    for (int iTP = 0; iTP < tps.size(); iTP++) {
+        events.insert(tps.at(iTP).GetEvent());
+    }
+    LogInfo << "Number of events: " << events.size() << std::endl;
+    
+    // create a vector of array of pointers for the true particles and the TPs
+    // one per event. Event numbers start from 1, so we need events.size()+1. TODO think of better ways
+    std::vector<std::vector<TriggerPrimitive*>> tps_per_event(events.size()+1);
+    std::vector<std::vector<TrueParticle*>> true_particles_per_event(events.size()+1);
+    
+    for (int iTP = 0; iTP < tps.size(); iTP++) {
+        // get the event number
+        int event = tps.at(iTP).GetEvent();
+        // add the TP to the vector of TPs for this event
+        tps_per_event.at(event).push_back(&tps.at(iTP));
+    }
+
+    for (int iTruePart = 0; iTruePart < true_particles.size(); iTruePart++) {
+        // get the event number
+        int event = true_particles.at(iTruePart).GetEvent();
+        // add the TP to the vector of TPs for this event
+        true_particles_per_event.at(event).push_back(&true_particles.at(iTruePart));
+    }
+
+    // mind that events actually start from 1
+    for (int iEvent = 1; iEvent < events.size(); iEvent++) {
+        
+        LogInfo << "Event " << iEvent << ": " << tps_per_event.at(iEvent).size() << " TPs" << std::endl;
+        LogInfo << "Event " << iEvent << ": " << true_particles_per_event.at(iEvent).size() << " true particles" << std::endl;
+
+        for (int iTP = 0; iTP < tps_per_event.at(iEvent).size(); iTP++) {
+            
+            // progress bar
+            if (iTP % 1000 == 0)
+                GenericToolbox::displayProgressBar(iTP, tps_per_event.at(iEvent).size(), "Matching TPs and true particles for this event...");
+
+            for (int iTruePart = 0; iTruePart < true_particles_per_event.at(iEvent).size(); iTruePart++) {
+                if (tps_per_event.at(iEvent).at(iTP)->GetEvent() == true_particles_per_event.at(iEvent).at(iTruePart)->GetEvent()) {
+                    
+                    if (isTimeCompatible(true_particles_per_event.at(iEvent).at(iTruePart), tps_per_event.at(iEvent).at(iTP), time_window) 
+                        && isChannelCompatible(true_particles_per_event.at(iEvent).at(iTruePart), tps_per_event.at(iEvent).at(iTP))) 
+                    {   
+                        // LogInfo << "TP " << tps_per_event.at(iEvent).at(iTP)->GetEvent() << " connected to true particle " << true_particles_per_event.at(iEvent).at(iTruePart)->GetEvent() << ", generator " << true_particles_per_event.at(iEvent).at(iTruePart)->GetGeneratorName() << std::endl;
+                        tps_per_event.at(iEvent).at(iTP)->SetTrueParticle(true_particles_per_event.at(iEvent).at(iTruePart));
+                        break;
+                    }
                 }
             }
         }
@@ -171,15 +226,16 @@ int main(int argc, char* argv[]) {
     std::vector <std::vector<cluster>> clusters_per_view;
     clusters_per_view.reserve(APA::views.size());
 
-    for (uint i = 0; i < APA::views.size(); i++) {
+    for (uint iView = 0; iView < APA::views.size(); iView++) {
+        // if (i < 2) continue; // testing only collection
         // divide the tps in views
         std::vector<TriggerPrimitive*> these_tps_per_view;
-        getPrimitivesForView(APA::views.at(i), tps, these_tps_per_view);
+        getPrimitivesForView(APA::views.at(iView), tps, these_tps_per_view);
+        LogInfo << "Number of TPs in " << APA::views.at(iView) << " view: " << these_tps_per_view.size() << std::endl;
         tps_per_view.emplace_back(these_tps_per_view);
-        LogInfo << "Number of tps in " << views.at(i) << " view: " << tps_per_view.at(i).size() << std::endl;
         // cluster the tps
-        clusters_per_view.emplace_back(cluster_maker(tps_per_view.at(i), ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut));
-        LogInfo << "Number of clusters in " << views.at(i) << " view: " << clusters_per_view.at(i).size() << std::endl;
+        clusters_per_view.emplace_back(cluster_maker(tps_per_view.at(iView), ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut));
+        LogInfo << "Number of clusters in " << APA::views.at(iView) << " view: " << clusters_per_view.at(iView).size() << std::endl;
     }
         
     // filter the clusters
@@ -194,10 +250,10 @@ int main(int argc, char* argv[]) {
     // write clusters to root files, 
     // create the root file
     
-    for (int i = 0; i < APA::views.size(); i++) {
-        std::string clusters_filename = outfolder + "/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + "_"+ APA::views.at(i) + ".root";
-        LogInfo << "Writing " << APA::views.at(i) << " clusters to " << clusters_filename << std::endl;
-        write_clusters_to_root(clusters_per_view.at(i), clusters_filename);
+    for (int iView = 0; iView < APA::views.size(); iView++) {
+        std::string clusters_filename = outfolder + "/clusters_tick" + std::to_string(ticks_limit) + "_ch" + std::to_string(channel_limit) + "_min" + std::to_string(min_tps_to_cluster) + "_"+ APA::views.at(iView) + ".root";
+        LogInfo << "Writing " << APA::views.at(iView) << " clusters to " << clusters_filename << std::endl;
+        write_clusters_to_root(clusters_per_view.at(iView), clusters_filename);
     }
 
     // stop the clock

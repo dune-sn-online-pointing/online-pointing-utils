@@ -15,8 +15,8 @@ static const float clock_tick = 16.; // ns
 
 // APA number of channels
 namespace APA{
-    static const int induction_channels = 960;
-    static const int collection_channels = 800;
+    static const int induction_channels = 800;
+    static const int collection_channels = 960;
     static const int total_channels = induction_channels*2 + collection_channels; 
     static const std::vector<std::string> views = {"U", "V", "X"};
 }
@@ -55,6 +55,6 @@ static const double apa_angular_coeff = tan(apa_angle * M_PI / 180);
 
 // TODO very temporary, these should be configurable parameters
 static const double adc_to_energy_conversion_factor = 250000; // ADC to MeV conversion factor
-static int time_window = 32; // in ticks
+static int time_window = 0; // in ticks
 
 #endif // UTILS_H
