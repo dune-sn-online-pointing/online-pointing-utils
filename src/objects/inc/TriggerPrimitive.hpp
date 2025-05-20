@@ -3,10 +3,12 @@
 
 #include <vector>
 #include <string>
+#include <Rtypes.h> // For ROOT types like UInt_t
 
 #include <utils.h>
 #include <Logger.h>
 #include <TrueParticle.h>
+
 
 class TriggerPrimitive {
 
@@ -48,7 +50,20 @@ class TriggerPrimitive {
         uint64_t GetSamplesToPeak()         const { return samples_to_peak_; }
         uint64_t GetAdcIntegral()           const { return adc_integral_; }
         uint64_t GetAdcPeak()               const { return adc_peak_; }
-        const TrueParticle* GetTrueParticle() const { return true_particle_; }
+        const TrueParticle* GetTrueParticle() const {
+            if (true_particle_ == nullptr) {
+                // LogWarning << "No true particle associated to this TriggerPrimitive" << std::endl;
+            }
+            return true_particle_;
+        }
+        const std::string GetGeneratorName() const {
+            if (true_particle_ == nullptr) {
+                // LogWarning << "No true particle associated to this TriggerPrimitive" << std::endl;
+                return "UNKNOWN";
+            }
+            else
+                return true_particle_->GetGeneratorName();
+        }
 
         TriggerPrimitive(
             uint64_t version,

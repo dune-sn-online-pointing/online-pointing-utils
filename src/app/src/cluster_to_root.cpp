@@ -62,75 +62,40 @@ int main(int argc, char* argv[]) {
     LogInfo << "Channel limit: " << channel_limit << std::endl;
     int min_tps_to_cluster = j["min_tps_to_cluster"];
     LogInfo << "Min TPs to cluster: " << min_tps_to_cluster << std::endl;
-    int plane = j["plane"];
-    LogInfo << "Plane: " << plane << std::endl;
-    int supernova_option = j["supernova_option"];
-    LogInfo << "Supernova option: " << supernova_option << std::endl;
-    int main_track_option = j["main_track_option"];
-    LogInfo << "Main track option: " << main_track_option << std::endl;
-    int max_events_per_filename = j["max_events_per_filename"];
-    LogInfo << "Max events per filename: " << max_events_per_filename << std::endl;
-    int adc_integral_cut = j["adc_integral_cut"];
-    LogInfo << "ADC integral cut: " << adc_integral_cut << std::endl;
-    int use_electron_direction = j["use_electron_direction"];
-    LogInfo << "Use electron direction: " << use_electron_direction << std::endl;
+    // int supernova_option = j["supernova_option"];
+    // LogInfo << "Supernova option: " << supernova_option << std::endl;
+    // int max_events_per_filename = j["max_events_per_filename"];
+    // LogInfo << "Max events per filename: " << max_events_per_filename << std::endl;
+
+    std::vector <int> adc_to_mev_conversion;
+    adc_to_mev_conversion.reserve(APA::views.size());
+    adc_to_mev_conversion.at(0) = j["adc_to_mev_induction"];
+    adc_to_mev_conversion.at(1) = j["adc_to_mev_induction"];
+    adc_to_mev_conversion.at(2) = j["adc_to_mev_collection"];
+    LogInfo << "ADC to MeV conversion for induction: " << adc_to_mev_conversion.at(0) << std::endl;
+    LogInfo << "ADC to MeV conversion for collection: " << adc_to_mev_conversion.at(2) << std::endl;
+
+    std::vector <int> adc_integral_cut;
+    adc_integral_cut.reserve(APA::views.size());
+    adc_integral_cut.at(0) = j["adc_integral_cut_induction"];
+    adc_integral_cut.at(1) = j["adc_integral_cut_induction"];
+    adc_integral_cut.at(2) = j["adc_integral_cut_collection"];
+    LogInfo << "ADC integral cut for induction: " << adc_integral_cut.at(0) << std::endl;
+    LogInfo << "ADC integral cut for collection: " << adc_integral_cut.at(2) << std::endl;
+    // int use_electron_direction = j["use_electron_direction"];
+    // LogInfo << "Use electron direction: " << use_electron_direction << std::endl;
+
+
+    std::string clusters_filename = outfolder + "/clusters_tick" + std::to_string(ticks_limit) + "_ch" + std::to_string(channel_limit) + "_min" + std::to_string(min_tps_to_cluster)  + ".root";
+    // if it already exists, delete it TODO make this a flag
+    if (std::ifstream(clusters_filename)) {
+        std::remove(clusters_filename.c_str());
+        LogInfo << "Deleted file: " << clusters_filename << std::endl;
+    }
 
     // start the clock
     std::clock_t start = std::clock();
 
-    //     // update the clusters
-    //     int errors = 0;
-    //     for (int i = 0; i < clusters.size(); i++) {
-    //         if (clusters[i].get_true_label() == 1) {
-    //             if (file_idx_to_true_pos.find(clusters[i].get_tp(0)[variables_to_index["event"]]) == file_idx_to_true_pos.end()) {
-    //                 continue;
-    //             }
-    //             float old_min = clusters[i].get_min_distance_from_true_pos();
-    //             std::vector<float> old_pos = clusters[i].get_true_pos();
-    //             clusters[i].set_true_pos(file_idx_to_true_pos[clusters[i].get_tp(0)[variables_to_index["event"]]]);
-    //             clusters[i].update_cluster_info();
-    //             // LogInfo << clusters[i].get_true_pos()[0] << " " << clusters[i].get_true_pos()[1] << " " << clusters[i].get_true_pos()[2] << std::endl;
-    //             float new_min = clusters[i].get_min_distance_from_true_pos();
-
-    //             if (new_min > old_min) {
-    //                 if (old_pos[0] != 0 and old_pos[1] != 0 and old_pos[2] != 0) {
-    //                     errors++;
-
-    //     // filter the clusters
-    //     if (main_track_option == 1) {
-    //         clusters = filter_main_tracks(clusters);
-    //     } else if (main_track_option == 2) {
-    //         clusters = filter_out_main_track(clusters);
-    //     }else if (main_track_option == 3) {
-    //         assing_different_label_to_main_tracks(clusters);
-    //     }
-    //     LogInfo << "Number of clusters after filtering: " << clusters.size() << std::endl;
-
-    //     std::map<int, int> label_to_count;
-    //     for (int i = 0; i < clusters.size(); i++) {
-    //         if (label_to_count.find(clusters[i].get_true_label()) == label_to_count.end()) {
-    //             label_to_count[clusters[i].get_true_label()] = 0;
-    //         }
-    //         label_to_count[clusters[i].get_true_label()]++;
-    //     }
-    //     for (auto const& x : label_to_count) {
-    //         // LogInfo << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
-    //         LogInfo << x.first << " ";
-    //     }
-    //     LogInfo << std::endl;
-    //     // if no clusters are found, return 0
-    //     for (auto const& x : label_to_count) {
-    //         // LogInfo << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
-    //         LogInfo << x.second << " ";
-    //     }
-    //     LogInfo << std::endl;
-
-    //     // write the clusters to a root file
-    //     std::string root_filename = outfolder + "/" + views[plane] + "/clusters_tick_limits_" + std::to_string(ticks_limit) + "_channel_limits_" + std::to_string(channel_limit) + "_min_tps_to_cluster_" + std::to_string(min_tps_to_cluster) + "_cut_" + std::to_string(adc_integral_cut) +  ".root";
-    //     write_clusters_to_root(clusters, root_filename);
-    //     LogInfo << "clusters written to " << root_filename << std::endl;
-    // }
-    // else { // do all planes
     // filename is the name of the file containing the filenames to read
     std::vector<std::string> filenames;
     // read the file containing the filenames and save them in a vector
@@ -144,116 +109,169 @@ int main(int argc, char* argv[]) {
     LogInfo << "Number of files: " << filenames.size() << std::endl;
     
     // TODO: parallelize this
-    // std::vector<std::vector<TriggerPrimitive>> tps = file_reader_all_planes(filenames, supernova_option, max_events_per_filename);
-    std::vector<TriggerPrimitive> tps;
-    std::vector<TrueParticle> true_particles;
-    std::vector<Neutrino> neutrinos;
-
-    file_reader(filenames, tps, true_particles, neutrinos, supernova_option, max_events_per_filename);
-
-    LogInfo << "Loaded TPs and true particles from file. Number of TPs: " << tps.size() << std::endl;
-
-    // print generator of all true particles
-    // for (int i = 0; i < true_particles.size(); i++) {
-    //     std::cout << "True particle " << i << ": " << true_particles.at(i).GetGeneratorName();
-    //     true_particles.at(i).Print();
-    // }
-
-    // return 0;
-
-    // connect TPs to the true particles
-    LogInfo << "Connecting TPs to true particles" << std::endl;
-
-    // count numnber of events, meaning unique values of event
-    std::set<int> events;
-    for (int iTP = 0; iTP < tps.size(); iTP++) {
-        events.insert(tps.at(iTP).GetEvent());
-    }
-    LogInfo << "Number of events: " << events.size() << std::endl;
     
-    // create a vector of array of pointers for the true particles and the TPs
-    // one per event. Event numbers start from 1, so we need events.size()+1. TODO think of better ways
-    std::vector<std::vector<TriggerPrimitive*>> tps_per_event(events.size()+1);
-    std::vector<std::vector<TrueParticle*>> true_particles_per_event(events.size()+1);
-    
-    for (int iTP = 0; iTP < tps.size(); iTP++) {
-        // get the event number
-        int event = tps.at(iTP).GetEvent();
-        // add the TP to the vector of TPs for this event
-        tps_per_event.at(event).push_back(&tps.at(iTP));
-    }
+    // each entry of the vector is an event
+    std::vector<std::vector<TriggerPrimitive>> tps;
+    std::vector<std::vector<TrueParticle>> true_particles;
+    std::vector<std::vector<Neutrino>> neutrinos;
 
-    for (int iTruePart = 0; iTruePart < true_particles.size(); iTruePart++) {
-        // get the event number
-        int event = true_particles.at(iTruePart).GetEvent();
-        // add the TP to the vector of TPs for this event
-        true_particles_per_event.at(event).push_back(&true_particles.at(iTruePart));
-    }
+    for (auto& filename : filenames) {
+        LogInfo << "Reading file: " << filename << std::endl;
 
-    // mind that events actually start from 1
-    for (int iEvent = 1; iEvent < events.size(); iEvent++) {
-        
-        LogInfo << "Event " << iEvent << ": " << tps_per_event.at(iEvent).size() << " TPs" << std::endl;
-        LogInfo << "Event " << iEvent << ": " << true_particles_per_event.at(iEvent).size() << " true particles" << std::endl;
+        // find how many events there are, reading the Event branch of the TP branch,
+        // it's a root file
+        std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
+        TFile *file = TFile::Open(filename.c_str());
+        if (!file || file->IsZombie()) {
+            LogError << "Failed to open file: " << filename << std::endl;
+            continue;
+        }
+        TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
+        if (!TPtree) {
+            LogError << " Tree not found: " << TPtree_path << std::endl;
+            continue; // can still go to next file
+        }
 
-        for (int iTP = 0; iTP < tps_per_event.at(iEvent).size(); iTP++) {
+        // read branch Event, knowing that the first value is 1, find the last number occurring
+        // in the branch, this is the number of events
+        int event = 0;
+        UInt_t this_event_number = 0;
+        TPtree->SetBranchAddress("Event", &this_event_number);
+        int n_events = 0;
+        for (Long64_t i = 0; i < TPtree->GetEntries(); ++i) {
+            TPtree->GetEntry(i);
+            if (this_event_number > n_events) {
+                n_events = this_event_number;
+            }
+        }
+        // close the file
+        file->Close();
+
+        LogInfo << "Number of events in file " << filename << ": " << n_events << std::endl;
+        // read the tps from the file event by event, starting from 1
+        // tps.reserve(n_events);
+        // LOGIC: event 0 will still exist but empty, for easier indexing
+        tps.resize(n_events+1);
+        true_particles.resize(n_events+1);
+        neutrinos.resize(n_events+1);
+
+        LogInfo << "############################" << std::endl;
+
+        // mind that events actually start from 1
+        for (int iEvent = 1; iEvent < n_events+1; iEvent++) {        // read the tps from the file
+
+            LogInfo << "Reading event " << iEvent << std::endl;
             
-            // progress bar
-            if (iTP % 1000 == 0)
-                GenericToolbox::displayProgressBar(iTP, tps_per_event.at(iEvent).size(), "Matching TPs and true particles for this event...");
+            file_reader(filename, tps.at(iEvent), true_particles.at(iEvent), neutrinos.at(iEvent), supernova_option, iEvent);
+            // file_reader(filenames, tps, true_particles, neutrinos, supernova_option, max_events_per_filename);
 
-            for (int iTruePart = 0; iTruePart < true_particles_per_event.at(iEvent).size(); iTruePart++) {
-                if (tps_per_event.at(iEvent).at(iTP)->GetEvent() == true_particles_per_event.at(iEvent).at(iTruePart)->GetEvent()) {
-                    
-                    if (isTimeCompatible(true_particles_per_event.at(iEvent).at(iTruePart), tps_per_event.at(iEvent).at(iTP), time_window) 
-                        && isChannelCompatible(true_particles_per_event.at(iEvent).at(iTruePart), tps_per_event.at(iEvent).at(iTP))) 
+            LogInfo << "Loaded TPs and true particles from file, for event " << iEvent << ". Number of TPs is now: " << tps.at(iEvent).size() << std::endl;
+
+            // print generator of all true particles
+            // for (int i = 0; i < true_particles.size(); i++) {
+            //     std::cout << "True particle " << i << ": " << true_particles.at(i).GetGeneratorName();
+            //     true_particles.at(i).Print();
+            // }
+
+            // return 0;
+
+            // connect TPs to the true particles
+            LogInfo << "Connecting TPs to true particles" << std::endl;
+            
+            LogInfo << "Event " << iEvent << ": " << tps.at(iEvent).size() << " TPs" << std::endl;
+            LogInfo << "Event " << iEvent << ": " << true_particles.at(iEvent).size() << " true particles" << std::endl;
+            
+            int matched_tps_counter = 0;
+
+            for (int iTP = 0; iTP < tps.at(iEvent).size(); iTP++) {
+                
+                // progress bar
+                // if (iTP % 1000 == 0)
+                //     GenericToolbox::displayProgressBar(iTP, tps.at(iEvent).size(), "Matching TPs and true particles for this event...");
+
+                for (int iTruePart = 0; iTruePart < true_particles.at(iEvent).size(); iTruePart++) {
+                    // print timestart, time end, channels in the true particle
+                    // LogInfo << "True particle " << iTruePart << ": " << true_particles.at(iEvent).at(iTruePart).GetGeneratorName() << std::endl;
+                    // LogInfo << "True particle start " << iTruePart << ": " << true_particles.at(iEvent).at(iTruePart).GetTimeStart() << " end: " << true_particles.at(iEvent).at(iTruePart).GetTimeEnd() << std::endl;
+                    // LogInfo << "True particle " << iTruePart << ": " << true_particles.at(iEvent).at(iTruePart).GetChannels().size() << " channels" << std::endl;
+                    // for (auto& channel : true_particles.at(iEvent).at(iTruePart).GetChannels()) {
+                    //     LogInfo << "Channel: " << channel << std::endl;
+                    // }
+
+                    // if there are no channels, skip directly
+                    if (true_particles.at(iEvent).at(iTruePart).GetChannels().size() == 0) {
+                        // LogInfo << "True particle " << iTruePart << ": no channels, skipping" << std::endl;
+                        continue;
+                    }
+
+                        
+                    if (isTimeCompatible(&true_particles.at(iEvent).at(iTruePart), &tps.at(iEvent).at(iTP), time_window) 
+                        && isChannelCompatible(&true_particles.at(iEvent).at(iTruePart), &tps.at(iEvent).at(iTP))) 
                     {   
-                        // LogInfo << "TP " << tps_per_event.at(iEvent).at(iTP)->GetEvent() << " connected to true particle " << true_particles_per_event.at(iEvent).at(iTruePart)->GetEvent() << ", generator " << true_particles_per_event.at(iEvent).at(iTruePart)->GetGeneratorName() << std::endl;
-                        tps_per_event.at(iEvent).at(iTP)->SetTrueParticle(true_particles_per_event.at(iEvent).at(iTruePart));
+                        // LogInfo << "TP connected to true particle, generator " << true_particles.at(iEvent).at(iTruePart).GetGeneratorName() << std::endl;
+                        tps.at(iEvent).at(iTP).SetTrueParticle(&true_particles.at(iEvent).at(iTruePart));
+                        matched_tps_counter++;
                         break;
                     }
                 }
             }
-        }
-    }
-    
-    LogInfo << "The views are " << APA::views.size() << std::endl;
 
-    std::vector <std::vector<TriggerPrimitive*>> tps_per_view;
-    tps_per_view.reserve(APA::views.size());
-    
+            float matched_tps_fraction = matched_tps_counter / float(tps.at(iEvent).size());
 
-    std::vector <std::vector<cluster>> clusters_per_view;
-    clusters_per_view.reserve(APA::views.size());
-
-    for (uint iView = 0; iView < APA::views.size(); iView++) {
-        // if (i < 2) continue; // testing only collection
-        // divide the tps in views
-        std::vector<TriggerPrimitive*> these_tps_per_view;
-        getPrimitivesForView(APA::views.at(iView), tps, these_tps_per_view);
-        LogInfo << "Number of TPs in " << APA::views.at(iView) << " view: " << these_tps_per_view.size() << std::endl;
-        tps_per_view.emplace_back(these_tps_per_view);
-        // cluster the tps
-        clusters_per_view.emplace_back(cluster_maker(tps_per_view.at(iView), ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut));
-        LogInfo << "Number of clusters in " << APA::views.at(iView) << " view: " << clusters_per_view.at(iView).size() << std::endl;
-    }
+            LogInfo << "Matched TPs fraction: " << matched_tps_fraction * 100. << " %" << std::endl;
         
-    // filter the clusters
-    // if (main_track_option == 1) {
-    //     clusters_x = filter_main_tracks(clusters_x);
-    // } else if (main_track_option == 2) {
-    //     clusters_x = filter_out_main_track(clusters_x);
-    // }else if (main_track_option == 3) {
-    //     assing_different_label_to_main_tracks(clusters_x);
-    // }
+            LogInfo << "The views are " << APA::views.size() << std::endl;
 
-    // write clusters to root files, 
-    // create the root file
-    
-    for (int iView = 0; iView < APA::views.size(); iView++) {
-        std::string clusters_filename = outfolder + "/clusters_tick" + std::to_string(ticks_limit) + "_ch" + std::to_string(channel_limit) + "_min" + std::to_string(min_tps_to_cluster) + "_"+ APA::views.at(iView) + ".root";
-        LogInfo << "Writing " << APA::views.at(iView) << " clusters to " << clusters_filename << std::endl;
-        write_clusters_to_root(clusters_per_view.at(iView), clusters_filename);
+            std::vector <std::vector<TriggerPrimitive*>> tps_per_view;
+            tps_per_view.reserve(APA::views.size());
+
+            std::vector <std::vector<cluster>> clusters_per_view;
+            clusters_per_view.reserve(APA::views.size());
+            
+            LogInfo << "-------------------------" << std::endl;
+            for (uint iView = 0; iView < APA::views.size(); iView++) {
+                // if (iView < 2) {
+                //     clusters_per_view.emplace_back(std::vector<cluster>());
+                //     tps_per_view.emplace_back(std::vector<TriggerPrimitive*>());
+                //     continue; // testing only collection TEMP
+                // }
+                // divide the tps in views
+                std::vector<TriggerPrimitive*> these_tps_per_view;
+                getPrimitivesForView(APA::views.at(iView), tps.at(iEvent), these_tps_per_view);
+                LogInfo << "Number of TPs in " << APA::views.at(iView) << " view: " << these_tps_per_view.size() << std::endl;
+                tps_per_view.emplace_back(these_tps_per_view);
+                // cluster the tps
+                clusters_per_view.emplace_back(cluster_maker(tps_per_view.at(iView), ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut.at(iView)));
+                LogInfo << "Number of clusters in " << APA::views.at(iView) << " view: " << clusters_per_view.at(iView).size() << std::endl;
+                LogInfo << "-------------------------" << std::endl;
+            }
+                
+            // filter the clusters
+            // if (main_track_option == 1) {
+            //     clusters_x = filter_main_tracks(clusters_x);
+            // } else if (main_track_option == 2) {
+            //     clusters_x = filter_out_main_track(clusters_x);
+            // }else if (main_track_option == 3) {
+            //     assing_different_label_to_main_tracks(clusters_x);
+            // }
+
+            // write clusters to root files, 
+            // create the root file
+            
+            for (int iView = 0; iView < APA::views.size(); iView++) {
+                // if (iView < 2) {
+                //     continue; // testing only collection TEMP
+                // }
+                
+                LogInfo << "Writing " << APA::views.at(iView) << " clusters to " << clusters_filename << std::endl;
+                write_clusters_to_root(clusters_per_view.at(iView), clusters_filename, APA::views.at(iView));
+            }
+            
+            LogInfo << "############################" << std::endl;
+
+            // break; // TEMP, just for testing one event at the time
+        }
+        break; // TEMP, just for testing one file at the time
     }
 
     // stop the clock
@@ -266,10 +284,18 @@ int main(int argc, char* argv[]) {
 
 
     // free the memory
-    for (auto& view_tps : tps_per_view)
-        view_tps.clear();
-    tps_per_view.clear();
-
+    for (int i = 0; i < tps.size(); i++) {
+        tps.at(i).clear();
+    }
+    tps.clear();
+    for (int i = 0; i < true_particles.size(); i++) {
+        true_particles.at(i).clear();
+    }
+    true_particles.clear();
+    for (int i = 0; i < neutrinos.size(); i++) {
+        neutrinos.at(i).clear();
+    }
+    neutrinos.clear();
 
     return 0;
 }

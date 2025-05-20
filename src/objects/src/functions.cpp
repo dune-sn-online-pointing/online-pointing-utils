@@ -12,14 +12,21 @@ void getPrimitivesForView(
 };
 
 bool isTimeCompatible(TrueParticle* true_particle, TriggerPrimitive* tp, int time_window){
+
+    // LogInfo << "True particle time start: " << true_particle->GetTimeStart() << ", end: " << true_particle->GetTimeEnd() << std::endl;
+    // LogInfo << "TP time start: " << tp->GetTimeStart() << ", end: " << tp->GetTimeEnd() << std::endl;
     
+    bool verbose = false;
+
     if (tp->GetTimeStart() < true_particle->GetTimeEnd() + time_window 
         && tp->GetTimeStart() > true_particle->GetTimeStart() - time_window) {
-        // LogInfo << "TP is time compatible with true particle, tp time start: " << tp->GetTimeStart() << ", true particle time start: " << true_particle->GetTimeStart() << ", end: " << true_particle->GetTimeEnd() << std::endl;
+        if (verbose) LogInfo << "TP is time compatible with true particle, tp time start: " << tp->GetTimeStart() << ", true particle time start: " << true_particle->GetTimeStart() << ", end: " << true_particle->GetTimeEnd() << std::endl;
         return true;
     }
-    else 
+    else {
+        if (verbose) LogInfo << "TP is NOT time compatible with true particle, tp time start: " << tp->GetTimeStart() << ", true particle time start: " << true_particle->GetTimeStart() << ", end: " << true_particle->GetTimeEnd() << std::endl;
         return false;   
+    }
 
     // // compute the interval going form time_start to time_start + samples_over_threshold
     // int start_time = tp->GetTimeStart() ;
@@ -45,10 +52,26 @@ bool isChannelCompatible (TrueParticle* true_particle, TriggerPrimitive* tp){
     //     return true;
     // }
 
+    bool verbose = false;
+
     if (true_particle->GetChannels().count(tp->GetChannel())) {
+        if (verbose) {
+            LogInfo << "TP is channel " << tp->GetChannel() << ", true particle has channels list ";
+            for (auto& channel : true_particle->GetChannels()) {
+                LogInfo << channel << " ";
+            }
+            LogInfo << std::endl;
+        }
        return true; 
     }
     else {
-        return false;
+        if (verbose) {
+            LogInfo << "TP is NOT channel compatible, it is " << tp->GetChannel() << ", true particle has channels list ";
+            for (auto& channel : true_particle->GetChannels()) {
+                LogInfo << channel << " ";
+            }
+            LogInfo << std::endl;
+            return false;
+        }
     }
 };

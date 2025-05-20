@@ -72,16 +72,16 @@ bool cluster::isCleanCluster (){
         }
     }
     // check if all tps are from the same generator
-    std::string generator = tps_[0]->GetTrueParticle()->GetGeneratorName();
-    LogInfo << "Generator of first TP: " << generator << std::endl;
+    std::string generator = tps_[0]->GetGeneratorName();
+    // LogInfo << "Generator of first TP: " << generator << std::endl;
     for (int i = 0; i < tps_.size(); i++) {
-        if (tps_.at(i)->GetTrueParticle()->GetGeneratorName() != generator) {
-            LogInfo << "Generator of TP " << i << ": " << tps_.at(i)->GetTrueParticle()->GetGeneratorName() << std::endl;
+        if (tps_.at(i)->GetGeneratorName() != generator) {
+            // LogInfo << "Generator of TP " << i << ": " << tps_.at(i)->GetGeneratorName() << std::endl;
             return false;
         }
     }
 
-    LogInfo << "Cluster is clean" << std::endl;
+    // LogInfo << "Cluster is clean and all TPs are from the same generator: " << generator << std::endl;
     return true;
 }
 
@@ -91,15 +91,20 @@ void cluster::update_cluster_info() {
 
     // if all tps are from the same TrueParticle, we can just set the true label straight away, skip  some computing
     if (isCleanCluster()) {
-        // LogInfo << "All TPs are from the same TrueParticle, and generator is " << tps_[0]->GetTrueParticle()->GetGeneratorName() << std::endl;
-        true_label_ = tps_[0]->GetTrueParticle()->GetGeneratorName();
+        // LogInfo << "All TPs are from the same TrueParticle, and generator is " << tps_[0]->GetGeneratorName() << std::endl;
+        true_label_ = tps_[0]->GetGeneratorName();
         // LogInfo << "True label, meaning generator, of this cluster: " << true_label_ << std::endl;
         if (true_label_ == "marley"){
             // LogInfo << "This is a pure marley cluster" << std::endl;
-            true_interaction_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetInteraction(); // check if ok
-            true_energy_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetEnergy();
-            true_pos_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetPosition();
-            true_dir_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetMomentum();
+            if (tps_[0]->GetTrueParticle() != nullptr) {
+                if (tps_[0]->GetTrueParticle()->GetNeutrino() != nullptr) {
+                    // LogInfo << "True particle is not null" << std::endl;
+                    true_interaction_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetInteraction(); // check if ok
+                    true_energy_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetEnergy();
+                    true_pos_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetPosition();
+                    true_dir_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetMomentum();
+                }
+            }
             supernova_tp_fraction_ = 1;
         }
     }
@@ -108,7 +113,7 @@ void cluster::update_cluster_info() {
         // LogInfo << "Not all TPs are from the same TrueParticle, finding the most frequent one" << std::endl;
         std::map<std::string, int> label_count;
         for (int i = 0; i < tps_.size(); i++) {
-            std::string label = tps_.at(i)->GetTrueParticle()->GetGeneratorName();
+            std::string label = tps_.at(i)->GetGeneratorName();
             if (label_count.find(label) == label_count.end()) {
                 label_count[label] = 1;
             }
@@ -118,30 +123,50 @@ void cluster::update_cluster_info() {
         }
         // find the label with the most counts
         int max_count = 0;
-        for (auto const& x : label_count) {
-            if (x.second > max_count) {
-                max_count = x.second;
-                true_label_ = x.first;
+        std::string first_label, second_label;
+        int first_count = 0, second_count = 0;
+
+        // Find top two labels by count
+        for (const auto& x : label_count) {
+            if (x.second > first_count) {
+            second_count = first_count;
+            second_label = first_label;
+            first_count = x.second;
+            first_label = x.first;
+            } else if (x.second > second_count) {
+            second_count = x.second;
+            second_label = x.first;
             }
         }
 
-        LogInfo << "Most common label: " << true_label_ << std::endl;
+        true_label_ = first_label;
+        // If the most common label is "UNKNOWN" and there is a second, use the second
+        if (true_label_ == "UNKNOWN" && !second_label.empty()) {
+            true_label_ = second_label;
+        }
+
+        // LogInfo << "Most common label: " << true_label_ << std::endl;
 
         // if there is at least one marley, set true information
         if (label_count.find("marley") != label_count.end()) {
-            LogInfo << "Found at least one marley TP" << std::endl;
-            true_interaction_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetInteraction(); // check if ok
-            true_energy_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetEnergy();
-            true_pos_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetPosition();
-            true_dir_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetMomentum();
+            // LogInfo << "Found at least one marley TP" << std::endl;
+            if (tps_[0]->GetTrueParticle() != nullptr) {
+                if (tps_[0]->GetTrueParticle()->GetNeutrino() != nullptr) {
+                    // LogInfo << "True particle is not null" << std::endl;
+                    true_interaction_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetInteraction(); // check if ok
+                    true_energy_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetEnergy();
+                    true_pos_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetPosition();
+                    true_dir_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetMomentum();
+                }
+            }
             supernova_tp_fraction_ = 0;
             // TODO could do better than this
             for (int i = 0; i < tps_.size(); i++) {
-                if (tps_.at(i)->GetTrueParticle()->GetGeneratorName() == "marley") {
+                if (tps_.at(i)->GetGeneratorName() == "marley") {
                     supernova_tp_fraction_++;
                 }
             }
-            supernova_tp_fraction_ /= tps_.size();
+            supernova_tp_fraction_ /= float (tps_.size());
         }
     }
 
@@ -157,12 +182,15 @@ void cluster::update_cluster_info() {
     for (int i = 0; i < tps_.size(); i++) {
         // total_charge += tps_.at(i)[tp.adc_integral];
         std::vector<float> pos = calculate_position(tps_.at(i));
-        std::vector<float> true_pos = tps_.at(i)->GetTrueParticle()->GetPosition();
-        float distance = vectorDistance(pos, true_pos);
-        if (distance < min_distance ) {
-            if (true_pos != std::vector<float>{0, 0, 0}) {
-                min_distance = distance;
-                // true_pos_ = true_pos;
+
+        if (tps_.at(i)->GetTrueParticle() != nullptr) {
+            std::vector<float> true_pos = tps_.at(i)->GetTrueParticle()->GetPosition();
+            float distance = vectorDistance(pos, true_pos);
+            if (distance < min_distance ) {
+                if (true_pos != std::vector<float>{0, 0, 0}) {
+                    min_distance = distance;
+                    // true_pos_ = true_pos;
+                }
             }
         }
 

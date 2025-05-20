@@ -62,7 +62,7 @@ class cluster {
         std::vector<float> reco_pos_ {0.0f, 0.0f, 0.0f};    
         std::string true_interaction_  {"UNKNOWN"}; // ES or CC
         float min_distance_from_true_pos_ {0.0f};
-        float true_energy_ {0.0f};
+        float true_energy_ {-1.0f};
         std::string true_label_ = {"UNKNOWN"}; // could be nicer than this TODO
         float supernova_tp_fraction_ {0.0f};
         // float total_charge_; // could keep 

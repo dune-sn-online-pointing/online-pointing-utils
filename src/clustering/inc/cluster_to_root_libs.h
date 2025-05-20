@@ -18,13 +18,16 @@
 
 #include "cluster.h"
 
+
+void get_first_and_last_event(TTree* tree, int branch_address, int which_event, int& first_entry, int& last_entry);
+
 // read the tps from the files and save them in a vector
 // std::vector<TriggerPrimitive> file_reader(std::vector<std::string> filenames, int plane=2, int supernova_option=0, int max_events_per_filename = INT_MAX);
-void file_reader(std::vector<std::string> filenames, std::vector<TriggerPrimitive>& tps, std::vector <TrueParticle> &true_particles, std::vector <Neutrino>& neutrinos, int supernova_option=0, int max_events_per_filename= INT_MAX);
+void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::vector <TrueParticle> &true_particles, std::vector <Neutrino>& neutrinos, int supernova_option=0, int event_number=0);
 // std::vector<std::vector<TriggerPrimitive>> file_reader_all_planes(std::vector<std::string> filenames, int supernova_option=0, int max_events_per_filename= INT_MAX);
 
 // create the clusters from the tps
-bool channel_condition_with_pbc(double ch1, double ch2, int channel_limit);
+bool channel_condition_with_pbc(TriggerPrimitive* tp1, TriggerPrimitive* tp2, int channel_limit);
 std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int ticks_limit=3, int channel_limit=1, int min_tps_to_cluster=1, int adc_integral_cut=0);
 
 // create a map connectig the file index to the true x y z
@@ -42,7 +45,7 @@ std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters);
 // void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int new_label=77);
 
 // write the clusters to a root file
-void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_filename);
+void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_filename, std::string view);
 
 std::vector<cluster> read_clusters_from_root(std::string root_filename);
 

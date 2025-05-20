@@ -6,6 +6,7 @@
 #include <climits>
 #include <algorithm>
 #include <Neutrino.h>
+#include <Rtypes.h> // For ROOT types like UInt_t
 
 class TrueParticle {
     
@@ -105,7 +106,7 @@ class TrueParticle {
         int GetTruthId() const { return truth_id; }
         const Neutrino* GetNeutrino() const {
             if (neutrino == nullptr) {
-                LogWarning << "No neutrino associated to this TrueParticle" << std::endl;
+                // LogWarning << "No neutrino associated to this TrueParticle" << std::endl;
             }
             return neutrino;
         }
@@ -141,9 +142,9 @@ class TrueParticle {
         float Py {0.0f};
         float Pz {0.0f};
         float energy {0.0f};
-        std::string generator_name {""};
+        std::string generator_name {"UNKNOWN"};
         int pdg {0};
-        std::string process {""};
+        std::string process {"UNKNOWN"};
         
         int track_id {-1}; // needed for association
         int truth_id {-1}; // needed for association

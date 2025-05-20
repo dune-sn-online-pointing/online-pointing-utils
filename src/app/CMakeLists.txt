@@ -4,10 +4,10 @@ target_link_libraries( clustering clusteringLibs )
 install( TARGETS clustering DESTINATION bin )
 
 
-cmessage( STATUS "Creating createVolume app..." )
-add_executable( createVolume ${CMAKE_CURRENT_SOURCE_DIR}/src/create_volume_clusters.cpp )
-target_link_libraries( createVolume clusteringLibs )
-install( TARGETS createVolume DESTINATION bin )
+# cmessage( STATUS "Creating createVolume app..." )
+# add_executable( createVolume ${CMAKE_CURRENT_SOURCE_DIR}/src/create_volume_clusters.cpp )
+# target_link_libraries( createVolume clusteringLibs )
+# install( TARGETS createVolume DESTINATION bin )
 
 # cmessage( STATUS "Creating matchClusters app..." )
 # add_executable( matchClusters ${CMAKE_CURRENT_SOURCE_DIR}/src/match_clusters.cpp )
