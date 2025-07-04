@@ -79,7 +79,7 @@ cluster join_clusters(cluster c_u, cluster c_v, cluster c_x){
     cluster c(tps);
     c.set_true_pos(c_x.get_true_pos());
     c.set_true_dir(c_x.get_true_dir());
-    c.set_true_energy(c_x.get_true_energy());
+    c.set_true_energy(c_x.get_true_neutrino_energy());
     c.set_true_label(c_x.get_true_label());
     c.set_true_interaction(c_x.get_true_interaction());
     c.set_min_distance_from_true_pos(c_x.get_min_distance_from_true_pos());

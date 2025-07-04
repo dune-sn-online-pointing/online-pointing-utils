@@ -62,21 +62,20 @@ int main(int argc, char* argv[]) {
     LogInfo << "Channel limit: " << channel_limit << std::endl;
     int min_tps_to_cluster = j["min_tps_to_cluster"];
     LogInfo << "Min TPs to cluster: " << min_tps_to_cluster << std::endl;
-    // int supernova_option = j["supernova_option"];
+    int supernova_option = 0; //j["supernova_option"]; TODO decide to keep or not
     // LogInfo << "Supernova option: " << supernova_option << std::endl;
+
     // int max_events_per_filename = j["max_events_per_filename"];
     // LogInfo << "Max events per filename: " << max_events_per_filename << std::endl;
 
-    std::vector <int> adc_to_mev_conversion;
-    adc_to_mev_conversion.reserve(APA::views.size());
+    std::vector <int> adc_to_mev_conversion (APA::views.size());
     adc_to_mev_conversion.at(0) = j["adc_to_mev_induction"];
     adc_to_mev_conversion.at(1) = j["adc_to_mev_induction"];
     adc_to_mev_conversion.at(2) = j["adc_to_mev_collection"];
     LogInfo << "ADC to MeV conversion for induction: " << adc_to_mev_conversion.at(0) << std::endl;
     LogInfo << "ADC to MeV conversion for collection: " << adc_to_mev_conversion.at(2) << std::endl;
 
-    std::vector <int> adc_integral_cut;
-    adc_integral_cut.reserve(APA::views.size());
+    std::vector <int> adc_integral_cut (APA::views.size());
     adc_integral_cut.at(0) = j["adc_integral_cut_induction"];
     adc_integral_cut.at(1) = j["adc_integral_cut_induction"];
     adc_integral_cut.at(2) = j["adc_integral_cut_collection"];
@@ -177,9 +176,7 @@ int main(int argc, char* argv[]) {
 
             // connect TPs to the true particles
             LogInfo << "Connecting TPs to true particles" << std::endl;
-            
-            LogInfo << "Event " << iEvent << ": " << tps.at(iEvent).size() << " TPs" << std::endl;
-            LogInfo << "Event " << iEvent << ": " << true_particles.at(iEvent).size() << " true particles" << std::endl;
+            LogInfo << tps.at(iEvent).size() << " TPs, " << true_particles.at(iEvent).size() << " true particles" << std::endl;
             
             int matched_tps_counter = 0;
 
@@ -218,9 +215,9 @@ int main(int argc, char* argv[]) {
 
             float matched_tps_fraction = matched_tps_counter / float(tps.at(iEvent).size());
 
-            LogInfo << "Matched TPs fraction: " << matched_tps_fraction * 100. << " %" << std::endl;
+            LogInfo << "Matched TPs: " << matched_tps_fraction * 100. << " %" << std::endl;
         
-            LogInfo << "The views are " << APA::views.size() << std::endl;
+            // LogInfo << "The views are " << APA::views.size() << std::endl;
 
             std::vector <std::vector<TriggerPrimitive*>> tps_per_view;
             tps_per_view.reserve(APA::views.size());
@@ -230,11 +227,6 @@ int main(int argc, char* argv[]) {
             
             LogInfo << "-------------------------" << std::endl;
             for (uint iView = 0; iView < APA::views.size(); iView++) {
-                // if (iView < 2) {
-                //     clusters_per_view.emplace_back(std::vector<cluster>());
-                //     tps_per_view.emplace_back(std::vector<TriggerPrimitive*>());
-                //     continue; // testing only collection TEMP
-                // }
                 // divide the tps in views
                 std::vector<TriggerPrimitive*> these_tps_per_view;
                 getPrimitivesForView(APA::views.at(iView), tps.at(iEvent), these_tps_per_view);
@@ -245,28 +237,14 @@ int main(int argc, char* argv[]) {
                 LogInfo << "Number of clusters in " << APA::views.at(iView) << " view: " << clusters_per_view.at(iView).size() << std::endl;
                 LogInfo << "-------------------------" << std::endl;
             }
-                
-            // filter the clusters
-            // if (main_track_option == 1) {
-            //     clusters_x = filter_main_tracks(clusters_x);
-            // } else if (main_track_option == 2) {
-            //     clusters_x = filter_out_main_track(clusters_x);
-            // }else if (main_track_option == 3) {
-            //     assing_different_label_to_main_tracks(clusters_x);
-            // }
 
             // write clusters to root files, 
-            // create the root file
-            
             for (int iView = 0; iView < APA::views.size(); iView++) {
-                // if (iView < 2) {
-                //     continue; // testing only collection TEMP
-                // }
-                
-                LogInfo << "Writing " << APA::views.at(iView) << " clusters to " << clusters_filename << std::endl;
+                LogInfo << "Writing " << APA::views.at(iView) << " clusters " << std::endl;
                 write_clusters_to_root(clusters_per_view.at(iView), clusters_filename, APA::views.at(iView));
             }
-            
+
+            LogInfo << " Output file is " << clusters_filename << std::endl;
             LogInfo << "############################" << std::endl;
 
             // break; // TEMP, just for testing one event at the time

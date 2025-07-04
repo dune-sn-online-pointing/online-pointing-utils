@@ -26,7 +26,7 @@ void get_first_and_last_event(TTree* tree, int* branch_value, int which_event, i
     first_entry = -1;
     last_entry = -1;
 
-    LogInfo << " Looking for event number " << which_event << std::endl;
+    // LogInfo << " Looking for event number " << which_event << std::endl;
     for (int iEntry = 0; iEntry < tree->GetEntries(); ++iEntry) {
         tree->GetEntry(iEntry);
         if (*branch_value == which_event) {
@@ -52,7 +52,6 @@ void get_first_and_last_event(TTree* tree, int* branch_value, int which_event, i
 // read the tps from the files and save them in a vector
 void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::vector <TrueParticle> &true_particles, std::vector <Neutrino>& neutrinos, int supernova_option, int event_number) {
     
-
     LogInfo << " Reading file: " << filename << std::endl;
     
     TFile *file = TFile::Open(filename.c_str());
@@ -90,8 +89,8 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
 
     get_first_and_last_event(TPtree, (int*)&this_event_number, event_number, first_tp_entry_in_event, last_tp_entry_in_event);
 
-    LogInfo << "First entry having this event number: " << first_tp_entry_in_event << std::endl;
-    LogInfo << "Last entry having this event number: " << last_tp_entry_in_event << std::endl;
+    // LogInfo << "First entry having this event number: " << first_tp_entry_in_event << std::endl;
+    // LogInfo << "Last entry having this event number: " << last_tp_entry_in_event << std::endl;
     LogInfo << "Number of TPs in event " << event_number << ": " << last_tp_entry_in_event - first_tp_entry_in_event + 1 << std::endl;
 
     tps.reserve(last_tp_entry_in_event - first_tp_entry_in_event + 1);
@@ -268,8 +267,8 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
     get_first_and_last_event(MCtruthtree, (int*)&event, this_event_number, first_mctruth_entry_in_event, last_mctruth_entry_in_event);
 
     LogInfo << "Number of MC truths in event " << event_number << ": " << last_mctruth_entry_in_event - first_mctruth_entry_in_event + 1 << std::endl;
-    LogInfo << "First entry having this event number: " << first_mctruth_entry_in_event << std::endl;
-    LogInfo << "Last entry having this event number: " << last_mctruth_entry_in_event << std::endl;
+    // LogInfo << "First entry having this event number: " << first_mctruth_entry_in_event << std::endl;
+    // LogInfo << "Last entry having this event number: " << last_mctruth_entry_in_event << std::endl;
 
     // this is a scope vector, just to put somewhere the generator name before
     // associating to the final true particles 
@@ -424,8 +423,7 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Connect trueparticles to mctruths using the truth_id
 
-    LogInfo << " Connecting MC particles to mctruths, there are " << true_particles.size() << " particles" << std::endl;
-    LogInfo << " There are " << neutrinos.size() << " neutrinos" << std::endl;
+    LogInfo << " Connecting MC particles to mctruths, there are "<< neutrinos.size() << " neutrinos and " << true_particles.size() << " other particles" << std::endl;
     
     int matched_MCparticles_counter = 0;
 
@@ -678,60 +676,6 @@ std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // 
     return blips;
 }
 
-// void assing_different_label_to_main_tracks(std::vector<cluster>& clusters, int new_label) {
-//     int best_idx = INT_MAX;
-//     UInt_t event = clusters[0].get_tp(0)->GetEvent();
-//     std::vector<int> bad_event_list;
-//     for (int index = 0; index < clusters.size(); index++) {
-//         if (clusters[index].get_tp(0)->GetEvent() != event) {
-//             if (best_idx < clusters.size() ){
-//                 if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
-//                     clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
-//                 }
-//                 else{
-//                     bad_event_list.push_back(event);
-//                 }
-//             }
-
-//             event = clusters[index].get_tp(0)->GetEvent();
-//             if (clusters[index].get_true_label() == 1){
-//                 best_idx = index;
-//             }
-//             else {
-//                 best_idx = INT_MAX;
-//             }
-//         }
-//         else {
-//             if (best_idx < clusters.size() ){
-//                 if (clusters[index].get_true_label() == 1 and clusters[index].get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos()){
-//                     best_idx = index;
-//                 }
-//             }
-//             else {
-//                 if (clusters[index].get_true_label() == 1){
-//                     best_idx = index;
-//                 }
-//             }
-//         }
-//     }
-//     if (best_idx < clusters.size() ){
-//         if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
-//             clusters[best_idx].set_true_label(100+clusters[best_idx].get_true_interaction());
-//         }
-//         else{
-//             bad_event_list.push_back(event);
-//         }
-//     }
-
-//     LogInfo << "Number of bad events: " << bad_event_list.size() << std::endl;
-
-//     for (int i=0; i<clusters.size(); i++) {
-//         if ((std::find(bad_event_list.begin(), bad_event_list.end(), clusters[i].get_tp(0)->GetEvent()) != bad_event_list.end()) and clusters[i].get_true_label() == 1) {
-//             clusters[i].set_true_label(new_label);
-//         }
-//     }
-
-// }
 
 void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_filename, std::string view) {
     // create folder if it does not exist
@@ -747,7 +691,8 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     float true_dir_x;
     float true_dir_y;
     float true_dir_z;
-    float true_energy;
+    float true_neutrino_energy;
+    float true_particle_energy;
     std::string true_label;
     std::string *true_label_point = new std::string();
     std::string true_interaction;
@@ -779,7 +724,8 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
         clusters_tree->Branch("true_dir_x", &true_dir_x, "true_dir_x/F");
         clusters_tree->Branch("true_dir_y", &true_dir_y, "true_dir_y/F");
         clusters_tree->Branch("true_dir_z", &true_dir_z, "true_dir_z/F");
-        clusters_tree->Branch("true_energy", &true_energy, "true_energy/F");
+        clusters_tree->Branch("true_neutrino_energy", &true_neutrino_energy, "true_neutrino_energy/F");
+        clusters_tree->Branch("true_particle_energy", &true_particle_energy, "true_particle_energy/F");
         clusters_tree->Branch("true_label", &true_label);
         clusters_tree->Branch("reco_pos_x", &reco_pos_x, "reco_pos_x/I");
         clusters_tree->Branch("reco_pos_y", &reco_pos_y, "reco_pos_y/I");
@@ -803,14 +749,15 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     }
     else 
     {   
-        LogInfo << "Tree already exists, updating it" << std::endl;
+        // LogInfo << "Tree already exists, updating it" << std::endl;
         // If the tree exists, set the branches to the existing tree
         clusters_tree->SetBranchAddress("event", &event);
         clusters_tree->SetBranchAddress("n_tps", &n_tps);
         clusters_tree->SetBranchAddress("true_dir_x", &true_dir_x);
         clusters_tree->SetBranchAddress("true_dir_y", &true_dir_y);
         clusters_tree->SetBranchAddress("true_dir_z", &true_dir_z);
-        clusters_tree->SetBranchAddress("true_energy", &true_energy);
+        clusters_tree->SetBranchAddress("true_neutrino_energy", &true_neutrino_energy);
+        clusters_tree->SetBranchAddress("true_particle_energy", &true_particle_energy);
         clusters_tree->SetBranchAddress("true_label", &true_label_point);
         clusters_tree->SetBranchAddress("reco_pos_x", &reco_pos_x);
         clusters_tree->SetBranchAddress("reco_pos_y", &reco_pos_y);
@@ -839,7 +786,8 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
         true_dir_x = cluster.get_true_dir()[0];
         true_dir_y = cluster.get_true_dir()[1];
         true_dir_z = cluster.get_true_dir()[2];
-        true_energy = cluster.get_true_energy();
+        true_neutrino_energy = cluster.get_true_neutrino_energy();
+        true_particle_energy = cluster.get_true_particle_energy();
         true_label = cluster.get_true_label();
         true_label_point = &true_label;
         reco_pos_x = cluster.get_reco_pos()[0];

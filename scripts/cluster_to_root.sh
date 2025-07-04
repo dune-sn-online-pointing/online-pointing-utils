@@ -8,7 +8,7 @@ current_dir=$(pwd)
 
 print_help() {
     echo "************************************************************************************************"
-    echo "Usage: ./$0 -j <json_settings.json>" #--cut <cut> --type <type> [Either "main_track" "blip" "benchmark "or "bkg"]"
+    echo "Usage: $0 -j <json_settings.json>" #--cut <cut> --type <type> [Either "main_track" "blip" "benchmark "or "bkg"]"
     echo "Options:"
     echo "  --json-settings <json>      Json file to used as input. Relative path inside json/"
     # echo "  --cut <cut>                           Cut value"

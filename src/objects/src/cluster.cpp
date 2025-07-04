@@ -100,7 +100,7 @@ void cluster::update_cluster_info() {
                 if (tps_[0]->GetTrueParticle()->GetNeutrino() != nullptr) {
                     // LogInfo << "True particle is not null" << std::endl;
                     true_interaction_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetInteraction(); // check if ok
-                    true_energy_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetEnergy();
+                    true_neutrino_energy_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetEnergy();
                     true_pos_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetPosition();
                     true_dir_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetMomentum();
                 }
@@ -154,7 +154,8 @@ void cluster::update_cluster_info() {
                 if (tps_[0]->GetTrueParticle()->GetNeutrino() != nullptr) {
                     // LogInfo << "True particle is not null" << std::endl;
                     true_interaction_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetInteraction(); // check if ok
-                    true_energy_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetEnergy();
+                    true_neutrino_energy_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetEnergy();
+                    true_particle_energy_ = tps_[0]->GetTrueParticle()->GetEnergy();
                     true_pos_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetPosition();
                     true_dir_ = tps_[0]->GetTrueParticle()->GetNeutrino()->GetMomentum();
                 }
