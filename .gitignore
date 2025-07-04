@@ -8,3 +8,5 @@ condor_test/
 app/plots/
 output/
 */*.root
+*.png  
+*.jpg
