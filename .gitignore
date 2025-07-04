@@ -10,3 +10,4 @@ output/
 */*.root
 *.png  
 *.jpg
+data/*
