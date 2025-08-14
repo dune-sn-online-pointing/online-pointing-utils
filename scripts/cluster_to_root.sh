@@ -58,7 +58,7 @@ echo $compile_command
 
 ################################################
 # Run this app
-command_to_run="$BUILD_DIR/src/app/clustering -j $settingsFile"
+command_to_run="$BUILD_DIR/src/app/clustering -j $settingsFile --output-suffix $(basename "$settingsFile" .json)"
 # command_to_run="valgrind --leak-check=full $BUILD_DIR/src/app/clustering -j $settingsFile"
 echo "Running command: ${command_to_run}"
 eval $command_to_run

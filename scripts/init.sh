@@ -1,7 +1,8 @@
 #!/bin/bash
 
 if [[ $INIT_DONE == true ]]; then
-    echo "Environment is already initialized, not running init.sh again"
+    echo "Environment is already initialized, not running init.sh again."
+    echo "If it is not loaded properly, run export INIT_DONE=false and rerun init.sh"
 else
 
     echo ""
