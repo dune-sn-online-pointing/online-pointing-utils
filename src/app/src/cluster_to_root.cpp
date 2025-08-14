@@ -29,6 +29,7 @@ int main(int argc, char* argv[]) {
 
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
+    clp.addOption("outputSuffix", {"--output-suffix"}, "Output filename suffix");
 
     clp.addDummyOption("Triggers");
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
@@ -212,10 +213,30 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
+            // Compute matched TPs percentage for each view
+            for (size_t iView = 0; iView < APA::views.size(); ++iView) {
+                std::vector<TriggerPrimitive*> these_tps_per_view;
+                getPrimitivesForView(APA::views.at(iView), tps.at(iEvent), these_tps_per_view);
 
-            float matched_tps_fraction = matched_tps_counter / float(tps.at(iEvent).size());
+                int matched_in_view = 0;
+                for (auto* tp : these_tps_per_view) {
+                    if (tp->GetTrueParticle() != nullptr) {
+                        matched_in_view++;
+                    }
+                }
 
-            LogInfo << "Matched TPs: " << matched_tps_fraction * 100. << " %" << std::endl;
+                float matched_fraction = these_tps_per_view.empty() ? 0.0f : (matched_in_view * 100.0f) / these_tps_per_view.size();
+                LogInfo << "Matched TPs in view " << APA::views.at(iView) << ": " << matched_fraction << " %" << std::endl;
+                LogInfo << "Of these, the ones for which the true particle contains truth: " << std::endl;
+                int truth_count = 0;
+                for (auto* tp : these_tps_per_view) {
+                    if (tp->GetTrueParticle() != nullptr && tp->GetTrueParticle()->GetGeneratorName() != "UNKNOWN") {
+                        truth_count++;
+                        std::cout << "; Generator: " << tp->GetTrueParticle()->GetGeneratorName() ;
+                    }
+                }
+                LogInfo << "TPs with non-UNKNOWN generator: " << truth_count * 100.0f / these_tps_per_view.size() << " %" << std::endl;
+            }
         
             // LogInfo << "The views are " << APA::views.size() << std::endl;
 
