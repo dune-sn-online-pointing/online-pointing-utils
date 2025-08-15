@@ -6,3 +6,8 @@ lists/
 */__pycache__/
 condor_test/
 app/plots/
+output/
+*/*.root
+*.png  
+*.jpg
+data/*

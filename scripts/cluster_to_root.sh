@@ -1,77 +1,66 @@
 #!/bin/bash
 
-### !!!!! THIS IS FROM HARRY, SPECIAL APPLICATION IS COMMENTED
+# Initialize env variables
+export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source $SCRIPTS_DIR/init.sh
 
-REPO_HOME=$(git rev-parse --show-toplevel)
 current_dir=$(pwd)
 
 print_help() {
     echo "************************************************************************************************"
-    echo "Usage: ./cluster_to_root.sh -j <json_settings.json>" #--cut <cut> --type <type> [Either "main_track" "blip" "benchmark "or "bkg"]"
+    echo "Usage: $0 -j <json_settings.json>" #--cut <cut> --type <type> [Either "main_track" "blip" "benchmark "or "bkg"]"
     echo "Options:"
-    echo "  --json-settings <json>                Json file to used as input. Relative path inside json/"
+    echo "  --json-settings <json>      Json file to used as input. Relative path inside json/"
     # echo "  --cut <cut>                           Cut value"
     # echo "  --type <type>                         Type of the dataset, either 'main_track', 'blip', 'bkg', 'benchmark'"
-    echo "  -h, --help                            Print this help message"
+    echo "  --no-compile                Do not recompile the code. Default is to recompile the code"
+    echo "  --clean-compile             Clean and recompile the code. Default is to recompile the code without cleaning"
+    echo "  -h, --help                  Print this help message"
     echo "************************************************************************************************"
     exit 0
 }
 
+settingsFile=""
+cleanCompile=false
+noCompile=false
+
 # Parse
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --output-folder) output_folder="$2"; shift 2 ;;
-        -j|--json-settings) INPUT_JSON="$2"; shift 2 ;;
+        --output-folder)    output_folder="$2"; shift 2 ;;
+        -j|--json-settings) settingsFile="$2"; shift 2 ;;
         # --cut)          cut="$2"; shift 2 ;;
         # --type)         type="$2"; shift 2 ;;
-        -h|--help)      print_help ;;
-        *)              shift ;;
+        --no-compile)       noCompile=true; shift ;;
+        --clean-compile)    cleanCompile=true; shift ;;
+        -h|--help)          print_help ;;
+        *)                  shift ;;
     esac
 done
 
-# check if json was selected
-if [ -z "$INPUT_JSON" ]; then
-    echo "Json settings file not provided"
-    exit 1
+if [ -z "$settingsFile" ]
+then
+    echo " Please specify the settings file, using flag -j <settings_file>. Stopping execution."
+    print_help
 fi
 
-# check if json file exists 
-if [ ! -f "$INPUT_JSON" ]; then
-    echo "Json settings file does not exist"
-    exit 1
-fi
+find_settings_command="$SCRIPTS_DIR/findSettings.sh -j $settingsFile"
+echo " Looking for json settings using command: $find_settings_command"
+settingsFile=$($find_settings_command | tail -n 1)
+echo -e "Settings file found, full path is: $settingsFile \n"
 
+################################################
+# Compile the code if requested
+compile_command="$SCRIPTS_DIR/compile.sh -p $HOME_DIR --no-compile $noCompile --clean-compile $cleanCompile"
+echo "Compiling the code with the following command:"
+echo $compile_command
+. $compile_command || exit
 
-echo "REPO_HOME: ${REPO_HOME}"
-
-# json_settings_file="${output_folder}/cluster_to_root/${type}/${type}_${cut}.json"
-# echo "Json file to be created: ${json_settings_file}"
-
-# echo "Creating json config from the information provided..."
-# python ${REPO_HOME}/python/cluster_to_root_json_creator.py --cut "$cut" --output_file "$json_settings_file" --type "$type" 
-# echo "Json settings file created at ${json_settings_file}"
-
-# compile
-echo "Compiling..."
-cd ${REPO_HOME}/build/
-cmake ..
-make -j $(nproc)
-# if successful, run the app
-if [ $? -ne 0 ]; then
-    echo "Compilation failed"
-    exit 1
-fi
-
-# Run the app
-# ES
-# INPUT_JSON="/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/es_lab.json"
-
-command_to_run="./app/cluster_to_root -j $INPUT_JSON"
+################################################
+# Run this app
+command_to_run="$BUILD_DIR/src/app/clustering -j $settingsFile --output-suffix $(basename "$settingsFile" .json)"
+# command_to_run="valgrind --leak-check=full $BUILD_DIR/src/app/clustering -j $settingsFile"
 echo "Running command: ${command_to_run}"
 eval $command_to_run
-
-# CC
-# INPUT_JSON="/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_to_root/cc_lab.json"
-# ./app/cluster_to_root -j $INPUT_JSON
 
 cd ${current_dir}

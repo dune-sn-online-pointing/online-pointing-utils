@@ -120,23 +120,29 @@ else ()
   set(CMAKE_CXX_STANDARD 17)
 endif ()
 
-# JSON
-# NLOHMANN JSON
-find_package( nlohmann_json )
+# First try to find the header directly without relying on CMake package
+find_path(NLOHMANN_JSON_INCLUDE_DIR NAMES nlohmann/json.hpp
+          PATHS /usr/include /usr/local/include ${CMAKE_PREFIX_PATH})
 
-find_path(NLOHMANN_JSON_INCLUDE_DIR NAMES nlohmann/json.hpp)
-if (nlohmann_json_FOUND)
-  cmessage( STATUS "nlohmann JSON library found: ${NLOHMANN_JSON_INCLUDE_DIR}")
-  # Additional actions for when the library is found
+if (NLOHMANN_JSON_INCLUDE_DIR)
+  cmessage(STATUS "nlohmann JSON header found: ${NLOHMANN_JSON_INCLUDE_DIR}/nlohmann/json.hpp")
+  # Create an interface target to mimic the found package
+  if (NOT TARGET nlohmann_json::nlohmann_json)
+    add_library(nlohmann_json::nlohmann_json INTERFACE IMPORTED)
+    set_target_properties(nlohmann_json::nlohmann_json PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${NLOHMANN_JSON_INCLUDE_DIR}")
+  endif()
 else()
-  if (NLOHMANN_JSON_INCLUDE_DIR)
-    cmessage( STATUS "nlohmann JSON header found: ${NLOHMANN_JSON_INCLUDE_DIR}/nlohmann/json.hpp")
-    # Additional actions for when the library is found
+  # Only try find_package if we didn't find the header directly
+  find_package(nlohmann_json QUIET)
+  if (nlohmann_json_FOUND)
+    cmessage(STATUS "nlohmann JSON library found via find_package")
   else()
-    cmessage( FATAL_ERROR "nlohmann JSON library not found")
-    # Additional actions for when the library is not found
+    cmessage(FATAL_ERROR "nlohmann JSON library not found")
   endif()
 endif()
-include_directories( ${NLOHMANN_JSON_INCLUDE_DIR} )
+
+# Add the include directory
+include_directories(${NLOHMANN_JSON_INCLUDE_DIR})
 
 
