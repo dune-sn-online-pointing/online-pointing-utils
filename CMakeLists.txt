@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.17)
 
 project(online-pointing-utils)
 
+# Use C++14 standard for better compatibility
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 option( USE_STATIC_LINKS "Use static links for generated libraries" ON )
 option( WITH_ROOT "Build also binaries depending on ROOT" ON )
 
