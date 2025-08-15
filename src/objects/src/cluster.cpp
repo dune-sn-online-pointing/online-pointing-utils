@@ -169,6 +169,15 @@ void cluster::update_cluster_info() {
             }
             supernova_tp_fraction_ /= float (tps_.size());
         }
+        
+        // Calculate fraction of TPs with any generator name (not "UNKNOWN")
+        generator_tp_fraction_ = 0;
+        for (int i = 0; i < tps_.size(); i++) {
+            if (tps_.at(i)->GetGeneratorName() != "UNKNOWN" && !tps_.at(i)->GetGeneratorName().empty()) {
+                generator_tp_fraction_++;
+            }
+        }
+        generator_tp_fraction_ /= float (tps_.size());
     }
 
     // the reconstructed position will be the average of the tps

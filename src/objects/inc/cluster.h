@@ -32,6 +32,7 @@ class cluster {
         std::string get_true_label() { return true_label_; }
         float get_min_distance_from_true_pos() const { return min_distance_from_true_pos_; }
         float get_supernova_tp_fraction() const { return supernova_tp_fraction_; }
+        float get_generator_tp_fraction() const { return generator_tp_fraction_; }
         std::string get_true_interaction() const { return true_interaction_; }
         float get_total_charge(); // { return total_charge_; }
         float get_total_energy(); // { return total_energy_; }
@@ -49,6 +50,7 @@ class cluster {
         void set_reco_pos(std::vector<float> pos) { reco_pos_ = pos; }
         void set_min_distance_from_true_pos(float min_distance) { min_distance_from_true_pos_ = min_distance; }
         void set_supernova_tp_fraction(float fraction) { supernova_tp_fraction_ = fraction; }
+        void set_generator_tp_fraction(float fraction) { generator_tp_fraction_ = fraction; }
         void set_true_interaction(std::string interaction) { true_interaction_ = interaction; }
         // void set_total_charge(float charge) { total_charge_ = charge; }
 
@@ -67,6 +69,7 @@ class cluster {
         float true_particle_energy_ {-1.0f};
         std::string true_label_ = {"UNKNOWN"}; // could be nicer than this TODO
         float supernova_tp_fraction_ {0.0f};
+        float generator_tp_fraction_ {0.0f};
         // float total_charge_; // could keep 
 };
 

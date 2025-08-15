@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <climits>
+#include <unordered_map>
 
 // #include <TLeaf.h>
 
@@ -702,6 +703,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     int reco_pos_z;
     float min_distance_from_true_pos;
     float supernova_tp_fraction;
+    float generator_tp_fraction;
     double total_charge;
     double total_energy;    
     double conversion_factor;
@@ -732,6 +734,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
         clusters_tree->Branch("reco_pos_z", &reco_pos_z, "reco_pos_z/I");
         clusters_tree->Branch("min_distance_from_true_pos", &min_distance_from_true_pos, "min_distance_from_true_pos/F");
         clusters_tree->Branch("supernova_tp_fraction", &supernova_tp_fraction, "supernova_tp_fraction/F");
+        clusters_tree->Branch("generator_tp_fraction", &generator_tp_fraction, "generator_tp_fraction/F");
         clusters_tree->Branch("true_interaction", &true_interaction);
         clusters_tree->Branch("total_charge", &total_charge, "total_charge/D");
         clusters_tree->Branch("total_energy", &total_energy, "total_energy/D");
@@ -764,6 +767,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
         clusters_tree->SetBranchAddress("reco_pos_z", &reco_pos_z);
         clusters_tree->SetBranchAddress("min_distance_from_true_pos", &min_distance_from_true_pos);
         clusters_tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
+        clusters_tree->SetBranchAddress("generator_tp_fraction", &generator_tp_fraction);
         clusters_tree->SetBranchAddress("true_interaction", &true_interaction_point);
         clusters_tree->SetBranchAddress("total_charge", &total_charge);
         clusters_tree->SetBranchAddress("total_energy", &total_energy);
@@ -795,6 +799,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
         reco_pos_z = cluster.get_reco_pos()[2];
         min_distance_from_true_pos = cluster.get_min_distance_from_true_pos();
         supernova_tp_fraction = cluster.get_supernova_tp_fraction();
+        generator_tp_fraction = cluster.get_generator_tp_fraction();
         true_interaction = cluster.get_true_interaction();
         true_interaction_point = &true_interaction;
         total_charge = cluster.get_total_charge();
@@ -854,6 +859,7 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
     int reco_pos_z;
     float min_distance_from_true_pos;
     float supernova_tp_fraction;
+    float generator_tp_fraction;
     // tree->SetBranchAddress("matrix", &matrix_ptr);
     // tree->SetBranchAddress("matrix", &matrix);
     clusters_tree->SetBranchAddress("nrows", &nrows);
@@ -868,6 +874,7 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
     clusters_tree->SetBranchAddress("reco_pos_z", &reco_pos_z);
     clusters_tree->SetBranchAddress("min_distance_from_true_pos", &min_distance_from_true_pos);
     clusters_tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
+    clusters_tree->SetBranchAddress("generator_tp_fraction", &generator_tp_fraction);
     clusters_tree->SetBranchAddress("true_interaction", &true_interaction);
     for (int i = 0; i < clusters_tree->GetEntries(); i++) {
         clusters_tree->GetEntry(i);
