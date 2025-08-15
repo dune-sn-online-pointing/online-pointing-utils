@@ -29,6 +29,7 @@ int main(int argc, char* argv[]) {
 
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
+    clp.addOption("outFolder", {"--output-folder"}, "Output folder path (optional, defaults to input file folder)");
     clp.addOption("outputSuffix", {"--output-suffix"}, "Output filename suffix");
 
     clp.addDummyOption("Triggers");
@@ -53,21 +54,36 @@ int main(int argc, char* argv[]) {
     std::ifstream i(json);
     nlohmann::json j;
     i >> j;
-    std::string filename = j["filename"];
-    LogInfo << "Filename: " << filename << std::endl;
-    std::string outfolder = j["output_folder"];
-    LogInfo << "Output folder: " << outfolder << std::endl;
+    std::string list_file = j["filename"];
+    LogInfo << "File with list of tpstreams: " << list_file << std::endl;
+    
+    // Determine output folder: command line option takes precedence, otherwise use input file folder
+    std::string outfolder;
+    if (clp.isOptionTriggered("outFolder")) {
+        outfolder = clp.getOptionVal<std::string>("outFolder");
+        LogInfo << "Output folder (from command line): " << outfolder << std::endl;
+    } else {
+        // Extract folder from list_file path
+        outfolder = list_file.substr(0, list_file.find_last_of("/\\"));
+        if (outfolder.empty()) outfolder = "."; // current directory if no path
+        LogInfo << "Output folder (from input file path): " << outfolder << std::endl;
+    }
     int ticks_limit = j["tick_limit"];
     LogInfo << "Tick limit: " << ticks_limit << std::endl;
     int channel_limit = j["channel_limit"];
     LogInfo << "Channel limit: " << channel_limit << std::endl;
     int min_tps_to_cluster = j["min_tps_to_cluster"];
     LogInfo << "Min TPs to cluster: " << min_tps_to_cluster << std::endl;
+    int min_time_over_threshold = j["min_time_over_threshold"];
+    LogInfo << "Min time over threshold: " << min_time_over_threshold << std::endl;
+    int energy_cut = j["energy_cut_mev"];
+    LogInfo << "Energy cut: " << energy_cut << std::endl;
+
     int supernova_option = 0; //j["supernova_option"]; TODO decide to keep or not
     // LogInfo << "Supernova option: " << supernova_option << std::endl;
 
-    // int max_events_per_filename = j["max_events_per_filename"];
-    // LogInfo << "Max events per filename: " << max_events_per_filename << std::endl;
+    int max_events_per_filename = j["max_events_per_filename"];
+    LogInfo << "Max events per filename: " << max_events_per_filename << std::endl;
 
     std::vector <int> adc_to_mev_conversion (APA::views.size());
     adc_to_mev_conversion.at(0) = j["adc_to_mev_induction"];
@@ -85,28 +101,37 @@ int main(int argc, char* argv[]) {
     // int use_electron_direction = j["use_electron_direction"];
     // LogInfo << "Use electron direction: " << use_electron_direction << std::endl;
 
-
-    std::string clusters_filename = outfolder + "/clusters_tick" + std::to_string(ticks_limit) + "_ch" + std::to_string(channel_limit) + "_min" + std::to_string(min_tps_to_cluster)  + ".root";
-    // if it already exists, delete it TODO make this a flag
-    if (std::ifstream(clusters_filename)) {
-        std::remove(clusters_filename.c_str());
-        LogInfo << "Deleted file: " << clusters_filename << std::endl;
-    }
-
     // start the clock
     std::clock_t start = std::clock();
 
     // filename is the name of the file containing the filenames to read
     std::vector<std::string> filenames;
     // read the file containing the filenames and save them in a vector
-    std::ifstream infile(filename);
+    std::ifstream infile(list_file);
     std::string line;
-    LogInfo<<"Opening file: "<< filename << std::endl;
+    LogInfo<<"Opening file: "<< list_file << std::endl;
     // read and save the TPs
     while (std::getline(infile, line)) {
+        // check that the line is not a break point, starting with ###
+        if (line.size() >= 3 && line.substr(0, 3) == "###") break;
+        if (line.empty() || line[0] == '#')continue; // skip empty lines and comments
+        // Extract filename from path and check if it starts with "tpstream"
+        std::string basename = line.substr(line.find_last_of("/\\") + 1);
+        if (basename.length() < 14 || basename.substr(basename.length() - 14) != "_tpstream.root") {
+            LogInfo << "Skipping file (doesn't end with '_tpstream.root'): " << basename << std::endl;
+            continue;
+        }
+        // Check if file exists before adding to filenames vector
+        std::ifstream file_check(line);
+        if (!file_check.good()) {
+            LogInfo << "Skipping file (does not exist): " << line << std::endl;
+            continue;
+        }
+        file_check.close();
         filenames.push_back(line);
     }
-    LogInfo << "Number of files: " << filenames.size() << std::endl;
+    
+    LogInfo << "Number of valid files: " << filenames.size() << std::endl;
     
     // TODO: parallelize this
     
@@ -114,6 +139,8 @@ int main(int argc, char* argv[]) {
     std::vector<std::vector<TriggerPrimitive>> tps;
     std::vector<std::vector<TrueParticle>> true_particles;
     std::vector<std::vector<Neutrino>> neutrinos;
+
+    std::vector<std::string> output_files;
 
     for (auto& filename : filenames) {
         LogInfo << "Reading file: " << filename << std::endl;
@@ -232,7 +259,7 @@ int main(int argc, char* argv[]) {
                 for (auto* tp : these_tps_per_view) {
                     if (tp->GetTrueParticle() != nullptr && tp->GetTrueParticle()->GetGeneratorName() != "UNKNOWN") {
                         truth_count++;
-                        std::cout << "; Generator: " << tp->GetTrueParticle()->GetGeneratorName() ;
+                        // std::cout << "; Generator: " << tp->GetTrueParticle()->GetGeneratorName() ;
                     }
                 }
                 LogInfo << "TPs with non-UNKNOWN generator: " << truth_count * 100.0f / these_tps_per_view.size() << " %" << std::endl;
@@ -259,18 +286,48 @@ int main(int argc, char* argv[]) {
                 LogInfo << "-------------------------" << std::endl;
             }
 
-            // write clusters to root files, 
+            // write clusters to root files
+
+            // Extract base filename without _tpstream.root suffix
+            std::string input_basename = filename.substr(filename.find_last_of("/\\") + 1);
+            input_basename = input_basename.substr(0, input_basename.length() - 14); // Remove "_tpstream.root"
+            std::string energy_cut_str = std::to_string(energy_cut);
+            energy_cut_str.erase(energy_cut_str.find_last_not_of('0') + 1, std::string::npos);
+            std::replace(energy_cut_str.begin(), energy_cut_str.end(), '.', 'p');
+            std::string clusters_filename = outfolder + 
+                "/" + input_basename + 
+                "_clusters_tick" + std::to_string(ticks_limit) + 
+                "_ch" + std::to_string(channel_limit) + 
+                "_min" + std::to_string(min_tps_to_cluster)  + 
+                "_tot" + std::to_string(min_time_over_threshold) + 
+                "_en" + energy_cut_str +
+            ".root";
+            // if it already exists, delete it TODO make this a flag
+            if (std::ifstream(clusters_filename)) {
+                std::remove(clusters_filename.c_str());
+                LogInfo << "Deleted file: " << clusters_filename << std::endl;
+            }
+
+
             for (int iView = 0; iView < APA::views.size(); iView++) {
                 LogInfo << "Writing " << APA::views.at(iView) << " clusters " << std::endl;
                 write_clusters_to_root(clusters_per_view.at(iView), clusters_filename, APA::views.at(iView));
             }
+
+            output_files.push_back(clusters_filename);
 
             LogInfo << " Output file is " << clusters_filename << std::endl;
             LogInfo << "############################" << std::endl;
 
             // break; // TEMP, just for testing one event at the time
         }
-        break; // TEMP, just for testing one file at the time
+        // break; // TEMP, just for testing one file at the time
+    }
+
+    LogInfo << "Output files are:" << std::endl;
+
+    for (const auto& file : output_files) {
+        LogInfo << file << std::endl;
     }
 
     // stop the clock
