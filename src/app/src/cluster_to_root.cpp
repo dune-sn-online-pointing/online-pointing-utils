@@ -63,10 +63,11 @@ int main(int argc, char* argv[]) {
         outfolder = clp.getOptionVal<std::string>("outFolder");
         LogInfo << "Output folder (from command line): " << outfolder << std::endl;
     } else {
-        // Extract folder from list_file path
-        outfolder = list_file.substr(0, list_file.find_last_of("/\\"));
-        if (outfolder.empty()) outfolder = "."; // current directory if no path
-        LogInfo << "Output folder (from input file path): " << outfolder << std::endl;
+        // Extract folder from list_file path and place outputs in a fixed 'clusters' subfolder
+        std::string base_folder = list_file.substr(0, list_file.find_last_of("/\\"));
+        if (base_folder.empty()) base_folder = "."; // current directory if no path
+        outfolder = base_folder + "/clusters";
+        LogInfo << "Output folder (default): " << outfolder << std::endl;
     }
     int ticks_limit = j["tick_limit"];
     LogInfo << "Tick limit: " << ticks_limit << std::endl;
@@ -262,7 +263,8 @@ int main(int argc, char* argv[]) {
                         // std::cout << "; Generator: " << tp->GetTrueParticle()->GetGeneratorName() ;
                     }
                 }
-                LogInfo << "TPs with non-UNKNOWN generator: " << truth_count * 100.0f / these_tps_per_view.size() << " %" << std::endl;
+                int gen_tp_fraction = these_tps_per_view.empty() ? 0 : static_cast<int>(truth_count * 100.0f / these_tps_per_view.size());
+                LogInfo << "TPs with non-UNKNOWN generator: " << gen_tp_fraction << " %" << std::endl;
             }
         
             // LogInfo << "The views are " << APA::views.size() << std::endl;
@@ -302,10 +304,12 @@ int main(int argc, char* argv[]) {
                 "_tot" + std::to_string(min_time_over_threshold) + 
                 "_en" + energy_cut_str +
             ".root";
-            // if it already exists, delete it TODO make this a flag
-            if (std::ifstream(clusters_filename)) {
-                std::remove(clusters_filename.c_str());
-                LogInfo << "Deleted file: " << clusters_filename << std::endl;
+            // Keep all events in the same output file: delete only before the first event
+            if (iEvent == 1) {
+                if (std::ifstream(clusters_filename)) {
+                    std::remove(clusters_filename.c_str());
+                    LogInfo << "Deleted existing file before first event: " << clusters_filename << std::endl;
+                }
             }
 
 
@@ -329,6 +333,8 @@ int main(int argc, char* argv[]) {
     for (const auto& file : output_files) {
         LogInfo << file << std::endl;
     }
+
+    LogInfo << "Output folder: " << outfolder << std::endl;
 
     // stop the clock
     std::clock_t end = std::clock();
