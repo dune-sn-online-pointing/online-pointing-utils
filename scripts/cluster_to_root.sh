@@ -20,7 +20,7 @@ print_help() {
     exit 0
 }
 
-settingsFile=""
+settingsFile="json/cluster_to_root/noCluster.json" # temp 
 cleanCompile=false
 noCompile=false
 
