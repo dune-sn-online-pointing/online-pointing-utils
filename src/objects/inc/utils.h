@@ -7,13 +7,16 @@
 #include <cmath>
 #include <set>
 
+// Include parameter headers for constants moved out of utils.h
+#include "../../../parameters/geometry.h"
+#include "../../../parameters/timing.h"
+#include "../../../parameters/conversion.h"
+
 // #include "TriggerPrimitive.hpp"
 
+// APAs
 static std::vector<std::string> views = {"U", "V", "X"};
 
-
-
-// APA number of channels
 namespace APA{
     static const int induction_channels = 800;
     static const int collection_channels = 960;
@@ -27,6 +30,7 @@ namespace APA{
     };
 }
 
+// CRPs, placeholder for now
 // namespace CRP{
 // }
 
@@ -47,27 +51,7 @@ namespace PDG{
     static const int kaon_zero_bar = -310;
 }
 
-static const int EVENTS_OFFSET = 0; // what for? TODO remove I think
-static const double apa_lenght_in_cm = 230;
-static const double wire_pitch_in_cm_collection = 0.479;
-static const double wire_pitch_in_cm_induction_diagonal = 0.4669;
-static const double apa_angle = (90 - 35.7);
-static const double wire_pitch_in_cm_induction = wire_pitch_in_cm_induction_diagonal / sin(apa_angle * M_PI / 180);
-static const double offset_between_apa_in_cm = 2.4;
-static const double apa_height_in_cm = 598.4;
-static const double time_tick_in_cm = 0.0805;
-static const double apa_width_in_cm = 4.7;
-static const int backtracker_error_margin = 4; // prob remove
-static const double apa_angular_coeff = tan(apa_angle * M_PI / 180);
-
-// TODO very temporary, these should be configurable parameters
-static const double adc_to_energy_conversion_factor = 4000; // ADC to MeV conversion factor
-static int time_window = 32*32; // in tpc ticks times conversion to tdc ticks
-static double drift_speed =  1.61e-4 ; // from wc config, this is cm/ns
-static int tdc_tick = 16; // in ns
-static const float TPC_sample_length = 512.; // ns
-static const float clock_tick = 16.; // ns
-static int conversion_tdc_to_tpc = 32; 
+// Constants moved to parameters/*.h above
 
 
 #endif // UTILS_H

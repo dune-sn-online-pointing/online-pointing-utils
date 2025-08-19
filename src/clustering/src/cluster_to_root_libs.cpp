@@ -6,6 +6,8 @@
 #include <sstream>
 #include <climits>
 #include <unordered_map>
+#include <TDirectory.h>
+#include <TKey.h>
 
 // #include <TLeaf.h>
 
@@ -685,7 +687,11 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     system(command.c_str());
     // create the root file if it does not exist, otherwise just update it
     TFile *clusters_file = new TFile(root_filename.c_str(), "UPDATE"); // TODO handle better
-    TTree *clusters_tree =  (TTree*)clusters_file->Get(Form("clusters_tree_%s", view.c_str()));
+    // Ensure a fixed TDirectory inside the ROOT file for cluster trees
+    TDirectory* clusters_dir = clusters_file->GetDirectory("clusters");
+    if (!clusters_dir) clusters_dir = clusters_file->mkdir("clusters");
+    clusters_dir->cd();
+    TTree *clusters_tree =  (TTree*)clusters_dir->Get(Form("clusters_tree_%s", view.c_str()));
 
     int event;
     int n_tps;
@@ -799,7 +805,19 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
         reco_pos_z = cluster.get_reco_pos()[2];
         min_distance_from_true_pos = cluster.get_min_distance_from_true_pos();
         supernova_tp_fraction = cluster.get_supernova_tp_fraction();
-        generator_tp_fraction = cluster.get_generator_tp_fraction();
+        // Compute fraction of TPs in this cluster with a non-UNKNOWN generator
+        {
+            int cluster_truth_count = 0;
+            const auto& cl_tps = cluster.get_tps();
+            for (auto* tp : cl_tps) {
+                auto* tpTruth = tp->GetTrueParticle();
+                if (tpTruth != nullptr && tpTruth->GetGeneratorName() != "UNKNOWN") {
+                    cluster_truth_count++;
+                }
+            }
+            generator_tp_fraction = cl_tps.empty() ? 0.f : static_cast<float>(cluster_truth_count) / static_cast<float>(cl_tps.size());
+            // std::cout << "Fraction of TPs with non-null generator: " << generator_tp_fraction << std::endl;
+        }
         true_interaction = cluster.get_true_interaction();
         true_interaction_point = &true_interaction;
         total_charge = cluster.get_total_charge();
@@ -828,6 +846,8 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
         clusters_tree->Fill();
     }
     // write the tree
+    // Write inside 'clusters' directory
+    clusters_dir->cd();
     clusters_tree->Write("", TObject::kOverwrite);
     clusters_file->Close();
 
@@ -841,7 +861,36 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
     f = TFile::Open(root_filename.c_str());
     // print the list of objects in the file
     f->ls();
-    TTree *clusters_tree = (TTree*)f->Get("clusters_tree");
+    TTree *clusters_tree = nullptr;
+    // Prefer the new in-file folder structure
+    if (auto* dir = f->GetDirectory("clusters")) {
+        dir->cd();
+        TIter nextKey(dir->GetListOfKeys());
+        while (TKey* key = (TKey*)nextKey()) {
+            if (std::string(key->GetClassName()) == "TTree") {
+                clusters_tree = dynamic_cast<TTree*>(key->ReadObj());
+                if (clusters_tree) break;
+            }
+        }
+    }
+    // Fallback to legacy names if nothing found
+    if (!clusters_tree) {
+        clusters_tree = (TTree*)f->Get("clusters_tree_X");
+    }
+    if (!clusters_tree) {
+        clusters_tree = (TTree*)f->Get("clusters_tree_U");
+    }
+    if (!clusters_tree) {
+        clusters_tree = (TTree*)f->Get("clusters_tree_V");
+    }
+    if (!clusters_tree) {
+        clusters_tree = (TTree*)f->Get("clusters_tree");
+    }
+    if (!clusters_tree) {
+        LogError << "No clusters tree found in file: " << root_filename << std::endl;
+        f->Close();
+        return clusters;
+    }
     
     // std::vector<TriggerPrimitive> matrix;
     // std::vector<TriggerPrimitive>* matrix_ptr = &matrix;
