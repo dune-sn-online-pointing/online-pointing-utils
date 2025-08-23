@@ -134,6 +134,11 @@ int main(int argc, char* argv[]) {
     
     LogInfo << "Number of valid files: " << filenames.size() << std::endl;
     
+    if (filenames.size() == 0) {
+        LogWarning << "No valid files found! Please check the list of input files." << std::endl;
+        return 1;
+    }
+    
     // TODO: parallelize this
     
     // each entry of the vector is an event
@@ -182,6 +187,21 @@ int main(int argc, char* argv[]) {
         tps.resize(n_events+1);
         true_particles.resize(n_events+1);
         neutrinos.resize(n_events+1);
+
+        // Extract base filename without _tpstream.root suffix
+        std::string input_basename = filename.substr(filename.find_last_of("/\\") + 1);
+        input_basename = input_basename.substr(0, input_basename.length() - 14); // Remove "_tpstream.root"
+        std::string energy_cut_str = std::to_string(energy_cut);
+        energy_cut_str.erase(energy_cut_str.find_last_not_of('0') + 1, std::string::npos);
+        std::replace(energy_cut_str.begin(), energy_cut_str.end(), '.', 'p');
+        std::string clusters_filename = outfolder + 
+            "/" + input_basename + 
+            "_clusters_tick" + std::to_string(ticks_limit) + 
+            "_ch" + std::to_string(channel_limit) + 
+            "_min" + std::to_string(min_tps_to_cluster)  + 
+            "_tot" + std::to_string(min_time_over_threshold) + 
+            "_en" + energy_cut_str +
+        ".root";
 
         LogInfo << "############################" << std::endl;
 
@@ -255,7 +275,7 @@ int main(int argc, char* argv[]) {
 
                 float matched_fraction = these_tps_per_view.empty() ? 0.0f : (matched_in_view * 100.0f) / these_tps_per_view.size();
                 LogInfo << "Matched TPs in view " << APA::views.at(iView) << ": " << matched_fraction << " %" << std::endl;
-                LogInfo << "Of these, the ones for which the true particle contains truth: " << std::endl;
+                // LogInfo << "Of these, the ones for which the true particle contains truth: " << std::endl;
                 int truth_count = 0;
                 for (auto* tp : these_tps_per_view) {
                     if (tp->GetTrueParticle() != nullptr && tp->GetTrueParticle()->GetGeneratorName() != "UNKNOWN") {
@@ -288,44 +308,17 @@ int main(int argc, char* argv[]) {
                 LogInfo << "-------------------------" << std::endl;
             }
 
-            // write clusters to root files
-
-            // Extract base filename without _tpstream.root suffix
-            std::string input_basename = filename.substr(filename.find_last_of("/\\") + 1);
-            input_basename = input_basename.substr(0, input_basename.length() - 14); // Remove "_tpstream.root"
-            std::string energy_cut_str = std::to_string(energy_cut);
-            energy_cut_str.erase(energy_cut_str.find_last_not_of('0') + 1, std::string::npos);
-            std::replace(energy_cut_str.begin(), energy_cut_str.end(), '.', 'p');
-            std::string clusters_filename = outfolder + 
-                "/" + input_basename + 
-                "_clusters_tick" + std::to_string(ticks_limit) + 
-                "_ch" + std::to_string(channel_limit) + 
-                "_min" + std::to_string(min_tps_to_cluster)  + 
-                "_tot" + std::to_string(min_time_over_threshold) + 
-                "_en" + energy_cut_str +
-            ".root";
-            // Keep all events in the same output file: delete only before the first event
-            if (iEvent == 1) {
-                if (std::ifstream(clusters_filename)) {
-                    std::remove(clusters_filename.c_str());
-                    LogInfo << "Deleted existing file before first event: " << clusters_filename << std::endl;
-                }
-            }
-
-
             for (int iView = 0; iView < APA::views.size(); iView++) {
                 LogInfo << "Writing " << APA::views.at(iView) << " clusters " << std::endl;
                 write_clusters_to_root(clusters_per_view.at(iView), clusters_filename, APA::views.at(iView));
             }
 
-            output_files.push_back(clusters_filename);
-
-            LogInfo << " Output file is " << clusters_filename << std::endl;
             LogInfo << "############################" << std::endl;
 
-            // break; // TEMP, just for testing one event at the time
         }
-        // break; // TEMP, just for testing one file at the time
+        
+        output_files.push_back(clusters_filename);
+        // LogInfo << " Output file is " << clusters_filename << std::endl;
     }
 
     LogInfo << "Output files are:" << std::endl;
@@ -339,10 +332,9 @@ int main(int argc, char* argv[]) {
     // stop the clock
     std::clock_t end = std::clock();
 
-    // std::setprecision(3);
-    LogInfo << "Time take  in seconds: " << float(end - start) / CLOCKS_PER_SEC << std::endl;
-    LogInfo << "Time taken in minutes: " << float(end - start) / CLOCKS_PER_SEC / 60  << std::endl;
-    LogInfo << "Time taken in hours: " << float(end - start) / CLOCKS_PER_SEC / 3600 << std::endl;
+    LogInfo << "Time taken in seconds: " << std::fixed << std::setprecision(2) << float(end - start) / CLOCKS_PER_SEC << std::endl;
+    LogInfo << "Time taken in minutes: " << std::fixed << std::setprecision(2) << float(end - start) / CLOCKS_PER_SEC / 60  << std::endl;
+    LogInfo << "Time taken in hours: " << std::fixed << std::setprecision(2) << float(end - start) / CLOCKS_PER_SEC / 3600 << std::endl;
 
 
     // free the memory

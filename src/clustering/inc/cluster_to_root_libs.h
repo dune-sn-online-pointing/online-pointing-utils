@@ -53,6 +53,20 @@ std::map<int, std::vector<cluster>> create_event_mapping(std::vector<cluster>& c
 
 std::map<int, std::vector<TriggerPrimitive>> create_background_event_mapping(std::vector<TriggerPrimitive>& bkg_tps);
 
+// Write condensed TPs and truth to a ROOT file for later clustering
+void write_tps_to_root(
+	const std::string& out_filename,
+	const std::vector<std::vector<TriggerPrimitive>>& tps_by_event,
+	const std::vector<std::vector<TrueParticle>>& true_particles_by_event,
+	const std::vector<std::vector<Neutrino>>& neutrinos_by_event);
+
+// Read condensed TPs and truth back from a ROOT file
+void read_tps_from_root(
+	const std::string& in_filename,
+	std::map<int, std::vector<TriggerPrimitive>>& tps_by_event,
+	std::map<int, std::vector<TrueParticle>>& true_particles_by_event,
+	std::map<int, std::vector<Neutrino>>& neutrinos_by_event);
+
 #endif
 
 

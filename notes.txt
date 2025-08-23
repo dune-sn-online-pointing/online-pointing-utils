@@ -1,0 +1,43 @@
+MARLEY presence per file (events with MARLEY-labeled TPs after ToT cut) and UNKNOWN totals:
+
+bktr0 (baseline, from earlier run):
+
+bkgCC60: 0/10 (UNKNOWN 0)
+bkgCC909080: 0/10 (UNKNOWN 0)
+bkgES60: 0/10 (UNKNOWN 0)
+bkgES909080: 0/10 (UNKNOWN 0)
+cleanCC60: 10/10
+cleanCC909080: 0/10 (UNKNOWN 240)
+cleanES60: 10/10
+cleanES909080: 1/10 (UNKNOWN 127)
+bktr5:
+
+bkgCC60: 0/10 (UNKNOWN 0)
+bkgCC909080: 0/10 (UNKNOWN 0)
+bkgES60: 0/10 (UNKNOWN 0)
+bkgES909080: 0/10 (UNKNOWN 0)
+cleanCC60: 10/10
+cleanCC909080: 2/10 (UNKNOWN 186)
+cleanES60: 10/10
+cleanES909080: 1/10 (UNKNOWN 127)
+bktr10:
+
+Same as bktr5.
+bktr15:
+
+Same as bktr5.
+Key takeaway:
+
+Increasing backtracker_error_margin from 0 to 5 improved cleanCC909080 from 0/10 to 2/10 MARLEY events and reduced UNKNOWN from 240 to 186. Larger margins (10, 15) did not yield further gains on this dataset. All other files unchanged across margins.
+files produced
+8 PDFs per margin written to:
+/home/virgolaema/dune/online-pointing-utils/data
+Filenames follow input base, e.g.:
+.../bkgCC60_tps_bktr5.pdf, .../bkgCC60_tps_bktr10.pdf, .../bkgCC60_tps_bktr15.pdf
+Same pattern for all 8 inputs.
+next steps
+If you want, I can open the PDFs in the editor for a quick visual scan.
+We can try an intermediate margin (e.g., 7–8) or tweak the association logic to see if cleanCC909080 improves further without inflating UNKNOWN.
+Requirements coverage:
+
+Run backtracking/analyzer for margins 0/5/10/15 and compare MARLEY label presence: Done (analyzer completed for 5/10/15; comparison against 0 reported).

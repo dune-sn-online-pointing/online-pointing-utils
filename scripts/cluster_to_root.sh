@@ -11,6 +11,7 @@ print_help() {
     echo "Usage: $0 -j <json_settings.json>" #--cut <cut> --type <type> [Either "main_track" "blip" "benchmark "or "bkg"]"
     echo "Options:"
     echo "  --json-settings <json>      Json file to used as input. Relative path inside json/"
+    echo "  -v|--verbose-mode         Turn on verbosity"
     # echo "  --cut <cut>                           Cut value"
     # echo "  --type <type>                         Type of the dataset, either 'main_track', 'blip', 'bkg', 'benchmark'"
     echo "  --no-compile                Do not recompile the code. Default is to recompile the code"
@@ -23,12 +24,14 @@ print_help() {
 settingsFile="json/cluster_to_root/noCluster.json" # temp 
 cleanCompile=false
 noCompile=false
+verboseMode=false
 
 # Parse
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --output-folder)    output_folder="$2"; shift 2 ;;
         -j|--json-settings) settingsFile="$2"; shift 2 ;;
+        -v|--verbose-mode)   verboseMode=true; shift ;;
         # --cut)          cut="$2"; shift 2 ;;
         # --type)         type="$2"; shift 2 ;;
         --no-compile)       noCompile=true; shift ;;
