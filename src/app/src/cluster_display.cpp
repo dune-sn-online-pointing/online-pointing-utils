@@ -64,6 +64,7 @@ namespace ViewerState {
 }
 
 static std::string toLower(std::string s){ std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c);}); return s; }
+static inline int toTPCticks(int tdcTicks){ return tdcTicks/32; }
 
 // Internal callbacks (we'll hook buttons via function pointers to avoid Cling symbol lookup)
 static void PrevImpl();
@@ -107,8 +108,9 @@ void drawCurrent(){
   if (cmin>cmax) { cmin=0; cmax=1; }
   int tpad = it.isEvent ? 20 : 5;
   int cpad = it.isEvent ? 10 : 2;
-  double xmin = tmin - tpad, xmax = tmax + tpad;
-  double ymin = cmin - cpad, ymax = cmax + cpad;
+  // Swap axes: X = channel, Y = time [ticks]
+  double xmin = cmin - cpad, xmax = cmax + cpad;
+  double ymin = tmin - tpad, ymax = tmax + tpad;
 
   // Lazily create control/plot pads once
   if (ViewerState::padCtrl == nullptr || ViewerState::padGrid == nullptr){
@@ -139,22 +141,18 @@ void drawCurrent(){
   ViewerState::padGrid->cd();
   gPad->Clear();
   if (frame) { delete frame; frame = nullptr; }
-  static int frameCounter = 0;
-  TString frameName = Form("frame_%d", ++frameCounter);
-  frame = new TH2F(frameName, "", 10, xmin, xmax, 10, ymin, ymax);
-  frame->SetDirectory(nullptr);
-  frame->SetStats(0);
-  frame->GetXaxis()->SetTitle("time [ticks]");
-  frame->GetYaxis()->SetTitle("channel");
-  frame->Draw("AXIS");
+  // Draw axis frame without creating named histograms (X=channel, Y=time)
+  gPad->DrawFrame(xmin, ymin, xmax, ymax, ";channel;time [ticks]");
+  gPad->SetGridx();
+  gPad->SetGridy();
 
-  // Draw each TP as a horizontal box representing ToT extent at a channel
+  // Draw each TP as a vertical box: fixed channel (x-range +/-0.45), y-range from time_start to time_start+ToT
   int color = kBlue+1;
   for (size_t i=0;i<nTPs;++i){
     double ts = it.tstart[i];
     double te = it.tstart[i] + it.sot[i];
     double ch = it.ch[i];
-    auto* b = new TBox(ts, ch-0.45, te, ch+0.45);
+    auto* b = new TBox(ch-0.45, ts, ch+0.45, te);
     b->SetFillColorAlpha(color, 0.35);
     b->SetLineColor(kBlack);
     b->Draw();
@@ -258,7 +256,9 @@ int main(int argc, char** argv){
           std::string low = toLower(lab);
           if (low.find("marley") == std::string::npos) continue;
           ViewerState::Item it; it.plane = plane; it.label = lab; it.interaction = inter? *inter : std::string(""); it.enu = enu; it.total_charge = totQ; it.total_energy = totE;
-          if (v_ch) it.ch = *v_ch; if (v_ts) it.tstart = *v_ts; if (v_sot) it.sot = *v_sot;
+          if (v_ch) it.ch = *v_ch;
+          if (v_ts){ it.tstart.reserve(v_ts->size()); for (int ts : *v_ts) it.tstart.push_back(toTPCticks(ts)); }
+          if (v_sot) it.sot = *v_sot; // SoT already in TPC ticks
           ViewerState::items.emplace_back(std::move(it));
         }
       } else {
@@ -272,10 +272,11 @@ int main(int argc, char** argv){
           auto& it = agg[evt];
           it.isEvent = true; it.eventId = evt; it.plane = plane; it.marleyOnly = onlyMarley; it.nClusters += 1;
           if (v_ch){ it.ch.insert(it.ch.end(), v_ch->begin(), v_ch->end()); }
-          if (v_ts){ it.tstart.insert(it.tstart.end(), v_ts->begin(), v_ts->end()); }
+          if (v_ts){ it.tstart.reserve(it.tstart.size()+v_ts->size()); for (int ts : *v_ts) it.tstart.push_back(toTPCticks(ts)); }
           if (v_sot){ it.sot.insert(it.sot.end(), v_sot->begin(), v_sot->end()); }
         }
-        for (auto &kv : agg){ ViewerState::items.emplace_back(std::move(kv.second)); }
+        // Only keep events with more than 1 TP
+        for (auto &kv : agg){ if (kv.second.ch.size() > 1) ViewerState::items.emplace_back(std::move(kv.second)); }
       }
     };
     readPlaneClusters("U"); readPlaneClusters("V"); readPlaneClusters("X");
@@ -294,14 +295,14 @@ int main(int argc, char** argv){
       int evtId = kv.first;
       auto &vec = kv.second; std::vector<TriggerPrimitive*> vU, vV, vX;
       for (auto &tp : vec){ if (tp.GetView()=="U") vU.push_back(&tp); else if (tp.GetView()=="V") vV.push_back(&tp); else if (tp.GetView()=="X") vX.push_back(&tp); }
-      auto addPlane = [&](std::vector<TriggerPrimitive*>& v, const char* plane){
+    auto addPlane = [&](std::vector<TriggerPrimitive*>& v, const char* plane){
         std::vector<cluster> cs = cluster_maker(v, tick_limit, channel_limit, min_tps, 0);
         if (toLower(mode)=="clusters"){
-          for (auto &c : cs){ std::string low = toLower(c.get_true_label()); if (low.find("marley") == std::string::npos) continue; ViewerState::Item it; it.plane=plane; it.label=c.get_true_label(); it.interaction=c.get_true_interaction(); it.enu=c.get_true_neutrino_energy(); it.total_charge=c.get_total_charge(); it.total_energy=c.get_total_energy(); auto ctps=c.get_tps(); it.ch.reserve(ctps.size()); it.tstart.reserve(ctps.size()); it.sot.reserve(ctps.size()); for (auto* tp : ctps){ it.ch.push_back(tp->GetDetectorChannel()); it.tstart.push_back((int)tp->GetTimeStart()); it.sot.push_back((int)tp->GetSamplesOverThreshold()); } ViewerState::items.emplace_back(std::move(it)); }
+      for (auto &c : cs){ std::string low = toLower(c.get_true_label()); if (low.find("marley") == std::string::npos) continue; ViewerState::Item it; it.plane=plane; it.label=c.get_true_label(); it.interaction=c.get_true_interaction(); it.enu=c.get_true_neutrino_energy(); it.total_charge=c.get_total_charge(); it.total_energy=c.get_total_energy(); auto ctps=c.get_tps(); it.ch.reserve(ctps.size()); it.tstart.reserve(ctps.size()); it.sot.reserve(ctps.size()); for (auto* tp : ctps){ it.ch.push_back(tp->GetDetectorChannel()); it.tstart.push_back(toTPCticks((int)tp->GetTimeStart())); it.sot.push_back((int)tp->GetSamplesOverThreshold()); } ViewerState::items.emplace_back(std::move(it)); }
         } else {
-          ViewerState::Item agg; agg.isEvent=true; agg.eventId=evtId; agg.plane=plane; agg.marleyOnly=onlyMarley;
-          for (auto &c : cs){ std::string low = toLower(c.get_true_label()); if (onlyMarley && low.find("marley")==std::string::npos) continue; auto ctps=c.get_tps(); agg.nClusters += 1; for (auto* tp : ctps){ agg.ch.push_back(tp->GetDetectorChannel()); agg.tstart.push_back((int)tp->GetTimeStart()); agg.sot.push_back((int)tp->GetSamplesOverThreshold()); } }
-          if (!agg.ch.empty()) ViewerState::items.emplace_back(std::move(agg));
+      ViewerState::Item agg; agg.isEvent=true; agg.eventId=evtId; agg.plane=plane; agg.marleyOnly=onlyMarley;
+      for (auto &c : cs){ std::string low = toLower(c.get_true_label()); if (onlyMarley && low.find("marley")==std::string::npos) continue; auto ctps=c.get_tps(); agg.nClusters += 1; for (auto* tp : ctps){ agg.ch.push_back(tp->GetDetectorChannel()); agg.tstart.push_back(toTPCticks((int)tp->GetTimeStart())); agg.sot.push_back((int)tp->GetSamplesOverThreshold()); } }
+      if (agg.ch.size() > 1) ViewerState::items.emplace_back(std::move(agg));
         }
       };
       addPlane(vU, "U"); addPlane(vV, "V"); addPlane(vX, "X");
