@@ -238,15 +238,30 @@ int main(int argc, char* argv[]) {
         continue;
     }
 
-    // Optional diagnostics: read true_particles to detect MARLEY truth per event
+    // Optional diagnostics: read true_particles to detect MARLEY truth per event and build channel/time maps
     std::set<int> events_with_marley_truth;
     std::map<int, double> event_nu_energy; // per-event neutrino energy [MeV]
+    // For backtracking checks:
+    std::unordered_map<int, std::unordered_set<int>> event_union_channels; // event -> set of channels from truth
+    auto makeTruthKey = [](int evt, int tid) -> long long { return ( (static_cast<long long>(evt) << 32) | (static_cast<unsigned int>(tid)) ); };
+    std::unordered_map<long long, std::pair<double,double>> truth_time_window; // (evt,truth_id) -> [tmin,tmax]
     if (auto* tTreeTruth = dynamic_cast<TTree*>(tpsDir->Get("true_particles"))) {
-        int tevt = 0; std::string* tgen = nullptr;
+        int tevt = 0; std::string* tgen = nullptr; double tstart=0.0, tend=0.0; std::vector<int>* channels=nullptr; int ttruth=0;
         tTreeTruth->SetBranchAddress("event", &tevt);
         tTreeTruth->SetBranchAddress("generator_name", &tgen);
+        if (tTreeTruth->GetBranch("time_start")) tTreeTruth->SetBranchAddress("time_start", &tstart);
+        if (tTreeTruth->GetBranch("time_end"))   tTreeTruth->SetBranchAddress("time_end", &tend);
+        if (tTreeTruth->GetBranch("channels"))   tTreeTruth->SetBranchAddress("channels", &channels);
+        if (tTreeTruth->GetBranch("truth_id"))   tTreeTruth->SetBranchAddress("truth_id", &ttruth);
         Long64_t ntruth = tTreeTruth->GetEntries();
-        for (Long64_t i=0;i<ntruth;++i){ tTreeTruth->GetEntry(i); if (tgen){ std::string low=*tgen; std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c){return (char)std::tolower(c);}); if (low.find("marley")!=std::string::npos) events_with_marley_truth.insert(tevt); } }
+        for (Long64_t i=0;i<ntruth;++i){
+            tTreeTruth->GetEntry(i);
+            if (tgen){ std::string low=*tgen; std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c){return (char)std::tolower(c);}); if (low.find("marley")!=std::string::npos) events_with_marley_truth.insert(tevt); }
+            // union channels per event for fast membership checks
+            if (channels){ auto &uset = event_union_channels[tevt]; for (int ch : *channels) uset.insert(ch); }
+            // time window per (event, truth_id)
+            truth_time_window[ makeTruthKey(tevt, ttruth) ] = { tstart, tend };
+        }
     }
     // Read neutrino energies per event if the 'neutrinos' tree exists
     if (auto* nuTree = dynamic_cast<TTree*>(tpsDir->Get("neutrinos"))) {
@@ -262,6 +277,8 @@ int main(int argc, char* argv[]) {
     ULong64_t samples_over_threshold = 0;
     UShort_t adc_peak = 0;
     UInt_t adc_integral = 0;
+    UInt_t ch_offline = 0; // TP channel (offline)
+    Int_t tp_truth_id = -1; // linked truth id if any
     std::string* view = nullptr;
     std::string* generator_name = nullptr;
     tpTree->SetBranchAddress("event", &tp_event);
@@ -270,6 +287,8 @@ int main(int argc, char* argv[]) {
     if (tpTree->GetBranch("adc_integral")) tpTree->SetBranchAddress("adc_integral", &adc_integral);
     tpTree->SetBranchAddress("view", &view);
     tpTree->SetBranchAddress("generator_name", &generator_name);
+    if (tpTree->GetBranch("channel")) tpTree->SetBranchAddress("channel", &ch_offline);
+    if (tpTree->GetBranch("truth_id")) tpTree->SetBranchAddress("truth_id", &tp_truth_id);
 
     // We'll compute per-plane entry counts while looping
     int nentries_X = 0;
@@ -351,6 +370,10 @@ int main(int argc, char* argv[]) {
     {
         bool warned_null_once = false;
         Long64_t nentries = tpTree->GetEntries();
+        // Counters to diagnose UNKNOWN causes
+        long long unknown_total = 0, unknown_in_union = 0, unknown_not_in_union = 0;
+        // Keep track for tail composition; we'll tally after thresholds are computed (from histograms)
+        struct TailCounters { long long marley=0, known_nonmarley=0, unk_in_union=0, unk_not_in_union=0; } adc99, tot99, int99, adc95, tot95, int95;
         for (Long64_t i = 0; i < nentries; ++i) {
             Long64_t nb = tpTree->GetEntry(i);
             if (nb <= 0 || view == nullptr || generator_name == nullptr) {
@@ -366,6 +389,10 @@ int main(int argc, char* argv[]) {
                 bool is_marley = false; {
                     std::string low = lab; std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c){ return (char)std::tolower(c); });
                     if (low.find("marley") != std::string::npos) is_marley = true;
+                }
+                bool is_unknown = false; {
+                    std::string low = *generator_name; std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c){ return (char)std::tolower(c); });
+                    is_unknown = (low == "unknown" || tp_truth_id < 0);
                 }
                 if (v == "X") { h_peak_X_fine->Fill(adc_peak); nentries_X++; label_tp_counts_X_plane[lab]++; }
                 else if (v == "U") { h_peak_U_fine->Fill(adc_peak); nentries_U++; label_tp_counts_U_plane[lab]++; }
@@ -403,10 +430,18 @@ int main(int argc, char* argv[]) {
                     else if (v == "V") { h_peak_V_marley_fine->Fill(adc_peak); }
                     h_peak_all_marley_fine->Fill(adc_peak);
                 }
+                // Track UNKNOWN membership wrt union of truth channels (per event)
+                if (is_unknown) {
+                    unknown_total++;
+                    auto it = event_union_channels.find(tp_event);
+                    bool in_union = (it != event_union_channels.end() && it->second.find(static_cast<int>(ch_offline)) != it->second.end());
+                    if (in_union) unknown_in_union++; else unknown_not_in_union++;
+                }
                 label_tp_counts[lab]++;
                 event_label_counts[tp_event][lab]++;
             }
         }
+        LogInfo << "UNKNOWN diagnostic: total=" << unknown_total << ", in-union(ch)=" << unknown_in_union << ", not-in-union(ch)=" << unknown_not_in_union << std::endl;
     }
 
     LogInfo << "Number of TPs after ToT cut - X: " << nentries_X << ", U: " << nentries_U << ", V: " << nentries_V << std::endl;
@@ -538,6 +573,12 @@ int main(int argc, char* argv[]) {
     style_hist_fine(h_peak_X_marley_fine,   "ADC Peak Histogram (MARLEY, Fine)", kMagenta+2, kMagenta+2);
     style_hist_fine(h_peak_U_marley_fine,   "ADC Peak Histogram (MARLEY, Fine)", kMagenta+2, kMagenta+2);
     style_hist_fine(h_peak_V_marley_fine,   "ADC Peak Histogram (MARLEY, Fine)", kMagenta+2, kMagenta+2);
+    // Make MARLEY histograms line-only for overlay clarity
+    auto style_peak_m_overlay = [](TH1F* h){ if(!h) return; h->SetFillStyle(0); h->SetLineColor(kMagenta+2); h->SetLineWidth(2); };
+    style_peak_m_overlay(h_peak_all_marley_fine);
+    style_peak_m_overlay(h_peak_X_marley_fine);
+    style_peak_m_overlay(h_peak_U_marley_fine);
+    style_peak_m_overlay(h_peak_V_marley_fine);
 
     // Create canvas for ADC peak histograms (Page 2)
     LogInfo << "Creating ADC peak plots..." << std::endl;
@@ -547,29 +588,41 @@ int main(int argc, char* argv[]) {
     c1->cd(1);
     gPad->SetLogy();
     h_peak_all_coarse->Draw("HIST");
-    TLegend *leg_all = new TLegend(0.5, 0.8, 0.7, 0.9);
-    leg_all->AddEntry(h_peak_all_coarse, "All Planes", "f");
+    if (h_peak_all_marley_fine && h_peak_all_marley_fine->GetEntries()>0) h_peak_all_marley_fine->Draw("HIST SAME");
+    TLegend *leg_all = new TLegend(0.50, 0.78, 0.88, 0.92);
+    leg_all->SetBorderSize(0);
+    leg_all->AddEntry(h_peak_all_coarse, "All Planes (All)", "f");
+    if (h_peak_all_marley_fine && h_peak_all_marley_fine->GetEntries()>0) leg_all->AddEntry(h_peak_all_marley_fine, "All Planes (MARLEY)", "l");
     leg_all->Draw();
 
     c1->cd(2);
     gPad->SetLogy();
     h_peak_X_coarse->Draw("HIST");
-    TLegend *leg_X = new TLegend(0.5, 0.8, 0.7, 0.9);
-    leg_X->AddEntry(h_peak_X_coarse, "Plane X", "f");
+    if (h_peak_X_marley_fine && h_peak_X_marley_fine->GetEntries()>0) h_peak_X_marley_fine->Draw("HIST SAME");
+    TLegend *leg_X = new TLegend(0.50, 0.78, 0.88, 0.92);
+    leg_X->SetBorderSize(0);
+    leg_X->AddEntry(h_peak_X_coarse, "Plane X (All)", "f");
+    if (h_peak_X_marley_fine && h_peak_X_marley_fine->GetEntries()>0) leg_X->AddEntry(h_peak_X_marley_fine, "Plane X (MARLEY)", "l");
     leg_X->Draw();
 
     c1->cd(3);
     gPad->SetLogy();
     h_peak_U_coarse->Draw("HIST");
-    TLegend *leg_U = new TLegend(0.5, 0.8, 0.7, 0.9);
-    leg_U->AddEntry(h_peak_U_coarse, "Plane U", "f");
+    if (h_peak_U_marley_fine && h_peak_U_marley_fine->GetEntries()>0) h_peak_U_marley_fine->Draw("HIST SAME");
+    TLegend *leg_U = new TLegend(0.50, 0.78, 0.88, 0.92);
+    leg_U->SetBorderSize(0);
+    leg_U->AddEntry(h_peak_U_coarse, "Plane U (All)", "f");
+    if (h_peak_U_marley_fine && h_peak_U_marley_fine->GetEntries()>0) leg_U->AddEntry(h_peak_U_marley_fine, "Plane U (MARLEY)", "l");
     leg_U->Draw();
 
     c1->cd(4);
     gPad->SetLogy();
     h_peak_V_coarse->Draw("HIST");
-    TLegend *leg_V = new TLegend(0.5, 0.8, 0.7, 0.9);
-    leg_V->AddEntry(h_peak_V_coarse, "Plane V", "f");
+    if (h_peak_V_marley_fine && h_peak_V_marley_fine->GetEntries()>0) h_peak_V_marley_fine->Draw("HIST SAME");
+    TLegend *leg_V = new TLegend(0.50, 0.78, 0.88, 0.92);
+    leg_V->SetBorderSize(0);
+    leg_V->AddEntry(h_peak_V_coarse, "Plane V (All)", "f");
+    if (h_peak_V_marley_fine && h_peak_V_marley_fine->GetEntries()>0) leg_V->AddEntry(h_peak_V_marley_fine, "Plane V (MARLEY)", "l");
     leg_V->Draw();
 
     // Save second page of PDF
@@ -585,8 +638,11 @@ int main(int argc, char* argv[]) {
     gPad->SetLogy();
     h_peak_all_fine->GetXaxis()->SetRangeUser(0, 250);
     h_peak_all_fine->Draw("HIST");
-    TLegend *leg_all_zoom = new TLegend(0.5, 0.8, 0.7, 0.9);
-    leg_all_zoom->AddEntry(h_peak_all_fine, "All Planes", "f");
+    if (h_peak_all_marley_fine && h_peak_all_marley_fine->GetEntries()>0) { h_peak_all_marley_fine->GetXaxis()->SetRangeUser(0, 250); h_peak_all_marley_fine->Draw("HIST SAME"); }
+    TLegend *leg_all_zoom = new TLegend(0.50, 0.78, 0.88, 0.92);
+    leg_all_zoom->SetBorderSize(0);
+    leg_all_zoom->AddEntry(h_peak_all_fine, "All Planes (All)", "f");
+    if (h_peak_all_marley_fine && h_peak_all_marley_fine->GetEntries()>0) leg_all_zoom->AddEntry(h_peak_all_marley_fine, "All Planes (MARLEY)", "l");
     leg_all_zoom->Draw();
 
     c1_zoom->cd(2);
@@ -608,8 +664,11 @@ int main(int argc, char* argv[]) {
             if (auto f = h_peak_X_fine->GetFunction("expo")) { f->SetLineColor(color); f->SetLineWidth(2); }
         }
     }
-    TLegend *leg_X_zoom = new TLegend(0.5, 0.8, 0.7, 0.9);
-    leg_X_zoom->AddEntry(h_peak_X_fine, "Plane X", "f");
+    if (h_peak_X_marley_fine && h_peak_X_marley_fine->GetEntries()>0) { h_peak_X_marley_fine->GetXaxis()->SetRangeUser(0, 250); h_peak_X_marley_fine->Draw("HIST SAME"); }
+    TLegend *leg_X_zoom = new TLegend(0.50, 0.78, 0.88, 0.92);
+    leg_X_zoom->SetBorderSize(0);
+    leg_X_zoom->AddEntry(h_peak_X_fine, "Plane X (All)", "f");
+    if (h_peak_X_marley_fine && h_peak_X_marley_fine->GetEntries()>0) leg_X_zoom->AddEntry(h_peak_X_marley_fine, "Plane X (MARLEY)", "l");
     leg_X_zoom->Draw();
 
     c1_zoom->cd(3);
@@ -631,8 +690,11 @@ int main(int argc, char* argv[]) {
             if (auto f = h_peak_U_fine->GetFunction("expo")) { f->SetLineColor(color); f->SetLineWidth(2); }
         }
     }
-    TLegend *leg_U_zoom = new TLegend(0.5, 0.8, 0.7, 0.9);
-    leg_U_zoom->AddEntry(h_peak_U_fine, "Plane U", "f");
+    if (h_peak_U_marley_fine && h_peak_U_marley_fine->GetEntries()>0) { h_peak_U_marley_fine->GetXaxis()->SetRangeUser(0, 250); h_peak_U_marley_fine->Draw("HIST SAME"); }
+    TLegend *leg_U_zoom = new TLegend(0.50, 0.78, 0.88, 0.92);
+    leg_U_zoom->SetBorderSize(0);
+    leg_U_zoom->AddEntry(h_peak_U_fine, "Plane U (All)", "f");
+    if (h_peak_U_marley_fine && h_peak_U_marley_fine->GetEntries()>0) leg_U_zoom->AddEntry(h_peak_U_marley_fine, "Plane U (MARLEY)", "l");
     leg_U_zoom->Draw();
 
     c1_zoom->cd(4);
@@ -654,8 +716,11 @@ int main(int argc, char* argv[]) {
             if (auto f = h_peak_V_fine->GetFunction("expo")) { f->SetLineColor(color); f->SetLineWidth(2); }
         }
     }
-    TLegend *leg_V_zoom = new TLegend(0.5, 0.8, 0.7, 0.9);
-    leg_V_zoom->AddEntry(h_peak_V_fine, "Plane V", "f");
+    if (h_peak_V_marley_fine && h_peak_V_marley_fine->GetEntries()>0) { h_peak_V_marley_fine->GetXaxis()->SetRangeUser(0, 250); h_peak_V_marley_fine->Draw("HIST SAME"); }
+    TLegend *leg_V_zoom = new TLegend(0.50, 0.78, 0.88, 0.92);
+    leg_V_zoom->SetBorderSize(0);
+    leg_V_zoom->AddEntry(h_peak_V_fine, "Plane V (All)", "f");
+    if (h_peak_V_marley_fine && h_peak_V_marley_fine->GetEntries()>0) leg_V_zoom->AddEntry(h_peak_V_marley_fine, "Plane V (MARLEY)", "l");
     leg_V_zoom->Draw();
 
     // Save third page of PDF
@@ -756,6 +821,76 @@ int main(int argc, char* argv[]) {
     c_int->cd(3); gPad->SetLogy(); h_int_U->Draw("HIST");   { TLegend *leg=new TLegend(0.6,0.8,0.88,0.92); leg->AddEntry(h_int_U,   "Plane U",   "f"); leg->Draw(); }
     c_int->cd(4); gPad->SetLogy(); h_int_V->Draw("HIST");   { TLegend *leg=new TLegend(0.6,0.8,0.88,0.92); leg->AddEntry(h_int_V,   "Plane V",   "f"); leg->Draw(); }
     c_int->SaveAs(pdf_output.c_str());
+
+    // Backtracking sanity page: tail composition at 95% and 99%
+    LogInfo << "Creating backtracking diagnostics page (tails composition)..." << std::endl;
+    auto percentile_from_hist = [](TH1* h, double p) -> double {
+        if (!h) return 0.0; double target = p * h->GetEntries(); double cum = 0.0; int nb = h->GetNbinsX();
+        for (int b=1; b<=nb; ++b){ cum += h->GetBinContent(b); if (cum >= target){ return h->GetXaxis()->GetBinUpEdge(b); } }
+        return h->GetXaxis()->GetXmax(); };
+    double adc95_th = percentile_from_hist(h_peak_all_fine, 0.95);
+    double adc99_th = percentile_from_hist(h_peak_all_fine, 0.99);
+    double tot95_th = percentile_from_hist(h_tot_all, 0.95);
+    double tot99_th = percentile_from_hist(h_tot_all, 0.99);
+    double int95_th = percentile_from_hist(h_int_all, 0.95);
+    double int99_th = percentile_from_hist(h_int_all, 0.99);
+
+    // Re-scan TP tree quickly to tally tails by category
+    {
+        Long64_t nentries = tpTree->GetEntries();
+        // ensure branches are still set (they are)
+        long long adc95_m=0, adc95_kn=0, adc95_ui=0, adc95_un=0;
+        long long adc99_m=0, adc99_kn=0, adc99_ui=0, adc99_un=0;
+        long long tot95_m=0, tot95_kn=0, tot95_ui=0, tot95_un=0;
+        long long tot99_m=0, tot99_kn=0, tot99_ui=0, tot99_un=0;
+        long long int95_m=0, int95_kn=0, int95_ui=0, int95_un=0;
+        long long int99_m=0, int99_kn=0, int99_ui=0, int99_un=0;
+        for (Long64_t i=0;i<nentries;++i){ tpTree->GetEntry(i);
+            if (static_cast<long long>(samples_over_threshold) <= tot_cut) continue; // same selection
+            std::string low = *generator_name; std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c){ return (char)std::tolower(c); });
+            bool is_m = (low.find("marley") != std::string::npos);
+            bool is_unk = (low == "unknown" || tp_truth_id < 0);
+            bool is_kn = (!is_m && !is_unk);
+            bool in_union = false; { auto it = event_union_channels.find(tp_event); in_union = (it != event_union_channels.end() && it->second.find(static_cast<int>(ch_offline)) != it->second.end()); }
+            auto bump = [&](bool cond, long long &m, long long &kn, long long &ui, long long &un){ if (!cond) return; if (is_m) ++m; else if (is_kn) ++kn; else if (is_unk && in_union) ++ui; else ++un; };
+            bump(adc_peak >= adc95_th, adc95_m, adc95_kn, adc95_ui, adc95_un);
+            bump(adc_peak >= adc99_th, adc99_m, adc99_kn, adc99_ui, adc99_un);
+            double tot = static_cast<double>(samples_over_threshold);
+            bump(tot >= tot95_th,  tot95_m, tot95_kn, tot95_ui, tot95_un);
+            bump(tot >= tot99_th,  tot99_m, tot99_kn, tot99_ui, tot99_un);
+            double integ = static_cast<double>(adc_integral);
+            bump(integ >= int95_th, int95_m, int95_kn, int95_ui, int95_un);
+            bump(integ >= int99_th, int99_m, int99_kn, int99_ui, int99_un);
+        }
+        TCanvas *c_bktr = new TCanvas("c_bktr", "Backtracking diagnostics: tail composition", 1100, 700);
+        c_bktr->Divide(2,1);
+        c_bktr->cd(1); {
+            gPad->SetMargin(0.12,0.06,0.12,0.06);
+            TText t; t.SetTextFont(42); t.SetTextSize(0.032); double y=0.94, dy=0.055;
+            auto line=[&](const std::string& s){ t.DrawTextNDC(0.12, y, s.c_str()); y-=dy; };
+            char b[256]; snprintf(b,sizeof(b),"ADCpeak tails: th95=%.1f, th99=%.1f", adc95_th, adc99_th); line(b);
+            snprintf(b,sizeof(b),"  95%%: MARLEY=%lld, KNOWN!=MARLEY=%lld, UNKNOWN(ch-in-union)=%lld, UNKNOWN(ch-out)=%lld", adc95_m, adc95_kn, adc95_ui, adc95_un); line(b);
+            snprintf(b,sizeof(b),"  99%%: MARLEY=%lld, KNOWN!=MARLEY=%lld, UNKNOWN(ch-in-union)=%lld, UNKNOWN(ch-out)=%lld", adc99_m, adc99_kn, adc99_ui, adc99_un); line(b);
+            y-=0.02; snprintf(b,sizeof(b),"ToT tails: th95=%.0f, th99=%.0f", tot95_th, tot99_th); line(b);
+            snprintf(b,sizeof(b),"  95%%: MARLEY=%lld, KNOWN!=MARLEY=%lld, UNKNOWN(ch-in-union)=%lld, UNKNOWN(ch-out)=%lld", tot95_m, tot95_kn, tot95_ui, tot95_un); line(b);
+            snprintf(b,sizeof(b),"  99%%: MARLEY=%lld, KNOWN!=MARLEY=%lld, UNKNOWN(ch-in-union)=%lld, UNKNOWN(ch-out)=%lld", tot99_m, tot99_kn, tot99_ui, tot99_un); line(b);
+            y-=0.02; snprintf(b,sizeof(b),"Integral tails: th95=%.0f, th99=%.0f", int95_th, int99_th); line(b);
+            snprintf(b,sizeof(b),"  95%%: MARLEY=%lld, KNOWN!=MARLEY=%lld, UNKNOWN(ch-in-union)=%lld, UNKNOWN(ch-out)=%lld", int95_m, int95_kn, int95_ui, int95_un); line(b);
+            snprintf(b,sizeof(b),"  99%%: MARLEY=%lld, KNOWN!=MARLEY=%lld, UNKNOWN(ch-in-union)=%lld, UNKNOWN(ch-out)=%lld", int99_m, int99_kn, int99_ui, int99_un); line(b);
+        }
+        c_bktr->cd(2); {
+            // Simple bar chart for ADC 99%% composition
+            TH1F *hbar = new TH1F("h_adc99_comp","ADCpeak > 99th composition;Category;Count",4,0,4);
+            hbar->SetStats(0);
+            hbar->GetXaxis()->SetBinLabel(1,"MARLEY"); hbar->GetXaxis()->SetBinLabel(2,"KNOWN!=MARLEY"); hbar->GetXaxis()->SetBinLabel(3,"UNK ch-in-union"); hbar->GetXaxis()->SetBinLabel(4,"UNK ch-out");
+            hbar->SetBinContent(1, adc99_m); hbar->SetBinContent(2, adc99_kn); hbar->SetBinContent(3, adc99_ui); hbar->SetBinContent(4, adc99_un);
+            hbar->SetFillColorAlpha(kMagenta+2,0.35); hbar->SetLineColor(kMagenta+2);
+            gPad->SetGridx(); gPad->SetGridy(); gPad->SetLogy();
+            hbar->Draw("HIST");
+        }
+        c_bktr->SaveAs(pdf_output.c_str());
+        delete c_bktr;
+    }
 
     // New page: MARLEY presence per plane (event-level)
     LogInfo << "Creating MARLEY per-plane diagnostic page..." << std::endl;

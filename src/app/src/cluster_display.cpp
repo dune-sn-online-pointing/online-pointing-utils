@@ -19,6 +19,7 @@
 #include <TApplication.h>
 #include <TCanvas.h>
 #include <TButton.h>
+#include <TPad.h>
 #include <TFile.h>
 #include <TTree.h>
 #include <TText.h>
@@ -58,23 +59,25 @@ namespace ViewerState {
   TButton* btnPrev = nullptr;
   TButton* btnNext = nullptr;
   TLatex* latex = nullptr;
+  TPad* padCtrl = nullptr; // left control pad for buttons
+  TPad* padGrid = nullptr; // right plotting area
 }
 
 static std::string toLower(std::string s){ std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c);}); return s; }
 
-// Expose C-style callbacks for ROOT interpreter to invoke
-extern "C" void Prev();
-extern "C" void Next();
+// Internal callbacks (we'll hook buttons via function pointers to avoid Cling symbol lookup)
+static void PrevImpl();
+static void NextImpl();
 
 void drawCurrent();
 
-void Prev(){
+static void PrevImpl(){
   using namespace ViewerState;
   if (items.empty()) return;
   idx = std::max(0, idx - 1);
   drawCurrent();
 }
-void Next(){
+static void NextImpl(){
   using namespace ViewerState;
   if (items.empty()) return;
   idx = std::min((int)items.size()-1, idx + 1);
@@ -85,7 +88,6 @@ void drawCurrent(){
   using namespace ViewerState;
   if (!canvas || items.empty()) return;
   canvas->cd();
-  canvas->Clear();
 
   // Current cluster
   const auto& it = items.at(std::clamp(idx, 0, (int)items.size()-1));
@@ -108,7 +110,39 @@ void drawCurrent(){
   double xmin = tmin - tpad, xmax = tmax + tpad;
   double ymin = cmin - cpad, ymax = cmax + cpad;
 
-  frame = new TH2F("frame","",10,xmin,xmax,10,ymin,ymax);
+  // Lazily create control/plot pads once
+  if (ViewerState::padCtrl == nullptr || ViewerState::padGrid == nullptr){
+    // Left control pad
+    ViewerState::padCtrl = new TPad("pCtrl", "controls", 0.0, 0.0, 0.18, 1.0);
+    ViewerState::padCtrl->SetMargin(0.06,0.04,0.04,0.04);
+    ViewerState::padCtrl->SetFillColor(kWhite);
+    ViewerState::padCtrl->Draw();
+    // Right plot area
+    ViewerState::padGrid = new TPad("pGrid", "plots", 0.18, 0.0, 1.0, 1.0);
+    ViewerState::padGrid->SetMargin(0.12,0.06,0.12,0.08);
+    ViewerState::padGrid->Draw();
+    // Buttons in the control pad using function-pointer commands
+    ViewerState::padCtrl->cd();
+    std::string prevCmd = Form("((void(*)())%p)()", (void*)(&PrevImpl));
+    btnPrev = new TButton("Prev", prevCmd.c_str(), 0.10, 0.08, 0.90, 0.46);
+    btnPrev->SetFillColor(kGray);
+    btnPrev->SetTextSize(0.25);
+    btnPrev->Draw();
+    std::string nextCmd = Form("((void(*)())%p)()", (void*)(&NextImpl));
+    btnNext = new TButton("Next", nextCmd.c_str(), 0.10, 0.54, 0.90, 0.92);
+    btnNext->SetFillColor(kGray);
+    btnNext->SetTextSize(0.25);
+    btnNext->Draw();
+  }
+
+  // Draw into the plot pad only
+  ViewerState::padGrid->cd();
+  gPad->Clear();
+  if (frame) { delete frame; frame = nullptr; }
+  static int frameCounter = 0;
+  TString frameName = Form("frame_%d", ++frameCounter);
+  frame = new TH2F(frameName, "", 10, xmin, xmax, 10, ymin, ymax);
+  frame->SetDirectory(nullptr);
   frame->SetStats(0);
   frame->GetXaxis()->SetTitle("time [ticks]");
   frame->GetYaxis()->SetTitle("channel");
@@ -138,12 +172,7 @@ void drawCurrent(){
     snprintf(buf,sizeof(buf),"E_nu=%.1f MeV, total_charge=%.0f, total_energy=%.0f", it.enu, it.total_charge, it.total_energy); latex->DrawLatex(0.12,y,buf);
   }
 
-  // Buttons
-  btnPrev = new TButton("Prev", "Prev()", 0.12, 0.05, 0.22, 0.10);
-  btnNext = new TButton("Next", "Next()", 0.24, 0.05, 0.34, 0.10);
-  btnPrev->SetFillColor(kGray+1); btnNext->SetFillColor(kGray+1);
-  btnPrev->Draw(); btnNext->Draw();
-
+  gPad->Modified(); gPad->Update();
   canvas->Modified(); canvas->Update();
 }
 
