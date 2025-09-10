@@ -27,6 +27,7 @@
 #include <TDirectory.h>
 #include <chrono>
 #include <filesystem>
+#include <TLatex.h>
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -241,6 +242,9 @@ int main(int argc, char* argv[]) {
     // Optional diagnostics: read true_particles to detect MARLEY truth per event and build channel/time maps
     std::set<int> events_with_marley_truth;
     std::map<int, double> event_nu_energy; // per-event neutrino energy [MeV]
+    // Extended neutrino kinematics (optional branches): position (x,y,z) and time t
+    struct NuKinematics { double en{-1}; double x{0}; double y{0}; double z{0}; double t{0}; bool hasXYZ{false}; bool hasT{false}; };
+    std::map<int, NuKinematics> event_nu_info; // event -> kinematics
     // For backtracking checks:
     std::unordered_map<int, std::unordered_set<int>> event_union_channels; // event -> set of channels from truth
     auto makeTruthKey = [](int evt, int tid) -> long long { return ( (static_cast<long long>(evt) << 32) | (static_cast<unsigned int>(tid)) ); };
@@ -265,11 +269,27 @@ int main(int argc, char* argv[]) {
     }
     // Read neutrino energies per event if the 'neutrinos' tree exists
     if (auto* nuTree = dynamic_cast<TTree*>(tpsDir->Get("neutrinos"))) {
-        int nevt = 0; int nen = 0;
+        int nevt = 0; int nen = 0; float nux=0.f, nuy=0.f, nuz=0.f, nut=0.f; // use float to match typical branch types
         nuTree->SetBranchAddress("event", &nevt);
         if (nuTree->GetBranch("en")) nuTree->SetBranchAddress("en", &nen);
+        // Try multiple possible branch name variants for position/time
+        auto bindFirstAvailable = [&](const std::vector<std::string>& names, float& var, bool& flag){
+            for (const auto& n : names) {
+                if (nuTree->GetBranch(n.c_str())) { nuTree->SetBranchAddress(n.c_str(), &var); flag = true; return; }
+            }
+        };
+        bool hasX=false, hasY=false, hasZ=false, hasT=false;
+        bindFirstAvailable({"x","nu_x","pos_x","vx"}, nux, hasX);
+        bindFirstAvailable({"y","nu_y","pos_y","vy"}, nuy, hasY);
+        bindFirstAvailable({"z","nu_z","pos_z","vz"}, nuz, hasZ);
+        bindFirstAvailable({"t","time","t0","nu_t"}, nut, hasT);
         Long64_t nnu = nuTree->GetEntries();
-        for (Long64_t i=0;i<nnu;++i){ nuTree->GetEntry(i); event_nu_energy[nevt] = static_cast<double>(nen); }
+        for (Long64_t i=0;i<nnu;++i){
+            nuTree->GetEntry(i);
+            event_nu_energy[nevt] = static_cast<double>(nen);
+            NuKinematics k; k.en = (double)nen; k.x=(double)nux; k.y=(double)nuy; k.z=(double)nuz; k.t=(double)nut; k.hasXYZ = (hasX||hasY||hasZ); k.hasT = hasT; event_nu_info[nevt] = k;
+        }
+        LogInfo << "Neutrino kinematics: entries=" << nnu << ", with position=" << ( (hasX||hasY||hasZ)?"yes":"no" ) << ", time=" << (hasT?"yes":"no") << std::endl;
     }
 
     // Branches we need from the TPs tree
@@ -279,6 +299,7 @@ int main(int argc, char* argv[]) {
     UInt_t adc_integral = 0;
     UInt_t ch_offline = 0; // TP channel (offline)
     Int_t tp_truth_id = -1; // linked truth id if any
+    Float_t time_offset_correction = 0.0f; // time offset correction (TPC ticks)
     std::string* view = nullptr;
     std::string* generator_name = nullptr;
     tpTree->SetBranchAddress("event", &tp_event);
@@ -289,6 +310,7 @@ int main(int argc, char* argv[]) {
     tpTree->SetBranchAddress("generator_name", &generator_name);
     if (tpTree->GetBranch("channel")) tpTree->SetBranchAddress("channel", &ch_offline);
     if (tpTree->GetBranch("truth_id")) tpTree->SetBranchAddress("truth_id", &tp_truth_id);
+    if (tpTree->GetBranch("time_offset_correction")) tpTree->SetBranchAddress("time_offset_correction", &time_offset_correction);
 
     // We'll compute per-plane entry counts while looping
     int nentries_X = 0;
@@ -364,6 +386,8 @@ int main(int argc, char* argv[]) {
     std::map<int, bool> event_has_marley_X;
     std::map<int, bool> event_has_marley_U;
     std::map<int, bool> event_has_marley_V;
+    // Track time offset corrections per event
+    std::map<int, double> event_time_offsets; // event -> offset in TPC ticks
 
     // Single pass over the TPs to fill histograms and label counts
     LogInfo << "Processing TPs..." << std::endl;
@@ -437,6 +461,11 @@ int main(int argc, char* argv[]) {
                     bool in_union = (it != event_union_channels.end() && it->second.find(static_cast<int>(ch_offline)) != it->second.end());
                     if (in_union) unknown_in_union++; else unknown_not_in_union++;
                 }
+                // Store time offset correction per event (only once per event)
+                if (event_time_offsets.find(tp_event) == event_time_offsets.end()) {
+                    event_time_offsets[tp_event] = static_cast<double>(time_offset_correction);
+                }
+                
                 label_tp_counts[lab]++;
                 event_label_counts[tp_event][lab]++;
             }
@@ -1104,6 +1133,102 @@ int main(int argc, char* argv[]) {
             c_scatter->SaveAs(pdf_output.c_str());
             delete gr; delete c_scatter;
         }
+    }
+
+    // New page(s): Neutrino kinematics table (per event)
+    if (!event_nu_info.empty()) {
+        std::vector<int> nu_events; nu_events.reserve(event_nu_info.size());
+        for (const auto &kv : event_nu_info) nu_events.push_back(kv.first);
+        std::sort(nu_events.begin(), nu_events.end());
+        const int rows_per_page = 28; // number of rows (events) per page
+        int page_index = 0;
+        for (size_t start = 0; start < nu_events.size(); start += rows_per_page) {
+            size_t end = std::min(start + (size_t)rows_per_page, nu_events.size());
+            std::string cname = Form("c_nu_kin_%d", page_index);
+            TCanvas *c_nu = new TCanvas(cname.c_str(), "Neutrino kinematics", 1100, 1600);
+            c_nu->cd();
+            TLatex latex; latex.SetNDC(); latex.SetTextFont(42);
+            latex.SetTextSize(0.025);
+            latex.DrawLatex(0.05, 0.97, "Neutrino Kinematics per Event");
+            latex.SetTextSize(0.018);
+            latex.DrawLatex(0.05, 0.94, "Columns: Event | E_{#nu} [MeV] | (x,y,z) | t (if available)");
+            double y = 0.90;
+            double dy = 0.028;
+            for (size_t i = start; i < end; ++i) {
+                int evt = nu_events[i];
+                const auto &info = event_nu_info[evt];
+                char buf[512];
+                std::string posStr = info.hasXYZ ? Form("(%.1f, %.1f, %.1f)", info.x, info.y, info.z) : std::string("(n/a)");
+                std::string tStr   = info.hasT ? Form(" t=%.1f", info.t) : std::string("");
+                snprintf(buf, sizeof(buf), "Evt %6d : E=%.1f MeV  pos=%s%s", evt, info.en, posStr.c_str(), tStr.c_str());
+                latex.DrawLatex(0.05, y, buf);
+                y -= dy; if (y < 0.06) break; // safety
+            }
+            if (start == 0) {
+                latex.SetTextSize(0.016);
+                latex.DrawLatex(0.05, 0.03, "Note: Position/time shown only if corresponding branches existed in 'neutrinos' tree.");
+            }
+            c_nu->SaveAs(pdf_output.c_str());
+            delete c_nu; page_index++;
+        }
+    }
+
+    // Time offset corrections histogram
+    if (!event_time_offsets.empty()) {
+        // Collect all unique offset values
+        std::set<double> unique_offsets;
+        for (const auto &kv : event_time_offsets) {
+            unique_offsets.insert(kv.second);
+        }
+        LogInfo << "Time offset analysis: " << unique_offsets.size() << " unique offset values across " << event_time_offsets.size() << " events" << std::endl;
+        
+        // Create histogram for time offset distribution
+        double min_offset = *unique_offsets.begin();
+        double max_offset = *unique_offsets.rbegin();
+        
+        // Determine binning
+        int nbins = 50; // default
+        if (unique_offsets.size() <= 10) nbins = std::max(10, (int)unique_offsets.size() + 5);
+        else if (unique_offsets.size() <= 50) nbins = (int)unique_offsets.size() + 10;
+        
+        // Extend range slightly for better display
+        double range = std::max(1.0, max_offset - min_offset);
+        double bin_lo = min_offset - 0.05 * range;
+        double bin_hi = max_offset + 0.05 * range;
+        
+        TCanvas *c_offset = new TCanvas("c_time_offset", "Time Offset Corrections", 1000, 700);
+        TH1F *h_offset = new TH1F("h_time_offset", "Time Offset Corrections per Event;Time Offset [TPC ticks];Events", nbins, bin_lo, bin_hi);
+        h_offset->SetLineColor(kBlue+1);
+        h_offset->SetFillColorAlpha(kBlue+1, 0.3);
+        h_offset->SetStats(1);
+        
+        for (const auto &kv : event_time_offsets) {
+            h_offset->Fill(kv.second);
+        }
+        
+        c_offset->cd();
+        h_offset->Draw("HIST");
+        // Remove grid as requested
+        
+        // Add text summary
+        TLatex latex; latex.SetNDC(); latex.SetTextFont(42); latex.SetTextSize(0.03);
+        latex.DrawLatex(0.15, 0.82, Form("Total events: %d", (int)event_time_offsets.size()));
+        latex.DrawLatex(0.15, 0.78, Form("Events with offset > 0: %d", (int)std::count_if(event_time_offsets.begin(), event_time_offsets.end(), [](const auto& p){return p.second > 0;})));
+        latex.DrawLatex(0.15, 0.74, Form("Range: [%.1f, %.1f] TPC ticks", min_offset, max_offset));
+        if (unique_offsets.size() <= 8) {  // Increased limit to show more values
+            latex.DrawLatex(0.15, 0.70, "Unique values (all events):");
+            int line = 0;
+            for (double val : unique_offsets) {
+                if (line < 6) { // increased display limit
+                    int count = (int)std::count_if(event_time_offsets.begin(), event_time_offsets.end(), [val](const auto& p){return std::abs(p.second - val) < 0.1;});
+                    latex.DrawLatex(0.17, 0.66 - line*0.035, Form("%.0f ticks (%d events)", val, count)); // Use %.0f for cleaner display
+                    line++;
+                } else break;
+            }
+        }
+        
+        c_offset->SaveAs(pdf_output.c_str());
+        delete h_offset; delete c_offset;
     }
 
     // Diagnostics: MARLEY presence per event (case-insensitive), and UNKNOWN counts

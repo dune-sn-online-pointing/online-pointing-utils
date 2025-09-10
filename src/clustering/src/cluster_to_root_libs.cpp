@@ -24,6 +24,9 @@
 LoggerInit([]{
     Logger::getUserHeader() << "[" << FILENAME << "]";
 });
+// Global map to store time offset corrections per event (TPC ticks)
+static std::map<int, double> g_event_time_offsets;
+
 void write_tps_to_root(
     const std::string& out_filename,
     const std::vector<std::vector<TriggerPrimitive>>& tps_by_event,
@@ -57,6 +60,7 @@ void write_tps_to_root(
     std::string view; std::string gen_name; std::string process;
     Int_t tp_truth_id=-1; Int_t tp_track_id=-1; Int_t tp_pdg=0; Int_t nu_truth_id=-1;
     Float_t nu_energy = -1.0f;
+    Float_t time_offset_correction = 0.0f; // TPC ticks correction applied to truth time windows
     tpsTree.Branch("event", &evt, "event/I");
     tpsTree.Branch("version", &version, "version/s");
     tpsTree.Branch("detid", &detid, "detid/i");
@@ -76,6 +80,7 @@ void write_tps_to_root(
     tpsTree.Branch("process", &process);
     tpsTree.Branch("neutrino_truth_id", &nu_truth_id, "neutrino_truth_id/I");
     tpsTree.Branch("neutrino_energy", &nu_energy, "neutrino_energy/F");
+    tpsTree.Branch("time_offset_correction", &time_offset_correction, "time_offset_correction/F");
 
     // True particles tree
     TTree trueTree("true_particles", "True particles per event");
@@ -128,6 +133,11 @@ void write_tps_to_root(
         const auto& v = tps_by_event[ev];
         for (const auto& tp : v) {
             evt = tp.GetEvent(); version = TriggerPrimitive::s_trigger_primitive_version; detid = 0; channel = tp.GetChannel(); s_over = tp.GetSamplesOverThreshold(); tstart = tp.GetTimeStart(); s_to_peak = tp.GetSamplesToPeak(); adc_integral = tp.GetAdcIntegral(); adc_peak = tp.GetAdcPeak(); det = tp.GetDetector(); det_channel = tp.GetDetectorChannel(); view = tp.GetView();
+            
+            // Set time offset correction for this event
+            auto offset_it = g_event_time_offsets.find(evt);
+            time_offset_correction = (offset_it != g_event_time_offsets.end()) ? (Float_t)offset_it->second : 0.0f;
+            
             const auto* tpp = tp.GetTrueParticle();
             if (tpp != nullptr) {
                 tp_truth_id = tpp->GetTruthId(); tp_track_id = tpp->GetTrackId(); tp_pdg = tpp->GetPdg(); gen_name = tpp->GetGeneratorName(); process = tpp->GetProcess();
@@ -142,6 +152,10 @@ void write_tps_to_root(
     tpsDir->cd();
     tpsTree.Write(); trueTree.Write(); nuTree.Write();
     outFile.Close();
+    
+    // Clear the global offset map after writing
+    g_event_time_offsets.clear();
+    
     // Report absolute output path for consistency
     std::error_code _ec_abs;
     auto abs_p = std::filesystem::absolute(std::filesystem::path(out_filename), _ec_abs);
@@ -267,10 +281,10 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
 
     UShort_t this_version = 0;
     uint64_t this_time_start = 0;
-    Int_t this_channel = 0;
+    Int_t this_channel = 0;          // Raw channel read from file (may be detector-local)
     UInt_t this_adc_integral = 0;
     UShort_t this_adc_peak = 0;
-    UShort_t this_detid = 0;
+    UShort_t this_detid = 0;          // Detector (APA) id if present
     // int this_event_number = 0;
     TPtree->SetBranchAddress("version", &this_version);
     TPtree->SetBranchAddress("time_start", &this_time_start);
@@ -309,17 +323,28 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
 
         // skipping flag (useless), type, and algorithm (dropped from TP v2)
         
+        // Determine if the channel appears detector-local; if so promote to global numbering
+        // Global scheme is: global = detid * APA::total_channels + local
+        uint64_t effective_channel = this_channel;
+        if (this_detid > 0 && this_channel >= 0 && this_channel < APA::total_channels) {
+            effective_channel = (uint64_t)this_detid * APA::total_channels + (uint64_t)this_channel;
+        }
+        // Heuristic safeguard: if channel already large (>= total_channels) but detid==0 we assume it's already global and leave unchanged
         TriggerPrimitive this_tp = TriggerPrimitive(
             this_version,
             0, // flag
             this_detid,
-            this_channel,
+            effective_channel,
             this_samples_over_threshold,
             this_time_start,
             this_samples_to_peak,
             this_adc_integral,
             this_adc_peak
         );
+        if (effective_channel != (uint64_t)this_channel) {
+            LogInfo << "Promoted detector-local channel " << this_channel << " with detid " << this_detid
+                    << " to global channel " << effective_channel << std::endl;
+        }
         this_tp.SetEvent(this_event_number);
         
         tps.emplace_back(this_tp); // add to collection of TPs
@@ -567,14 +592,122 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
         if (it != particle_map.end()) {
             auto* particle = it->second;
             // Use SimIDE timestamp directly (clock ticks) to match TP time_start units
-            particle->SetTimeStart(std::min(particle->GetTimeStart(), (double)Timestamp));
-            particle->SetTimeEnd(std::max(particle->GetTimeEnd(), (double)Timestamp));
+            // Store SimIDE times scaled into TPC tick domain (Timestamp * conversion_tdc_to_tpc)
+            // (Later we'll optionally apply an offset correction to align with TP time origin.)
+            particle->SetTimeStart(std::min(particle->GetTimeStart(), (double)Timestamp * conversion_tdc_to_tpc));
+            particle->SetTimeEnd(std::max(particle->GetTimeEnd(), (double)Timestamp * conversion_tdc_to_tpc));
             particle->AddChannel(ChannelID);
             match_count++;
         } else {
             LogWarning << "TrackID " << trackID << " not found in MC particles." << std::endl;
         }
     } // end of simides, not used anywhere anymore
+
+    // TEMPORARY DIAGNOSTIC (events 4,6,8,10): For each TP print channel, time, min dt to any SimIDE on same channel, membership.
+    if (event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) {
+        // Build map: channel -> vector of simide timestamps (TPC ticks)
+        std::unordered_map<int, std::vector<double>> simideTimeByChannel;
+        int nSimIDEsDiag = 0;
+        double simideMinTime = std::numeric_limits<double>::max();
+        double simideMaxTime = -1.0;
+        std::vector<std::pair<int,double>> firstSimIdeSamples; firstSimIdeSamples.reserve(20);
+        for (Long64_t iSimIde = first_simide_entry_in_event; iSimIde <= last_simide_entry_in_event; ++iSimIde) {
+            simidestree->GetEntry(iSimIde);
+            double tConv = (double)Timestamp * conversion_tdc_to_tpc; // scaled units
+            simideTimeByChannel[(int)ChannelID].push_back(tConv);
+            nSimIDEsDiag++;
+            if ((int)firstSimIdeSamples.size() < 15) firstSimIdeSamples.emplace_back((int)ChannelID, tConv);
+            simideMinTime = std::min(simideMinTime, tConv);
+            simideMaxTime = std::max(simideMaxTime, tConv);
+        }
+        for (auto &kv : simideTimeByChannel) {
+            auto &vec = kv.second; std::sort(vec.begin(), vec.end());
+        }
+        // Attempt automatic time-offset detection: compare earliest SimIDE time on overlapping channels with TP times.
+        std::vector<double> diffs;
+        diffs.reserve(32);
+        for (const auto &kv : simideTimeByChannel) {
+            int ch = kv.first;
+            double earliestSim = kv.second.front();
+            for (const auto &tp : tps) {
+                if (tp.GetEvent() != (int)event_number) continue;
+                if (tp.GetChannel() == ch) {
+                    double diff = earliestSim - tp.GetTimeStart();
+                    if (diff > 0) diffs.push_back(diff);
+                    break; // only one TP needed per channel
+                }
+            }
+        }
+        double appliedOffset = 0.0;
+        if (diffs.size() >= 3) {
+            std::sort(diffs.begin(), diffs.end());
+            double median = diffs[diffs.size()/2];
+            // Heuristic bounds: expect large systematic offset in range [1000, 200000] ticks
+            if (median > 1000 && median < 200000) {
+                appliedOffset = median;
+                // Shift true particle windows back by this offset
+                for (auto &p : true_particles) {
+                    double ns = p.GetTimeStart() - appliedOffset; if (ns < 0) ns = 0; p.SetTimeStart(ns);
+                    double ne = p.GetTimeEnd() - appliedOffset; if (ne < ns) ne = ns; p.SetTimeEnd(ne);
+                }
+            }
+        }
+        // Store the offset in global map for use in write_tps_to_root
+        g_event_time_offsets[event_number] = appliedOffset;
+        
+        if (appliedOffset > 0) {
+            LogInfo << "[DIAG] Event " << event_number << " Applied time offset correction ticks=" << appliedOffset << " (median diff)." << std::endl;
+        } else {
+            LogInfo << "[DIAG] Event " << event_number << " No time offset correction applied (diff samples=" << diffs.size() << ")." << std::endl;
+        }
+        // TP time span for this event
+        double tpMinTime = std::numeric_limits<double>::max();
+        double tpMaxTime = -1.0;
+        int tpCountInEvent = 0;
+        for (size_t i = 0; i < tps.size(); ++i) {
+            if (tps[i].GetEvent() != (int)event_number) continue;
+            tpCountInEvent++;
+            tpMinTime = std::min(tpMinTime, tps[i].GetTimeStart());
+            tpMaxTime = std::max(tpMaxTime, tps[i].GetTimeStart());
+        }
+        LogInfo << "[DIAG] Event " << event_number << " SimIDEs summary: nSimIDEs=" << nSimIDEsDiag
+                << " uniqueChannels=" << simideTimeByChannel.size()
+                << " timeRangeTicks=[" << simideMinTime << "," << simideMaxTime << "]" << std::endl;
+        LogInfo << "[DIAG] Event " << event_number << " TPs summary: nTPs=" << tpCountInEvent
+                << " timeRangeTicks=[" << tpMinTime << "," << tpMaxTime << "]" << std::endl;
+        if (!firstSimIdeSamples.empty()) {
+            std::ostringstream oss; oss << "[DIAG] Event " << event_number << " FirstSimIDEs(ch:time)=";
+            for (size_t i=0;i<firstSimIdeSamples.size();++i){ oss << firstSimIdeSamples[i].first << ":" << firstSimIdeSamples[i].second; if (i+1<firstSimIdeSamples.size()) oss << ","; }
+            LogInfo << oss.str() << std::endl;
+        }
+        LogInfo << "[DIAG] Event " << event_number << " TP-to-SimIDE channel/time proximity:" << std::endl;
+        LogInfo << "[DIAG] Format: TPIndex channel time_start ticks | inSimIDEset | minDeltaTicks" << std::endl;
+        for (size_t i = 0; i < tps.size(); ++i) {
+            if (tps[i].GetEvent() != (int)event_number) continue; // only current event's TPs
+            int globalCh = tps[i].GetChannel();
+            int localCh = tps[i].GetDetectorChannel();
+            double t = tps[i].GetTimeStart();
+            bool inSet = simideTimeByChannel.find(globalCh) != simideTimeByChannel.end();
+            double minDt = -1.0;
+            if (inSet) {
+                const auto &vt = simideTimeByChannel[globalCh];
+                // binary search for closest
+                auto it = std::lower_bound(vt.begin(), vt.end(), t);
+                if (it != vt.end()) minDt = std::abs(*it - t);
+                if (it != vt.begin()) minDt = (minDt < 0) ? std::abs(*(it-1)-t) : std::min(minDt, std::abs(*(it-1)-t));
+            }
+            LogInfo << "[DIAG] TP " << i << " gch=" << globalCh << " (local=" << localCh << ") t=" << t
+                    << " | inSet=" << (inSet?"Y":"N")
+                    << " | minDt=" << minDt << std::endl;
+        }
+        // True particle spatial info (first one if exists)
+        if (!true_particles.empty()) {
+            const auto &p = true_particles.front();
+            LogInfo << "[DIAG] Event " << event_number << " TrueParticle pos (x,y,z)=(" << p.GetX() << "," << p.GetY() << "," << p.GetZ() << ")"
+                    << " timeWindowTicks=[" << p.GetTimeStart() << "," << p.GetTimeEnd() << "]"
+                    << " nChannels=" << p.GetChannels().size() << std::endl;
+        }
+    }
 
     LogInfo << " Matched ";
     std::cout << std::setprecision(2) << std::fixed << float(match_count)/(last_simide_entry_in_event-first_simide_entry_in_event+1)*100. << " %" << " SimIDEs to true particles" << std::endl;
