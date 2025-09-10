@@ -67,6 +67,15 @@ void read_tps_from_root(
 	std::map<int, std::vector<TrueParticle>>& true_particles_by_event,
 	std::map<int, std::vector<Neutrino>>& neutrinos_by_event);
 
+// Direct TP-SimIDE matching based on time and channel proximity
+void match_tps_to_simides_direct(
+	std::vector<TriggerPrimitive>& tps,
+	std::vector<TrueParticle>& true_particles,
+	TFile* file,
+	int event_number,
+	double time_tolerance_ticks = 50.0,
+	int channel_tolerance = 5);
+
 #endif
 
 

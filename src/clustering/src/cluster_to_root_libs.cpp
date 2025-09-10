@@ -792,6 +792,10 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
     LogInfo << " Number of geant particles with SimIDEs info: " << float(truepart_with_simideInfo)/true_particles.size()*100. << " %" << std::endl;
     LogInfo << " If not 100%, it's ok. Some particles (nuclei) don't produce SimIDEs" << std::endl;
 
+    // NEW: Apply direct TP-SimIDE matching to replace/supplement trueParticle-based matching
+    LogInfo << " Applying direct TP-SimIDE matching for event " << event_number << std::endl;
+    match_tps_to_simides_direct(tps, true_particles, file, event_number, 5000.0, 50);
+
     file->Close(); // don't need anymore
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1310,6 +1314,204 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
     }
     f->Close();
     return clusters;
+}
+
+// Direct TP-SimIDE matching function based on time and channel proximity
+void match_tps_to_simides_direct(
+    std::vector<TriggerPrimitive>& tps,
+    std::vector<TrueParticle>& true_particles,
+    TFile* file,
+    int event_number,
+    double time_tolerance_ticks,
+    int channel_tolerance)
+{
+    LogInfo << "Starting direct TP-SimIDE matching for event " << event_number << std::endl;
+    
+    // Clear any existing truth links
+    for (auto& tp : tps) {
+        if (tp.GetEvent() == event_number) {
+            tp.SetTrueParticle(nullptr);
+        }
+    }
+    
+    // Read SimIDEs tree
+    std::string simidestree_path = "triggerAnaDumpTPs/simides";
+    TTree *simidestree = dynamic_cast<TTree*>(file->Get(simidestree_path.c_str()));
+    if (!simidestree) {
+        LogError << "SimIDEs tree not found: " << simidestree_path << std::endl;
+        return;
+    }
+    
+    // Get SimIDE entries for this event
+    int first_simide_entry = -1;
+    int last_simide_entry = -1;
+    UInt_t event_number_simides = 0;
+    simidestree->SetBranchAddress("Event", &event_number_simides);
+    get_first_and_last_event(simidestree, (int*)&event_number_simides, event_number, first_simide_entry, last_simide_entry);
+    
+    if (first_simide_entry == -1) {
+        LogWarning << "No SimIDEs found for event " << event_number << std::endl;
+        return;
+    }
+    
+    // Set up SimIDE branch addresses
+    UInt_t simide_channel;
+    UShort_t simide_timestamp;
+    Int_t simide_track_id;
+    
+    simidestree->SetBranchAddress("ChannelID", &simide_channel);
+    simidestree->SetBranchAddress("Timestamp", &simide_timestamp);
+    simidestree->SetBranchAddress("trackID", &simide_track_id);
+    
+    // Build lookup map for true particles by trackID
+    std::unordered_map<int, TrueParticle*> track_to_particle;
+    for (auto& particle : true_particles) {
+        if (particle.GetEvent() == event_number) {
+            track_to_particle[std::abs(particle.GetTrackId())] = &particle;
+        }
+    }
+    
+    // Structure to hold SimIDE information
+    struct SimIDEInfo {
+        int channel;
+        double time_tpc_ticks;
+        int track_id;
+        TrueParticle* particle;
+    };
+    std::vector<SimIDEInfo> simides_in_event;
+    
+    // Read all SimIDEs for this event
+    for (Long64_t iSimIde = first_simide_entry; iSimIde <= last_simide_entry; ++iSimIde) {
+        simidestree->GetEntry(iSimIde);
+        
+        // Convert SimIDE timestamp to TPC ticks (with overflow protection)
+        uint64_t timestampU64 = (uint64_t)simide_timestamp;
+        double time_tpc = (double)(timestampU64 * conversion_tdc_to_tpc);
+        
+        // Find associated particle
+        auto particle_it = track_to_particle.find(std::abs(simide_track_id));
+        if (particle_it != track_to_particle.end()) {
+            simides_in_event.push_back({
+                (int)simide_channel,
+                time_tpc,
+                simide_track_id,
+                particle_it->second
+            });
+        }
+    }
+    
+    LogInfo << "Found " << simides_in_event.size() << " SimIDEs linked to particles in event " << event_number << std::endl;
+    
+    // Diagnostic: show SimIDE time and channel ranges
+    if (event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) {
+        if (!simides_in_event.empty()) {
+            double min_simide_time = simides_in_event[0].time_tpc_ticks;
+            double max_simide_time = simides_in_event[0].time_tpc_ticks;
+            int min_simide_channel = simides_in_event[0].channel;
+            int max_simide_channel = simides_in_event[0].channel;
+            
+            for (const auto& simide : simides_in_event) {
+                min_simide_time = std::min(min_simide_time, simide.time_tpc_ticks);
+                max_simide_time = std::max(max_simide_time, simide.time_tpc_ticks);
+                min_simide_channel = std::min(min_simide_channel, simide.channel);
+                max_simide_channel = std::max(max_simide_channel, simide.channel);
+            }
+            
+            LogInfo << "[SIMIDE-RANGE] Event " << event_number << " time: [" << min_simide_time << "," << max_simide_time 
+                    << "] channels: [" << min_simide_channel << "," << max_simide_channel << "]" << std::endl;
+        }
+    }
+    
+    // Match TPs to SimIDEs
+    int matched_tp_count = 0;
+    int total_tp_count = 0;
+    
+    for (auto& tp : tps) {
+        if (tp.GetEvent() != event_number) continue;
+        total_tp_count++;
+        
+        // Find best matching SimIDE based on channel and time proximity
+        TrueParticle* best_match = nullptr;
+        double best_score = std::numeric_limits<double>::max();
+        int best_channel_diff = channel_tolerance + 1;
+        double best_time_diff = time_tolerance_ticks + 1;
+        
+        for (const auto& simide : simides_in_event) {
+            // Handle both local and global channel numbering for SimIDEs
+            int tp_global_channel = tp.GetChannel();
+            int tp_local_channel = tp_global_channel % 2560;
+            
+            int channel_diff;
+            if (simide.channel < 2560) {
+                // SimIDE uses local channel numbering - compare with TP local channel
+                channel_diff = std::abs(tp_local_channel - simide.channel);
+            } else {
+                // SimIDE uses global channel numbering - compare with TP global channel  
+                channel_diff = std::abs(tp_global_channel - simide.channel);
+            }
+            
+            // Calculate time difference
+            double time_diff = std::abs(tp.GetTimeStart() - simide.time_tpc_ticks);
+            
+            // Check if within tolerance
+            if (channel_diff <= channel_tolerance && time_diff <= time_tolerance_ticks) {
+                // Score based on combined time and channel proximity
+                double score = time_diff + (channel_diff * 10.0); // Weight channel difference more
+                
+                if (score < best_score) {
+                    best_score = score;
+                    best_match = simide.particle;
+                    best_channel_diff = channel_diff;
+                    best_time_diff = time_diff;
+                }
+            }
+        }
+        
+        if (best_match) {
+            tp.SetTrueParticle(best_match);
+            matched_tp_count++;
+            
+            // Diagnostic output for specific events
+            if (event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) {
+                int tp_local_ch = tp.GetChannel() % 2560;
+                LogInfo << "[DIRECT-MATCH] TP ch=" << tp.GetChannel() << " (local=" << tp_local_ch << ") time=" << tp.GetTimeStart()
+                        << " -> particle_id=" << best_match->GetTrackId()
+                        << " (ch_diff=" << best_channel_diff << " time_diff=" << best_time_diff << ")" << std::endl;
+            }
+        } else {
+            // Diagnostic for failed matches in specific events
+            if ((event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) && total_tp_count <= 10) {
+                int tp_local_ch = tp.GetChannel() % 2560;
+                LogInfo << "[NO-MATCH] TP ch=" << tp.GetChannel() << " (local=" << tp_local_ch << ") time=" << tp.GetTimeStart()
+                        << " -> no SimIDE match found within tolerances" << std::endl;
+            }
+        }
+    }
+    
+    double match_efficiency = total_tp_count > 0 ? (double)matched_tp_count / total_tp_count * 100.0 : 0.0;
+    LogInfo << "Direct TP-SimIDE matching results for event " << event_number << ": "
+            << matched_tp_count << "/" << total_tp_count << " TPs matched ("
+            << std::fixed << std::setprecision(1) << match_efficiency << "%)" << std::endl;
+    
+    // Diagnostic: show TP channel ranges for comparison
+    if ((event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) && total_tp_count > 0) {
+        int min_tp_channel = std::numeric_limits<int>::max();
+        int max_tp_channel = 0;
+        int min_tp_local = std::numeric_limits<int>::max();
+        int max_tp_local = 0;
+        for (const auto& tp : tps) {
+            if (tp.GetEvent() == event_number) {
+                int global_ch = tp.GetChannel();
+                int local_ch = global_ch % 2560;
+                min_tp_channel = std::min(min_tp_channel, global_ch);
+                max_tp_channel = std::max(max_tp_channel, global_ch);
+                min_tp_local = std::min(min_tp_local, local_ch);
+                max_tp_local = std::max(max_tp_local, local_ch);
+            }
+        }
+        LogInfo << "[TP-RANGE] Event " << event_number << " global: [" << min_tp_channel << "," << max_tp_channel 
+                << "] local: [" << min_tp_local << "," << max_tp_local << "]" << std::endl;
+    }
 }
 
 std::map<int, std::vector<cluster>> create_event_mapping(std::vector<cluster>& clusters){
