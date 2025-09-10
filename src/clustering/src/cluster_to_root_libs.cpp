@@ -594,8 +594,19 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
             // Use SimIDE timestamp directly (clock ticks) to match TP time_start units
             // Store SimIDE times scaled into TPC tick domain (Timestamp * conversion_tdc_to_tpc)
             // (Later we'll optionally apply an offset correction to align with TP time origin.)
-            particle->SetTimeStart(std::min(particle->GetTimeStart(), (double)Timestamp * conversion_tdc_to_tpc));
-            particle->SetTimeEnd(std::max(particle->GetTimeEnd(), (double)Timestamp * conversion_tdc_to_tpc));
+            // OVERFLOW FIX: Cast to larger type before multiplication to prevent 16-bit overflow
+            uint64_t timestampU64 = (uint64_t)Timestamp;
+            double tConverted = (double)(timestampU64 * conversion_tdc_to_tpc);
+            
+            // DIAGNOSTIC: Check for potential overflow (when raw timestamp > 2048 for 32x conversion)
+            if (Timestamp > 2048) {
+                double wouldOverflow = (double)((uint16_t)(Timestamp * conversion_tdc_to_tpc)); // simulate 16-bit overflow
+                LogInfo << "[OVERFLOW-FIX] Raw timestamp " << Timestamp << " -> corrected: " << tConverted 
+                        << " (would have been: " << wouldOverflow << " with overflow)" << std::endl;
+            }
+            
+            particle->SetTimeStart(std::min(particle->GetTimeStart(), tConverted));
+            particle->SetTimeEnd(std::max(particle->GetTimeEnd(), tConverted));
             particle->AddChannel(ChannelID);
             match_count++;
         } else {
@@ -611,9 +622,17 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
         double simideMinTime = std::numeric_limits<double>::max();
         double simideMaxTime = -1.0;
         std::vector<std::pair<int,double>> firstSimIdeSamples; firstSimIdeSamples.reserve(20);
+        // ADDED DIAGNOSTIC: Check raw timestamps and channel IDs before conversion
+        std::vector<UShort_t> rawTimestampSamples; rawTimestampSamples.reserve(15);
+        std::vector<UShort_t> rawChannelSamples; rawChannelSamples.reserve(15);
         for (Long64_t iSimIde = first_simide_entry_in_event; iSimIde <= last_simide_entry_in_event; ++iSimIde) {
             simidestree->GetEntry(iSimIde);
-            double tConv = (double)Timestamp * conversion_tdc_to_tpc; // scaled units
+            if ((int)rawTimestampSamples.size() < 15) {
+                rawTimestampSamples.push_back(Timestamp);
+                rawChannelSamples.push_back(ChannelID);
+            }
+            // OVERFLOW FIX: Cast to larger type before multiplication to prevent 16-bit overflow
+            double tConv = (double)((uint64_t)Timestamp * conversion_tdc_to_tpc); // scaled units
             simideTimeByChannel[(int)ChannelID].push_back(tConv);
             nSimIDEsDiag++;
             if ((int)firstSimIdeSamples.size() < 15) firstSimIdeSamples.emplace_back((int)ChannelID, tConv);
@@ -673,6 +692,24 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
         LogInfo << "[DIAG] Event " << event_number << " SimIDEs summary: nSimIDEs=" << nSimIDEsDiag
                 << " uniqueChannels=" << simideTimeByChannel.size()
                 << " timeRangeTicks=[" << simideMinTime << "," << simideMaxTime << "]" << std::endl;
+        LogInfo << "[DIAG] Event " << event_number << " RAW timestamps (before ×32): ";
+        for (size_t i = 0; i < rawTimestampSamples.size(); ++i) {
+            if (i > 0) LogInfo << ",";
+            LogInfo << rawTimestampSamples[i];
+        }
+        LogInfo << std::endl;
+        LogInfo << "[DIAG] Event " << event_number << " RAW SimIDE channels (no promotion): ";
+        for (size_t i = 0; i < rawChannelSamples.size(); ++i) {
+            if (i > 0) LogInfo << ",";
+            int ch = rawChannelSamples[i];
+            int detid = ch / 2560;
+            int local_ch = ch % 2560;
+            char plane = 'U';
+            if (local_ch >= 800 && local_ch < 1600) plane = 'V';
+            else if (local_ch >= 1600) plane = 'X';
+            LogInfo << ch << "(" << plane << ")";
+        }
+        LogInfo << std::endl;
         LogInfo << "[DIAG] Event " << event_number << " TPs summary: nTPs=" << tpCountInEvent
                 << " timeRangeTicks=[" << tpMinTime << "," << tpMaxTime << "]" << std::endl;
         if (!firstSimIdeSamples.empty()) {
@@ -680,6 +717,27 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
             for (size_t i=0;i<firstSimIdeSamples.size();++i){ oss << firstSimIdeSamples[i].first << ":" << firstSimIdeSamples[i].second; if (i+1<firstSimIdeSamples.size()) oss << ","; }
             LogInfo << oss.str() << std::endl;
         }
+        // TP channel plane analysis
+        int tpCountU=0, tpCountV=0, tpCountX=0;
+        int tpMinU=999999, tpMaxU=-1, tpMinV=999999, tpMaxV=-1, tpMinX=999999, tpMaxX=-1;
+        for (size_t i = 0; i < tps.size(); ++i) {
+            if (tps[i].GetEvent() != (int)event_number) continue;
+            int ch = tps[i].GetChannel();
+            int detid = ch / 2560;
+            int local_ch = ch % 2560;
+            if (local_ch < 800) { tpCountU++; tpMinU=std::min(tpMinU,ch); tpMaxU=std::max(tpMaxU,ch); }
+            else if (local_ch < 1600) { tpCountV++; tpMinV=std::min(tpMinV,ch); tpMaxV=std::max(tpMaxV,ch); }
+            else { tpCountX++; tpMinX=std::min(tpMinX,ch); tpMaxX=std::max(tpMaxX,ch); }
+        }
+        LogInfo << "[DIAG] Event " << event_number << " TP planes: U=" << tpCountU;
+        if(tpCountU>0) LogInfo << "[" << tpMinU << "-" << tpMaxU << "]";
+        LogInfo << " V=" << tpCountV;
+        if(tpCountV>0) LogInfo << "[" << tpMinV << "-" << tpMaxV << "]";
+        LogInfo << " X=" << tpCountX;
+        if(tpCountX>0) LogInfo << "[" << tpMinX << "-" << tpMaxX << "]";
+        LogInfo << std::endl;
+        // Track MARLEY associations by plane
+        int marleyCountU=0, marleyCountV=0, marleyCountX=0;
         LogInfo << "[DIAG] Event " << event_number << " TP-to-SimIDE channel/time proximity:" << std::endl;
         LogInfo << "[DIAG] Format: TPIndex channel time_start ticks | inSimIDEset | minDeltaTicks" << std::endl;
         for (size_t i = 0; i < tps.size(); ++i) {
@@ -699,7 +757,19 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
             LogInfo << "[DIAG] TP " << i << " gch=" << globalCh << " (local=" << localCh << ") t=" << t
                     << " | inSet=" << (inSet?"Y":"N")
                     << " | minDt=" << minDt << std::endl;
+            // Count MARLEY associations by plane
+            if (inSet) {
+                int detid = globalCh / 2560;
+                int local_channel = globalCh % 2560;
+                if (local_channel < 800) marleyCountU++;
+                else if (local_channel < 1600) marleyCountV++;
+                else marleyCountX++;
+            }
         }
+        // MARLEY association summary by plane
+        LogInfo << "[DIAG] Event " << event_number << " MARLEY associations by plane: U=" << marleyCountU 
+                << " V=" << marleyCountV << " X=" << marleyCountX 
+                << " (total=" << (marleyCountU + marleyCountV + marleyCountX) << ")" << std::endl;
         // True particle spatial info (first one if exists)
         if (!true_particles.empty()) {
             const auto &p = true_particles.front();
