@@ -1,3 +1,8 @@
+# plot_avg_times app
+cmessage( STATUS "Creating plot_avg_times app..." )
+add_executable( plot_avg_times ${CMAKE_CURRENT_SOURCE_DIR}/src/plot_avg_times.cpp )
+target_link_libraries( plot_avg_times clusteringLibs)
+install( TARGETS plot_avg_times DESTINATION bin )
 cmessage( STATUS "Creating backtrack app..." )
 add_executable( backtrack ${CMAKE_CURRENT_SOURCE_DIR}/src/backtrack.cpp )
 target_link_libraries( backtrack clusteringLibs )

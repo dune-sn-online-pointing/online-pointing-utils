@@ -105,3 +105,7 @@ Build and run with backtracking diagnostics: Done
 Compare across backtracker settings: Done
 Provide interpretation and next steps: Done
 Want me to add the tail-composition console print and the small UNKNOWN-in-union CSV dump next?
+
+
+
+Need to put conditions on the events included in training, like the distance from edges and the time distance from 0.
