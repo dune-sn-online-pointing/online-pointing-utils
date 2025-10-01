@@ -109,3 +109,43 @@ Want me to add the tail-composition console print and the small UNKNOWN-in-union
 
 
 Need to put conditions on the events included in training, like the distance from edges and the time distance from 0.
+
+
+
+NEW GPT 
+
+Kicking off the next round: I’ve rerun the backtracking with the updated tolerances and compared outcomes, then checked the code paths to confirm exactly which knobs are in play.
+
+actions taken
+Ran backtracking with your broadened JSON tolerances (backtracker_error_margin=200, backtracker_channel_tolerance=100).
+Ran another pass with a smaller time window (backtracker_error_margin=150) to gauge sensitivity.
+Verified config parsing and matching logic in backtrack.cpp and cluster_to_root_libs.cpp to ensure the intended tolerances are applied.
+results
+With margin 200 (effective tick tolerance ≈ 201×32 = 6432 ticks, channel tolerance 100):
+
+Event 10: Direct TP↔SimIDE matching within APA/time windows: 35/141 matched (24.82%), skipped 7459 outside APA/time windows.
+Overall printed for event 10: Matched 35/7600 TPs to true particles via SimIDE association.
+Output produced: cleanES60_tps_bktr200.root
+File list: test_files_tps_bktr200.txt
+With margin 150 (effective tick tolerance ≈ 4832 ticks, channel tolerance 100):
+
+Event 10: 27/115 matched (23.48%), skipped 7485 outside APA/time windows.
+Output produced: cleanES60_tps_bktr150.root
+File list: test_files_tps_bktr150.txt
+Diagnostics remained consistent with prior observations:
+
+Event time-offset correction applied: 40224 ticks.
+SimIDE coverage in event 10: time [73088, 74240], channels [5526, 7181], APAs {2}; we correctly restrict TP candidates to overlapping APA/time windows.
+Many matched TPs cluster in expected channel neighborhoods around 5527–6069, 5880–6069, 7176; several have Δt of a few thousand ticks and Δch tens of wires, as permitted by the looser tolerances.
+notes
+The looser window (200) does increase absolute matches from earlier iterations (3) to 35 within the candidate set. Tightening to 150 reduces matches slightly, as expected.
+Because channel tolerance=100 is quite permissive, we should expect some non-local pairings when the time window is also broad; APA/time-window filtering helps but doesn’t fully disambiguate.
+what’s next
+Add an optional “plane-consistency” requirement during matching:
+Infer the local plane from channel (0–799 U, 800–1599 V, ≥1600 X).
+Require TP plane to match SimIDE plane for a match, or use a stronger score bonus for plane-consistent pairs.
+This is low-risk and should reduce spurious matches while preserving true ones.
+Slight scoring tweak to favor tight time matches more strongly:
+Current score = Δt + 10·Δch; consider increasing the weight on channel or adding a small penalty if Δt > 2–3k ticks.
+Run across a few more events (event 10 diagnostics are enabled; others are already matched silently) and capture simple histograms of Δt and Δch for matched pairs to tune tolerances quantitatively.
+If you’d like, I can implement the plane-consistency check and the scoring tweak now and re-run with margin 150–200 for comparison.

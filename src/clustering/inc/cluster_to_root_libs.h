@@ -23,7 +23,14 @@ void get_first_and_last_event(TTree* tree, int branch_address, int which_event, 
 
 // read the tps from the files and save them in a vector
 // std::vector<TriggerPrimitive> file_reader(std::vector<std::string> filenames, int plane=2, int supernova_option=0, int max_events_per_filename = INT_MAX);
-void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::vector <TrueParticle> &true_particles, std::vector <Neutrino>& neutrinos, int supernova_option=0, int event_number=0);
+void file_reader(std::string filename,
+				 std::vector<TriggerPrimitive>& tps,
+				 std::vector<TrueParticle>& true_particles,
+				 std::vector<Neutrino>& neutrinos,
+				 int supernova_option = 0,
+				 int event_number = 0,
+				 double time_tolerance_ticks = -1.0,
+				 int channel_tolerance = -1);
 // std::vector<std::vector<TriggerPrimitive>> file_reader_all_planes(std::vector<std::string> filenames, int supernova_option=0, int max_events_per_filename= INT_MAX);
 
 // create the clusters from the tps

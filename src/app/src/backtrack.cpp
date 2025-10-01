@@ -17,7 +17,6 @@
 
 #include "cluster_to_root_libs.h"
 #include "cluster.h"
-#include "functions.h"
 
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
@@ -81,6 +80,13 @@ int main(int argc, char* argv[]) {
     int effective_time_window = (1 + bktr_margin) * conversion_tdc_to_tpc;
     LogInfo << "Effective time window (TDC ticks): " << effective_time_window << " (conversion_tdc_to_tpc=" << conversion_tdc_to_tpc << ")" << std::endl;
 
+    int channel_tolerance = 50; // default fallback
+    if (j.contains("backtracker_channel_tolerance")) {
+        try { channel_tolerance = j.at("backtracker_channel_tolerance").get<int>(); }
+        catch (...) { LogWarning << "Invalid backtracker_channel_tolerance in JSON, keeping default (50)." << std::endl; }
+    }
+    LogInfo << "Channel tolerance (channels): " << channel_tolerance << std::endl;
+
     for (auto& filename : filenames) {
         LogInfo << "Reading file: " << filename << std::endl;
         // count events
@@ -98,18 +104,23 @@ int main(int argc, char* argv[]) {
 
         for (int iEvent = 1; iEvent <= n_events; ++iEvent) {
             LogInfo << "Reading event " << iEvent << std::endl;
-            file_reader(filename, tps.at(iEvent), true_particles.at(iEvent), neutrinos.at(iEvent), /*supernova_option*/0, iEvent);
+            file_reader(
+                filename,
+                tps.at(iEvent),
+                true_particles.at(iEvent),
+                neutrinos.at(iEvent),
+                /*supernova_option*/0,
+                iEvent,
+                static_cast<double>(effective_time_window),
+                channel_tolerance);
 
-            // connect TPs to true particles
-        for (int iTP = 0; iTP < (int)tps.at(iEvent).size(); ++iTP) {
-                for (int iTruePart = 0; iTruePart < (int)true_particles.at(iEvent).size(); ++iTruePart) {
-                    if (true_particles.at(iEvent).at(iTruePart).GetChannels().size() == 0) continue;
-            // Use the effective_time_window derived from backtracker_error_margin
-            if (isTimeCompatible(&true_particles.at(iEvent).at(iTruePart), &tps.at(iEvent).at(iTP), effective_time_window)
-                        && isChannelCompatible(&true_particles.at(iEvent).at(iTruePart), &tps.at(iEvent).at(iTP)))
-                    { tps.at(iEvent).at(iTP).SetTrueParticle(&true_particles.at(iEvent).at(iTruePart)); break; }
-                }
+            // Summarise direct TP-to-truth associations built inside file_reader
+            int matched_tps_counter = 0;
+            for (const auto& tp : tps.at(iEvent)) {
+                if (tp.GetTrueParticle() != nullptr) { matched_tps_counter++; }
             }
+            LogInfo << "Matched " << matched_tps_counter << "/" << tps.at(iEvent).size()
+                    << " TPs to true particles via SimIDE association." << std::endl;
         }
 
         // write *_tps_bktr<N>.root where N is backtracker_error_margin

@@ -7,8 +7,12 @@
 #include <climits>
 #include <unordered_map>
 #include <set>
+#include <initializer_list>
+#include <array>
 #include <TDirectory.h>
 #include <TKey.h>
+#include <TBranch.h>
+#include <TLeaf.h>
 #include <filesystem>
 
 // #include <TLeaf.h>
@@ -24,6 +28,38 @@
 LoggerInit([]{
     Logger::getUserHeader() << "[" << FILENAME << "]";
 });
+
+namespace {
+
+template <typename T>
+bool SetBranchWithFallback(TTree* tree,
+                           std::initializer_list<const char*> candidateNames,
+                           T* address,
+                           const std::string& context) {
+    for (const auto* name : candidateNames) {
+        if (tree->GetBranch(name) != nullptr) {
+            tree->SetBranchAddress(name, address);
+            return true;
+        }
+    }
+
+    std::ostringstream oss;
+    oss << "Branches [";
+    bool first = true;
+    for (const auto* name : candidateNames) {
+        if (!first) {
+            oss << ", ";
+        }
+        oss << name;
+        first = false;
+    }
+    oss << "] not found";
+
+    LogError << oss.str() << " in " << context << std::endl;
+    return false;
+}
+
+} // namespace
 // Global map to store time offset corrections per event (TPC ticks)
 static std::map<int, double> g_event_time_offsets;
 
@@ -234,7 +270,14 @@ void get_first_and_last_event(TTree* tree, int* branch_value, int which_event, i
 }
 
 // read the tps from the files and save them in a vector
-void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::vector <TrueParticle> &true_particles, std::vector <Neutrino>& neutrinos, int supernova_option, int event_number) {
+void file_reader(std::string filename,
+                 std::vector<TriggerPrimitive>& tps,
+                 std::vector<TrueParticle>& true_particles,
+                 std::vector<Neutrino>& neutrinos,
+                 int supernova_option,
+                 int event_number,
+                 double time_tolerance_ticks,
+                 int channel_tolerance) {
     
     LogInfo << " Reading file: " << filename << std::endl;
     
@@ -268,7 +311,9 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
     int last_tp_entry_in_event = -1;
 
     UInt_t this_event_number = 0;
-    TPtree->SetBranchAddress("Event", &this_event_number);
+    if (TPtree->SetBranchAddress("Event", &this_event_number) < 0) {
+        LogWarning << "Failed to bind branch 'Event'" << std::endl;
+    }
 
 
     get_first_and_last_event(TPtree, (int*)&this_event_number, event_number, first_tp_entry_in_event, last_tp_entry_in_event);
@@ -281,79 +326,246 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
 
     UShort_t this_version = 0;
     uint64_t this_time_start = 0;
-    Int_t this_channel = 0;          // Raw channel read from file (may be detector-local)
+    UInt_t this_channel = 0;          // Raw channel read from file (may be detector-local)
     UInt_t this_adc_integral = 0;
     UShort_t this_adc_peak = 0;
     UShort_t this_detid = 0;          // Detector (APA) id if present
     // int this_event_number = 0;
-    TPtree->SetBranchAddress("version", &this_version);
-    TPtree->SetBranchAddress("time_start", &this_time_start);
-    TPtree->SetBranchAddress("channel", &this_channel);
-    TPtree->SetBranchAddress("adc_integral", &this_adc_integral);
-    TPtree->SetBranchAddress("adc_peak", &this_adc_peak);
-    TPtree->SetBranchAddress("detid", &this_detid);
-    TPtree->SetBranchAddress("Event", &this_event_number);
+    auto bindBranch = [&](const char* name, void* address) {
+        if (TPtree->SetBranchAddress(name, address) < 0) {
+            LogWarning << "Failed to bind branch '" << name << "'" << std::endl;
+        }
+    };
+
+    bindBranch("version", &this_version);
+    bindBranch("time_start", &this_time_start);
+    bindBranch("channel", &this_channel);
+    bindBranch("adc_integral", &this_adc_integral);
+    bindBranch("adc_peak", &this_adc_peak);
+    bindBranch("detid", &this_detid);
+    bindBranch("Event", &this_event_number);
     
     // For version 1
     uint64_t this_time_over_threshold = 0;
     uint64_t this_time_peak = 0;
-    TPtree->SetBranchAddress("time_over_threshold", &this_time_over_threshold);
-    TPtree->SetBranchAddress("time_peak", &this_time_peak);
+    // Some files use a misspelled v1 name: "time_over_threhsold". Prefer the correct one, fallback to the misspelled.
+    {
+        const char* totBranchName = nullptr;
+        if (TPtree->GetBranch("time_over_threshold") != nullptr) {
+            totBranchName = "time_over_threshold";
+        } else if (TPtree->GetBranch("time_over_threhsold") != nullptr) {
+            totBranchName = "time_over_threhsold";
+        }
+        if (totBranchName != nullptr) {
+            TPtree->SetBranchAddress(totBranchName, &this_time_over_threshold);
+        } else {
+            LogWarning << "Failed to bind v1 ToT (time_over_threshold/time_over_threhsold)" << std::endl;
+        }
+    }
+    // Some rare files might misspell time_peak as time_peek; try a fallback as well.
+    {
+        const char* tpeakBranchName = nullptr;
+        if (TPtree->GetBranch("time_peak") != nullptr) {
+            tpeakBranchName = "time_peak";
+        } else if (TPtree->GetBranch("time_peek") != nullptr) {
+            tpeakBranchName = "time_peek";
+        }
+        if (tpeakBranchName != nullptr) {
+            TPtree->SetBranchAddress(tpeakBranchName, &this_time_peak);
+        } else {
+            LogWarning << "Failed to bind v1 time_peak (time_peak/time_peek)" << std::endl;
+        }
+    }
 
-    // For version 2
-    uint64_t this_samples_over_threshold = 0;
-    uint64_t this_samples_to_peak = 0;
-    TPtree->SetBranchAddress("samples_over_threshold", &this_samples_over_threshold);
-    TPtree->SetBranchAddress("samples_to_peak", &this_samples_to_peak);
+    // For version 2 (branch types may vary across files; commonly UShort_t or ULong_t/ULong64_t)
+    // Bind both correct and commonly misspelled branch names when present, then choose per-entry the non-zero one.
+    UShort_t this_samples_over_threshold_correct = 0;
+    UShort_t this_samples_over_threshold_typo   = 0;
+    UShort_t this_samples_to_peak_correct       = 0;
+    UShort_t this_samples_to_peak_typo          = 0;
+    bool bound_sover_correct = false, bound_sover_typo = false;
+    bool bound_stopeak_correct = false, bound_stopeak_typo = false;
+    // Keep TLeaf pointers for type/diagnostic inspection and fallback reads
+    TLeaf* leaf_sover_correct = nullptr;
+    TLeaf* leaf_sover_typo = nullptr;
+    TLeaf* leaf_stopeak_correct = nullptr;
+    TLeaf* leaf_stopeak_typo = nullptr;
+    if (TPtree->GetBranch("samples_over_threshold") != nullptr) {
+        TPtree->SetBranchAddress("samples_over_threshold", &this_samples_over_threshold_correct);
+        bound_sover_correct = true;
+        leaf_sover_correct = TPtree->GetLeaf("samples_over_threshold");
+    }
+    if (TPtree->GetBranch("samples_over_thershold") != nullptr) {
+        TPtree->SetBranchAddress("samples_over_thershold", &this_samples_over_threshold_typo);
+        bound_sover_typo = true;
+        leaf_sover_typo = TPtree->GetLeaf("samples_over_thershold");
+    }
+    if (!bound_sover_correct && !bound_sover_typo) {
+        LogWarning << "Failed to bind v2 ToT (samples_over_threshold/samples_over_thershold)" << std::endl;
+    }
+    if (TPtree->GetBranch("samples_to_peak") != nullptr) {
+        TPtree->SetBranchAddress("samples_to_peak", &this_samples_to_peak_correct);
+        bound_stopeak_correct = true;
+        leaf_stopeak_correct = TPtree->GetLeaf("samples_to_peak");
+    }
+    if (TPtree->GetBranch("samples_to_peek") != nullptr) {
+        TPtree->SetBranchAddress("samples_to_peek", &this_samples_to_peak_typo);
+        bound_stopeak_typo = true;
+        leaf_stopeak_typo = TPtree->GetLeaf("samples_to_peek");
+    }
+    if (!bound_stopeak_correct && !bound_stopeak_typo) {
+        LogWarning << "Failed to bind v2 samples_to_peak (samples_to_peak/samples_to_peek)" << std::endl;
+    }
+    // Debug: Log detected leaf types for diagnostics (commented out to reduce verbosity)
+    // if (bound_sover_correct && leaf_sover_correct) {
+    //     LogInfo << "[TP-READ-DIAG] Leaf type samples_over_threshold: " << leaf_sover_correct->GetTypeName() << std::endl;
+    // }
+    // if (bound_sover_typo && leaf_sover_typo) {
+    //     LogInfo << "[TP-READ-DIAG] Leaf type samples_over_thershold: " << leaf_sover_typo->GetTypeName() << std::endl;
+    // }
+    // if (bound_stopeak_correct && leaf_stopeak_correct) {
+    //     LogInfo << "[TP-READ-DIAG] Leaf type samples_to_peak: " << leaf_stopeak_correct->GetTypeName() << std::endl;
+    // }
+    // if (bound_stopeak_typo && leaf_stopeak_typo) {
+    //     LogInfo << "[TP-READ-DIAG] Leaf type samples_to_peek: " << leaf_stopeak_typo->GetTypeName() << std::endl;
+    // }
     
     LogInfo << "  If the TOT or peak branches are not found, it is because the TPs are not that version" << std::endl;
 
     LogInfo << " Reading tree of TriggerPrimitives" << std::endl;
 
+    // Counters and guards for ToT-based filtering
+    size_t tot_filtered_count = 0;
+    size_t tot_nonzero_seen = 0; // if no TP has ToT>0, we skip applying the ToT<2 filter
+
     // Loop over the entries in the tree
     for (Long64_t iTP = first_tp_entry_in_event; iTP <= last_tp_entry_in_event; ++iTP) {
         TPtree->GetEntry(iTP);
 
-        // in v1 the variables were different, so adapt to version 2
+    // Build effective v2-like values for ToT and time-to-peak
+        UShort_t eff_samples_over_threshold = 0;
+        UShort_t eff_samples_to_peak = 0;
         if (this_version == 1){
+            // v1 -> v2 conversion
             int clock_to_TPC_ticks = 32; // TODO move to namespace
-            this_samples_over_threshold = (this_time_over_threshold / clock_to_TPC_ticks); // converting from clock to TPC ticks TODO better
-            this_samples_to_peak = (this_time_peak - this_time_start ) / clock_to_TPC_ticks;    // converting from clock to TPC ticks TODO better
+            eff_samples_over_threshold = static_cast<UShort_t>(this_time_over_threshold / clock_to_TPC_ticks);
+            eff_samples_to_peak       = static_cast<UShort_t>((this_time_peak > this_time_start)
+                                        ? ((this_time_peak - this_time_start) / clock_to_TPC_ticks)
+                                        : 0);
+        } else {
+            // v2: pick the non-zero branch among correct and typo when both are present
+            UShort_t sover_cand1 = bound_sover_correct ? this_samples_over_threshold_correct : 0;
+            UShort_t sover_cand2 = bound_sover_typo    ? this_samples_over_threshold_typo   : 0;
+            eff_samples_over_threshold = (sover_cand1 > 0 ? sover_cand1 : sover_cand2);
+
+            UShort_t stopeak_cand1 = bound_stopeak_correct ? this_samples_to_peak_correct : 0;
+            UShort_t stopeak_cand2 = bound_stopeak_typo    ? this_samples_to_peak_typo    : 0;
+            eff_samples_to_peak = (stopeak_cand1 > 0 ? stopeak_cand1 : stopeak_cand2);
+        }
+
+        // Common fallback: if effective values remain zero and v2 leaves exist, try reading via TLeaf
+        // This also covers files reporting version==1 but actually storing v2-style fields.
+        if (eff_samples_over_threshold == 0) {
+            double v_sover_c = (leaf_sover_correct ? leaf_sover_correct->GetValue() : 0.0);
+            double v_sover_t = (leaf_sover_typo ? leaf_sover_typo->GetValue() : 0.0);
+            unsigned long long vi = (unsigned long long)((v_sover_c > 0.0) ? v_sover_c : v_sover_t);
+            if (vi > 0ULL) {
+                eff_samples_over_threshold = static_cast<UShort_t>(std::min<unsigned long long>(vi, 0xFFFFULL));
+            }
+        }
+        if (eff_samples_to_peak == 0) {
+            double v_stopeak_c = (leaf_stopeak_correct ? leaf_stopeak_correct->GetValue() : 0.0);
+            double v_stopeak_t = (leaf_stopeak_typo ? leaf_stopeak_typo->GetValue() : 0.0);
+            unsigned long long vi = (unsigned long long)((v_stopeak_c > 0.0) ? v_stopeak_c : v_stopeak_t);
+            if (vi > 0ULL) {
+                eff_samples_to_peak = static_cast<UShort_t>(std::min<unsigned long long>(vi, 0xFFFFULL));
+            }
         }
 
         // skipping flag (useless), type, and algorithm (dropped from TP v2)
         
-        // Determine if the channel appears detector-local; if so promote to global numbering
+    // Temporary diagnostic to inspect raw values for the first few TPs in this event
+    if (iTP - first_tp_entry_in_event < 5) {
+        auto* chLeaf = TPtree->GetLeaf("channel");
+        std::array<unsigned char, sizeof(UInt_t)> raw_bytes{};
+        if (chLeaf != nullptr) {
+            auto* raw_ptr = reinterpret_cast<const unsigned char*>(chLeaf->GetValuePointer());
+            if (raw_ptr != nullptr) {
+                std::copy(raw_ptr, raw_ptr + raw_bytes.size(), raw_bytes.begin());
+            }
+        }
+        // Debug TP details (commented out to reduce verbosity)
+        // LogInfo << "[TP-READ-DIAG] version=" << this_version
+        //     << " raw channel=" << this_channel
+        //     << " detid=" << this_detid
+        //     << " time_start=" << this_time_start
+        //     << " samples_over_threshold(eff)=" << eff_samples_over_threshold
+        //     << " samples_to_peak(eff)=" << eff_samples_to_peak
+        //     << " adc_integral=" << this_adc_integral
+        //     << " adc_peak=" << this_adc_peak
+        //     << " raw_bytes=["
+        //     << static_cast<int>(raw_bytes[0]) << ","
+        //     << static_cast<int>(raw_bytes[1]) << ","
+        //     << static_cast<int>(raw_bytes[2]) << ","
+        //     << static_cast<int>(raw_bytes[3])
+        //     << "]"
+        //     << std::endl;
+    }
+
+    // Determine if the channel appears detector-local; if so promote to global numbering
         // Global scheme is: global = detid * APA::total_channels + local
         uint64_t effective_channel = this_channel;
         if (this_detid > 0 && this_channel >= 0 && this_channel < APA::total_channels) {
             effective_channel = (uint64_t)this_detid * APA::total_channels + (uint64_t)this_channel;
         }
         // Heuristic safeguard: if channel already large (>= total_channels) but detid==0 we assume it's already global and leave unchanged
+
+        // Track whether any non-zero ToT is observed; we'll apply the ToT<2 filter only if ToT info is present and non-trivial
+        if (eff_samples_over_threshold > 0) {
+            ++tot_nonzero_seen;
+        }
+
         TriggerPrimitive this_tp = TriggerPrimitive(
             this_version,
             0, // flag
             this_detid,
             effective_channel,
-            this_samples_over_threshold,
+            eff_samples_over_threshold,
             this_time_start,
-            this_samples_to_peak,
+            eff_samples_to_peak,
             this_adc_integral,
             this_adc_peak
         );
-        if (effective_channel != (uint64_t)this_channel) {
-            LogInfo << "Promoted detector-local channel " << this_channel << " with detid " << this_detid
-                    << " to global channel " << effective_channel << std::endl;
-        }
+        // Debug channel promotion (commented out to reduce verbosity)
+        // if (effective_channel != (uint64_t)this_channel) {
+        //     LogInfo << "Promoted detector-local channel " << this_channel << " with detid " << this_detid
+        //             << " to global channel " << effective_channel << std::endl;
+        // }
         this_tp.SetEvent(this_event_number);
         
         tps.emplace_back(this_tp); // add to collection of TPs
     }
-    
-    if (tps.size() > 0)
-        LogInfo << " Found " << tps.size() << " TPs in file " << filename << std::endl;
-    else 
-        LogWarning << " Found no TPs in file " << filename << std::endl;
+
+    // Apply ToT<2 filter only if ToT info is actually populated (some non-zero values seen)
+    if (!tps.empty()) {
+        if (tot_nonzero_seen > 0) {
+            // Filter in-place: keep only TPs with ToT >= 2
+            auto before = tps.size();
+            tps.erase(std::remove_if(tps.begin(), tps.end(), [&](const TriggerPrimitive& tp){
+                return tp.GetSamplesOverThreshold() < 2;
+            }), tps.end());
+            tot_filtered_count = before - tps.size();
+
+            LogInfo << " Found " << tps.size() << " TPs in file " << filename << " after ToT>=2 filter"
+                    << " (filtered " << tot_filtered_count << ")" << std::endl;
+        } else {
+            // No meaningful ToT data; skip the filter to avoid dropping everything
+            LogWarning << " ToT field absent or all zeros; skipping ToT<2 filter. Kept "
+                       << tps.size() << " TPs from file " << filename << std::endl;
+        }
+    } else {
+        LogWarning << " Found no TPs in file " << filename << " (nothing to filter)" << std::endl;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Read mcparticles (geant)
@@ -399,15 +611,29 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
     MCparticlestree->SetBranchAddress("x", &x);
     MCparticlestree->SetBranchAddress("y", &y);
     MCparticlestree->SetBranchAddress("z", &z);
-    MCparticlestree->SetBranchAddress("Px", &px);
-    MCparticlestree->SetBranchAddress("Py", &py);
-    MCparticlestree->SetBranchAddress("Pz", &pz);
-    MCparticlestree->SetBranchAddress("en", &energy);
+
+    if (!SetBranchWithFallback(MCparticlestree, {"Px", "px"}, &px, "MC particles Px")) {
+        return;
+    }
+    if (!SetBranchWithFallback(MCparticlestree, {"Py", "py"}, &py, "MC particles Py")) {
+        return;
+    }
+    if (!SetBranchWithFallback(MCparticlestree, {"Pz", "pz"}, &pz, "MC particles Pz")) {
+        return;
+    }
+    if (!SetBranchWithFallback(MCparticlestree, {"en", "energy"}, &energy, "MC particles energy")) {
+        return;
+    }
+
     MCparticlestree->SetBranchAddress("pdg", &pdg);
     MCparticlestree->SetBranchAddress("Event", &event);
     // MCparticlestree->SetBranchAddress("block_id", &block_id);
-    MCparticlestree->SetBranchAddress("track_id", &track_id);
-    MCparticlestree->SetBranchAddress("truth_id", &truth_id);
+    if (!SetBranchWithFallback(MCparticlestree, {"track_id", "g4_track_id"}, &track_id, "MC particles track id")) {
+        return;
+    }
+    if (!SetBranchWithFallback(MCparticlestree, {"truth_id", "truth_track_id", "truth_block_id"}, &truth_id, "MC particles truth id")) {
+        return;
+    }
     MCparticlestree->SetBranchAddress("status_code", &status_code);
 
 
@@ -474,10 +700,18 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
     MCtruthtree->SetBranchAddress("x", &x);
     MCtruthtree->SetBranchAddress("y", &y);
     MCtruthtree->SetBranchAddress("z", &z);
-    MCtruthtree->SetBranchAddress("Px", &px);
-    MCtruthtree->SetBranchAddress("Py", &py);
-    MCtruthtree->SetBranchAddress("Pz", &pz);
-    MCtruthtree->SetBranchAddress("en", &energy);
+    if (!SetBranchWithFallback(MCtruthtree, {"Px", "px"}, &px, "MC truth Px")) {
+        return;
+    }
+    if (!SetBranchWithFallback(MCtruthtree, {"Py", "py"}, &py, "MC truth Py")) {
+        return;
+    }
+    if (!SetBranchWithFallback(MCtruthtree, {"Pz", "pz"}, &pz, "MC truth Pz")) {
+        return;
+    }
+    if (!SetBranchWithFallback(MCtruthtree, {"en", "energy"}, &energy, "MC truth energy")) {
+        return;
+    }
     MCtruthtree->SetBranchAddress("pdg", &pdg);
     MCtruthtree->SetBranchAddress("Event", &event);
     MCtruthtree->SetBranchAddress("block_id", &block_id);
@@ -558,9 +792,18 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
     float x_simide;
 
     simidestree->SetBranchAddress("Event", &event_number_simides);
-    simidestree->SetBranchAddress("ChannelID", &ChannelID);
-    simidestree->SetBranchAddress("Timestamp", &Timestamp);
-    simidestree->SetBranchAddress("trackID", &trackID);
+
+    if (!SetBranchWithFallback(simidestree, {"ChannelID", "channel"}, &ChannelID, "SimIDEs channel")) {
+        return;
+    }
+
+    if (!SetBranchWithFallback(simidestree, {"Timestamp", "timestamp"}, &Timestamp, "SimIDEs timestamp")) {
+        return;
+    }
+
+    if (!SetBranchWithFallback(simidestree, {"trackID", "origTrackID"}, &trackID, "SimIDEs track ID")) {
+        return;
+    }
     simidestree->SetBranchAddress("x", &x_simide);
 
     LogInfo << " Reading tree of SimIDEs to find channels and timestamps associated to MC particles" << std::endl;
@@ -674,11 +917,13 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
         // Store the offset in global map for use in write_tps_to_root
         g_event_time_offsets[event_number] = appliedOffset;
         
-        if (appliedOffset > 0) {
-            LogInfo << "[DIAG] Event " << event_number << " Applied time offset correction ticks=" << appliedOffset << " (median diff)." << std::endl;
-        } else {
-            LogInfo << "[DIAG] Event " << event_number << " No time offset correction applied (diff samples=" << diffs.size() << ")." << std::endl;
-        }
+        // Debug output for time offset correction (commented out)
+        // if (appliedOffset > 0) {
+        //     LogInfo << "[DIAG] Event " << event_number << " Applied time offset correction ticks=" << appliedOffset << " (median diff)." << std::endl;
+        // } else {
+        //     LogInfo << "[DIAG] Event " << event_number << " No time offset correction applied (diff samples=" << diffs.size() << ")." << std::endl;
+        // }
+        
         // TP time span for this event
         double tpMinTime = std::numeric_limits<double>::max();
         double tpMaxTime = -1.0;
@@ -689,94 +934,100 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
             tpMinTime = std::min(tpMinTime, tps[i].GetTimeStart());
             tpMaxTime = std::max(tpMaxTime, tps[i].GetTimeStart());
         }
-        LogInfo << "[DIAG] Event " << event_number << " SimIDEs summary: nSimIDEs=" << nSimIDEsDiag
-                << " uniqueChannels=" << simideTimeByChannel.size()
-                << " timeRangeTicks=[" << simideMinTime << "," << simideMaxTime << "]" << std::endl;
-        LogInfo << "[DIAG] Event " << event_number << " RAW timestamps (before ×32): ";
-        for (size_t i = 0; i < rawTimestampSamples.size(); ++i) {
-            if (i > 0) LogInfo << ",";
-            LogInfo << rawTimestampSamples[i];
-        }
-        LogInfo << std::endl;
-        LogInfo << "[DIAG] Event " << event_number << " RAW SimIDE channels (no promotion): ";
-        for (size_t i = 0; i < rawChannelSamples.size(); ++i) {
-            if (i > 0) LogInfo << ",";
-            int ch = rawChannelSamples[i];
-            int detid = ch / 2560;
-            int local_ch = ch % 2560;
-            char plane = 'U';
-            if (local_ch >= 800 && local_ch < 1600) plane = 'V';
-            else if (local_ch >= 1600) plane = 'X';
-            LogInfo << ch << "(" << plane << ")";
-        }
-        LogInfo << std::endl;
-        LogInfo << "[DIAG] Event " << event_number << " TPs summary: nTPs=" << tpCountInEvent
-                << " timeRangeTicks=[" << tpMinTime << "," << tpMaxTime << "]" << std::endl;
-        if (!firstSimIdeSamples.empty()) {
-            std::ostringstream oss; oss << "[DIAG] Event " << event_number << " FirstSimIDEs(ch:time)=";
-            for (size_t i=0;i<firstSimIdeSamples.size();++i){ oss << firstSimIdeSamples[i].first << ":" << firstSimIdeSamples[i].second; if (i+1<firstSimIdeSamples.size()) oss << ","; }
-            LogInfo << oss.str() << std::endl;
-        }
-        // TP channel plane analysis
-        int tpCountU=0, tpCountV=0, tpCountX=0;
-        int tpMinU=999999, tpMaxU=-1, tpMinV=999999, tpMaxV=-1, tpMinX=999999, tpMaxX=-1;
-        for (size_t i = 0; i < tps.size(); ++i) {
-            if (tps[i].GetEvent() != (int)event_number) continue;
-            int ch = tps[i].GetChannel();
-            int detid = ch / 2560;
-            int local_ch = ch % 2560;
-            if (local_ch < 800) { tpCountU++; tpMinU=std::min(tpMinU,ch); tpMaxU=std::max(tpMaxU,ch); }
-            else if (local_ch < 1600) { tpCountV++; tpMinV=std::min(tpMinV,ch); tpMaxV=std::max(tpMaxV,ch); }
-            else { tpCountX++; tpMinX=std::min(tpMinX,ch); tpMaxX=std::max(tpMaxX,ch); }
-        }
-        LogInfo << "[DIAG] Event " << event_number << " TP planes: U=" << tpCountU;
-        if(tpCountU>0) LogInfo << "[" << tpMinU << "-" << tpMaxU << "]";
-        LogInfo << " V=" << tpCountV;
-        if(tpCountV>0) LogInfo << "[" << tpMinV << "-" << tpMaxV << "]";
-        LogInfo << " X=" << tpCountX;
-        if(tpCountX>0) LogInfo << "[" << tpMinX << "-" << tpMaxX << "]";
-        LogInfo << std::endl;
-        // Track MARLEY associations by plane
-        int marleyCountU=0, marleyCountV=0, marleyCountX=0;
-        LogInfo << "[DIAG] Event " << event_number << " TP-to-SimIDE channel/time proximity:" << std::endl;
-        LogInfo << "[DIAG] Format: TPIndex channel time_start ticks | inSimIDEset | minDeltaTicks" << std::endl;
-        for (size_t i = 0; i < tps.size(); ++i) {
-            if (tps[i].GetEvent() != (int)event_number) continue; // only current event's TPs
-            int globalCh = tps[i].GetChannel();
-            int localCh = tps[i].GetDetectorChannel();
-            double t = tps[i].GetTimeStart();
-            bool inSet = simideTimeByChannel.find(globalCh) != simideTimeByChannel.end();
-            double minDt = -1.0;
-            if (inSet) {
-                const auto &vt = simideTimeByChannel[globalCh];
-                // binary search for closest
-                auto it = std::lower_bound(vt.begin(), vt.end(), t);
-                if (it != vt.end()) minDt = std::abs(*it - t);
-                if (it != vt.begin()) minDt = (minDt < 0) ? std::abs(*(it-1)-t) : std::min(minDt, std::abs(*(it-1)-t));
-            }
-            LogInfo << "[DIAG] TP " << i << " gch=" << globalCh << " (local=" << localCh << ") t=" << t
-                    << " | inSet=" << (inSet?"Y":"N")
-                    << " | minDt=" << minDt << std::endl;
-            // Count MARLEY associations by plane
-            if (inSet) {
-                int detid = globalCh / 2560;
-                int local_channel = globalCh % 2560;
-                if (local_channel < 800) marleyCountU++;
-                else if (local_channel < 1600) marleyCountV++;
-                else marleyCountX++;
-            }
-        }
-        // MARLEY association summary by plane
-        LogInfo << "[DIAG] Event " << event_number << " MARLEY associations by plane: U=" << marleyCountU 
-                << " V=" << marleyCountV << " X=" << marleyCountX 
-                << " (total=" << (marleyCountU + marleyCountV + marleyCountX) << ")" << std::endl;
-        // True particle spatial info (first one if exists)
-        if (!true_particles.empty()) {
-            const auto &p = true_particles.front();
-            LogInfo << "[DIAG] Event " << event_number << " TrueParticle pos (x,y,z)=(" << p.GetX() << "," << p.GetY() << "," << p.GetZ() << ")"
-                    << " timeWindowTicks=[" << p.GetTimeStart() << "," << p.GetTimeEnd() << "]"
-                    << " nChannels=" << p.GetChannels().size() << std::endl;
-        }
+        
+        // Debug diagnostics (commented out to reduce output)
+        // LogInfo << "[DIAG] Event " << event_number << " SimIDEs summary: nSimIDEs=" << nSimIDEsDiag
+        //         << " uniqueChannels=" << simideTimeByChannel.size()
+        //         << " timeRangeTicks=[" << simideMinTime << "," << simideMaxTime << "]" << std::endl;
+        // LogInfo << "[DIAG] Event " << event_number << " RAW timestamps (before ×32): ";
+        // for (size_t i = 0; i < rawTimestampSamples.size(); ++i) {
+        //     if (i > 0) LogInfo << ",";
+        //     LogInfo << rawTimestampSamples[i];
+        // }
+        // LogInfo << std::endl;
+        // LogInfo << "[DIAG] Event " << event_number << " RAW SimIDE channels (no promotion): ";
+        // for (size_t i = 0; i < rawChannelSamples.size(); ++i) {
+        //     if (i > 0) LogInfo << ",";
+        //     int ch = rawChannelSamples[i];
+        //     int detid = ch / 2560;
+        //     int local_ch = ch % 2560;
+        //     char plane = 'U';
+        //     if (local_ch >= 800 && local_ch < 1600) plane = 'V';
+        //     else if (local_ch >= 1600) plane = 'X';
+        //     LogInfo << ch << "(" << plane << ")";
+        // }
+        // LogInfo << std::endl;
+        
+        // Debug TP diagnostics (commented out to reduce output)
+        // LogInfo << "[DIAG] Event " << event_number << " TPs summary: nTPs=" << tpCountInEvent
+        //         << " timeRangeTicks=[" << tpMinTime << "," << tpMaxTime << "]" << std::endl;
+        // if (!firstSimIdeSamples.empty()) {
+        //     std::ostringstream oss; oss << "[DIAG] Event " << event_number << " FirstSimIDEs(ch:time)=";
+        //     for (size_t i=0;i<firstSimIdeSamples.size();++i){ oss << firstSimIdeSamples[i].first << ":" << firstSimIdeSamples[i].second; if (i+1<firstSimIdeSamples.size()) oss << ","; }
+        //     LogInfo << oss.str() << std::endl;
+        // }
+        
+        // TP channel plane analysis (commented out debug)
+        // int tpCountU=0, tpCountV=0, tpCountX=0;
+        // int tpMinU=999999, tpMaxU=-1, tpMinV=999999, tpMaxV=-1, tpMinX=999999, tpMaxX=-1;
+        // for (size_t i = 0; i < tps.size(); ++i) {
+        //     if (tps[i].GetEvent() != (int)event_number) continue;
+        //     int ch = tps[i].GetChannel();
+        //     int detid = ch / 2560;
+        //     int local_ch = ch % 2560;
+        //     if (local_ch < 800) { tpCountU++; tpMinU=std::min(tpMinU,ch); tpMaxU=std::max(tpMaxU,ch); }
+        //     else if (local_ch < 1600) { tpCountV++; tpMinV=std::min(tpMinV,ch); tpMaxV=std::max(tpMaxV,ch); }
+        //     else { tpCountX++; tpMinX=std::min(tpMinX,ch); tpMaxX=std::max(tpMaxX,ch); }
+        // }
+        // LogInfo << "[DIAG] Event " << event_number << " TP planes: U=" << tpCountU;
+        // if(tpCountU>0) LogInfo << "[" << tpMinU << "-" << tpMaxU << "]";
+        // LogInfo << " V=" << tpCountV;
+        // if(tpCountV>0) LogInfo << "[" << tpMinV << "-" << tpMaxV << "]";
+        // LogInfo << " X=" << tpCountX;
+        // if(tpCountX>0) LogInfo << "[" << tpMinX << "-" << tpMaxX << "]";
+        // LogInfo << std::endl;
+        
+        // Track MARLEY associations by plane (commented out debug)
+        // int marleyCountU=0, marleyCountV=0, marleyCountX=0;
+        // LogInfo << "[DIAG] Event " << event_number << " TP-to-SimIDE channel/time proximity:" << std::endl;
+        // LogInfo << "[DIAG] Format: TPIndex channel time_start ticks | inSimIDEset | minDeltaTicks" << std::endl;
+        // for (size_t i = 0; i < tps.size(); ++i) {
+        //     if (tps[i].GetEvent() != (int)event_number) continue; // only current event's TPs
+        //     int globalCh = tps[i].GetChannel();
+        //     int localCh = tps[i].GetDetectorChannel();
+        //     double t = tps[i].GetTimeStart();
+        //     bool inSet = simideTimeByChannel.find(globalCh) != simideTimeByChannel.end();
+        //     double minDt = -1.0;
+        //     if (inSet) {
+        //         const auto &vt = simideTimeByChannel[globalCh];
+        //         // binary search for closest
+        //         auto it = std::lower_bound(vt.begin(), vt.end(), t);
+        //         if (it != vt.end()) minDt = std::abs(*it - t);
+        //         if (it != vt.begin()) minDt = (minDt < 0) ? std::abs(*(it-1)-t) : std::min(minDt, std::abs(*(it-1)-t));
+        //     }
+        //     LogInfo << "[DIAG] TP " << i << " gch=" << globalCh << " (local=" << localCh << ") t=" << t
+        //             << " | inSet=" << (inSet?"Y":"N")
+        //             << " | minDt=" << minDt << std::endl;
+        //     // Count MARLEY associations by plane
+        //     if (inSet) {
+        //         int detid = globalCh / 2560;
+        //         int local_channel = globalCh % 2560;
+        //         if (local_channel < 800) marleyCountU++;
+        //         else if (local_channel < 1600) marleyCountV++;
+        //         else marleyCountX++;
+        //     }
+        // }
+        // // MARLEY association summary by plane
+        // LogInfo << "[DIAG] Event " << event_number << " MARLEY associations by plane: U=" << marleyCountU 
+        //         << " V=" << marleyCountV << " X=" << marleyCountX 
+        //         << " (total=" << (marleyCountU + marleyCountV + marleyCountX) << ")" << std::endl;
+        // // True particle spatial info (first one if exists)
+        // if (!true_particles.empty()) {
+        //     const auto &p = true_particles.front();
+        //     LogInfo << "[DIAG] Event " << event_number << " TrueParticle pos (x,y,z)=(" << p.GetX() << "," << p.GetY() << "," << p.GetZ() << ")"
+        //             << " timeWindowTicks=[" << p.GetTimeStart() << "," << p.GetTimeEnd() << "]"
+        //             << " nChannels=" << p.GetChannels().size() << std::endl;
+        // }
     }
 
     LogInfo << " Matched ";
@@ -794,7 +1045,9 @@ void file_reader(std::string filename, std::vector<TriggerPrimitive>& tps, std::
 
     // NEW: Apply direct TP-SimIDE matching to replace/supplement trueParticle-based matching
     LogInfo << " Applying direct TP-SimIDE matching for event " << event_number << std::endl;
-    match_tps_to_simides_direct(tps, true_particles, file, event_number, 5000.0, 50);
+    const double effective_time_tolerance = (time_tolerance_ticks >= 0.0) ? time_tolerance_ticks : 5000.0;
+    const int effective_channel_tolerance = (channel_tolerance >= 0) ? channel_tolerance : 50;
+    match_tps_to_simides_direct(tps, true_particles, file, event_number, effective_time_tolerance, effective_channel_tolerance);
 
     file->Close(); // don't need anymore
 
@@ -1327,6 +1580,16 @@ void match_tps_to_simides_direct(
 {
     LogInfo << "Starting direct TP-SimIDE matching for event " << event_number << std::endl;
     
+    // Fetch any previously estimated time-offset correction for this event
+    double event_time_offset = 0.0;
+    {
+        auto it = g_event_time_offsets.find(event_number);
+        if (it != g_event_time_offsets.end()) event_time_offset = it->second;
+    }
+    if (event_time_offset != 0.0) {
+        LogInfo << "[DIRECT] Using event time-offset correction (ticks) = " << event_time_offset << std::endl;
+    }
+
     // Clear any existing truth links
     for (auto& tp : tps) {
         if (tp.GetEvent() == event_number) {
@@ -1358,10 +1621,16 @@ void match_tps_to_simides_direct(
     UInt_t simide_channel;
     UShort_t simide_timestamp;
     Int_t simide_track_id;
-    
-    simidestree->SetBranchAddress("ChannelID", &simide_channel);
-    simidestree->SetBranchAddress("Timestamp", &simide_timestamp);
-    simidestree->SetBranchAddress("trackID", &simide_track_id);
+
+    if (!SetBranchWithFallback(simidestree, {"ChannelID", "channel"}, &simide_channel, "SimIDEs channel")) {
+        return;
+    }
+    if (!SetBranchWithFallback(simidestree, {"Timestamp", "timestamp"}, &simide_timestamp, "SimIDEs timestamp")) {
+        return;
+    }
+    if (!SetBranchWithFallback(simidestree, {"trackID", "origTrackID"}, &simide_track_id, "SimIDEs track ID")) {
+        return;
+    }
     
     // Build lookup map for true particles by trackID
     std::unordered_map<int, TrueParticle*> track_to_particle;
@@ -1387,13 +1656,15 @@ void match_tps_to_simides_direct(
         // Convert SimIDE timestamp to TPC ticks (with overflow protection)
         uint64_t timestampU64 = (uint64_t)simide_timestamp;
         double time_tpc = (double)(timestampU64 * conversion_tdc_to_tpc);
+        // Apply event time-offset so SimIDE times are comparable to TP times
+        double time_tpc_aligned = time_tpc - event_time_offset;
         
         // Find associated particle
         auto particle_it = track_to_particle.find(std::abs(simide_track_id));
         if (particle_it != track_to_particle.end()) {
             simides_in_event.push_back({
                 (int)simide_channel,
-                time_tpc,
+                time_tpc_aligned,
                 simide_track_id,
                 particle_it->second
             });
@@ -1402,39 +1673,91 @@ void match_tps_to_simides_direct(
     
     LogInfo << "Found " << simides_in_event.size() << " SimIDEs linked to particles in event " << event_number << std::endl;
     
-    // Diagnostic: show SimIDE time and channel ranges
-    if (event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) {
-        if (!simides_in_event.empty()) {
-            double min_simide_time = simides_in_event[0].time_tpc_ticks;
-            double max_simide_time = simides_in_event[0].time_tpc_ticks;
-            int min_simide_channel = simides_in_event[0].channel;
-            int max_simide_channel = simides_in_event[0].channel;
-            
-            for (const auto& simide : simides_in_event) {
-                min_simide_time = std::min(min_simide_time, simide.time_tpc_ticks);
-                max_simide_time = std::max(max_simide_time, simide.time_tpc_ticks);
-                min_simide_channel = std::min(min_simide_channel, simide.channel);
-                max_simide_channel = std::max(max_simide_channel, simide.channel);
-            }
-            
-            LogInfo << "[SIMIDE-RANGE] Event " << event_number << " time: [" << min_simide_time << "," << max_simide_time 
-                    << "] channels: [" << min_simide_channel << "," << max_simide_channel << "]" << std::endl;
+    // SimIDE time and channel ranges (diagnostic output commented out for selected events)
+    double min_simide_time = std::numeric_limits<double>::max();
+    double max_simide_time = -std::numeric_limits<double>::max();
+    int min_simide_channel = INT_MAX;
+    int max_simide_channel = INT_MIN;
+    if (!simides_in_event.empty()) {
+        for (const auto& simide : simides_in_event) {
+            min_simide_time = std::min(min_simide_time, simide.time_tpc_ticks);
+            max_simide_time = std::max(max_simide_time, simide.time_tpc_ticks);
+            min_simide_channel = std::min(min_simide_channel, simide.channel);
+            max_simide_channel = std::max(max_simide_channel, simide.channel);
         }
+        // Debug: diagnostic range output for specific events (commented out)
+        // if (event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) {
+        //     LogInfo << "[SIMIDE-RANGE] Event " << event_number << " time: [" << min_simide_time << "," << max_simide_time 
+        //             << "] channels: [" << min_simide_channel << "," << max_simide_channel << "]" << std::endl;
+        // }
     }
     
-    // Match TPs to SimIDEs
+    // Determine APA coverage of SimIDEs to optionally filter TPs when SimIDEs use global channels
+    bool simides_use_global_channels = false;
+    std::unordered_set<int> simide_apa_set;
+    for (const auto& s : simides_in_event) {
+        if (s.channel >= APA::total_channels) simides_use_global_channels = true;
+        if (s.channel >= APA::total_channels) simide_apa_set.insert(s.channel / APA::total_channels);
+    }
+    // Debug: show when SimIDEs use global channels (commented out)
+    // if (simides_use_global_channels && !simide_apa_set.empty()) {
+    //     std::ostringstream apas;
+    //     bool first = true; for (int a : simide_apa_set) { if (!first) apas << ","; apas << a; first = false; }
+    //     LogInfo << "[DIRECT] SimIDEs appear global; restricting TP candidates to APAs {" << apas.str() << "}" << std::endl;
+    // }
+
+    // Helper to infer plane from a channel index (local indexing rules: U:[0,800), V:[800,1600), X:[1600,2560))
+    auto infer_plane_from_channel = [](int channel) -> char {
+        int local = channel % APA::total_channels;
+        if (local < 800) return 'U';
+        if (local < 1600) return 'V';
+        return 'X';
+    };
+
+    // Match TPs to SimIDEs (prefer plane-consistent matches)
     int matched_tp_count = 0;
-    int total_tp_count = 0;
+    int total_tp_count = 0; // number of TPs considered as candidates
+    int skipped_tp_outside_windows = 0; // skipped due to APA/time filters
+    int matched_same_plane = 0; // diagnostics: how many matches used plane-consistency
     
     for (auto& tp : tps) {
         if (tp.GetEvent() != event_number) continue;
+        // If SimIDEs are global, ignore TPs that are outside SimIDE APA set to avoid spurious matches
+        if (simides_use_global_channels && !simide_apa_set.empty()) {
+            int tp_apa = tp.GetChannel() / APA::total_channels;
+            if (simide_apa_set.find(tp_apa) == simide_apa_set.end()) {
+                skipped_tp_outside_windows++;
+                continue; // skip this TP: different APA than SimIDEs
+            }
+        }
+        // Also restrict to TPs that lie near the SimIDE time span (within tolerance)
+        if (min_simide_time <= max_simide_time) {
+            double t = tp.GetTimeStart();
+            if (t < min_simide_time - time_tolerance_ticks || t > max_simide_time + time_tolerance_ticks) {
+                skipped_tp_outside_windows++;
+                continue;
+            }
+        }
         total_tp_count++;
         
-        // Find best matching SimIDE based on channel and time proximity
-        TrueParticle* best_match = nullptr;
-        double best_score = std::numeric_limits<double>::max();
-        int best_channel_diff = channel_tolerance + 1;
-        double best_time_diff = time_tolerance_ticks + 1;
+        // Find best matching SimIDE based on channel/time proximity with plane preference
+        TrueParticle* best_match_same_plane = nullptr;
+        double best_score_same_plane = std::numeric_limits<double>::max();
+        int best_channel_diff_same_plane = channel_tolerance + 1;
+        double best_time_diff_same_plane = time_tolerance_ticks + 1;
+
+        TrueParticle* best_match_any_plane = nullptr;
+        double best_score_any_plane = std::numeric_limits<double>::max();
+        int best_channel_diff_any_plane = channel_tolerance + 1;
+        double best_time_diff_any_plane = time_tolerance_ticks + 1;
+
+        // Determine TP plane (prefer explicit view if available, else infer from channel)
+        char tp_plane_char = 'U';
+        {
+            std::string tp_view = tp.GetView();
+            if (!tp_view.empty()) tp_plane_char = tp_view[0];
+            else tp_plane_char = infer_plane_from_channel(tp.GetChannel());
+        }
         
         for (const auto& simide : simides_in_event) {
             // Handle both local and global channel numbering for SimIDEs
@@ -1455,36 +1778,66 @@ void match_tps_to_simides_direct(
             
             // Check if within tolerance
             if (channel_diff <= channel_tolerance && time_diff <= time_tolerance_ticks) {
-                // Score based on combined time and channel proximity
-                double score = time_diff + (channel_diff * 10.0); // Weight channel difference more
-                
-                if (score < best_score) {
-                    best_score = score;
-                    best_match = simide.particle;
-                    best_channel_diff = channel_diff;
-                    best_time_diff = time_diff;
+                // Score based on combined time and channel proximity (favor tighter channel matches)
+                // Increased channel weight improves spatial consistency in presence of wide time windows
+                double score = time_diff + (channel_diff * 20.0);
+
+                // Determine SimIDE plane
+                char simide_plane_char = infer_plane_from_channel(simide.channel);
+                bool same_plane = (simide_plane_char == tp_plane_char);
+
+                if (same_plane) {
+                    if (score < best_score_same_plane) {
+                        best_score_same_plane = score;
+                        best_match_same_plane = simide.particle;
+                        best_channel_diff_same_plane = channel_diff;
+                        best_time_diff_same_plane = time_diff;
+                    }
+                } else {
+                    if (score < best_score_any_plane) {
+                        best_score_any_plane = score;
+                        best_match_any_plane = simide.particle;
+                        best_channel_diff_any_plane = channel_diff;
+                        best_time_diff_any_plane = time_diff;
+                    }
                 }
             }
         }
-        
-        if (best_match) {
-            tp.SetTrueParticle(best_match);
+        // Prefer a same-plane match if available; otherwise, fall back to best any-plane match
+        bool used_same_plane = false;
+        if (best_match_same_plane) {
+            tp.SetTrueParticle(best_match_same_plane);
             matched_tp_count++;
-            
-            // Diagnostic output for specific events
-            if (event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) {
-                int tp_local_ch = tp.GetChannel() % 2560;
-                LogInfo << "[DIRECT-MATCH] TP ch=" << tp.GetChannel() << " (local=" << tp_local_ch << ") time=" << tp.GetTimeStart()
-                        << " -> particle_id=" << best_match->GetTrackId()
-                        << " (ch_diff=" << best_channel_diff << " time_diff=" << best_time_diff << ")" << std::endl;
-            }
-        } else {
-            // Diagnostic for failed matches in specific events
-            if ((event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) && total_tp_count <= 10) {
-                int tp_local_ch = tp.GetChannel() % 2560;
-                LogInfo << "[NO-MATCH] TP ch=" << tp.GetChannel() << " (local=" << tp_local_ch << ") time=" << tp.GetTimeStart()
-                        << " -> no SimIDE match found within tolerances" << std::endl;
-            }
+            matched_same_plane++;
+            used_same_plane = true;
+
+            // Debug: per-match details for specific events (commented out)
+            // if (event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) {
+            //     int tp_local_ch = tp.GetChannel() % 2560;
+            //     LogInfo << "[DIRECT-MATCH] TP ch=" << tp.GetChannel() << " (local=" << tp_local_ch << ") time=" << tp.GetTimeStart()
+            //             << " -> particle_id=" << best_match_same_plane->GetTrackId()
+            //             << " (ch_diff=" << best_channel_diff_same_plane << " time_diff=" << best_time_diff_same_plane << ")" << std::endl;
+            // }
+        }
+        else if (best_match_any_plane) {
+            tp.SetTrueParticle(best_match_any_plane);
+            matched_tp_count++;
+
+            // Debug: fallback any-plane match details (commented out)
+            // if (event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) {
+            //     int tp_local_ch = tp.GetChannel() % 2560;
+            //     LogInfo << "[DIRECT-MATCH] (fallback-any-plane) TP ch=" << tp.GetChannel() << " (local=" << tp_local_ch << ") time=" << tp.GetTimeStart()
+            //             << " -> particle_id=" << best_match_any_plane->GetTrackId()
+            //             << " (ch_diff=" << best_channel_diff_any_plane << " time_diff=" << best_time_diff_any_plane << ")" << std::endl;
+            // }
+        }
+        else {
+            // Debug: diagnostic for failed matches (commented out)
+            // if ((event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) && total_tp_count <= 10) {
+            //     int tp_local_ch = tp.GetChannel() % 2560;
+            //     LogInfo << "[NO-MATCH] TP ch=" << tp.GetChannel() << " (local=" << tp_local_ch << ") time=" << tp.GetTimeStart()
+            //             << " -> no SimIDE match found within tolerances" << std::endl;
+            // }
         }
     }
     
@@ -1492,26 +1845,32 @@ void match_tps_to_simides_direct(
     LogInfo << "Direct TP-SimIDE matching results for event " << event_number << ": "
             << matched_tp_count << "/" << total_tp_count << " TPs matched ("
             << std::fixed << std::setprecision(1) << match_efficiency << "%)" << std::endl;
-    
-    // Diagnostic: show TP channel ranges for comparison
-    if ((event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) && total_tp_count > 0) {
-        int min_tp_channel = std::numeric_limits<int>::max();
-        int max_tp_channel = 0;
-        int min_tp_local = std::numeric_limits<int>::max();
-        int max_tp_local = 0;
-        for (const auto& tp : tps) {
-            if (tp.GetEvent() == event_number) {
-                int global_ch = tp.GetChannel();
-                int local_ch = global_ch % 2560;
-                min_tp_channel = std::min(min_tp_channel, global_ch);
-                max_tp_channel = std::max(max_tp_channel, global_ch);
-                min_tp_local = std::min(min_tp_local, local_ch);
-                max_tp_local = std::max(max_tp_local, local_ch);
-            }
-        }
-        LogInfo << "[TP-RANGE] Event " << event_number << " global: [" << min_tp_channel << "," << max_tp_channel 
-                << "] local: [" << min_tp_local << "," << max_tp_local << "]" << std::endl;
+    if (skipped_tp_outside_windows > 0) {
+        LogInfo << "[DIRECT] Skipped " << skipped_tp_outside_windows << " TPs outside APA/time windows." << std::endl;
     }
+    if (matched_tp_count > 0) {
+        LogInfo << "[DIRECT] Plane-consistent matches: " << matched_same_plane << "/" << matched_tp_count << std::endl;
+    }
+    
+    // Debug: TP channel ranges for comparison (commented out)
+    // if ((event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) && total_tp_count > 0) {
+    //     int min_tp_channel = std::numeric_limits<int>::max();
+    //     int max_tp_channel = 0;
+    //     int min_tp_local = std::numeric_limits<int>::max();
+    //     int max_tp_local = 0;
+    //     for (const auto& tp : tps) {
+    //         if (tp.GetEvent() == event_number) {
+    //             int global_ch = tp.GetChannel();
+    //             int local_ch = global_ch % 2560;
+    //             min_tp_channel = std::min(min_tp_channel, global_ch);
+    //             max_tp_channel = std::max(max_tp_channel, global_ch);
+    //             min_tp_local = std::min(min_tp_local, local_ch);
+    //             max_tp_local = std::max(max_tp_local, local_ch);
+    //         }
+    //     }
+    //     LogInfo << "[TP-RANGE] Event " << event_number << " global: [" << min_tp_channel << "," << max_tp_channel 
+    //             << "] local: [" << min_tp_local << "," << max_tp_local << "]" << std::endl;
+    // }
 }
 
 std::map<int, std::vector<cluster>> create_event_mapping(std::vector<cluster>& clusters){

@@ -116,17 +116,17 @@ class TriggerPrimitive {
 
     private:
         // Metadata.
-        uint64_t version_ : 8;
-        uint64_t flag_ : 8;
-        uint64_t detid_ : 8;
-        
-        // Physics data.
-        uint64_t channel_ : 24;
-        uint64_t samples_over_threshold_ : 16;
-        uint64_t time_start_ : 16; // in larsoft it's much shorter 
-        uint64_t samples_to_peak_ : 16;
-        uint64_t adc_integral_ : 32;
-        uint64_t adc_peak_ : 16;
+    uint64_t version_ = 0;
+    uint64_t flag_ = 0;
+    uint64_t detid_ = 0;
+
+    // Physics data.
+    uint64_t channel_ = 0;
+    uint64_t samples_over_threshold_ = 0;
+    uint64_t time_start_ = 0; // in larsoft it's much shorter
+    uint64_t samples_to_peak_ = 0;
+    uint64_t adc_integral_ = 0;
+    uint64_t adc_peak_ = 0;
 
         // Additional variables
         int detector_ = -1; // this goes from 0 to the number of APAs 

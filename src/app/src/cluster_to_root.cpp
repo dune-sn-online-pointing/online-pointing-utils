@@ -86,6 +86,23 @@ int main(int argc, char* argv[]) {
     int max_events_per_filename = j["max_events_per_filename"];
     LogInfo << "Max events per filename: " << max_events_per_filename << std::endl;
 
+    int bktr_margin = backtracker_error_margin;
+    if (j.contains("backtracker_error_margin")) {
+        try { bktr_margin = j.at("backtracker_error_margin").get<int>(); }
+        catch (...) { LogWarning << "Invalid backtracker_error_margin in JSON, keeping default (" << backtracker_error_margin << ")." << std::endl; }
+    }
+    LogInfo << "Using backtracker_error_margin: " << bktr_margin << std::endl;
+
+    int channel_tolerance = 50;
+    if (j.contains("backtracker_channel_tolerance")) {
+        try { channel_tolerance = j.at("backtracker_channel_tolerance").get<int>(); }
+        catch (...) { LogWarning << "Invalid backtracker_channel_tolerance in JSON, keeping default (50)." << std::endl; }
+    }
+    LogInfo << "Channel tolerance (channels): " << channel_tolerance << std::endl;
+
+    int effective_time_window = (1 + bktr_margin) * conversion_tdc_to_tpc;
+    LogInfo << "Effective time window (TDC ticks): " << effective_time_window << " (conversion_tdc_to_tpc=" << conversion_tdc_to_tpc << ")" << std::endl;
+
     std::vector <int> adc_to_mev_conversion (APA::views.size());
     adc_to_mev_conversion.at(0) = j["adc_to_mev_induction"];
     adc_to_mev_conversion.at(1) = j["adc_to_mev_induction"];
@@ -210,7 +227,15 @@ int main(int argc, char* argv[]) {
 
             LogInfo << "Reading event " << iEvent << std::endl;
             
-            file_reader(filename, tps.at(iEvent), true_particles.at(iEvent), neutrinos.at(iEvent), supernova_option, iEvent);
+            file_reader(
+                filename,
+                tps.at(iEvent),
+                true_particles.at(iEvent),
+                neutrinos.at(iEvent),
+                supernova_option,
+                iEvent,
+                static_cast<double>(effective_time_window),
+                channel_tolerance);
             // file_reader(filenames, tps, true_particles, neutrinos, supernova_option, max_events_per_filename);
 
             LogInfo << "Loaded TPs and true particles from file, for event " << iEvent << ". Number of TPs is now: " << tps.at(iEvent).size() << std::endl;
@@ -224,43 +249,18 @@ int main(int argc, char* argv[]) {
             // return 0;
 
             // connect TPs to the true particles
-            LogInfo << "Connecting TPs to true particles" << std::endl;
+            LogInfo << "Summarising TP truth associations" << std::endl;
             LogInfo << tps.at(iEvent).size() << " TPs, " << true_particles.at(iEvent).size() << " true particles" << std::endl;
-            
+
             int matched_tps_counter = 0;
-
-            for (int iTP = 0; iTP < tps.at(iEvent).size(); iTP++) {
-                
-                // progress bar
-                // if (iTP % 1000 == 0)
-                //     GenericToolbox::displayProgressBar(iTP, tps.at(iEvent).size(), "Matching TPs and true particles for this event...");
-
-                for (int iTruePart = 0; iTruePart < true_particles.at(iEvent).size(); iTruePart++) {
-                    // print timestart, time end, channels in the true particle
-                    // LogInfo << "True particle " << iTruePart << ": " << true_particles.at(iEvent).at(iTruePart).GetGeneratorName() << std::endl;
-                    // LogInfo << "True particle start " << iTruePart << ": " << true_particles.at(iEvent).at(iTruePart).GetTimeStart() << " end: " << true_particles.at(iEvent).at(iTruePart).GetTimeEnd() << std::endl;
-                    // LogInfo << "True particle " << iTruePart << ": " << true_particles.at(iEvent).at(iTruePart).GetChannels().size() << " channels" << std::endl;
-                    // for (auto& channel : true_particles.at(iEvent).at(iTruePart).GetChannels()) {
-                    //     LogInfo << "Channel: " << channel << std::endl;
-                    // }
-
-                    // if there are no channels, skip directly
-                    if (true_particles.at(iEvent).at(iTruePart).GetChannels().size() == 0) {
-                        // LogInfo << "True particle " << iTruePart << ": no channels, skipping" << std::endl;
-                        continue;
-                    }
-
-                        
-                    if (isTimeCompatible(&true_particles.at(iEvent).at(iTruePart), &tps.at(iEvent).at(iTP), time_window) 
-                        && isChannelCompatible(&true_particles.at(iEvent).at(iTruePart), &tps.at(iEvent).at(iTP))) 
-                    {   
-                        // LogInfo << "TP connected to true particle, generator " << true_particles.at(iEvent).at(iTruePart).GetGeneratorName() << std::endl;
-                        tps.at(iEvent).at(iTP).SetTrueParticle(&true_particles.at(iEvent).at(iTruePart));
-                        matched_tps_counter++;
-                        break;
-                    }
+            for (const auto& tp : tps.at(iEvent)) {
+                if (tp.GetTrueParticle() != nullptr) {
+                    matched_tps_counter++;
                 }
             }
+            float matched_fraction_total = tps.at(iEvent).empty() ? 0.0f : (matched_tps_counter * 100.0f) / tps.at(iEvent).size();
+            LogInfo << "Matched " << matched_tps_counter << "/" << tps.at(iEvent).size()
+                    << " TPs to true particles via SimIDE association (" << matched_fraction_total << " %)." << std::endl;
             // Compute matched TPs percentage for each view
             for (size_t iView = 0; iView < APA::views.size(); ++iView) {
                 std::vector<TriggerPrimitive*> these_tps_per_view;
