@@ -844,8 +844,7 @@ void file_reader(std::string filename,
             // DIAGNOSTIC: Check for potential overflow (when raw timestamp > 2048 for 32x conversion)
             if (Timestamp > 2048) {
                 double wouldOverflow = (double)((uint16_t)(Timestamp * conversion_tdc_to_tpc)); // simulate 16-bit overflow
-                LogInfo << "[OVERFLOW-FIX] Raw timestamp " << Timestamp << " -> corrected: " << tConverted 
-                        << " (would have been: " << wouldOverflow << " with overflow)" << std::endl;
+                // LogInfo << "[OVERFLOW-FIX] Raw timestamp " << Timestamp << " -> corrected: " << tConverted << " (would have been: " << wouldOverflow << " with overflow)" << std::endl;
             }
             
             particle->SetTimeStart(std::min(particle->GetTimeStart(), tConverted));
