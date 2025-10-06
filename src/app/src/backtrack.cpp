@@ -50,25 +50,34 @@ int main(int argc, char* argv[]) {
         bktr_margin = clp.getOptionVal<int>("bktrMargin");
     }
     LogInfo << "Using backtracker_error_margin: " << bktr_margin << std::endl;
-    std::string list_file = j["filename"]; // text file with tpstream list
-    LogInfo << "File with list of tpstreams: " << list_file << std::endl;
+    std::vector<std::string> filenames;
+    std::string list_file;
+    if (j.contains("filename") && !j["filename"].get<std::string>().empty()) {
+        // Use the single filename as the only input file path
+        std::string single_file = j["filename"];
+        LogInfo << "Using single input file: " << single_file << std::endl;
+        filenames.push_back(single_file);
+    } else {
+        // Read filelist containing the list of paths
+        list_file = j["filelist"];
+        LogInfo << "File with list of tpstreams: " << list_file << std::endl;
+        std::ifstream infile(list_file);
+        std::string line;
+        while (std::getline(infile, line)) {
+            if (line.size() >= 3 && line.substr(0,3) == "###") break;
+            if (line.empty() || line[0] == '#') continue;
+            std::string basename = line.substr(line.find_last_of("/\\") + 1);
+            if (basename.length() < 14 || basename.substr(basename.length()-14) != "_tpstream.root") { LogInfo << "Skipping (not *_tpstream.root): " << basename << std::endl; continue; }
+            std::ifstream fchk(line); if (!fchk.good()) { LogInfo << "Skipping (missing): " << line << std::endl; continue; }
+            filenames.push_back(line);
+        }
+        
+        LogInfo << "Number of valid files: " << filenames.size() << std::endl;
+        LogThrowIf(filenames.empty(), "No valid input files.");
+    }
 
     std::string outfolder = clp.isOptionTriggered("outFolder") ? clp.getOptionVal<std::string>("outFolder") : std::string("data");
     LogInfo << "Output folder: " << outfolder << std::endl;
-
-    std::ifstream infile(list_file);
-    std::string line;
-    std::vector<std::string> filenames;
-    while (std::getline(infile, line)) {
-        if (line.size() >= 3 && line.substr(0,3) == "###") break;
-        if (line.empty() || line[0] == '#') continue;
-        std::string basename = line.substr(line.find_last_of("/\\") + 1);
-        if (basename.length() < 14 || basename.substr(basename.length()-14) != "_tpstream.root") { LogInfo << "Skipping (not *_tpstream.root): " << basename << std::endl; continue; }
-        std::ifstream fchk(line); if (!fchk.good()) { LogInfo << "Skipping (missing): " << line << std::endl; continue; }
-        filenames.push_back(line);
-    }
-    LogInfo << "Number of valid files: " << filenames.size() << std::endl;
-    LogThrowIf(filenames.empty(), "No valid input files.");
 
     std::vector<std::string> produced;
 
