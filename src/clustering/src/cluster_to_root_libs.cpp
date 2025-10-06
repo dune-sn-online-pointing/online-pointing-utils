@@ -255,7 +255,7 @@ void get_first_and_last_event(TTree* tree, int* branch_value, int which_event, i
     first_entry = -1;
     last_entry = -1;
 
-    // LogInfo << " Looking for event number " << which_event << std::endl;
+    LogInfo << " Looking for event number " << which_event << std::endl;
     for (int iEntry = 0; iEntry < tree->GetEntries(); ++iEntry) {
         tree->GetEntry(iEntry);
         if (*branch_value == which_event) {
@@ -263,16 +263,8 @@ void get_first_and_last_event(TTree* tree, int* branch_value, int which_event, i
                 first_entry = iEntry;
             }
             last_entry = iEntry;
-        }
-        // case only one event
-        if (which_event == 1 && iEntry == tree->GetEntries() - 1) {
-            // first_entry = iEntry;
-            last_entry = iEntry;
-            break;
-        }
-        // at least one was found, since they are ordered, if number changes, stop
-        if ( first_entry != -1 && *branch_value != which_event) {
-            last_entry = iEntry - 1;
+        } else if (first_entry != -1) {
+            // Since entries are ordered, once we see a different event after finding the first, we stop
             break;
         }
     }
@@ -323,6 +315,8 @@ void file_reader(std::string filename,
     if (TPtree->SetBranchAddress("Event", &this_event_number) < 0) {
         LogWarning << "Failed to bind branch 'Event'" << std::endl;
     }
+
+    LogWarning << "Event number requested: " << event_number << std::endl;
 
 
     get_first_and_last_event(TPtree, (int*)&this_event_number, event_number, first_tp_entry_in_event, last_tp_entry_in_event);
