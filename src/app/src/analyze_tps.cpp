@@ -98,64 +98,67 @@ int main(int argc, char* argv[]) {
     };
 
     if (j.contains("filename") && !j["filename"].is_null() && !j["filename"].get<std::string>().empty()) {
+        LogInfo << "Using single input file: " << j["filename"].get<std::string>() << std::endl;
         filename = resolvePath(j["filename"]);
         inputFiles.push_back(filename);
     }
-    if (j.contains("filelist") && !j["filelist"].is_null() && !j["filelist"].get<std::string>().empty()) {
-        std::string listPath = resolvePath(j["filelist"]);
-        LogInfo << "Using file list: " << j["filelist"].get<std::string>() << " (resolved: " << listPath << ")" << std::endl;
-        has_filelist = true;
-        std::ifstream listFile(listPath);
-        LogThrowIf(!listFile.is_open(), "Could not open file list: " << listPath);
-        std::filesystem::path list_dir = std::filesystem::path(listPath).parent_path();
-        std::error_code _ec_list;
-        if (!list_dir.is_absolute()) list_dir = std::filesystem::absolute(list_dir, _ec_list);
-    auto resolvePathWithBase = [&](const std::string& p, const std::filesystem::path& base) -> std::string {
-            if (p.empty()) return p;
-            std::filesystem::path rel(p);
-            if (rel.is_absolute()) return rel.string();
-            std::vector<std::filesystem::path> candidates = {
-                rel,
-                std::filesystem::current_path() / rel,
-                base / rel,
-                base.parent_path() / rel,
-                json_dir / rel,
-        json_dir.parent_path() / rel,
-        std::filesystem::current_path().parent_path() / rel,
-        std::filesystem::current_path().parent_path().parent_path() / rel,
-        json_dir.parent_path().parent_path() / rel
-            };
-            for (const auto& c : candidates) {
-                std::error_code ec;
-                if (std::filesystem::exists(c, ec)) {
-                    std::filesystem::path abs = std::filesystem::absolute(c, ec);
-                    return ec ? c.string() : abs.string();
+    else{
+        if (j.contains("filelist") && !j["filelist"].is_null() && !j["filelist"].get<std::string>().empty()) {
+            std::string listPath = resolvePath(j["filelist"]);
+            LogInfo << "Using file list: " << j["filelist"].get<std::string>() << " (resolved: " << listPath << ")" << std::endl;
+            has_filelist = true;
+            std::ifstream listFile(listPath);
+            LogThrowIf(!listFile.is_open(), "Could not open file list: " << listPath);
+            std::filesystem::path list_dir = std::filesystem::path(listPath).parent_path();
+            std::error_code _ec_list;
+            if (!list_dir.is_absolute()) list_dir = std::filesystem::absolute(list_dir, _ec_list);
+        auto resolvePathWithBase = [&](const std::string& p, const std::filesystem::path& base) -> std::string {
+                if (p.empty()) return p;
+                std::filesystem::path rel(p);
+                if (rel.is_absolute()) return rel.string();
+                std::vector<std::filesystem::path> candidates = {
+                    rel,
+                    std::filesystem::current_path() / rel,
+                    base / rel,
+                    base.parent_path() / rel,
+                    json_dir / rel,
+            json_dir.parent_path() / rel,
+            std::filesystem::current_path().parent_path() / rel,
+            std::filesystem::current_path().parent_path().parent_path() / rel,
+            json_dir.parent_path().parent_path() / rel
+                };
+                for (const auto& c : candidates) {
+                    std::error_code ec;
+                    if (std::filesystem::exists(c, ec)) {
+                        std::filesystem::path abs = std::filesystem::absolute(c, ec);
+                        return ec ? c.string() : abs.string();
+                    }
                 }
+                return rel.string();
+            };
+            auto trim = [](std::string& s){
+                const char* ws = " \t\r\n";
+                size_t start = s.find_first_not_of(ws);
+                size_t end = s.find_last_not_of(ws);
+                if (start == std::string::npos) { s.clear(); return; }
+                s = s.substr(start, end - start + 1);
+            };
+            std::string line;
+            while (std::getline(listFile, line)) {
+                if (line.empty()) continue;
+                // skip comments and whitespace
+                trim(line);
+                if (line.empty() || line[0] == '#') continue;
+                std::string resolved = resolvePathWithBase(line, list_dir);
+                // Make absolute to avoid ROOT opening relative to the current build dir
+                std::error_code ec_abs;
+                std::filesystem::path abs_path = std::filesystem::absolute(std::filesystem::path(resolved), ec_abs);
+                if (!ec_abs) resolved = abs_path.string();
+                LogDebug << "Queued input file: '" << line << "' -> '" << resolved << "'" << std::endl;
+                inputFiles.push_back(resolved);
             }
-            return rel.string();
-        };
-        auto trim = [](std::string& s){
-            const char* ws = " \t\r\n";
-            size_t start = s.find_first_not_of(ws);
-            size_t end = s.find_last_not_of(ws);
-            if (start == std::string::npos) { s.clear(); return; }
-            s = s.substr(start, end - start + 1);
-        };
-        std::string line;
-        while (std::getline(listFile, line)) {
-            if (line.empty()) continue;
-            // skip comments and whitespace
-            trim(line);
-            if (line.empty() || line[0] == '#') continue;
-            std::string resolved = resolvePathWithBase(line, list_dir);
-            // Make absolute to avoid ROOT opening relative to the current build dir
-            std::error_code ec_abs;
-            std::filesystem::path abs_path = std::filesystem::absolute(std::filesystem::path(resolved), ec_abs);
-            if (!ec_abs) resolved = abs_path.string();
-            LogDebug << "Queued input file: '" << line << "' -> '" << resolved << "'" << std::endl;
-            inputFiles.push_back(resolved);
+            listFile.close();
         }
-        listFile.close();
     }
     LogThrowIf(inputFiles.empty(), "No input ROOT files provided. Set 'filename' or 'filelist' in JSON.");
 

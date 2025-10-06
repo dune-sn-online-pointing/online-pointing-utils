@@ -12,11 +12,22 @@ else
     export HOME_DIR=$(dirname $SCRIPTS_DIR)
     echo " Repository home is $HOME_DIR"
 
-    # In lxplus, nothing special should be needed 
+    # In lxplus, set up a full ROOT environment from LCG
     # In fnal, we need to be in a container and set up root
 
     if [[ $(hostname) == *"lxplus"* ]]; then
-        echo " In lxplus, no need to source an environment or packages."
+        LCG_VIEW_PATH=/cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-el9-gcc11-opt/setup.sh
+        if [[ -z ${ONLINE_POINTING_UTILS_LCG_VIEW:-} ]]; then
+            if [[ -f ${LCG_VIEW_PATH} ]]; then
+                echo " Setting up environment for lxplus using ${LCG_VIEW_PATH}"
+                source "${LCG_VIEW_PATH}"
+                export ONLINE_POINTING_UTILS_LCG_VIEW=${LCG_VIEW_PATH}
+            else
+                echo " WARNING: Expected LCG view at ${LCG_VIEW_PATH} not found. ROOT packages may be incomplete."
+            fi
+        else
+            echo " Environment already sourced from ${ONLINE_POINTING_UTILS_LCG_VIEW}, skipping."
+        fi
     elif [[ $(hostname) == *"fnal"* ]]; then
         if grep -q "Scientific Linux release 7" /etc/redhat-release 2>/dev/null; then
             echo " Setting up environment for fnal cluster, using ups products. If this fails, it means you're not in a slf7 container."

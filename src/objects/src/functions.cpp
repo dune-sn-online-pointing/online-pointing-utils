@@ -25,10 +25,11 @@ bool isTimeCompatible(TrueParticle* true_particle, TriggerPrimitive* tp, int tim
     }
     else {
         if (verbose) LogInfo << "TP is NOT time compatible with true particle, tp time start: " << tp->GetTimeStart() << ", true particle time start: " << true_particle->GetTimeStart() << ", end: " << true_particle->GetTimeEnd() << std::endl;
-        return false;   
-    }
 
     // // compute the interval going form time_start to time_start + samples_over_threshold
+        return false;
+    };
+
     // int start_time = tp->GetTimeStart() ;
     // int end_time = tp->GetTimeStart() + tp->GetSamplesOverThreshold()* TPC_sample_length;
     
@@ -64,14 +65,12 @@ bool isChannelCompatible (TrueParticle* true_particle, TriggerPrimitive* tp){
         }
        return true; 
     }
-    else {
-        if (verbose) {
-            LogInfo << "TP is NOT channel compatible, it is " << tp->GetChannel() << ", true particle has channels list ";
-            for (auto& channel : true_particle->GetChannels()) {
-                LogInfo << channel << " ";
-            }
-            LogInfo << std::endl;
-            return false;
+    if (verbose) {
+        LogInfo << "TP is NOT channel compatible, it is " << tp->GetChannel() << ", true particle has channels list ";
+        for (auto& channel : true_particle->GetChannels()) {
+            LogInfo << channel << " ";
         }
+        LogInfo << std::endl;
     }
+    return false;
 };

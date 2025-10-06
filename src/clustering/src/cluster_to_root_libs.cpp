@@ -14,6 +14,7 @@
 #include <TBranch.h>
 #include <TLeaf.h>
 #include <filesystem>
+#include <system_error>
 
 // #include <TLeaf.h>
 
@@ -30,6 +31,20 @@ LoggerInit([]{
 });
 
 namespace {
+
+bool ensureDirectoryExists(const std::string& folder) {
+    if (folder.empty()) {
+        return true;
+    }
+
+    std::error_code ec;
+    std::filesystem::create_directories(folder, ec);
+    if (ec) {
+        LogError << "Failed to ensure directory '" << folder << "' exists: " << ec.message() << std::endl;
+        return false;
+    }
+    return true;
+}
 
 template <typename T>
 bool SetBranchWithFallback(TTree* tree,
@@ -71,15 +86,9 @@ void write_tps_to_root(
 {
     // Ensure output directory exists
     std::string folder = out_filename.substr(0, out_filename.find_last_of("/"));
-    if (!folder.empty()) {
-        // Use std::filesystem to create directories
-        try {
-            std::filesystem::create_directories(folder);
-        } catch (...) {
-            // Fallback to system call if filesystem fails
-            std::string command = std::string("mkdir -p ") + folder;
-            system(command.c_str());
-        }
+    if (!ensureDirectoryExists(folder)) {
+        LogError << "Cannot create or access directory for output file: " << folder << std::endl;
+        return;
     }
 
     TFile outFile(out_filename.c_str(), "RECREATE");
@@ -1310,8 +1319,10 @@ std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // 
 void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_filename, std::string view) {
     // create folder if it does not exist
     std::string folder = root_filename.substr(0, root_filename.find_last_of("/"));
-    std::string command = "mkdir -p " + folder;
-    system(command.c_str());
+    if (!ensureDirectoryExists(folder)) {
+        LogError << "Cannot create or access directory for clusters output: " << folder << std::endl;
+        return;
+    }
     // create the root file if it does not exist, otherwise just update it
     TFile *clusters_file = new TFile(root_filename.c_str(), "UPDATE"); // TODO handle better
     // Ensure a fixed TDirectory inside the ROOT file for cluster trees

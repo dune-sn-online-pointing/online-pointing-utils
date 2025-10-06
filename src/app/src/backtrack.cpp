@@ -90,13 +90,18 @@ int main(int argc, char* argv[]) {
     for (auto& filename : filenames) {
         LogInfo << "Reading file: " << filename << std::endl;
         // count events
-        std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2";
+        // std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2";
+        std::string MCtree_path = "triggerAnaDumpTPs/mcneutrinos";
         TFile *file = TFile::Open(filename.c_str());
         if (!file || file->IsZombie()) { LogError << "Failed to open file: " << filename << std::endl; continue; }
-        TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
-        if (!TPtree) { LogError << "Tree not found: " << TPtree_path << std::endl; file->Close(); delete file; continue; }
-        UInt_t this_event_number = 0; TPtree->SetBranchAddress("Event", &this_event_number);
-        int n_events = 0; for (Long64_t i = 0; i < TPtree->GetEntries(); ++i) { TPtree->GetEntry(i); if ((int)this_event_number > n_events) n_events = this_event_number; }
+        // TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
+        // if (!TPtree) { LogError << "Tree not found: " << TPtree_path << std::endl; file->Close(); delete file; continue; }
+        TTree *MCtree = dynamic_cast<TTree*>(file->Get(MCtree_path.c_str()));
+        if (!MCtree) { LogError << "Tree not found: " << MCtree_path << std::endl; file->Close(); delete file; continue; }
+        UInt_t this_event_number = 0; MCtree->SetBranchAddress("Event", &this_event_number);
+        int n_events = MCtree->GetEntries(); 
+
+        LogInfo << "Number of events in file: " << n_events << std::endl;
         file->Close(); delete file; file = nullptr;
 
         tps.clear(); true_particles.clear(); neutrinos.clear();
