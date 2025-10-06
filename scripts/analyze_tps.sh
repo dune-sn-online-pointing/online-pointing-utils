@@ -13,6 +13,8 @@ print_help() {
     echo "  --json-settings <json>      Json file to used as input. Relative path inside json/"
     echo "  --no-compile                Do not recompile the code. Default is to recompile the code"
     echo "  --clean-compile             Clean and recompile the code. Default is to recompile the code without cleaning"
+    echo "  -i|--input-file <file>      Input file with list of input ROOT files. Overrides json."
+    echo "  --output-folder <dir>       Output folder (default: data/). Overrides json."
     echo "  -h, --help                  Print this help message"
     echo "*******************************************************************************"
     exit 0
@@ -25,8 +27,9 @@ noCompile=false
 # Parse
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --output-folder)    output_folder="$2"; shift 2 ;;
         -j|--json-settings) settingsFile="$2"; shift 2 ;;
+        -i|--input-file) inputFile="$2"; shift 2;;
+        --output-folder) output_folder="$2"; shift 2;;
         --no-compile)       noCompile=true; shift ;;
         --clean-compile)    cleanCompile=true; shift ;;
         -h|--help)          print_help ;;
@@ -55,5 +58,13 @@ echo $compile_command
 ################################################
 # Run this app
 command_to_run="$BUILD_DIR/src/app/analyze_tps -j $settingsFile"
+# optional overrides
+if [ ! -z ${inputFile+x} ]; then
+    command_to_run="$command_to_run --input-file $inputFile"
+fi
+if [ ! -z ${output_folder+x} ]; then
+    command_to_run="$command_to_run --output-folder $output_folder"
+fi
+
 echo "Running command: ${command_to_run}"
 eval $command_to_run

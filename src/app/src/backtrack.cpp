@@ -12,6 +12,7 @@
 #include <filesystem>
 
 #include "CmdLineParser.h"
+#include "implementation/CmdLineParser.impl.h"
 #include "Logger.h"
 #include "GenericToolbox.Utils.h"
 
@@ -27,6 +28,7 @@ int main(int argc, char* argv[]) {
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
     clp.addOption("outFolder", {"--output-folder"}, "Output folder path (default: data)");
+    clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
     clp.addOption("bktrMargin", {"--bktr-margin"}, "Override backtracker_error_margin (int)");
     clp.addDummyOption("Triggers");
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
@@ -38,7 +40,9 @@ int main(int argc, char* argv[]) {
     LogThrowIf( clp.isNoOptionTriggered(), "No option was provided." );
 
     std::string json = clp.getOptionVal<std::string>("json");
-    std::ifstream i(json); nlohmann::json j; i >> j;
+    std::ifstream i(json);
+    LogThrowIf(!i.good(), "Failed to open JSON config: " << json);
+    nlohmann::json j; i >> j;
     
     // Determine backtracker_error_margin value: CLI > JSON > default from parameters/timing.h
     int bktr_margin = backtracker_error_margin; // from parameters/timing.h
@@ -50,33 +54,151 @@ int main(int argc, char* argv[]) {
         bktr_margin = clp.getOptionVal<int>("bktrMargin");
     }
     LogInfo << "Using backtracker_error_margin: " << bktr_margin << std::endl;
+    auto is_tpstream = [](const std::string& path){
+        std::string basename = path.substr(path.find_last_of("/\\") + 1);
+        return basename.length() >= 14 && basename.substr(basename.length()-14) == "_tpstream.root";
+    };
+    auto file_exists = [](const std::string& path){ std::ifstream f(path); return f.good(); };
+
     std::vector<std::string> filenames;
-    std::string list_file;
-    if (j.contains("filename") && !j["filename"].get<std::string>().empty()) {
-        // Use the single filename as the only input file path
-        std::string single_file = j["filename"];
-        LogInfo << "Using single input file: " << single_file << std::endl;
-        filenames.push_back(single_file);
-    } else {
-        // Read filelist containing the list of paths
-        list_file = j["filelist"];
-        LogInfo << "File with list of tpstreams: " << list_file << std::endl;
-        std::ifstream infile(list_file);
-        std::string line;
-        while (std::getline(infile, line)) {
-            if (line.size() >= 3 && line.substr(0,3) == "###") break;
-            if (line.empty() || line[0] == '#') continue;
-            std::string basename = line.substr(line.find_last_of("/\\") + 1);
-            if (basename.length() < 14 || basename.substr(basename.length()-14) != "_tpstream.root") { LogInfo << "Skipping (not *_tpstream.root): " << basename << std::endl; continue; }
-            std::ifstream fchk(line); if (!fchk.good()) { LogInfo << "Skipping (missing): " << line << std::endl; continue; }
-            filenames.push_back(line);
+    filenames.reserve(64);
+
+    // Priority 1: CLI --input-file
+    if (clp.isOptionTriggered("inputFile")) {
+        std::string in = clp.getOptionVal<std::string>("inputFile");
+        LogInfo << "Input specified on CLI: " << in << std::endl;
+        if (file_exists(in)) {
+            if (is_tpstream(in)) filenames.push_back(in);
+            else {
+                // Treat as list file
+                std::ifstream infile(in);
+                std::string line;
+                while (std::getline(infile, line)) {
+                    if (line.size() >= 3 && line.substr(0,3) == "###") break;
+                    if (line.empty() || line[0] == '#') continue;
+                    if (!file_exists(line)) { LogWarning << "Skipping (missing): " << line << std::endl; continue; }
+                    if (!is_tpstream(line)) { LogWarning << "Skipping (not *_tpstream.root): " << line << std::endl; continue; }
+                    filenames.push_back(line);
+                }
+            }
+        } else {
+            LogError << "CLI input path does not exist: " << in << std::endl;
         }
-        
-        LogInfo << "Number of valid files: " << filenames.size() << std::endl;
-        LogThrowIf(filenames.empty(), "No valid input files.");
     }
 
-    std::string outfolder = clp.isOptionTriggered("outFolder") ? clp.getOptionVal<std::string>("outFolder") : std::string("data");
+    // Priority 2: JSON inputFile (single root)
+    if (filenames.empty()) {
+        try {
+            if (j.contains("inputFile")) {
+                auto single = j.at("inputFile").get<std::string>();
+                if (!single.empty()) {
+                    LogInfo << "JSON inputFile: " << single << std::endl;
+                    LogThrowIf(!file_exists(single), "inputFile does not exist: " << single);
+                    LogThrowIf(!is_tpstream(single),  "inputFile not a *_tpstream.root: " << single);
+                    filenames.push_back(single);
+                }
+            }
+        } catch (...) { /* ignore */ }
+    }
+
+    // Priority 3: JSON inputFolder (gather *_tpstream.root)
+    if (filenames.empty()) {
+        try {
+            if (j.contains("inputFolder")) {
+                auto folder = j.at("inputFolder").get<std::string>();
+                if (!folder.empty()) {
+                    LogInfo << "JSON inputFolder: " << folder << std::endl;
+                    std::error_code ec;
+                    for (auto const& entry : std::filesystem::directory_iterator(folder, ec)) {
+                        if (ec) break;
+                        if (!entry.is_regular_file()) continue;
+                        std::string p = entry.path().string();
+                        if (!is_tpstream(p)) continue;
+                        if (!file_exists(p)) continue;
+                        filenames.push_back(p);
+                    }
+                    std::sort(filenames.begin(), filenames.end());
+                }
+            }
+        } catch (...) { /* ignore */ }
+    }
+
+    // Priority 4: JSON inputList (array of files)
+    if (filenames.empty()) {
+        try {
+            if (j.contains("inputList") && j.at("inputList").is_array()) {
+                LogInfo << "JSON inputList provided." << std::endl;
+                for (const auto& el : j.at("inputList")) {
+                    if (!el.is_string()) continue;
+                    std::string p = el.get<std::string>();
+                    if (p.empty()) continue;
+                    if (!file_exists(p)) { LogWarning << "Skipping (missing): " << p << std::endl; continue; }
+                    if (!is_tpstream(p)) { LogWarning << "Skipping (not *_tpstream.root): " << p << std::endl; continue; }
+                    filenames.push_back(p);
+                }
+            }
+        } catch (...) { /* ignore */ }
+    }
+
+    // Priority 5: JSON inputListFile (file with list)
+    if (filenames.empty()) {
+        try {
+            if (j.contains("inputListFile")) {
+                auto list_file = j.at("inputListFile").get<std::string>();
+                if (!list_file.empty()) {
+                    LogInfo << "JSON inputListFile: " << list_file << std::endl;
+                    std::ifstream infile(list_file);
+                    std::string line;
+                    while (std::getline(infile, line)) {
+                        if (line.size() >= 3 && line.substr(0,3) == "###") break;
+                        if (line.empty() || line[0] == '#') continue;
+                        if (!file_exists(line)) { LogWarning << "Skipping (missing): " << line << std::endl; continue; }
+                        if (!is_tpstream(line)) { LogWarning << "Skipping (not *_tpstream.root): " << line << std::endl; continue; }
+                        filenames.push_back(line);
+                    }
+                }
+            }
+        } catch (...) { /* ignore */ }
+    }
+
+    // Backward compatibility: old keys "filename" (single) and "filelist" (list file)
+    // if (filenames.empty()) {
+    //     if (j.contains("filename")) {
+    //         try {
+    //             std::string single_file = j.at("filename").get<std::string>();
+    //             if (!single_file.empty()) {
+    //                 LogInfo << "Using legacy 'filename': " << single_file << std::endl;
+    //                 if (file_exists(single_file) && is_tpstream(single_file)) filenames.push_back(single_file);
+    //             }
+    //         } catch (...) { /* ignore */ }
+    //     }
+    // }
+    // if (filenames.empty()) {
+    //     if (j.contains("filelist")) {
+    //         try {
+    //             std::string list_file = j.at("filelist").get<std::string>();
+    //             LogInfo << "Using legacy 'filelist': " << list_file << std::endl;
+    //             std::ifstream infile(list_file);
+    //             std::string line;
+    //             while (std::getline(infile, line)) {
+    //                 if (line.size() >= 3 && line.substr(0,3) == "###") break;
+    //                 if (line.empty() || line[0] == '#') continue;
+    //                 if (!file_exists(line)) { LogWarning << "Skipping (missing): " << line << std::endl; continue; }
+    //                 if (!is_tpstream(line)) { LogWarning << "Skipping (not *_tpstream.root): " << line << std::endl; continue; }
+    //                 filenames.push_back(line);
+    //             }
+    //         } catch (...) { /* ignore */ }
+    //     }
+    // }
+
+    LogInfo << "Number of valid files: " << filenames.size() << std::endl;
+    LogThrowIf(filenames.empty(), "No valid input files.");
+
+    // Output folder: CLI outFolder > JSON outputFolder > "data"
+    std::string outfolder;
+    if (clp.isOptionTriggered("outFolder")) outfolder = clp.getOptionVal<std::string>("outFolder");
+    else if (j.contains("outputFolder")) { try { outfolder = j.at("outputFolder").get<std::string>(); } catch (...) { /* ignore */ }}
+    if (outfolder.empty()) outfolder = std::string("data");
     LogInfo << "Output folder: " << outfolder << std::endl;
 
     std::vector<std::string> produced;
@@ -107,33 +229,40 @@ int main(int argc, char* argv[]) {
         // if (!TPtree) { LogError << "Tree not found: " << TPtree_path << std::endl; file->Close(); delete file; continue; }
         TTree *MCtree = dynamic_cast<TTree*>(file->Get(MCtree_path.c_str()));
         if (!MCtree) { LogError << "Tree not found: " << MCtree_path << std::endl; file->Close(); delete file; continue; }
-        UInt_t this_event_number = 0; MCtree->SetBranchAddress("Event", &this_event_number);
+        UInt_t this_event_number = 0; 
+        MCtree->SetBranchAddress("Event", &this_event_number);
         int n_events = MCtree->GetEntries(); 
+
+        MCtree->GetEntry(0);
+        int first_event = this_event_number;
 
         LogInfo << "Number of events in file: " << n_events << std::endl;
         file->Close(); delete file; file = nullptr;
 
         tps.clear(); true_particles.clear(); neutrinos.clear();
-        tps.resize(n_events+1); true_particles.resize(n_events+1); neutrinos.resize(n_events+1);
+        tps.resize(n_events); true_particles.resize(n_events); neutrinos.resize(n_events);
 
-        for (int iEvent = 1; iEvent <= n_events; ++iEvent) {
+        // loop over events
+        for (int iEvent = first_event; iEvent < first_event + n_events; ++iEvent) {
+            int event_index = iEvent - first_event;
             LogInfo << "Reading event " << iEvent << std::endl;
             file_reader(
                 filename,
-                tps.at(iEvent),
-                true_particles.at(iEvent),
-                neutrinos.at(iEvent),
+                tps.at(event_index),
+                true_particles.at(event_index),
+                neutrinos.at(iEvent - first_event),
                 /*supernova_option*/0,
                 iEvent,
                 static_cast<double>(effective_time_window),
-                channel_tolerance);
+                channel_tolerance
+            );
 
             // Summarise direct TP-to-truth associations built inside file_reader
             int matched_tps_counter = 0;
-            for (const auto& tp : tps.at(iEvent)) {
+            for (const auto& tp : tps.at(event_index)) {
                 if (tp.GetTrueParticle() != nullptr) { matched_tps_counter++; }
             }
-            LogInfo << "Matched " << matched_tps_counter << "/" << tps.at(iEvent).size()
+            LogInfo << "Matched " << matched_tps_counter << "/" << tps.at(event_index).size()
                     << " TPs to true particles via SimIDE association." << std::endl;
         }
 
