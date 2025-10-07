@@ -5,6 +5,7 @@ set( LIB_NAME "globalLib" )
 set( SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/global.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ParametersManager.cpp
 )
 
 if( USE_STATIC_LINKS )

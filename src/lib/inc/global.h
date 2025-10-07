@@ -3,6 +3,7 @@
 
 #include "CmdLineParser.h"
 #include "Logger.h"
+#include "GenericToolbox.Utils.h"
 
 #include <nlohmann/json.hpp>
 

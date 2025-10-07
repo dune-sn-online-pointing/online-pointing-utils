@@ -11,6 +11,10 @@ else
     export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     export HOME_DIR=$(dirname $SCRIPTS_DIR)
     echo " Repository home is $HOME_DIR"
+    
+    # Set up parameters directory
+    export PARAMETERS_DIR="${HOME_DIR}/parameters"
+    echo " Parameters directory is $PARAMETERS_DIR"
 
     # In lxplus, set up a full ROOT environment from LCG
     # In fnal, we need to be in a container and set up root
@@ -50,6 +54,7 @@ else
     export PYTHON_DIR=$HOME_DIR"/python/"
     export SRC_DIR=$HOME_DIR"/src/"
     export BUILD_DIR=$HOME_DIR"/build/"
+    export PARAMETERS_DIR=$HOME_DIR"/parameters/"
 
     # activate the python environment
     if [[ -d $PYTHON_DIR/online-pointing-env ]]; then

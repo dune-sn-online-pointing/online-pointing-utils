@@ -1,6 +1,5 @@
 *******************************************************************************
-Detector parameters
+Conversion parameters
 *******************************************************************************
 
-< detector.name = "ProtoDUNE-VD" >               Detector name
-< detector.n_apas = 4 >                         Number of APAs
+< conversion.adc_to_energy_factor = 4000.0 >     ADC to MeV conversion factor

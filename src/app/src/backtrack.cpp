@@ -1,22 +1,5 @@
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <ctime>
-#include <map>
-#include <sstream>
-#include <climits>
-#include <algorithm>
-#include <set>
-#include <nlohmann/json.hpp>
-#include <filesystem>
+#include "global.h"
 
-#include "CmdLineParser.h"
-#include "implementation/CmdLineParser.impl.h"
-#include "Logger.h"
-#include "GenericToolbox.Utils.h"
-
-#include "verbosity.h"
 #include "cluster_to_root_libs.h"
 #include "Cluster.h"
 
