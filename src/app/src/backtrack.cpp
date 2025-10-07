@@ -16,8 +16,9 @@
 #include "Logger.h"
 #include "GenericToolbox.Utils.h"
 
+#include "verbosity.h"
 #include "cluster_to_root_libs.h"
-#include "cluster.h"
+#include "Cluster.h"
 
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
@@ -31,13 +32,22 @@ int main(int argc, char* argv[]) {
     clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
     clp.addOption("bktrMargin", {"--bktr-margin"}, "Override backtracker_error_margin (int)");
     clp.addDummyOption("Triggers");
-    clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
+    clp.addTriggerOption("verboseMode", {"-v", "--verbose"}, "Run in verbose mode");
+    clp.addTriggerOption("debugMode", {"-d", "--debug"}, "Run in debug mode (more detailed than verbose)");
     clp.addDummyOption();
     LogInfo << clp.getDescription().str() << std::endl;
     LogInfo << "Usage: " << std::endl;
     LogInfo << clp.getConfigSummary() << std::endl << std::endl;
     clp.parseCmdLine(argc, argv);
     LogThrowIf( clp.isNoOptionTriggered(), "No option was provided." );
+
+    // Set logging verbosity based on command line options
+    if (clp.isOptionTriggered("debugMode")) {
+        debugMode = true;
+    }
+    else if (clp.isOptionTriggered("verboseMode")) {
+        verboseMode = true;
+    }
 
     std::string json = clp.getOptionVal<std::string>("json");
     std::ifstream i(json);
@@ -161,36 +171,6 @@ int main(int argc, char* argv[]) {
         } catch (...) { /* ignore */ }
     }
 
-    // Backward compatibility: old keys "filename" (single) and "filelist" (list file)
-    // if (filenames.empty()) {
-    //     if (j.contains("filename")) {
-    //         try {
-    //             std::string single_file = j.at("filename").get<std::string>();
-    //             if (!single_file.empty()) {
-    //                 LogInfo << "Using legacy 'filename': " << single_file << std::endl;
-    //                 if (file_exists(single_file) && is_tpstream(single_file)) filenames.push_back(single_file);
-    //             }
-    //         } catch (...) { /* ignore */ }
-    //     }
-    // }
-    // if (filenames.empty()) {
-    //     if (j.contains("filelist")) {
-    //         try {
-    //             std::string list_file = j.at("filelist").get<std::string>();
-    //             LogInfo << "Using legacy 'filelist': " << list_file << std::endl;
-    //             std::ifstream infile(list_file);
-    //             std::string line;
-    //             while (std::getline(infile, line)) {
-    //                 if (line.size() >= 3 && line.substr(0,3) == "###") break;
-    //                 if (line.empty() || line[0] == '#') continue;
-    //                 if (!file_exists(line)) { LogWarning << "Skipping (missing): " << line << std::endl; continue; }
-    //                 if (!is_tpstream(line)) { LogWarning << "Skipping (not *_tpstream.root): " << line << std::endl; continue; }
-    //                 filenames.push_back(line);
-    //             }
-    //         } catch (...) { /* ignore */ }
-    //     }
-    // }
-
     LogInfo << "Number of valid files: " << filenames.size() << std::endl;
     LogThrowIf(filenames.empty(), "No valid input files.");
 
@@ -245,7 +225,9 @@ int main(int argc, char* argv[]) {
         // loop over events
         for (int iEvent = first_event; iEvent < first_event + n_events; ++iEvent) {
             int event_index = iEvent - first_event;
-            LogInfo << "Reading event " << iEvent << std::endl;
+            if (verboseMode) LogInfo << "Reading event " << iEvent << std::endl;
+            if (debugMode) LogDebug << "Beginning file_reader for event " << iEvent << std::endl;
+            
             file_reader(
                 filename,
                 tps.at(event_index),
@@ -264,6 +246,12 @@ int main(int argc, char* argv[]) {
             }
             LogInfo << "Matched " << matched_tps_counter << "/" << tps.at(event_index).size()
                     << " TPs to true particles via SimIDE association." << std::endl;
+                    
+            if (debugMode) {
+                LogDebug << "Event " << iEvent << " processing complete with " 
+                         << tps.at(event_index).size() << " TPs and " 
+                         << true_particles.at(event_index).size() << " true particles" << std::endl;
+            }
         }
 
         // write *_tps_bktr<N>.root where N is backtracker_error_margin
@@ -272,31 +260,40 @@ int main(int argc, char* argv[]) {
         std::ostringstream suffix;
         suffix << "_tps_bktr" << bktr_margin << ".root";
         std::string out = outfolder + "/" + input_basename + suffix.str();
-    // Use absolute path for output
-    std::error_code _ec_abs;
-    std::filesystem::path out_abs_p = std::filesystem::absolute(std::filesystem::path(out), _ec_abs);
-    std::string out_abs = _ec_abs ? out : out_abs_p.string();
-    write_tps_to_root(out_abs, tps, true_particles, neutrinos);
-    produced.push_back(out_abs);
+        // Use absolute path for output
+        std::error_code _ec_abs;
+        std::filesystem::path out_abs_p = std::filesystem::absolute(std::filesystem::path(out), _ec_abs);
+        std::string out_abs = _ec_abs ? out : out_abs_p.string();
+        
+        if (verboseMode) LogInfo << "Writing output to: " << out_abs << std::endl;
+        write_tps_to_root(out_abs, tps, true_particles, neutrinos);
+        produced.push_back(out_abs);
     }
 
     // also write a filelist for convenience
     try {
-    std::ostringstream list_name;
-    list_name << outfolder << "/test_files_tps_bktr" << bktr_margin << ".txt";
-    std::string list_out = list_name.str();
-    std::error_code _ec_list_abs;
-    std::filesystem::path list_abs_p = std::filesystem::absolute(std::filesystem::path(list_out), _ec_list_abs);
-    std::string list_out_abs = _ec_list_abs ? list_out : list_abs_p.string();
-    std::ofstream of(list_out_abs);
+        std::ostringstream list_name;
+        list_name << outfolder << "/test_files_tps_bktr" << bktr_margin << ".txt";
+        std::string list_out = list_name.str();
+        std::error_code _ec_list_abs;
+        std::filesystem::path list_abs_p = std::filesystem::absolute(std::filesystem::path(list_out), _ec_list_abs);
+        std::string list_out_abs = _ec_list_abs ? list_out : list_abs_p.string();
+        
+        if (verboseMode) LogInfo << "Writing file list to: " << list_out_abs << std::endl;
+        std::ofstream of(list_out_abs);
         for (const auto& p : produced) of << p << "\n";
         of << "\n### This is a break point\n";
         of.close();
-    LogInfo << "Wrote list of TPs files: " << list_out_abs << std::endl;
+        LogInfo << "Wrote list of TPs files: " << list_out_abs << std::endl;
     } catch (...) { LogWarning << "Failed to write TPs file list." << std::endl; }
 
-    LogInfo << "\nSummary of produced files (" << produced.size() << "):" << std::endl;
-    for (const auto& p : produced) LogInfo << " - " << p << std::endl;
+    LogInfo << "\nList of produced files (" << produced.size() << "):" << std::endl;
+    for (size_t i = 0; i < std::min<size_t>(10, produced.size()); ++i) {
+        LogInfo << " - " << produced[i] << std::endl;
+    }
+    if (produced.size() > 10) {
+        LogInfo << " ... (" << produced.size() - 10 << " more files not shown)" << std::endl;
+    }
 
     return 0;
 }

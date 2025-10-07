@@ -16,7 +16,7 @@
 
 // #include "position_calculator.h"
 #include "cluster_to_root_libs.h"
-#include "cluster.h"
+#include "Cluster.h"
 #include "functions.h"
 
 
@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
     int channel_limit = j["channel_limit"];
     LogInfo << "Channel limit: " << channel_limit << std::endl;
     int min_tps_to_cluster = j["min_tps_to_cluster"];
-    LogInfo << "Min TPs to cluster: " << min_tps_to_cluster << std::endl;
+    LogInfo << "Min TPs to Cluster: " << min_tps_to_cluster << std::endl;
     int min_time_over_threshold = j["min_time_over_threshold"];
     LogInfo << "Min time over threshold: " << min_time_over_threshold << std::endl;
     int energy_cut = j["energy_cut_mev"];
@@ -292,7 +292,7 @@ int main(int argc, char* argv[]) {
             std::vector <std::vector<TriggerPrimitive*>> tps_per_view;
             tps_per_view.reserve(APA::views.size());
 
-            std::vector <std::vector<cluster>> clusters_per_view;
+            std::vector <std::vector<Cluster>> clusters_per_view;
             clusters_per_view.reserve(APA::views.size());
             
             LogInfo << "-------------------------" << std::endl;
@@ -302,7 +302,7 @@ int main(int argc, char* argv[]) {
                 getPrimitivesForView(APA::views.at(iView), tps.at(iEvent), these_tps_per_view);
                 LogInfo << "Number of TPs in " << APA::views.at(iView) << " view: " << these_tps_per_view.size() << std::endl;
                 tps_per_view.emplace_back(these_tps_per_view);
-                // cluster the tps
+                // Cluster the tps
                 clusters_per_view.emplace_back(cluster_maker(tps_per_view.at(iView), ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut.at(iView)));
                 LogInfo << "Number of clusters in " << APA::views.at(iView) << " view: " << clusters_per_view.at(iView).size() << std::endl;
                 LogInfo << "-------------------------" << std::endl;

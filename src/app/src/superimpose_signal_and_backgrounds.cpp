@@ -11,7 +11,7 @@
 #include "aggregate_clusters_within_volume_libs.h"
 // #include "position_calculator.h"
 #include "cluster_to_root_libs.h"
-#include "cluster.h"
+#include "Cluster.h"
 #include "create_volume_clusters_libs.h"
 
 
@@ -73,8 +73,8 @@ int main(int argc, char* argv[]) {
     }
     std::cout << "Number of files: " << filenames.size() << std::endl;
 
-    std::vector<cluster> sig_clusters = read_clusters_from_root(signal_clusters);
-    std::map<int, std::vector<cluster>> sig_event_mapping = create_event_mapping(sig_clusters);
+    std::vector<Cluster> sig_clusters = read_clusters_from_root(signal_clusters);
+    std::map<int, std::vector<Cluster>> sig_event_mapping = create_event_mapping(sig_clusters);
     std::cout << "Sig event mapping created" << std::endl;
     std::vector<int> sig_list_of_event_numbers;
     for (auto const& x : sig_event_mapping) {
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    std::vector<cluster> clusters_in_volume;
+    std::vector<Cluster> clusters_in_volume;
     for (int i = 0; i < sig_list_of_event_numbers.size(); i++) {
         if (i % 100 == 0) {
             std::cout << "Cluster number: " << i << std::endl;
@@ -135,7 +135,7 @@ int main(int argc, char* argv[]) {
 
         std::vector<std::vector<double>> tps_around_cluster = get_tps_around_cluster(tps, sig_event_mapping[sig_list_of_event_numbers[i]][main_track_idx], radius);
         // std::cout<<tps_around_cluster.size()<<std::endl;
-        cluster c(tps_around_cluster);
+        Cluster c(tps_around_cluster);
         c.set_true_pos(sig_event_mapping[sig_list_of_event_numbers[i]][main_track_idx].get_true_pos());
         c.set_true_dir(sig_event_mapping[sig_list_of_event_numbers[i]][main_track_idx].get_true_dir());
         c.set_true_energy(sig_event_mapping[sig_list_of_event_numbers[i]][main_track_idx].get_true_energy());

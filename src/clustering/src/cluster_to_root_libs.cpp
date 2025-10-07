@@ -1,34 +1,9 @@
-#include <vector>
-#include <map>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <climits>
-#include <unordered_map>
-#include <set>
-#include <initializer_list>
-#include <array>
-#include <TDirectory.h>
-#include <TKey.h>
-#include <TBranch.h>
-#include <TLeaf.h>
-#include <filesystem>
-#include <system_error>
-
-// #include <TLeaf.h>
-
 #include "cluster_to_root_libs.h"
-#include "cluster.h"
+#include "Cluster.h"
 #include "TriggerPrimitive.hpp"
-// #include "position_calculator.h"
+#include "global.h"
 
-#include "Logger.h"
-#include "GenericToolbox.Utils.h"
-
-LoggerInit([]{
-    Logger::getUserHeader() << "[" << FILENAME << "]";
-});
+LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 namespace {
 
@@ -204,7 +179,7 @@ void write_tps_to_root(
     // Report absolute output path for consistency
     std::error_code _ec_abs;
     auto abs_p = std::filesystem::absolute(std::filesystem::path(out_filename), _ec_abs);
-    LogInfo << "Wrote TPs file: " << (_ec_abs ? out_filename : abs_p.string()) << std::endl;
+    if (verboseMode) LogInfo << "Wrote TPs file: " << (_ec_abs ? out_filename : abs_p.string()) << std::endl;
 }
 
 void read_tps_from_root(
@@ -213,7 +188,7 @@ void read_tps_from_root(
     std::map<int, std::vector<TrueParticle>>& true_particles_by_event,
     std::map<int, std::vector<Neutrino>>& neutrinos_by_event)
 {
-    LogInfo << "Reading TPs from: " << in_filename << std::endl;
+    if (verboseMode) LogInfo << "Reading TPs from: " << in_filename << std::endl;
     TFile inFile(in_filename.c_str(), "READ"); if (inFile.IsZombie()) { LogError << "Cannot open: " << in_filename << std::endl; return; }
     TDirectory* tpsDir = inFile.GetDirectory("tps"); if (!tpsDir) { LogError << "Directory 'tps' not found in: " << in_filename << std::endl; return; }
 
@@ -255,7 +230,7 @@ void get_first_and_last_event(TTree* tree, int* branch_value, int which_event, i
     first_entry = -1;
     last_entry = -1;
 
-    LogInfo << " Looking for event number " << which_event << std::endl;
+    if (debugMode) LogInfo << " Looking for event number " << which_event << std::endl;
     for (int iEntry = 0; iEntry < tree->GetEntries(); ++iEntry) {
         tree->GetEntry(iEntry);
         if (*branch_value == which_event) {
@@ -279,9 +254,9 @@ void file_reader(std::string filename,
                  int event_number,
                  double time_tolerance_ticks,
                  int channel_tolerance) {
-    
-    LogInfo << " Reading file: " << filename << std::endl;
-    
+
+    if (debugMode) LogInfo << " Reading file: " << filename << std::endl;
+
     TFile *file = TFile::Open(filename.c_str());
     if (!file || file->IsZombie()) {
         LogError << " Error opening file: " << filename << std::endl;
@@ -299,7 +274,7 @@ void file_reader(std::string filename,
         this_interaction = "UNKNOWN"; // not sure TODO
     }
 
-    LogInfo << " For this file, interaction type: " << this_interaction << std::endl;
+    if (verboseMode) LogInfo << " For this file, interaction type: " << this_interaction << std::endl;
 
     std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
     TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
@@ -316,14 +291,11 @@ void file_reader(std::string filename,
         LogWarning << "Failed to bind branch 'Event'" << std::endl;
     }
 
-    LogWarning << "Event number requested: " << event_number << std::endl;
-
-
     get_first_and_last_event(TPtree, (int*)&this_event_number, event_number, first_tp_entry_in_event, last_tp_entry_in_event);
 
-    // LogInfo << "First entry having this event number: " << first_tp_entry_in_event << std::endl;
-    // LogInfo << "Last entry having this event number: " << last_tp_entry_in_event << std::endl;
-    LogInfo << "Number of TPs in event " << event_number << ": " << last_tp_entry_in_event - first_tp_entry_in_event + 1 << std::endl;
+    if (debugMode) LogInfo << "First entry having this event number: " << first_tp_entry_in_event << std::endl;
+    if (debugMode) LogInfo << "Last entry having this event number: " << last_tp_entry_in_event << std::endl;
+    if (verboseMode) LogInfo << "Number of TPs in event " << event_number << ": " << last_tp_entry_in_event - first_tp_entry_in_event + 1 << std::endl;
 
     tps.reserve(last_tp_entry_in_event - first_tp_entry_in_event + 1);
 
@@ -433,9 +405,9 @@ void file_reader(std::string filename,
     //     LogInfo << "[TP-READ-DIAG] Leaf type samples_to_peek: " << leaf_stopeak_typo->GetTypeName() << std::endl;
     // }
     
-    LogInfo << "  If the TOT or peak branches are not found, it is because the TPs are not that version" << std::endl;
+    if (verboseMode) LogInfo << "  If the TOT or peak branches are not found, it is because the TPs are not that version" << std::endl;
 
-    LogInfo << " Reading tree of TriggerPrimitives" << std::endl;
+    if (verboseMode) LogInfo << " Reading tree of TriggerPrimitives" << std::endl;
 
     // Counters and guards for ToT-based filtering
     size_t tot_filtered_count = 0;
@@ -669,7 +641,7 @@ void file_reader(std::string filename,
         // LogInfo << "......" << std::endl;
     }
 
-    LogInfo << " Found " << true_particles.size() << " geant particles in file " << filename << std::endl;
+    if (verboseMode) LogInfo << " Found " << true_particles.size() << " geant particles in file " << filename << std::endl;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Read MC truth
@@ -690,9 +662,7 @@ void file_reader(std::string filename,
 
     get_first_and_last_event(MCtruthtree, (int*)&event, this_event_number, first_mctruth_entry_in_event, last_mctruth_entry_in_event);
 
-    LogInfo << "Number of MC truths in event " << event_number << ": " << last_mctruth_entry_in_event - first_mctruth_entry_in_event + 1 << std::endl;
-    // LogInfo << "First entry having this event number: " << first_mctruth_entry_in_event << std::endl;
-    // LogInfo << "Last entry having this event number: " << last_mctruth_entry_in_event << std::endl;
+    if (verboseMode) LogInfo << "Number of MC truths in event " << event_number << ": " << last_mctruth_entry_in_event - first_mctruth_entry_in_event + 1 << std::endl;
 
     // this is a scope vector, just to put somewhere the generator name before
     // associating to the final true particles 
@@ -855,7 +825,7 @@ void file_reader(std::string filename,
             particle->AddChannel(ChannelID);
             match_count++;
         } else {
-            LogWarning << "TrackID " << trackID << " not found in MC particles." << std::endl;
+            if (verboseMode) LogWarning << "TrackID " << trackID << " not found in MC particles." << std::endl;
         }
     } // end of simides, not used anywhere anymore
 
@@ -1032,7 +1002,7 @@ void file_reader(std::string filename,
         // }
     }
 
-    LogInfo << " Matched ";
+    if (verboseMode) LogInfo << " Matched ";
     std::cout << std::setprecision(2) << std::fixed << float(match_count)/(last_simide_entry_in_event-first_simide_entry_in_event+1)*100. << " %" << " SimIDEs to true particles" << std::endl;
 
     int truepart_with_simideInfo = 0;
@@ -1042,11 +1012,11 @@ void file_reader(std::string filename,
         }
     }
 
-    LogInfo << " Number of geant particles with SimIDEs info: " << float(truepart_with_simideInfo)/true_particles.size()*100. << " %" << std::endl;
-    LogInfo << " If not 100%, it's ok. Some particles (nuclei) don't produce SimIDEs" << std::endl;
+    if (verboseMode) LogInfo << " Number of geant particles with SimIDEs info: " << float(truepart_with_simideInfo)/true_particles.size()*100. << " %" << std::endl;
+    if (verboseMode) LogInfo << " If not 100%, it's ok. Some particles (nuclei) don't produce SimIDEs" << std::endl;
 
     // NEW: Apply direct TP-SimIDE matching to replace/supplement trueParticle-based matching
-    LogInfo << " Applying direct TP-SimIDE matching for event " << event_number << std::endl;
+    if (verboseMode) LogInfo << " Applying direct TP-SimIDE matching for event " << event_number << std::endl;
     const double effective_time_tolerance = (time_tolerance_ticks >= 0.0) ? time_tolerance_ticks : 5000.0;
     const int effective_channel_tolerance = (channel_tolerance >= 0) ? channel_tolerance : 50;
     match_tps_to_simides_direct(tps, true_particles, file, event_number, effective_time_tolerance, effective_channel_tolerance);
@@ -1056,7 +1026,7 @@ void file_reader(std::string filename,
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Connect trueparticles to mctruths using the truth_id
 
-    LogInfo << " Connecting MC particles to mctruths, there are "<< neutrinos.size() << " neutrinos and " << true_particles.size() << " other particles" << std::endl;
+    if (verboseMode) LogInfo << " Connecting MC particles to mctruths, there are "<< neutrinos.size() << " neutrinos and " << true_particles.size() << " other particles" << std::endl;
     
     int matched_MCparticles_counter = 0;
 
@@ -1080,7 +1050,7 @@ void file_reader(std::string filename,
             if (mc_true_particle.GetEvent() == particle.GetEvent() 
             && mc_true_particle.GetTruthId() == particle.GetTruthId()) 
         {
-                // LogInfo << " Found a match, generator name: " << mc_true_particle.GetGeneratorName() << std::endl;
+                if (debugMode)  LogInfo << " Found a match, generator name: " << mc_true_particle.GetGeneratorName() << std::endl;
                 particle.SetGeneratorName(mc_true_particle.GetGeneratorName());
                 particle.SetProcess(mc_true_particle.GetProcess());
                 found = true;
@@ -1099,7 +1069,7 @@ void file_reader(std::string filename,
         }
     }
 
-    LogInfo << " Matched MC particles to mctruths: "  << float(matched_MCparticles_counter)/true_particles.size()*100. << " %" << std::endl;
+    if (verboseMode) LogInfo << " Matched MC particles to mctruths: "  << float(matched_MCparticles_counter)/true_particles.size()*100. << " %" << std::endl;
     
     // sort the TPs by time
     // C++ 17 has the parameter std::execution::par that handles parallelization, can try that out TODO
@@ -1109,7 +1079,7 @@ void file_reader(std::string filename,
     });
     std::clock_t end_sorting = std::clock();
     double elapsed_time = double(end_sorting - start_sorting) / CLOCKS_PER_SEC;
-    LogInfo << "Sorting TPs took " << elapsed_time << " seconds" << std::endl;
+    if (verboseMode) LogInfo << "Sorting TPs took " << elapsed_time << " seconds" << std::endl;
 
 }
 
@@ -1135,11 +1105,11 @@ bool channel_condition_with_pbc(TriggerPrimitive *tp1, TriggerPrimitive* tp2, in
 
 // this is supposed to do one event at the time
 // TODO add number to save fraction of TPs removed with the cut
-std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
-    LogInfo << "Creating clusters from TPs" << std::endl;
+std::vector<Cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
+    if (verboseMode) LogInfo << "Creating clusters from TPs" << std::endl;
 
     std::vector<std::vector<TriggerPrimitive*>> buffer;
-    std::vector<cluster> clusters;
+    std::vector<Cluster> clusters;
 
     // Reset the buffer for each event
     buffer.clear();
@@ -1171,18 +1141,18 @@ std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int t
                     if (channel_condition_with_pbc(tp, tp2, channel_limit)) {
                         candidate.push_back(tp);
                         appended = true;
-                        // LogInfo << "Appended TP to candidate cluster" << std::endl;
+                        // LogInfo << "Appended TP to candidate Cluster" << std::endl;
                         break;
                     }
                 }
                 if (appended) break;
-                // LogInfo << "Not appended to candidate cluster" << std::endl;
+                // LogInfo << "Not appended to candidate Cluster" << std::endl;
             }
         }
 
-        // If not appended to any candidate, create a new cluster in the buffer
+        // If not appended to any candidate, create a new Cluster in the buffer
         if (!appended) {
-            // LogInfo << "Creating new candidate cluster" << std::endl;
+            // LogInfo << "Creating new candidate Cluster" << std::endl;
             buffer.push_back({tp});
         }
     }
@@ -1196,8 +1166,8 @@ std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int t
             }
             if (adc_integral > adc_integral_cut) {
                 // check validity of tps in candidate
-                // LogInfo << "Candidate cluster has " << candidate.size() << " TPs" << std::endl;
-                clusters.emplace_back(cluster(std::move(candidate)));
+                // LogInfo << "Candidate Cluster has " << candidate.size() << " TPs" << std::endl;
+                clusters.emplace_back(Cluster(std::move(candidate)));
                 // LogInfo << "Cluster created with " << clusters.back().get_tps().size() << " TPs" << std::endl;
             }
             else {
@@ -1211,10 +1181,10 @@ std::vector<cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int t
 }
 
 
-std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
+std::vector<Cluster> filter_main_tracks(std::vector<Cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
     int best_idx = INT_MAX;
 
-    std::vector<cluster> main_tracks;
+    std::vector<Cluster> main_tracks;
     UInt_t event = clusters[0].get_tp(0)->GetEvent();
 
     for (int index = 0; index < clusters.size(); index++) {
@@ -1255,7 +1225,7 @@ std::vector<cluster> filter_main_tracks(std::vector<cluster>& clusters) { // val
     return main_tracks;
 }
 
-std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
+std::vector<Cluster> filter_out_main_track(std::vector<Cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
     int best_idx = INT_MAX;
     std::vector<int> bad_idx_list;
     UInt_t event = clusters[0].get_tp(0)->GetEvent();
@@ -1297,7 +1267,7 @@ std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // 
 
 
 
-    std::vector<cluster> blips;
+    std::vector<Cluster> blips;
 
     for (int i=0; i<clusters.size(); i++) {
         if (std::find(bad_idx_list.begin(), bad_idx_list.end(), i) == bad_idx_list.end()) {
@@ -1310,7 +1280,7 @@ std::vector<cluster> filter_out_main_track(std::vector<cluster>& clusters) { // 
 }
 
 
-void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_filename, std::string view) {
+void write_clusters_to_root(std::vector<Cluster>& clusters, std::string root_filename, std::string view) {
     // create folder if it does not exist
     std::string folder = root_filename.substr(0, root_filename.find_last_of("/"));
     if (!ensureDirectoryExists(folder)) {
@@ -1319,7 +1289,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     }
     // create the root file if it does not exist, otherwise just update it
     TFile *clusters_file = new TFile(root_filename.c_str(), "UPDATE"); // TODO handle better
-    // Ensure a fixed TDirectory inside the ROOT file for cluster trees
+    // Ensure a fixed TDirectory inside the ROOT file for Cluster trees
     TDirectory* clusters_dir = clusters_file->GetDirectory("clusters");
     if (!clusters_dir) clusters_dir = clusters_file->mkdir("clusters");
     clusters_dir->cd();
@@ -1357,7 +1327,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
 
     if (!clusters_tree) {
         clusters_tree = new TTree(Form("clusters_tree_%s", view.c_str()), "Tree of clusters");
-        LogInfo << "Tree not found, creating it" << std::endl;
+        if (verboseMode) LogInfo << "Tree not found, creating it" << std::endl;
         // create the branches
         clusters_tree->Branch("event", &event, "event/I");
         clusters_tree->Branch("n_tps", &n_tps, "n_tps/I");
@@ -1422,25 +1392,25 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     
 
     // fill the tree
-    for (auto& cluster : clusters) {
-        event = cluster.get_event();
-        n_tps = cluster.get_size();
-        true_dir_x = cluster.get_true_dir()[0];
-        true_dir_y = cluster.get_true_dir()[1];
-        true_dir_z = cluster.get_true_dir()[2];
-        true_neutrino_energy = cluster.get_true_neutrino_energy();
-        true_particle_energy = cluster.get_true_particle_energy();
-        true_label = cluster.get_true_label();
+    for (auto& Cluster : clusters) {
+        event = Cluster.get_event();
+        n_tps = Cluster.get_size();
+        true_dir_x = Cluster.get_true_dir()[0];
+        true_dir_y = Cluster.get_true_dir()[1];
+        true_dir_z = Cluster.get_true_dir()[2];
+        true_neutrino_energy = Cluster.get_true_neutrino_energy();
+        true_particle_energy = Cluster.get_true_particle_energy();
+        true_label = Cluster.get_true_label();
         true_label_point = &true_label;
-        reco_pos_x = cluster.get_reco_pos()[0];
-        reco_pos_y = cluster.get_reco_pos()[1];
-        reco_pos_z = cluster.get_reco_pos()[2];
-        min_distance_from_true_pos = cluster.get_min_distance_from_true_pos();
-        supernova_tp_fraction = cluster.get_supernova_tp_fraction();
-        // Compute fraction of TPs in this cluster with a non-UNKNOWN generator
+        reco_pos_x = Cluster.get_reco_pos()[0];
+        reco_pos_y = Cluster.get_reco_pos()[1];
+        reco_pos_z = Cluster.get_reco_pos()[2];
+        min_distance_from_true_pos = Cluster.get_min_distance_from_true_pos();
+        supernova_tp_fraction = Cluster.get_supernova_tp_fraction();
+        // Compute fraction of TPs in this Cluster with a non-UNKNOWN generator
         {
             int cluster_truth_count = 0;
-            const auto& cl_tps = cluster.get_tps();
+            const auto& cl_tps = Cluster.get_tps();
             for (auto* tp : cl_tps) {
                 auto* tpTruth = tp->GetTrueParticle();
                 if (tpTruth != nullptr && tpTruth->GetGeneratorName() != "UNKNOWN") {
@@ -1450,10 +1420,10 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
             generator_tp_fraction = cl_tps.empty() ? 0.f : static_cast<float>(cluster_truth_count) / static_cast<float>(cl_tps.size());
             // std::cout << "Fraction of TPs with non-null generator: " << generator_tp_fraction << std::endl;
         }
-        true_interaction = cluster.get_true_interaction();
+        true_interaction = Cluster.get_true_interaction();
         true_interaction_point = &true_interaction;
-        total_charge = cluster.get_total_charge();
-        total_energy = cluster.get_total_energy();
+        total_charge = Cluster.get_total_charge();
+        total_energy = Cluster.get_total_energy();
         conversion_factor = adc_to_energy_conversion_factor; // should be in settings, still keep as metadata
         // TODO create different tree for metadata? Currently in filename
 
@@ -1465,7 +1435,7 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
         tp_adc_peak->clear();
         tp_samples_to_peak->clear();
         tp_adc_integral->clear();
-        for (auto& tp : cluster.get_tps()) {
+        for (auto& tp : Cluster.get_tps()) {
             tp_detector_channel->push_back(tp->GetDetectorChannel());
             tp_detector->push_back(tp->GetDetector());
             tp_samples_over_threshold->push_back(tp->GetSamplesOverThreshold());
@@ -1486,9 +1456,9 @@ void write_clusters_to_root(std::vector<cluster>& clusters, std::string root_fil
     return;   
 }
 
-std::vector<cluster> read_clusters_from_root(std::string root_filename){
+std::vector<Cluster> read_clusters_from_root(std::string root_filename){
     LogInfo << "Reading clusters from: " << root_filename << std::endl;
-    std::vector<cluster> clusters;
+    std::vector<Cluster> clusters;
     TFile *f = new TFile();
     f = TFile::Open(root_filename.c_str());
     // print the list of objects in the file
@@ -1559,14 +1529,14 @@ std::vector<cluster> read_clusters_from_root(std::string root_filename){
     clusters_tree->SetBranchAddress("true_interaction", &true_interaction);
     for (int i = 0; i < clusters_tree->GetEntries(); i++) {
         clusters_tree->GetEntry(i);
-        // cluster g(matrix);
-        // cluster.set_true_dir({true_dir_x, true_dir_y, true_dir_z});
-        // cluster.set_true_energy(true_energy);
-        // cluster.set_true_label(true_label);
-        // cluster.set_reco_pos({reco_pos_x, reco_pos_y, reco_pos_z});
-        // cluster.set_min_distance_from_true_pos(min_distance_from_true_pos);
-        // cluster.set_supernova_tp_fraction(supernova_tp_fraction);       
-        // cluster.set_true_interaction(true_interaction);
+        // Cluster g(matrix);
+        // Cluster.set_true_dir({true_dir_x, true_dir_y, true_dir_z});
+        // Cluster.set_true_energy(true_energy);
+        // Cluster.set_true_label(true_label);
+        // Cluster.set_reco_pos({reco_pos_x, reco_pos_y, reco_pos_z});
+        // Cluster.set_min_distance_from_true_pos(min_distance_from_true_pos);
+        // Cluster.set_supernova_tp_fraction(supernova_tp_fraction);       
+        // Cluster.set_true_interaction(true_interaction);
         // clusters.push_back(g);
     }
     f->Close();
@@ -1582,7 +1552,7 @@ void match_tps_to_simides_direct(
     double time_tolerance_ticks,
     int channel_tolerance)
 {
-    LogInfo << "Starting direct TP-SimIDE matching for event " << event_number << std::endl;
+    if (verboseMode) LogInfo << "Starting direct TP-SimIDE matching for event " << event_number << std::endl;
     
     // Fetch any previously estimated time-offset correction for this event
     double event_time_offset = 0.0;
@@ -1675,7 +1645,7 @@ void match_tps_to_simides_direct(
         }
     }
     
-    LogInfo << "Found " << simides_in_event.size() << " SimIDEs linked to particles in event " << event_number << std::endl;
+    if (verboseMode) LogInfo << "Found " << simides_in_event.size() << " SimIDEs linked to particles in event " << event_number << std::endl;
     
     // SimIDE time and channel ranges (diagnostic output commented out for selected events)
     double min_simide_time = std::numeric_limits<double>::max();
@@ -1877,12 +1847,12 @@ void match_tps_to_simides_direct(
     // }
 }
 
-std::map<int, std::vector<cluster>> create_event_mapping(std::vector<cluster>& clusters){
-    std::map<int, std::vector<cluster>> event_mapping;
+std::map<int, std::vector<Cluster>> create_event_mapping(std::vector<Cluster>& clusters){
+    std::map<int, std::vector<Cluster>> event_mapping;
     for (auto& g : clusters) {
     // check if the event is already in the map
         if (event_mapping.find(g.get_tp(0)->GetEvent()) == event_mapping.end()) {
-            std::vector<cluster> temp;
+            std::vector<Cluster> temp;
             temp.push_back(g);
             event_mapping[g.get_tp(0)->GetEvent()] = temp;
         }

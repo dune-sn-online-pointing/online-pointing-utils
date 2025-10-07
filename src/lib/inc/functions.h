@@ -2,11 +2,10 @@
 #define FUNCTIONS_H
 
 #include "TriggerPrimitive.hpp"
-#include "Cluster.h"
+#include "cluster.h"
 #include "utils.h"
 
 #include "root.h"
-#include "global.h"
 
 
 // this is just a vector of pointers, to not create copies of the TriggerPrimitive objects

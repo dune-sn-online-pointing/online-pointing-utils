@@ -1,9 +1,7 @@
 #ifndef TRIGGERPRIMITIVE_HPP
 #define TRIGGERPRIMITIVE_HPP
 
-#include <vector>
-#include <string>
-#include <Rtypes.h> // For ROOT types like UInt_t
+#include "root.h"
 
 #include <utils.h>
 #include <Logger.h>

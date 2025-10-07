@@ -12,15 +12,15 @@
 #include "TLeaf.h"
 #include "TMatrixD.h"
 
-#include "cluster.h"
+#include "Cluster.h"
 #include "cluster_to_root_libs.h"
 // #include "position_calculator.h"
 #include "superimpose_root_files_libs.h"
 
 
 
-cluster filter_clusters_within_radius(std::vector<cluster>& clusters, float radius) {
-    std::vector<cluster> filtered_clusters;
+Cluster filter_clusters_within_radius(std::vector<Cluster>& clusters, float radius) {
+    std::vector<Cluster> filtered_clusters;
     int idx_best = -1;
     int idx = 0;
     int event_number = -1;
@@ -71,7 +71,7 @@ cluster filter_clusters_within_radius(std::vector<cluster>& clusters, float radi
         }
     }
 
-    cluster final_collective_cluster;
+    Cluster final_collective_cluster;
     std::vector<TriggerPrimitive*> tps; 
     std::vector<TriggerPrimitive*> tps_all;
     for (auto const& g : filtered_clusters) {

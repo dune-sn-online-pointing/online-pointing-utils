@@ -5,7 +5,8 @@
 #include <vector>
 #include <iostream>
 #include "create_volume_clusters_libs.h"
-#include "cluster.h"
+#include "Cluster.h"
+#include "Backtracking.h"
 // #include "position_calculator.h"
 
 
@@ -20,11 +21,11 @@ std::vector<float> read_predictions(std::string predictions) {
     return predictions_vector;
 }
 
-std::vector<TriggerPrimitive*> get_tps_around_cluster(std::vector<TriggerPrimitive*> tps, cluster cluster, int radius){
+std::vector<TriggerPrimitive*> get_tps_around_cluster(std::vector<TriggerPrimitive*> tps, Cluster Cluster, int radius){
     std::vector<TriggerPrimitive*> tps_around_cluster;
     // search the region of interest with a binary search
-    int min_time_start = cluster.get_tps().at(0)->GetTimeStart();
-    int max_time_end = cluster.get_tps().at(cluster.get_tps().size() - 1)->GetTimeStart();
+    int min_time_start = Cluster.get_tps().at(0)->GetTimeStart();
+    int max_time_end = Cluster.get_tps().at(Cluster.get_tps().size() - 1)->GetTimeStart();
     double radius_in_ticks = radius/0.08;
     int start = 0;
     int end = tps.size() - 1;
@@ -41,9 +42,9 @@ std::vector<TriggerPrimitive*> get_tps_around_cluster(std::vector<TriggerPrimiti
     }
 
 
-    float cluster_x = cluster.get_reco_pos()[0];
-    float cluster_y = cluster.get_reco_pos()[1];
-    float cluster_z = cluster.get_reco_pos()[2];
+    float cluster_x = Cluster.get_reco_pos()[0];
+    float cluster_y = Cluster.get_reco_pos()[1];
+    float cluster_z = Cluster.get_reco_pos()[2];
 
 
     while (tps.at(start)->GetTimeStart() < max_time_end + 1.2*radius_in_ticks) {

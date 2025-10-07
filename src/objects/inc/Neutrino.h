@@ -1,9 +1,7 @@
 #ifndef NEUTRINO_H
 #define NEUTRINO_H
 
-#include <iostream>
-#include <vector>
-#include <string>
+#include "root.h"
 
 // the idea is  to associate a neutrino to each TrueParticle 
 // having generator_name == "marley"

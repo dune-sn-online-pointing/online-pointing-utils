@@ -34,7 +34,7 @@ static std::string toLower(std::string s){ std::transform(s.begin(), s.end(), s.
 
 int main(int argc, char* argv[]){
   CmdLineParser clp;
-  clp.getDescription() << "> analyze_clusters app - Generate plots from cluster ROOT files." << std::endl;
+  clp.getDescription() << "> analyze_clusters app - Generate plots from Cluster ROOT files." << std::endl;
   clp.addDummyOption("Main options");
   clp.addOption("json",    {"-j","--json"}, "JSON file containing the configuration");
   clp.addOption("outFolder", {"--output-folder"}, "Output folder path (optional)");
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]){
   std::map<std::string, TH1F*> max_tp_charge_plane_h;
   std::map<std::string, TH1F*> total_length_plane_h;
   std::map<std::string, TH2F*> ntps_vs_total_charge_plane_h;
-  std::vector<double> marley_enu; std::vector<double> marley_ncl; // per event MARLEY cluster count vs Eν
+  std::vector<double> marley_enu; std::vector<double> marley_ncl; // per event MARLEY Cluster count vs Eν
   std::map<int,int> sn_clusters_per_event; // sum across planes
 
     auto ensureHist = [](std::map<std::string, TH1F*>& m, const std::string& key, const char* title){
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]){
         }
         // 2D
         if (h2_ntps_charge) h2_ntps_charge->Fill(n_tps, total_charge);
-        // Supernova cluster count per event (any fraction > 0)
+        // Supernova Cluster count per event (any fraction > 0)
         if (supernova_tp_fraction > 0.f) sn_clusters_per_event[event] += 1;
       }
       // After looping plane, capture MARLEY vs Eν for this plane
@@ -221,7 +221,7 @@ int main(int argc, char* argv[]){
       h->Draw("HBAR"); cl->SaveAs(pdf.c_str()); delete h; delete cl;
     }
 
-    // Page: per-plane cluster size and totals
+    // Page: per-plane Cluster size and totals
     {
       TCanvas* csz = new TCanvas("c_ac_sizes","Sizes",1200,900); csz->Divide(3,2);
       int pad=1; for (auto* h : {n_tps_plane_h["U"], n_tps_plane_h["V"], n_tps_plane_h["X"], total_charge_plane_h["U"], total_charge_plane_h["V"], total_charge_plane_h["X"]}){

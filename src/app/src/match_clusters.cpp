@@ -10,7 +10,7 @@
 
 // #include "position_calculator.h"
 #include "cluster_to_root_libs.h"
-#include "cluster.h"
+#include "Cluster.h"
 #include "match_clusters_libs.h"
 
 
@@ -65,9 +65,9 @@ int main(int argc, char* argv[]) {
     // start the clock
     std::clock_t start;
     start = std::clock();
-    std::vector<cluster> clusters_u;
-    std::vector<cluster> clusters_v;
-    std::vector<cluster> clusters_x;
+    std::vector<Cluster> clusters_u;
+    std::vector<Cluster> clusters_v;
+    std::vector<Cluster> clusters_x;
 
     if (create_clusters_from_file){ 
         // filename is the name of the file containing the filenames to read
@@ -149,8 +149,8 @@ int main(int argc, char* argv[]) {
     std::cout << std::endl;
     std::cout << "clusters written to " << file_clusters_u << " " << file_clusters_v << " " << file_clusters_x << std::endl;
     std::cout << "Number of clusters: " << clusters_u.size() << " " << clusters_v.size() << " " << clusters_x.size() << std::endl;
-    std::vector<std::vector<cluster>> clusters;
-    std::vector<cluster> multiplane_clusters;
+    std::vector<std::vector<Cluster>> clusters;
+    std::vector<Cluster> multiplane_clusters;
 
     int start_j = 0;
     int start_k = 0;
@@ -218,12 +218,12 @@ int main(int argc, char* argv[]) {
 
                 if (are_compatibles(clusters_u[j], clusters_v[k], clusters_x[i], 5)) {
                     clusters.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
-                    cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
+                    Cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
                     multiplane_clusters.push_back(c);
                     // TODO: include option to use true information
                     // if (match_with_true_pos(clusters_u[j], clusters_v[k], clusters_x[i], 5)) {
                     //     clusters.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
-                    //     cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
+                    //     Cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
                     //     multiplane_clusters.push_back(c);
                     // }
                 }

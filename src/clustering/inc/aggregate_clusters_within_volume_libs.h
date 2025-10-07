@@ -4,9 +4,9 @@
 #include <vector>
 #include <cmath>
 // #include "position_calculator.h"
-#include "cluster.h"
+#include "Cluster.h"
 
-std::vector<cluster> aggregate_clusters_within_volume(std::vector<cluster> clusters, float radius, std::vector<float> predictions, float threshold);
+std::vector<Cluster> aggregate_clusters_within_volume(std::vector<Cluster> clusters, float radius, std::vector<float> predictions, float threshold);
 
 
 #endif

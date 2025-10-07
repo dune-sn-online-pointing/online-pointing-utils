@@ -1,11 +1,10 @@
 # Library containing the cpp objects used throughout the repo
 
-set( LIB_NAME "objectsLibs" )
+set( LIB_NAME "globalLib" )
 
 set( SRC_FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/Cluster.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/functions.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/Neutrino.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/global.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utils.cpp
 )
 
 if( USE_STATIC_LINKS )
@@ -14,18 +13,14 @@ else()
   add_library( ${LIB_NAME} SHARED ${SRC_FILES} )
 endif()
 
-
 target_include_directories(
     ${LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
-    ${CMAKE_SOURCE_DIR}/src/backtracking
 )
 
 
 target_link_libraries(
     ${LIB_NAME} PUBLIC
-    backtrackingLibs
-    globalLib
     ${ROOT_LIBRARIES}
 )
 

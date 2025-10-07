@@ -15,9 +15,9 @@
 #include "TLeaf.h"
 #include "TMatrixD.h"
 
-#include "cluster.h"
+#include "Cluster.h"
 
-cluster filter_clusters_within_radius(std::vector<cluster>& clusters, float radius);
+Cluster filter_clusters_within_radius(std::vector<Cluster>& clusters, float radius);
 
 
 

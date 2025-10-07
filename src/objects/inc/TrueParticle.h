@@ -1,12 +1,8 @@
 #ifndef TRUEPARTICLE_H
 #define TRUEPARTICLE_H
 
-#include <unordered_set>
-#include <iostream>
-#include <climits>
-#include <algorithm>
+#include "root.h"
 #include <Neutrino.h>
-#include <Rtypes.h> // For ROOT types like UInt_t
 
 class TrueParticle {
     

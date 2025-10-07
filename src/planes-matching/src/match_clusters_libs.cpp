@@ -2,11 +2,12 @@
 #include <iostream>
 #include <algorithm>
 #include "match_clusters_libs.h"
-#include "cluster.h"
+#include "Cluster.h"
+#include "Backtracking.h"
 // #include "position_calculator.h"
 
 
-bool are_compatibles(cluster& c_u, cluster& c_v, cluster& c_x, float radius) {
+bool are_compatibles(Cluster& c_u, Cluster& c_v, Cluster& c_x, float radius) {
 
     // check if they come from the same detector
 
@@ -35,11 +36,11 @@ bool are_compatibles(cluster& c_u, cluster& c_v, cluster& c_x, float radius) {
     return true;
 }
 
-bool match_with_true_pos(cluster& c_u, cluster& c_v, cluster& c_x, float radius){
+bool match_with_true_pos(Cluster& c_u, Cluster& c_v, Cluster& c_x, float radius){
     float true_x = c_x.get_true_pos()[0];
     float true_y = c_x.get_true_pos()[1];
     float true_z = c_x.get_true_pos()[2];
-    // Check U cluster
+    // Check U Cluster
     if (std::abs(std::abs(c_u.get_reco_pos()[0]) - std::abs(true_x)) > radius) {
         return false;
     }
@@ -47,14 +48,14 @@ bool match_with_true_pos(cluster& c_u, cluster& c_v, cluster& c_x, float radius)
     if (std::abs(std::abs(std::abs(eval_y_knowing_z_U_plane(c_u.get_tps(), true_z, true_x > 0 ? 1 : -1))- std::abs(true_y))) > radius) {
         return false;
     }
-    // Check V cluster
+    // Check V Cluster
     if (std::abs(std::abs(c_v.get_reco_pos()[0]) - std::abs(true_x)) > radius) {
         return false;
     }
     if (std::abs(std::abs(eval_y_knowing_z_V_plane(c_v.get_tps(), true_z, true_x > 0 ? 1 : -1)) - std::abs(true_y)) > radius) {
         return false;
     }
-    // Check X cluster
+    // Check X Cluster
     if (std::abs(std::abs(c_x.get_reco_pos()[0]) - std::abs(true_x)) > radius) {
         return false;
     }
@@ -64,7 +65,7 @@ bool match_with_true_pos(cluster& c_u, cluster& c_v, cluster& c_x, float radius)
     return true;
 }
 
-cluster join_clusters(cluster c_u, cluster c_v, cluster c_x){
+Cluster join_clusters(Cluster c_u, Cluster c_v, Cluster c_x){
     std::vector<TriggerPrimitive*> tps;
     for (int i = 0; i < c_u.get_size(); i++) {
         tps.push_back(c_u.get_tps()[i]);
@@ -76,7 +77,7 @@ cluster join_clusters(cluster c_u, cluster c_v, cluster c_x){
         tps.push_back(c_x.get_tps()[i]);
     }
 
-    cluster c(tps);
+    Cluster c(tps);
     c.set_true_pos(c_x.get_true_pos());
     c.set_true_dir(c_x.get_true_dir());
     c.set_true_energy(c_x.get_true_neutrino_energy());

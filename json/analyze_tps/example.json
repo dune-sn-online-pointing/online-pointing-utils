@@ -8,5 +8,7 @@
         "path/file2.dat"
     ],
     "inputListFile": "/path/to/input_list.txt",
-    "outputFolder": "/path/to/output_folder/"
+    "outputFolder": "/path/to/output_folder/",
+
+    "tot_cut": 1
 }

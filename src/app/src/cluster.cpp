@@ -9,14 +9,14 @@
 #include "Logger.h"
 
 #include "cluster_to_root_libs.h"
-#include "cluster.h"
+#include "Cluster.h"
 #include "functions.h"
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 int main(int argc, char* argv[]) {
     CmdLineParser clp;
-    clp.getDescription() << "> cluster app - build clusters from *_tps.root files."<< std::endl;
+    clp.getDescription() << "> Cluster app - build clusters from *_tps.root files."<< std::endl;
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
     clp.addOption("outFolder", {"--output-folder"}, "Output folder path (default: data)");
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
             tps_per_view.reserve(APA::views.size());
             for (size_t iView=0;iView<APA::views.size();++iView){ std::vector<TriggerPrimitive*> v; getPrimitivesForView(APA::views.at(iView), tps, v); tps_per_view.emplace_back(std::move(v)); }
 
-            std::vector<std::vector<cluster>> clusters_per_view; clusters_per_view.reserve(APA::views.size());
+            std::vector<std::vector<Cluster>> clusters_per_view; clusters_per_view.reserve(APA::views.size());
             std::vector<int> adc_cut = {adc_integral_cut_ind, adc_integral_cut_ind, adc_integral_cut_col};
             for (size_t iView=0;iView<APA::views.size();++iView){ clusters_per_view.emplace_back(cluster_maker(tps_per_view.at(iView), ticks_limit, channel_limit, min_tps_to_cluster, adc_cut.at(iView))); }
 

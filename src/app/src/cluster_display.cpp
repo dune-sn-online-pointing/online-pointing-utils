@@ -30,7 +30,7 @@
 #include <TStyle.h>
 
 #include "cluster_to_root_libs.h"
-#include "cluster.h"
+#include "Cluster.h"
 #include "TriggerPrimitive.hpp"
 
 LoggerInit([]{ Logger::getUserHeader() << "[" << FILENAME << "]";});
@@ -93,7 +93,7 @@ void drawCurrent(){
   if (!canvas || items.empty()) return;
   canvas->cd();
 
-  // Current cluster
+  // Current Cluster
   const auto& it = items.at(std::clamp(idx, 0, (int)items.size()-1));
   size_t nTPs = std::min({it.ch.size(), it.tstart.size(), it.sot.size()});
   if (nTPs == 0) return;
@@ -236,7 +236,7 @@ void drawCurrent(){
 
 int main(int argc, char** argv){
   CmdLineParser clp;
-  clp.getDescription() << "> cluster_display - interactive MARLEY cluster viewer (Prev/Next)" << std::endl;
+  clp.getDescription() << "> cluster_display - interactive MARLEY Cluster viewer (Prev/Next)" << std::endl;
   clp.addDummyOption("Main options");
   clp.addOption("clusters", {"--clusters-file"}, "Input clusters ROOT file (required, must contain 'clusters' in filename)");
   clp.addOption("mode", {"--mode"}, "Display mode: clusters | events (default: clusters)");
@@ -359,7 +359,7 @@ int main(int argc, char** argv){
   }
 
   int fake_argc = 0; char** fake_argv = nullptr; TApplication app("cluster_display", &fake_argc, fake_argv);
-  ViewerState::canvas = new TCanvas("cluster_display", "MARLEY cluster viewer", 1200, 800);
+  ViewerState::canvas = new TCanvas("cluster_display", "MARLEY Cluster viewer", 1200, 800);
   ViewerState::idx = 0;
   drawCurrent();
   app.Run();

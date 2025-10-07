@@ -11,7 +11,7 @@
 #include "aggregate_clusters_within_volume_libs.h"
 // #include "position_calculator.h"
 #include "cluster_to_root_libs.h"
-#include "cluster.h"
+#include "Cluster.h"
 #include "create_volume_clusters_libs.h"
 
 
@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
     std::vector<TriggerPrimitive*> tps;
     for (int i = 0; i < tps_object.size(); i++) tps.push_back(&tps_object[i]);
     
-    std::vector<cluster> clusters           = read_clusters_from_root(cluster_filename);
+    std::vector<Cluster> clusters           = read_clusters_from_root(cluster_filename);
     std::vector<float> predictions_vector   = read_predictions(predictions);
 
     LogInfo << "Number of clusters: " << clusters.size() << std::endl;
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
     LogInfo << "Number of tps: " << tps.size() << std::endl;
 
 
-    std::vector<cluster> clusters_in_volume;
+    std::vector<Cluster> clusters_in_volume;
     for (int i = 0; i < clusters.size(); i++) {
         if (i % 100 == 0) {
             LogInfo << "Cluster number: " << i << std::endl;
@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
             continue;
         }
         std::vector<TriggerPrimitive*> tps_around_cluster = get_tps_around_cluster(tps, clusters[i], radius);
-        cluster c(tps_around_cluster);
+        Cluster c(tps_around_cluster);
         c.set_true_pos(clusters[i].get_true_pos());
         c.set_true_dir(clusters[i].get_true_dir());
         c.set_true_energy(clusters[i].get_true_energy());

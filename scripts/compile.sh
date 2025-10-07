@@ -79,8 +79,9 @@ else
         echo -e "  Make failed. Stopping execution.\n"
         cd $pwd # go back to the original directory
         return 1
+    else
+        echo -e "  Compilation finished successfully!\n"
     fi
 
-    echo -e "  Compilation finished successfully!\n"
     cd $pwd # go back to the original directory
 fi

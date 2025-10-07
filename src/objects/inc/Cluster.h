@@ -1,10 +1,7 @@
 #ifndef CLUSTER_H
 #define CLUSTER_H
 
-#include <vector>
-#include <cmath>
-#include <map>
-#include <string>
+#include "root.h"
 
 #include "TriggerPrimitive.hpp"
 #include "utils.h"
@@ -12,12 +9,12 @@
 extern std::map<std::string, int> variables_to_index;
 
 // could inherit from TP, but it might be just added complexity
-class cluster {
+class Cluster {
     public:
-        cluster() {}
+        Cluster() {}
         // cluster(std::vector<std::vector<double>> tps) { tps_ = tps; true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_neutrino_energy_ = 0; true_label_ = -99; true_interaction_ = -99; supernova_tp_fraction_ = 0; update_cluster_info(); }
-        cluster(std::vector<TriggerPrimitive*> tps);// : tps_(tps) { true_dir_ = {0, 0, 0}; true_pos_ = {0, 0, 0}; reco_pos_ = {0, 0, 0}; min_distance_from_true_pos_ = 0; true_neutrino_energy_ = 0; true_label_ = -99; true_interaction_ = -99; supernova_tp_fraction_ = 0; update_cluster_info(); }
-        ~cluster() {}
+        Cluster(std::vector<TriggerPrimitive*> tps);
+        ~Cluster() {}
 
         void update_cluster_info();
         
@@ -70,15 +67,11 @@ class cluster {
         std::string true_label_ = {"UNKNOWN"}; // could be nicer than this TODO
         float supernova_tp_fraction_ {0.0f};
         float generator_tp_fraction_ {0.0f};
-        // float total_charge_; // could keep 
+        float total_charge_ {0.0f};
+        float total_energy_ {0.0f};
 };
 
-float vectorDistance(std::vector<float> a, std::vector<float> b);
-std::vector<float> calculate_position(TriggerPrimitive *tp);
-std::vector<std::vector<float>> validate_position_calculation(std::vector<TriggerPrimitive> tps);
-float distance(cluster cluster1, cluster cluster2);
-float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign);
-float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign);
+float distance(Cluster cluster1, Cluster cluster2);
 
 #endif // CLUSTER_H
 

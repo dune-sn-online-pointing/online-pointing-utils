@@ -1,6 +1,7 @@
 #include "functions.h"
-#include "global.h"
-#include "root.h"
+#include <map>
+#include <string>
+#include <TError.h>
 
 const std::map<std::string, ELogLevel> rootVerbLevelMap = {
     {"kInfo", static_cast<ELogLevel>(kInfo)},

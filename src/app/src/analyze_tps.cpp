@@ -1,39 +1,9 @@
-#include <TROOT.h>
-#include <TCanvas.h>
-#include <TH1F.h>
-#include <TH2F.h>
-#include <TLegend.h>
-#include <TLatex.h>
-#include <TText.h>
-#include <TGraph.h>
-#include <TDatime.h>
-#include <TFile.h>
-#include <TTree.h>
-#include <TPad.h>
-#include <TStyle.h>
-#include <TSystem.h>
-#include <TF1.h>
-// Includes
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <map>
-#include <set>
-#include <algorithm>
-#include <sstream>
-#include <cctype>
-#include <cstdio>
-#include <filesystem>
-#include <nlohmann/json.hpp>
-
-// Project includes
-#include "CmdLineParser.h"
-#include "Logger.h"
+#include "functions.h"
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 int main(int argc, char* argv[]) {
+
     CmdLineParser clp;
     clp.getDescription() << "> analyze_tps app - Generate trigger primitive analysis plots from *_tps_bktr<N>.root files." << std::endl;
     clp.addDummyOption("Main options");
@@ -151,6 +121,10 @@ int main(int argc, char* argv[]) {
     // Get ToT cut from configuration
     int tot_cut = j.value("tot_cut", 1); // default to 5
     bool verboseMode = clp.isOptionTriggered("verboseMode");
+    bool debugMode = j.value("debug_mode", false);
+    // Convert string to ROOT verbosity constant
+    int rootVerbosity = stringToRootLevel(j.value("root_verbosity", "kWarning"));
+    gErrorIgnoreLevel = rootVerbosity;
     // We'll compute per-plane entry counts while looping
     int nentries_X = 0;
     int nentries_U = 0;
@@ -275,7 +249,7 @@ int main(int argc, char* argv[]) {
     // Process all input files
     LogInfo << "Processing " << inputs.size() << " input file(s)..." << std::endl;
     for (const auto& input_file : inputs) {
-        LogInfo << "Opening file: " << input_file << std::endl;
+        if (verboseMode)LogInfo << "Opening file: " << input_file << std::endl;
         
         TFile* file = TFile::Open(input_file.c_str());
         if (!file || file->IsZombie()) {
@@ -286,24 +260,59 @@ int main(int argc, char* argv[]) {
 
         // Find the trigger primitives tree
         TTree* tpTree = nullptr;
+        TTree* neutrinosTree = nullptr;
         if (auto* dir = file->GetDirectory("tps")) {
             tpTree = dynamic_cast<TTree*>(dir->Get("tps"));
-        }
-        if (!tpTree) {
-            tpTree = dynamic_cast<TTree*>(file->Get("tps_tree"));
-        }
-        if (!tpTree) {
-            tpTree = dynamic_cast<TTree*>(file->Get("tps"));
-        }
-        
+            neutrinosTree = dynamic_cast<TTree*>(dir->Get("neutrinos"));
+        }        
         if (!tpTree) {
             LogWarning << "No trigger primitives tree found in file: " << input_file << std::endl;
             file->Close();
             delete file;
             continue;
         }
+        if (!neutrinosTree) {
+            LogWarning << "No neutrinos tree found in file: " << input_file << std::endl;
+        }
 
-        LogInfo << "Found TP tree with " << tpTree->GetEntries() << " entries" << std::endl;
+        int nTPs = tpTree->GetEntries();
+        int nNeutrinos = neutrinosTree->GetEntries();
+
+        if (verboseMode) LogInfo << "Found TP tree with " << nTPs << " entries" << std::endl;
+        if (verboseMode) LogInfo << "Found Neutrinos tree with " <<  nNeutrinos << " entries" << std::endl;
+
+        // Set up branches to read neutrino information
+        Int_t nu_event = 0;
+        Int_t nu_energy = 0.0;
+        Float_t nu_x = 0.0;
+        Float_t nu_y = 0.0;
+        Float_t nu_z = 0.0;
+        Float_t nu_Px = 0.0;
+        Float_t nu_Py = 0.0;
+        Float_t nu_Pz = 0.0;
+
+        neutrinosTree->SetBranchAddress("event", &nu_event);
+        neutrinosTree->SetBranchAddress("en", &nu_energy);
+        neutrinosTree->SetBranchAddress("x", &nu_x);
+        neutrinosTree->SetBranchAddress("y", &nu_y);
+        neutrinosTree->SetBranchAddress("z", &nu_z);
+        neutrinosTree->SetBranchAddress("Px", &nu_Px);
+        neutrinosTree->SetBranchAddress("Py", &nu_Py);
+        neutrinosTree->SetBranchAddress("Pz", &nu_Pz);
+
+        // Fill up neutrino info map
+        for (Long64_t i = 0; i < nNeutrinos; ++i) {
+            neutrinosTree->GetEntry(i);
+            NeutrinoInfo& info = event_nu_info[nu_event];
+            info.en = nu_energy;
+            info.x = nu_x; info.y = nu_y; info.z = nu_z;
+            info.hasXYZ = true;
+            // Estimate time offset from z position and speed of light (in cm/ns)
+            info.t = nu_z / 29.9792458; // speed of light in cm/ns
+            info.hasT = true;
+            event_nu_energy[nu_event] = nu_energy;
+            // event_time_offsets[nu_event] = info.t;
+        }
 
         // Set up branch addresses for reading TPs
         Int_t tp_event = 0;
@@ -331,15 +340,14 @@ int main(int argc, char* argv[]) {
         }
 
         // First pass: read all entries and fill histograms
-        Long64_t nentries = tpTree->GetEntries();
-        for (Long64_t i = 0; i < nentries; ++i) {
+        for (Long64_t i = 0; i < nTPs; ++i) {
             tpTree->GetEntry(i);
             
             // Apply ToT cut
             if (static_cast<int>(samples_over_threshold) <= tot_cut) continue;
             
             // Determine plane based on view field
-            std::string plane = *view; // Use view directly since it contains U, V, X
+            std::string plane = *view; // Use view directly since it contains U, V
             
             // Count entries per plane
             if (plane == "X") nentries_X++;
@@ -440,8 +448,6 @@ int main(int argc, char* argv[]) {
     // Summary info text
     TText *tot_info = new TText(0.5, 0.5, "Summary of TP analysis results");
     
-    // ... (continue moving all code into main) ...
-
     // (The rest of the code from the file should be inside this main function)
 
     // ... (move all code that was after this closing brace into main) ...
@@ -477,6 +483,17 @@ int main(int argc, char* argv[]) {
     h_peak_X_coarse->Rebin(2);
     h_peak_U_coarse->Rebin(2);
     h_peak_V_coarse->Rebin(2);
+
+    // Prepare coarse clones for MARLEY histograms as well
+    TH1F *h_peak_all_marley_coarse = (TH1F*) h_peak_all_marley_fine->Clone("h_peak_all_marley_coarse");
+    TH1F *h_peak_X_marley_coarse   = (TH1F*) h_peak_X_marley_fine->Clone("h_peak_X_marley_coarse");
+    TH1F *h_peak_U_marley_coarse   = (TH1F*) h_peak_U_marley_fine->Clone("h_peak_U_marley_coarse");
+    TH1F *h_peak_V_marley_coarse   = (TH1F*) h_peak_V_marley_fine->Clone("h_peak_V_marley_coarse");
+    // Rebin MARLEY histograms to match the coarse binning
+    h_peak_all_marley_coarse->Rebin(2);
+    h_peak_X_marley_coarse->Rebin(2);
+    h_peak_U_marley_coarse->Rebin(2);
+    h_peak_V_marley_coarse->Rebin(2);
 
     // Configure styles for non-zoomed (coarse) display
     auto style_hist = [](TH1F* h, Color_t line, Color_t fill){
@@ -515,6 +532,11 @@ int main(int argc, char* argv[]) {
     style_peak_m_overlay(h_peak_X_marley_fine);
     style_peak_m_overlay(h_peak_U_marley_fine);
     style_peak_m_overlay(h_peak_V_marley_fine);
+    // Apply same overlay style to coarse MARLEY histograms
+    style_peak_m_overlay(h_peak_all_marley_coarse);
+    style_peak_m_overlay(h_peak_X_marley_coarse);
+    style_peak_m_overlay(h_peak_U_marley_coarse);
+    style_peak_m_overlay(h_peak_V_marley_coarse);
 
     // Create canvas for ADC peak histograms (Page 2)
     if (verboseMode) LogInfo << "Creating ADC peak plots..." << std::endl;
@@ -524,41 +546,41 @@ int main(int argc, char* argv[]) {
     c1->cd(1);
     gPad->SetLogy();
     h_peak_all_coarse->Draw("HIST");
-    if (h_peak_all_marley_fine && h_peak_all_marley_fine->GetEntries()>0) h_peak_all_marley_fine->Draw("HIST SAME");
+    if (h_peak_all_marley_coarse && h_peak_all_marley_coarse->GetEntries()>0) h_peak_all_marley_coarse->Draw("HIST SAME");
     TLegend *leg_all = new TLegend(0.50, 0.78, 0.88, 0.92);
     leg_all->SetBorderSize(0);
     leg_all->AddEntry(h_peak_all_coarse, "All Planes (All)", "f");
-    if (h_peak_all_marley_fine && h_peak_all_marley_fine->GetEntries()>0) leg_all->AddEntry(h_peak_all_marley_fine, "All Planes (MARLEY)", "l");
+    if (h_peak_all_marley_coarse && h_peak_all_marley_coarse->GetEntries()>0) leg_all->AddEntry(h_peak_all_marley_coarse, "All Planes (MARLEY)", "l");
     leg_all->Draw();
 
     c1->cd(2);
     gPad->SetLogy();
     h_peak_X_coarse->Draw("HIST");
-    if (h_peak_X_marley_fine && h_peak_X_marley_fine->GetEntries()>0) h_peak_X_marley_fine->Draw("HIST SAME");
+    if (h_peak_X_marley_coarse && h_peak_X_marley_coarse->GetEntries()>0) h_peak_X_marley_coarse->Draw("HIST SAME");
     TLegend *leg_X = new TLegend(0.50, 0.78, 0.88, 0.92);
     leg_X->SetBorderSize(0);
     leg_X->AddEntry(h_peak_X_coarse, "Plane X (All)", "f");
-    if (h_peak_X_marley_fine && h_peak_X_marley_fine->GetEntries()>0) leg_X->AddEntry(h_peak_X_marley_fine, "Plane X (MARLEY)", "l");
+    if (h_peak_X_marley_coarse && h_peak_X_marley_coarse->GetEntries()>0) leg_X->AddEntry(h_peak_X_marley_coarse, "Plane X (MARLEY)", "l");
     leg_X->Draw();
 
     c1->cd(3);
     gPad->SetLogy();
     h_peak_U_coarse->Draw("HIST");
-    if (h_peak_U_marley_fine && h_peak_U_marley_fine->GetEntries()>0) h_peak_U_marley_fine->Draw("HIST SAME");
+    if (h_peak_U_marley_coarse && h_peak_U_marley_coarse->GetEntries()>0) h_peak_U_marley_coarse->Draw("HIST SAME");
     TLegend *leg_U = new TLegend(0.50, 0.78, 0.88, 0.92);
     leg_U->SetBorderSize(0);
     leg_U->AddEntry(h_peak_U_coarse, "Plane U (All)", "f");
-    if (h_peak_U_marley_fine && h_peak_U_marley_fine->GetEntries()>0) leg_U->AddEntry(h_peak_U_marley_fine, "Plane U (MARLEY)", "l");
+    if (h_peak_U_marley_coarse && h_peak_U_marley_coarse->GetEntries()>0) leg_U->AddEntry(h_peak_U_marley_coarse, "Plane U (MARLEY)", "l");
     leg_U->Draw();
 
     c1->cd(4);
     gPad->SetLogy();
     h_peak_V_coarse->Draw("HIST");
-    if (h_peak_V_marley_fine && h_peak_V_marley_fine->GetEntries()>0) h_peak_V_marley_fine->Draw("HIST SAME");
+    if (h_peak_V_marley_coarse && h_peak_V_marley_coarse->GetEntries()>0) h_peak_V_marley_coarse->Draw("HIST SAME");
     TLegend *leg_V = new TLegend(0.50, 0.78, 0.88, 0.92);
     leg_V->SetBorderSize(0);
     leg_V->AddEntry(h_peak_V_coarse, "Plane V (All)", "f");
-    if (h_peak_V_marley_fine && h_peak_V_marley_fine->GetEntries()>0) leg_V->AddEntry(h_peak_V_marley_fine, "Plane V (MARLEY)", "l");
+    if (h_peak_V_marley_coarse && h_peak_V_marley_coarse->GetEntries()>0) leg_V->AddEntry(h_peak_V_marley_coarse, "Plane V (MARLEY)", "l");
     leg_V->Draw();
 
     // Save second page of PDF
@@ -923,7 +945,7 @@ int main(int argc, char* argv[]) {
     { TLegend *leg = new TLegend(0.5, 0.8, 0.7, 0.9); leg->AddEntry(h_peak_U_marley_clone, "Plane U (MARLEY)", "f"); leg->Draw(); }
     c1_m_zoom->cd(4); gPad->SetLogy(); h_peak_V_marley_clone->GetXaxis()->SetRangeUser(0, 250); h_peak_V_marley_clone->SetTitle("ADC Peak Histogram (MARLEY, Zoomed 0-250)"); h_peak_V_marley_clone->Draw("HIST");
     { TLegend *leg = new TLegend(0.5, 0.8, 0.7, 0.9); leg->AddEntry(h_peak_V_marley_clone, "Plane V (MARLEY)", "f"); leg->Draw(); }
-    c1_m_zoom->SaveAs(pdf_output.c_str());
+    // c1_m_zoom->SaveAs(pdf_output.c_str());
     
     // Cleanup cloned histograms
     delete h_peak_all_marley_clone;
@@ -987,7 +1009,7 @@ int main(int argc, char* argv[]) {
     //         int end = std::min(start + per_page, total);
     //         TCanvas *c_evt = new TCanvas((std::string("c_evt_") + std::to_string(start/per_page)).c_str(), "Generator labels per event", 1500, 1000);
     //         c_evt->Divide(3,3);
-    //         std::vector<TH1F*> to_delete;
+    //                 std::vector<TH1F*> to_delete;
     //         for (int idx = start; idx < end; ++idx) {
     //             int pad = (idx - start) + 1;
     //             c_evt->cd(pad);
@@ -1040,7 +1062,7 @@ int main(int argc, char* argv[]) {
             if (it != event_nu_energy.end()) { xs.push_back(it->second); ys.push_back((double)marleyCount); }
         }
         if (!xs.empty()) {
-            TCanvas *c_scatter = new TCanvas("c_marley_vs_enu", "MARLEY TPs vs neutrino energy", 1000, 700);
+            TCanvas *c_scatter = new TCanvas("c_marley_vs_enu", "MARLEY TPs per event vs neutrino energy", 1000, 700);
             TGraph *gr = new TGraph((int)xs.size(), xs.data(), ys.data());
             gr->SetTitle("MARLEY TPs per event vs neutrino energy;E_{#nu} [MeV];MARLEY TPs");
             gr->SetMarkerStyle(20); gr->SetMarkerColor(kRed+1); gr->SetLineColor(kRed+1);
@@ -1049,10 +1071,69 @@ int main(int argc, char* argv[]) {
             c_scatter->SaveAs(pdf_output.c_str());
             delete gr; delete c_scatter;
         }
+        else {
+            LogWarning << "No events with both MARLEY TPs and neutrino energy found; skipping MARLEY TPs vs E_nu scatter plot." << std::endl;
+        }
+    }
+
+
+    // Scatter plot: sum of MARLEY TP ADC integrals per event vs neutrino energy
+    {
+        std::vector<double> xs; xs.reserve(event_label_counts.size());
+        std::vector<double> ys; ys.reserve(event_label_counts.size());
+        auto toLower = [](std::string s){ std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c); }); return s; };
+        // For each event, sum ADC integrals of MARLEY TPs
+        std::map<int, double> marley_adc_integral_sum;
+        for (const auto& kv : event_label_counts) {
+            int evt = kv.first;
+            marley_adc_integral_sum[evt] = 0.0;
+        }
+        // Loop over all TPs to accumulate MARLEY ADC integrals per event
+        for (const auto& input_file : inputs) {
+            TFile* file = TFile::Open(input_file.c_str(), "READ");
+            if (!file || file->IsZombie()) continue;
+            TTree* tpTree = (TTree*)file->Get("tps/tps");
+            if (!tpTree) { file->Close(); delete file; continue; }
+            Int_t tp_event = 0;
+            UInt_t adc_integral = 0;
+            std::string* generator_name = new std::string();
+            tpTree->SetBranchAddress("event", &tp_event);
+            tpTree->SetBranchAddress("adc_integral", &adc_integral);
+            tpTree->SetBranchAddress("generator_name", &generator_name);
+            for (Long64_t i = 0; i < tpTree->GetEntries(); ++i) {
+                tpTree->GetEntry(i);
+                std::string gen_lower = *generator_name;
+                std::transform(gen_lower.begin(), gen_lower.end(), gen_lower.begin(), [](unsigned char c){ return std::tolower(c); });
+                bool is_marley = (gen_lower.find("marley") != std::string::npos);
+                if (is_marley) {
+                    marley_adc_integral_sum[tp_event] += adc_integral;
+                }
+            }
+            file->Close(); delete file;
+        }
+        // Now fill the graph
+        for (const auto& kv : marley_adc_integral_sum) {
+            int evt = kv.first;
+            double sum_adc = kv.second;
+            auto itE = event_nu_energy.find(evt);
+            if (itE != event_nu_energy.end()) {
+                xs.push_back(itE->second); ys.push_back(sum_adc);
+            }
+        }
+        if (!xs.empty()) {
+            TCanvas *c_scatter_adc = new TCanvas("c_marley_adc_vs_enu", "Sum MARLEY ADC integral vs neutrino energy", 1000, 700);
+            TGraph *gr_adc = new TGraph((int)xs.size(), xs.data(), ys.data());
+            gr_adc->SetTitle("Sum MARLEY TP ADC integral per event vs neutrino energy;E_{#nu} [MeV];Sum ADC integral (MARLEY TPs)");
+            gr_adc->SetMarkerStyle(20); gr_adc->SetMarkerColor(kMagenta+2); gr_adc->SetLineColor(kMagenta+2);
+            gr_adc->Draw("AP");
+            gPad->SetGridx(); gPad->SetGridy();
+            c_scatter_adc->SaveAs(pdf_output.c_str());
+            delete gr_adc; delete c_scatter_adc;
+        }
     }
 
     // New page(s): Neutrino kinematics table (per event)
-    if (!event_nu_info.empty()) {
+    if (!event_nu_info.empty() && verboseMode) {
         std::vector<int> nu_events; nu_events.reserve(event_nu_info.size());
         for (const auto &kv : event_nu_info) nu_events.push_back(kv.first);
         std::sort(nu_events.begin(), nu_events.end());
@@ -1089,64 +1170,6 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Time offset corrections histogram
-    if (!event_time_offsets.empty()) {
-        // Collect all unique offset values
-        std::set<double> unique_offsets;
-        for (const auto &kv : event_time_offsets) {
-            unique_offsets.insert(kv.second);
-        }
-        if (verboseMode) LogInfo << "Time offset analysis: " << unique_offsets.size() << " unique offset values across " << event_time_offsets.size() << " events" << std::endl;
-        
-        // Create histogram for time offset distribution
-        double min_offset = *unique_offsets.begin();
-        double max_offset = *unique_offsets.rbegin();
-        
-        // Determine binning
-        int nbins = 50; // default
-        if (unique_offsets.size() <= 10) nbins = std::max(10, (int)unique_offsets.size() + 5);
-        else if (unique_offsets.size() <= 50) nbins = (int)unique_offsets.size() + 10;
-        
-        // Extend range slightly for better display
-        double range = std::max(1.0, max_offset - min_offset);
-        double bin_lo = min_offset - 0.05 * range;
-        double bin_hi = max_offset + 0.05 * range;
-        
-        TCanvas *c_offset = new TCanvas("c_time_offset", "Time Offset Corrections", 1000, 700);
-        TH1F *h_offset = new TH1F("h_time_offset", "Time Offset Corrections per Event;Time Offset [TPC ticks];Events", nbins, bin_lo, bin_hi);
-        h_offset->SetLineColor(kBlue+1);
-        h_offset->SetFillColorAlpha(kBlue+1, 0.3);
-        h_offset->SetStats(1);
-        
-        for (const auto &kv : event_time_offsets) {
-            h_offset->Fill(kv.second);
-        }
-        
-        c_offset->cd();
-        h_offset->Draw("HIST");
-        // Remove grid as requested
-        
-        // Add text summary
-        TLatex latex; latex.SetNDC(); latex.SetTextFont(42); latex.SetTextSize(0.03);
-        latex.DrawLatex(0.15, 0.82, Form("Total events: %d", (int)event_time_offsets.size()));
-        latex.DrawLatex(0.15, 0.78, Form("Events with offset > 0: %d", (int)std::count_if(event_time_offsets.begin(), event_time_offsets.end(), [](const auto& p){return p.second > 0;})));
-        latex.DrawLatex(0.15, 0.74, Form("Range: [%.1f, %.1f] TPC ticks", min_offset, max_offset));
-        if (unique_offsets.size() <= 8) {  // Increased limit to show more values
-            latex.DrawLatex(0.15, 0.70, "Unique values (all events):");
-            int line = 0;
-            for (double val : unique_offsets) {
-                if (line < 6) { // increased display limit
-                    int count = (int)std::count_if(event_time_offsets.begin(), event_time_offsets.end(), [val](const auto& p){return std::abs(p.second - val) < 0.1;});
-                    latex.DrawLatex(0.17, 0.66 - line*0.035, Form("%.0f ticks (%d events)", val, count)); // Use %.0f for cleaner display
-                    line++;
-                } else break;
-            }
-        }
-        
-        c_offset->SaveAs(pdf_output.c_str());
-        delete h_offset; delete c_offset;
-    }
-
     // Diagnostics: MARLEY presence per event (case-insensitive), and UNKNOWN counts
     {
         auto toLower = [](std::string s){ std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c); }); return s; };
@@ -1178,7 +1201,8 @@ int main(int argc, char* argv[]) {
         }
         LogInfo << "MARLEY diagnostic: " << events_with_marley << "/" << total_events << " events contain MARLEY TPs after ToT cut." << std::endl;
         if (events_without_marley > 0) {
-            LogInfo << "Events without MARLEY TPs: " << events_without_marley << " (showing up to 10):" << std::endl;
+            double pct_without_marley = (total_events > 0) ? (100.0 * events_without_marley / total_events) : 0.0;
+            LogInfo << "Events without MARLEY TPs: " << events_without_marley << " (" << pct_without_marley << "%, showing up to 10):" << std::endl;
             std::ostringstream oss; for (size_t i=0;i<sample_missing_ids.size();++i){ if(i) oss << ", "; oss << sample_missing_ids[i]; }
             LogInfo << "  IDs: [" << oss.str() << "]" << std::endl;
             LogInfo << "  Total UNKNOWN TPs across missing events: " << unknown_total_in_missing << std::endl;
@@ -1279,27 +1303,7 @@ int main(int argc, char* argv[]) {
         // Final ROOT cleanup
         gROOT->GetListOfCanvases()->Clear();
         gROOT->GetListOfFunctions()->Clear();
-    gROOT->GetListOfFunctions()->Clear();
 
-    // Print final summary of produced files and locations
-    if (!producedFiles.empty()) {
-        LogInfo << "\nSummary of produced files (" << producedFiles.size() << "):" << std::endl;
-        for (const auto& p : producedFiles) {
-            LogInfo << " - " << p << std::endl;
-        }
-        std::set<std::string> outDirs;
-        for (const auto& p : producedFiles) {
-            auto pos = p.find_last_of("/\\");
-            outDirs.insert(pos == std::string::npos ? std::string(".") : p.substr(0, pos));
-        }
-        LogInfo << "Output location(s):" << std::endl;
-        for (const auto& d : outDirs) {
-            LogInfo << " - " << d << std::endl;
-        }
-    } else {
-        LogWarning << "No output files were produced." << std::endl;
-    }
-
-    LogInfo << "analyze_tps completed successfully!" << std::endl;
+    LogInfo << "App analyze_tps completed successfully!" << std::endl;
     return 0;
 }
