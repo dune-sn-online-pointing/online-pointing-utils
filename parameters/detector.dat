@@ -2,5 +2,5 @@
 Detector parameters
 *******************************************************************************
 
-< detector.name = "ProtoDUNE-VD" >               Detector name
+< detector.name = "FD-VD" >               Detector name
 < detector.n_apas = 4 >                         Number of APAs

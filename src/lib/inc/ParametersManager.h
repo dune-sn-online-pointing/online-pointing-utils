@@ -1,13 +1,7 @@
 #ifndef PARAMETERS_MANAGER_H
 #define PARAMETERS_MANAGER_H
 
-#include <map>
-#include <string>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <cstdlib>
-#include <stdexcept>
+#include "std.h"
 #include <cmath>
 
 class ParametersManager {

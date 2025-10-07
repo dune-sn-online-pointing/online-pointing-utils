@@ -1,13 +1,14 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <map>
-#include <string>
-#include <vector>
-#include <cmath>
-#include <set>
+#include "std.h"
+#include <nlohmann/json.hpp>
 
 #include "ParametersManager.h"
+
+// File utility functions
+std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix = "_tpstream.root");
+std::vector<std::string> find_input_files(const nlohmann::json& j, const std::vector<std::string>& file_suffixes);
 
 // #include "TriggerPrimitive.hpp"
 

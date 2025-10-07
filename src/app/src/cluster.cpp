@@ -11,6 +11,8 @@
 #include "cluster_to_root_libs.h"
 #include "Cluster.h"
 #include "functions.h"
+#include "ParametersManager.h"
+#include "utils.h"
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -19,6 +21,7 @@ int main(int argc, char* argv[]) {
     clp.getDescription() << "> Cluster app - build clusters from *_tps.root files."<< std::endl;
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
+    clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
     clp.addOption("outFolder", {"--output-folder"}, "Output folder path (default: data)");
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
     clp.addDummyOption();
@@ -28,15 +31,34 @@ int main(int argc, char* argv[]) {
     clp.parseCmdLine(argc, argv);
     LogThrowIf( clp.isNoOptionTriggered(), "No option was provided." );
 
+    // Load parameters
+    ParametersManager::getInstance().loadParameters();
+
     std::string json = clp.getOptionVal<std::string>("json");
     std::ifstream i(json); nlohmann::json j; i >> j;
 
-    std::vector<std::string> inputs;
-    if (j.contains("filename") && !j["filename"].get<std::string>().empty()) inputs.push_back(j["filename"].get<std::string>());
-    if (j.contains("filelist") && !j["filelist"].get<std::string>().empty()) {
-        std::ifstream lf(j["filelist"].get<std::string>()); std::string line; while (std::getline(lf, line)) { if (line.empty() || line[0]=='#') continue; inputs.push_back(line); }
+    // Use utility function for file finding
+    std::vector<std::string> inputs = find_input_files(j, "_tps.root");
+    
+    // Override with CLI input if provided
+    if (clp.isOptionTriggered("inputFile")) {
+        std::string input_file = clp.getOptionVal<std::string>("inputFile");
+        inputs.clear();
+        if (input_file.find("_tps.root") != std::string::npos) {
+            inputs.push_back(input_file);
+        } else {
+            std::ifstream lf(input_file);
+            std::string line;
+            while (std::getline(lf, line)) {
+                if (!line.empty() && line[0] != '#') {
+                    inputs.push_back(line);
+                }
+            }
+        }
     }
-    LogThrowIf(inputs.empty(), "Provide 'filename' or 'filelist' in JSON.");
+
+    LogInfo << "Number of valid files: " << inputs.size() << std::endl;
+    LogThrowIf(inputs.empty(), "No valid input files found.");
 
     std::string outfolder = clp.isOptionTriggered("outFolder") ? clp.getOptionVal<std::string>("outFolder") : std::string("data");
 

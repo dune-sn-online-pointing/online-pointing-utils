@@ -10,6 +10,8 @@
 
 #include "CmdLineParser.h"
 #include "Logger.h"
+#include "ParametersManager.h"
+#include "utils.h"
 
 // ROOT
 #include <TFile.h>
@@ -32,6 +34,7 @@ int main(int argc, char* argv[]){
   clp.getDescription() << "> extract_calibration - compute per-event MARLEY TP ADC-integral sums and correlate with true energies" << std::endl;
   clp.addDummyOption("Main options");
   clp.addOption("json", {"-j","--json"}, "JSON file containing configuration");
+  clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
   clp.addOption("outFolder", {"--output-folder"}, "Output folder path (optional)");
   clp.addTriggerOption("verboseMode", {"-v"}, "Verbose");
   clp.addDummyOption();
@@ -40,20 +43,37 @@ int main(int argc, char* argv[]){
   clp.parseCmdLine(argc, argv);
   LogThrowIf(clp.isNoOptionTriggered(), "No option was provided.");
 
+  // Load parameters
+  ParametersManager::getInstance().loadParameters();
+
   std::string jsonPath = clp.getOptionVal<std::string>("json");
   std::ifstream jf(jsonPath); LogThrowIf(!jf.is_open(), "Could not open JSON: " << jsonPath);
   nlohmann::json j; jf >> j;
 
   auto resolvePath = [](const std::string& p)->std::string{ std::error_code ec; auto abs=std::filesystem::absolute(p, ec); return ec? p : abs.string(); };
 
-  std::vector<std::string> inputs;
-  if (j.contains("filename") && !j["filename"].get<std::string>().empty()) inputs.push_back(resolvePath(j["filename"]));
-  if (j.contains("filelist") && !j["filelist"].get<std::string>().empty()){
-    std::ifstream fl(j["filelist"].get<std::string>());
-    LogThrowIf(!fl.is_open(), "Could not open file list: " << j["filelist"].get<std::string>());
-    std::string line; while(std::getline(fl,line)){ if(line.empty()||line[0]=='#') continue; inputs.push_back(resolvePath(line)); }
+  // Use utility function for file finding (assume _tps_bktr files for calibration)
+  std::vector<std::string> inputs = find_input_files(j, "_tps_bktr");
+  
+  // Override with CLI input if provided
+  if (clp.isOptionTriggered("inputFile")) {
+      std::string input_file = clp.getOptionVal<std::string>("inputFile");
+      inputs.clear();
+      if (input_file.find("_tps_bktr") != std::string::npos || input_file.find(".root") != std::string::npos) {
+          inputs.push_back(input_file);
+      } else {
+          std::ifstream lf(input_file);
+          std::string line;
+          while (std::getline(lf, line)) {
+              if (!line.empty() && line[0] != '#') {
+                  inputs.push_back(line);
+              }
+          }
+      }
   }
-  LogThrowIf(inputs.empty(), "Provide 'filename' or 'filelist' in JSON.");
+
+  LogInfo << "Number of valid files: " << inputs.size() << std::endl;
+  LogThrowIf(inputs.empty(), "No valid input files found.");
 
   std::string outFolder;
   if (clp.isOptionTriggered("outFolder")) outFolder = clp.getOptionVal<std::string>("outFolder");

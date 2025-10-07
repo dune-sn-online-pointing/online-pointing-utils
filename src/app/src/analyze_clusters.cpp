@@ -27,6 +27,8 @@
 #include <TText.h>
 
 #include "cluster_to_root_libs.h"
+#include "ParametersManager.h"
+#include "utils.h"
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -37,6 +39,7 @@ int main(int argc, char* argv[]){
   clp.getDescription() << "> analyze_clusters app - Generate plots from Cluster ROOT files." << std::endl;
   clp.addDummyOption("Main options");
   clp.addOption("json",    {"-j","--json"}, "JSON file containing the configuration");
+  clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
   clp.addOption("outFolder", {"--output-folder"}, "Output folder path (optional)");
   clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
   clp.addDummyOption();
@@ -45,6 +48,9 @@ int main(int argc, char* argv[]){
   LogInfo << clp.getConfigSummary() << std::endl << std::endl;
   clp.parseCmdLine(argc, argv);
   LogThrowIf(clp.isNoOptionTriggered(), "No option was provided.");
+
+  // Load parameters
+  ParametersManager::getInstance().loadParameters();
 
   // Avoid ROOT auto-ownership of histograms to prevent double deletes on TFile close
   TH1::AddDirectory(kFALSE);
@@ -55,13 +61,28 @@ int main(int argc, char* argv[]){
 
   auto resolvePath = [](const std::string& p)->std::string{ std::error_code ec; auto abs=std::filesystem::absolute(p, ec); return ec? p : abs.string(); };
 
-  std::vector<std::string> inputs;
-  if (j.contains("filename") && !j["filename"].get<std::string>().empty()) inputs.push_back(resolvePath(j["filename"]));
-  if (j.contains("filelist") && !j["filelist"].get<std::string>().empty()){
-    std::ifstream fl(j["filelist"].get<std::string>()); LogThrowIf(!fl.is_open(), "Could not open file list: " << j["filelist" ].get<std::string>());
-    std::string line; while (std::getline(fl,line)){ if(line.empty()||line[0]=='#') continue; inputs.push_back(resolvePath(line)); }
+  // Use utility function for file finding (clusters files)
+  std::vector<std::string> inputs = find_input_files(j, "_clusters");
+  
+  // Override with CLI input if provided
+  if (clp.isOptionTriggered("inputFile")) {
+      std::string input_file = clp.getOptionVal<std::string>("inputFile");
+      inputs.clear();
+      if (input_file.find("_clusters") != std::string::npos || input_file.find(".root") != std::string::npos) {
+          inputs.push_back(input_file);
+      } else {
+          std::ifstream lf(input_file);
+          std::string line;
+          while (std::getline(lf, line)) {
+              if (!line.empty() && line[0] != '#') {
+                  inputs.push_back(line);
+              }
+          }
+      }
   }
-  LogThrowIf(inputs.empty(), "Provide 'filename' or 'filelist' in JSON.");
+
+  LogInfo << "Number of valid files: " << inputs.size() << std::endl;
+  LogThrowIf(inputs.empty(), "No valid input files found.");
 
   std::string outFolder;
   if (clp.isOptionTriggered("outFolder")) outFolder = clp.getOptionVal<std::string>("outFolder");
@@ -117,6 +138,11 @@ int main(int argc, char* argv[]){
   std::map<std::string, TH2F*> ntps_vs_total_charge_plane_h;
   std::vector<double> marley_enu; std::vector<double> marley_ncl; // per event MARLEY Cluster count vs Eν
   std::map<int,int> sn_clusters_per_event; // sum across planes
+  
+  // Marley TP fraction categorization counters (across all planes)
+  int only_marley_clusters = 0;     // generator_tp_fraction = 1.0
+  int partial_marley_clusters = 0;  // 0 < generator_tp_fraction < 1.0
+  int no_marley_clusters = 0;       // generator_tp_fraction = 0.0
 
     auto ensureHist = [](std::map<std::string, TH1F*>& m, const std::string& key, const char* title){
       if (m.count(key)==0){ m[key] = new TH1F((key+"_h").c_str(), title, 100, 0, 1000); m[key]->SetStats(0); m[key]->SetDirectory(nullptr); }
@@ -174,6 +200,16 @@ int main(int argc, char* argv[]){
         h_energy->Fill(total_energy);
         // record event energy when available
         if (true_ne>0) evt_enu[event] = true_ne;
+        
+        // Categorize clusters by Marley TP content
+        if (generator_tp_fraction == 1.0f) {
+          only_marley_clusters++;
+        } else if (generator_tp_fraction > 0.0f && generator_tp_fraction < 1.0f) {
+          partial_marley_clusters++;
+        } else if (generator_tp_fraction == 0.0f) {
+          no_marley_clusters++;
+        }
+        
         // derived variables from vectors
         if (v_adcint && !v_adcint->empty()){
           int max_adc = *std::max_element(v_adcint->begin(), v_adcint->end());
@@ -266,6 +302,39 @@ int main(int argc, char* argv[]){
       TGraph* gr = new TGraph((int)marley_enu.size(), marley_enu.data(), marley_ncl.data());
       gr->SetTitle("MARLEY clusters vs E_{#nu};E_{#nu} [MeV];N_{clusters} (MARLEY)"); gr->SetMarkerStyle(20); gr->SetMarkerColor(kRed+1);
       gr->Draw("AP"); gPad->SetGridx(); gPad->SetGridy(); csc->SaveAs(pdf.c_str()); delete gr; delete csc;
+    }
+
+    // Page: Marley TP fraction categorization
+    {
+      TCanvas* cmarley = new TCanvas("c_ac_marley","Marley TP categorization",900,600);
+      TH1F* hmarley = new TH1F("h_ac_marley","Clusters by Marley TP content;Category;Number of clusters", 3, 0, 3);
+      hmarley->SetStats(0);
+      hmarley->SetFillColor(kBlue+1);
+      hmarley->SetFillStyle(3001);
+      
+      // Set bin labels and contents
+      hmarley->GetXaxis()->SetBinLabel(1, "Only Marley TPs");
+      hmarley->GetXaxis()->SetBinLabel(2, "Partial Marley TPs");
+      hmarley->GetXaxis()->SetBinLabel(3, "No Marley TPs");
+      
+      hmarley->SetBinContent(1, only_marley_clusters);
+      hmarley->SetBinContent(2, partial_marley_clusters);
+      hmarley->SetBinContent(3, no_marley_clusters);
+      
+      cmarley->SetGridy();
+      cmarley->SetBottomMargin(0.15);
+      hmarley->Draw("HIST");
+      
+      // Add text annotations with counts
+      auto text1 = new TText(0.8, only_marley_clusters + 0.05 * hmarley->GetMaximum(), Form("%d", only_marley_clusters));
+      text1->SetTextAlign(22); text1->SetTextSize(0.04); text1->Draw();
+      auto text2 = new TText(1.8, partial_marley_clusters + 0.05 * hmarley->GetMaximum(), Form("%d", partial_marley_clusters));
+      text2->SetTextAlign(22); text2->SetTextSize(0.04); text2->Draw();
+      auto text3 = new TText(2.8, no_marley_clusters + 0.05 * hmarley->GetMaximum(), Form("%d", no_marley_clusters));
+      text3->SetTextAlign(22); text3->SetTextSize(0.04); text3->Draw();
+      
+      cmarley->SaveAs(pdf.c_str()); 
+      delete hmarley; delete cmarley;
     }
 
     // Close PDF and file

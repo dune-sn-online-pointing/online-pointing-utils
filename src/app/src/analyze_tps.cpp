@@ -1,4 +1,6 @@
 #include "functions.h"
+#include "ParametersManager.h"
+#include "utils.h"
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -8,6 +10,7 @@ int main(int argc, char* argv[]) {
     clp.getDescription() << "> analyze_tps app - Generate trigger primitive analysis plots from *_tps_bktr<N>.root files." << std::endl;
     clp.addDummyOption("Main options");
     clp.addOption("json", {"-j", "--json"}, "JSON file containing the configuration");
+    clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
     clp.addOption("outFolder", {"--output-folder"}, "Output folder path (optional)");
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
     clp.addDummyOption();
@@ -16,6 +19,9 @@ int main(int argc, char* argv[]) {
     LogInfo << clp.getConfigSummary() << std::endl << std::endl;
     clp.parseCmdLine(argc, argv);
     LogThrowIf(clp.isNoOptionTriggered(), "No option was provided.");
+
+    // Load parameters
+    ParametersManager::getInstance().loadParameters();
 
     // Parse JSON configuration
     std::string json = clp.getOptionVal<std::string>("json");
@@ -34,89 +40,28 @@ int main(int argc, char* argv[]) {
         outFolder = j.value("output_folder", std::string(""));
     }
 
-    // Get input files from various JSON fields
-    std::vector<std::string> inputs;
+    // Use utility function for file finding
+    std::vector<std::string> inputs = find_input_files(j, std::vector<std::string>{"_tps.root", "_tps_bktr"});
     
-    // First try "filename" field (single file)
-    if (j.contains("filename") && !j["filename"].get<std::string>().empty()) {
-        std::string filepath = j["filename"].get<std::string>();
-        std::error_code ec;
-        auto abs = std::filesystem::absolute(filepath, ec);
-        inputs.push_back(ec ? filepath : abs.string());
-    }
-    
-    // Then try "filelist" field (list file)
-    if (j.contains("filelist") && !j["filelist"].get<std::string>().empty()) {
-        std::ifstream fl(j["filelist"].get<std::string>());
-        LogThrowIf(!fl.is_open(), "Could not open file list: " << j["filelist"].get<std::string>());
-        std::string line;
-        while (std::getline(fl, line)) {
-            if (line.empty() || line[0] == '#') continue;
-            std::error_code ec;
-            auto abs = std::filesystem::absolute(line, ec);
-            inputs.push_back(ec ? line : abs.string());
-        }
-    }
-    
-    // Try "inputFile" field (single file)
-    if (inputs.empty() && j.contains("inputFile") && !j["inputFile"].get<std::string>().empty()) {
-        std::string filepath = j["inputFile"].get<std::string>();
-        std::error_code ec;
-        auto abs = std::filesystem::absolute(filepath, ec);
-        inputs.push_back(ec ? filepath : abs.string());
-    }
-    
-    // Try "inputListFile" field (list file)
-    if (inputs.empty() && j.contains("inputListFile") && !j["inputListFile"].get<std::string>().empty()) {
-        std::ifstream fl(j["inputListFile"].get<std::string>());
-        LogThrowIf(!fl.is_open(), "Could not open input list file: " << j["inputListFile"].get<std::string>());
-        std::string line;
-        while (std::getline(fl, line)) {
-            if (line.empty() || line[0] == '#') continue;
-            std::error_code ec;
-            auto abs = std::filesystem::absolute(line, ec);
-            inputs.push_back(ec ? line : abs.string());
-        }
-    }
-    
-    // Try "inputFolder" + "inputList" combination
-    if (inputs.empty() && j.contains("inputFolder") && !j["inputFolder"].get<std::string>().empty()) {
-        std::string folder = j["inputFolder"].get<std::string>();
-        
-        // If inputList is provided, use those specific files
-        if (j.contains("inputList") && j["inputList"].is_array() && !j["inputList"].empty()) {
-            for (const auto& item : j["inputList"]) {
-                std::string filename = item.get<std::string>();
-                std::string filepath = folder + "/" + filename;
-                std::error_code ec;
-                auto abs = std::filesystem::absolute(filepath, ec);
-                inputs.push_back(ec ? filepath : abs.string());
-            }
+    // Override with CLI input if provided
+    if (clp.isOptionTriggered("inputFile")) {
+        std::string input_file = clp.getOptionVal<std::string>("inputFile");
+        inputs.clear();
+        if (input_file.find("_tps.root") != std::string::npos || input_file.find("_tps_bktr") != std::string::npos) {
+            inputs.push_back(input_file);
         } else {
-            // No specific list provided, scan the folder for .root files
-            try {
-                for (const auto& entry : std::filesystem::directory_iterator(folder)) {
-                    if (entry.is_regular_file()) {
-                        std::string filepath = entry.path().string();
-                        // Look for files that match the pattern *_tps_bktr*.root or *_tps.root
-                        if (filepath.size() >= 5 && filepath.substr(filepath.size()-5) == ".root") {
-                            std::string basename = entry.path().filename().string();
-                            if (basename.find("_tps_bktr") != std::string::npos || 
-                                basename.find("_tps.root") != std::string::npos) {
-                                inputs.push_back(filepath);
-                            }
-                        }
-                    }
+            std::ifstream lf(input_file);
+            std::string line;
+            while (std::getline(lf, line)) {
+                if (!line.empty() && line[0] != '#') {
+                    inputs.push_back(line);
                 }
-                // Sort the found files for consistent processing order
-                std::sort(inputs.begin(), inputs.end());
-            } catch (const std::filesystem::filesystem_error& e) {
-                LogWarning << "Error scanning directory " << folder << ": " << e.what() << std::endl;
             }
         }
     }
-    
-    LogThrowIf(inputs.empty(), "No input files found. Check JSON configuration for inputFile, inputFolder, filelist, or inputListFile fields.");
+
+    LogInfo << "Number of valid files: " << inputs.size() << std::endl;
+    LogThrowIf(inputs.empty(), "No valid input files found.");
 
     // Get ToT cut from configuration
     int tot_cut = j.value("tot_cut", 1); // default to 5

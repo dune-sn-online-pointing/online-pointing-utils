@@ -1,5 +1,4 @@
 #include "ParametersManager.h"
-#include <iostream>
 
 // Global initialization function to load parameters
 namespace {

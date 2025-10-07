@@ -18,6 +18,8 @@
 #include "cluster_to_root_libs.h"
 #include "Cluster.h"
 #include "functions.h"
+#include "ParametersManager.h"
+#include "utils.h"
 
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
@@ -29,6 +31,7 @@ int main(int argc, char* argv[]) {
 
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
+    clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
     clp.addOption("outFolder", {"--output-folder"}, "Output folder path (optional, defaults to input file folder)");
     clp.addOption("outputSuffix", {"--output-suffix"}, "Output filename suffix");
 
@@ -46,6 +49,9 @@ int main(int argc, char* argv[]) {
 
     LogThrowIf( clp.isNoOptionTriggered(), "No option was provided." );
 
+    // Load parameters
+    ParametersManager::getInstance().loadParameters();
+
     LogInfo << "Provided arguments: " << std::endl;
     LogInfo << clp.getValueSummary() << std::endl << std::endl;
 
@@ -54,8 +60,33 @@ int main(int argc, char* argv[]) {
     std::ifstream i(json);
     nlohmann::json j;
     i >> j;
-    std::string list_file = j["filename"];
-    LogInfo << "File with list of tpstreams: " << list_file << std::endl;
+    
+    // Use utility function for file finding
+    std::vector<std::string> filenames = find_input_files(j, "_tpstream.root");
+    
+    // Override with CLI input if provided
+    if (clp.isOptionTriggered("inputFile")) {
+        std::string input_file = clp.getOptionVal<std::string>("inputFile");
+        filenames.clear();
+        if (input_file.find("_tpstream.root") != std::string::npos) {
+            filenames.push_back(input_file);
+        } else {
+            std::ifstream lf(input_file);
+            std::string line;
+            while (std::getline(lf, line)) {
+                if (!line.empty() && line[0] != '#') {
+                    filenames.push_back(line);
+                }
+            }
+        }
+    }
+
+    LogInfo << "Number of valid files: " << filenames.size() << std::endl;
+    LogThrowIf(filenames.empty(), "No valid input files found.");
+    
+    // Determine output folder using first filename if not specified
+    std::string list_file = filenames.empty() ? "" : filenames[0];
+    LogInfo << "Using for output folder reference: " << list_file << std::endl;
     
     // Determine output folder: command line option takes precedence, otherwise use input file folder
     std::string outfolder;
@@ -122,40 +153,6 @@ int main(int argc, char* argv[]) {
     // start the clock
     std::clock_t start = std::clock();
 
-    // filename is the name of the file containing the filenames to read
-    std::vector<std::string> filenames;
-    // read the file containing the filenames and save them in a vector
-    std::ifstream infile(list_file);
-    std::string line;
-    LogInfo<<"Opening file: "<< list_file << std::endl;
-    // read and save the TPs
-    while (std::getline(infile, line)) {
-        // check that the line is not a break point, starting with ###
-        if (line.size() >= 3 && line.substr(0, 3) == "###") break;
-        if (line.empty() || line[0] == '#')continue; // skip empty lines and comments
-        // Extract filename from path and check if it starts with "tpstream"
-        std::string basename = line.substr(line.find_last_of("/\\") + 1);
-        if (basename.length() < 14 || basename.substr(basename.length() - 14) != "_tpstream.root") {
-            LogInfo << "Skipping file (doesn't end with '_tpstream.root'): " << basename << std::endl;
-            continue;
-        }
-        // Check if file exists before adding to filenames vector
-        std::ifstream file_check(line);
-        if (!file_check.good()) {
-            LogInfo << "Skipping file (does not exist): " << line << std::endl;
-            continue;
-        }
-        file_check.close();
-        filenames.push_back(line);
-    }
-    
-    LogInfo << "Number of valid files: " << filenames.size() << std::endl;
-    
-    if (filenames.size() == 0) {
-        LogWarning << "No valid files found! Please check the list of input files." << std::endl;
-        return 1;
-    }
-    
     // TODO: parallelize this
     
     // each entry of the vector is an event

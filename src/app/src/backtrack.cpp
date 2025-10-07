@@ -1,4 +1,5 @@
 #include "global.h"
+#include "utils.h"
 
 #include "cluster_to_root_libs.h"
 #include "Cluster.h"
@@ -7,6 +8,9 @@
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 int main(int argc, char* argv[]) {
+    // Ensure parameters are loaded
+    ParametersManager::getInstance().loadParameters();
+    
     CmdLineParser clp;
     clp.getDescription() << "> backtrack app - extract TPs and attach truth, writing *_tps_bktr<N>.root files (N: backtracker_error_margin)."<< std::endl;
     clp.addDummyOption("Main options");
@@ -79,79 +83,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Priority 2: JSON inputFile (single root)
+    // Priority 2-5: Use utility function for JSON-based file finding
     if (filenames.empty()) {
-        try {
-            if (j.contains("inputFile")) {
-                auto single = j.at("inputFile").get<std::string>();
-                if (!single.empty()) {
-                    LogInfo << "JSON inputFile: " << single << std::endl;
-                    LogThrowIf(!file_exists(single), "inputFile does not exist: " << single);
-                    LogThrowIf(!is_tpstream(single),  "inputFile not a *_tpstream.root: " << single);
-                    filenames.push_back(single);
-                }
-            }
-        } catch (...) { /* ignore */ }
-    }
-
-    // Priority 3: JSON inputFolder (gather *_tpstream.root)
-    if (filenames.empty()) {
-        try {
-            if (j.contains("inputFolder")) {
-                auto folder = j.at("inputFolder").get<std::string>();
-                if (!folder.empty()) {
-                    LogInfo << "JSON inputFolder: " << folder << std::endl;
-                    std::error_code ec;
-                    for (auto const& entry : std::filesystem::directory_iterator(folder, ec)) {
-                        if (ec) break;
-                        if (!entry.is_regular_file()) continue;
-                        std::string p = entry.path().string();
-                        if (!is_tpstream(p)) continue;
-                        if (!file_exists(p)) continue;
-                        filenames.push_back(p);
-                    }
-                    std::sort(filenames.begin(), filenames.end());
-                }
-            }
-        } catch (...) { /* ignore */ }
-    }
-
-    // Priority 4: JSON inputList (array of files)
-    if (filenames.empty()) {
-        try {
-            if (j.contains("inputList") && j.at("inputList").is_array()) {
-                LogInfo << "JSON inputList provided." << std::endl;
-                for (const auto& el : j.at("inputList")) {
-                    if (!el.is_string()) continue;
-                    std::string p = el.get<std::string>();
-                    if (p.empty()) continue;
-                    if (!file_exists(p)) { LogWarning << "Skipping (missing): " << p << std::endl; continue; }
-                    if (!is_tpstream(p)) { LogWarning << "Skipping (not *_tpstream.root): " << p << std::endl; continue; }
-                    filenames.push_back(p);
-                }
-            }
-        } catch (...) { /* ignore */ }
-    }
-
-    // Priority 5: JSON inputListFile (file with list)
-    if (filenames.empty()) {
-        try {
-            if (j.contains("inputListFile")) {
-                auto list_file = j.at("inputListFile").get<std::string>();
-                if (!list_file.empty()) {
-                    LogInfo << "JSON inputListFile: " << list_file << std::endl;
-                    std::ifstream infile(list_file);
-                    std::string line;
-                    while (std::getline(infile, line)) {
-                        if (line.size() >= 3 && line.substr(0,3) == "###") break;
-                        if (line.empty() || line[0] == '#') continue;
-                        if (!file_exists(line)) { LogWarning << "Skipping (missing): " << line << std::endl; continue; }
-                        if (!is_tpstream(line)) { LogWarning << "Skipping (not *_tpstream.root): " << line << std::endl; continue; }
-                        filenames.push_back(line);
-                    }
-                }
-            }
-        } catch (...) { /* ignore */ }
+        filenames = find_input_files(j, "_tpstream.root");
     }
 
     LogInfo << "Number of valid files: " << filenames.size() << std::endl;
