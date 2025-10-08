@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    std::vector<std::vector<double>> bkg_tps = file_reader(filenames, plane, 2, max_events_per_filename);
+    std::vector<std::vector<double>> bkg_tps = read_tpstream(filenames, plane, 2, max_events_per_filename);
     std::map<int, std::vector<std::vector<double>>> bkg_event_mapping = create_background_event_mapping(bkg_tps);
     std::cout << "Bkg event mapping created" << std::endl;
     std::vector<int> bkg_list_of_event_numbers;
@@ -148,6 +148,6 @@ int main(int argc, char* argv[]) {
 
     }
     std::cout << "Number of clusters in volume: " << clusters_in_volume.size() << std::endl;
-    write_clusters_to_root(clusters_in_volume, output_dir+"clusters_in_volume.root");
+    write_clusters(clusters_in_volume, output_dir+"clusters_in_volume.root");
     return 0;
 }

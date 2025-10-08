@@ -4,7 +4,8 @@
 #include "root.h"
 
 #include "TriggerPrimitive.hpp"
-#include "utils.h"
+#include "global.h"
+#include "verbosity.h"
 
 extern std::map<std::string, int> variables_to_index;
 

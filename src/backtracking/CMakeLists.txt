@@ -15,8 +15,8 @@ endif()
 target_include_directories(
     ${LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/src/lib/inc
-    ${CMAKE_SOURCE_DIR}/src/objects/inc
+    ${CMAKE_SOURCE_DIR}/src/lib
+    ${CMAKE_SOURCE_DIR}/src/objects
 )
 
 target_link_libraries( ${LIB_NAME} PRIVATE globalLib )

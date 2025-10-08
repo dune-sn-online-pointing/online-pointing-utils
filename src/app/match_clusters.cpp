@@ -81,17 +81,17 @@ int main(int argc, char* argv[]) {
             filenames.push_back(line);
         }
         std::cout << "Number of files: " << filenames.size() << std::endl;
-        std::vector<TriggerPrimitive> tps_u = file_reader(filenames, 0, supernova_option, max_events_per_filename);
-        std::vector<TriggerPrimitive> tps_v = file_reader(filenames, 1, supernova_option, max_events_per_filename);
-        std::vector<TriggerPrimitive> tps_x = file_reader(filenames, 2, supernova_option, max_events_per_filename);
+        std::vector<TriggerPrimitive> tps_u = read_tpstream(filenames, 0, supernova_option, max_events_per_filename);
+        std::vector<TriggerPrimitive> tps_v = read_tpstream(filenames, 1, supernova_option, max_events_per_filename);
+        std::vector<TriggerPrimitive> tps_x = read_tpstream(filenames, 2, supernova_option, max_events_per_filename);
         std::cout << "Number of tps: " << tps_u.size() << " " << tps_v.size() << " " << tps_x.size() << std::endl;
         std::map<int, std::vector<float>> file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
         std::map<int, int> file_idx_to_true_interaction_map = file_idx_to_true_interaction(filenames);
         std::cout << "XYZ map created" << std::endl;
         
-        clusters_u = cluster_maker(tps_u, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut/2);
-        clusters_v = cluster_maker(tps_v, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut/2);
-        clusters_x = cluster_maker(tps_x, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut);
+        clusters_u = make_cluster(tps_u, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut/2);
+        clusters_v = make_cluster(tps_v, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut/2);
+        clusters_x = make_cluster(tps_x, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut);
 
         std::cout << "Number of clusters: " << clusters_u.size() << " " << clusters_v.size() << " " << clusters_x.size() << std::endl;
         // add true x y z dir
@@ -117,9 +117,9 @@ int main(int argc, char* argv[]) {
         }
 
         // write the clusters to a root file
-        write_clusters_to_root(clusters_u, file_clusters_u);
-        write_clusters_to_root(clusters_v, file_clusters_v);
-        write_clusters_to_root(clusters_x, file_clusters_x);
+        write_clusters(clusters_u, file_clusters_u);
+        write_clusters(clusters_v, file_clusters_v);
+        write_clusters(clusters_x, file_clusters_x);
     }
     else{
         clusters_u = read_clusters_from_root(file_clusters_u);
@@ -253,7 +253,7 @@ int main(int argc, char* argv[]) {
     std::cout << std::endl;
 
     // save the multiplane clusters to a root file
-    write_clusters_to_root(multiplane_clusters, outfolder + "multiplane_clusters.root");
+    write_clusters(multiplane_clusters, outfolder + "multiplane_clusters.root");
     std::cout << "multiplane clusters written to " << outfolder + "multiplane_clusters.root" << std::endl;
        
 

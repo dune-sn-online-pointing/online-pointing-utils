@@ -2,40 +2,11 @@
 #ifndef cluster_TO_ROOT_LIBS_H
 #define cluster_TO_ROOT_LIBS_H
 
-#include <vector>
-#include <map>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <climits>
-
-// include root libraries
-#include "TFile.h"
-#include "TTree.h"
-#include "TBranch.h"
-#include "TLeaf.h"
-#include "TMatrixD.h"
-
 #include "Cluster.h"
-
-
-void get_first_and_last_event(TTree* tree, int branch_address, int which_event, int& first_entry, int& last_entry);
-
-// read the tps from the files and save them in a vector
-// std::vector<TriggerPrimitive> file_reader(std::vector<std::string> filenames, int plane=2, int supernova_option=0, int max_events_per_filename = INT_MAX);
-void file_reader(std::string filename,
-				 std::vector<TriggerPrimitive>& tps,
-				 std::vector<TrueParticle>& true_particles,
-				 std::vector<Neutrino>& neutrinos,
-				 int supernova_option = 0,
-				 int event_number = 0,
-				 double time_tolerance_ticks = -1.0,
-				 int channel_tolerance = -1);
-// std::vector<std::vector<TriggerPrimitive>> file_reader_all_planes(std::vector<std::string> filenames, int supernova_option=0, int max_events_per_filename= INT_MAX);
 
 // create the clusters from the tps
 bool channel_condition_with_pbc(TriggerPrimitive* tp1, TriggerPrimitive* tp2, int channel_limit);
-std::vector<Cluster> cluster_maker(std::vector<TriggerPrimitive*> all_tps, int ticks_limit=3, int channel_limit=1, int min_tps_to_cluster=1, int adc_integral_cut=0);
+std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ticks_limit=3, int channel_limit=1, int min_tps_to_cluster=1, int adc_integral_cut=0);
 
 // create a map connectig the file index to the true x y z
 // std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> filenames);
@@ -52,7 +23,7 @@ std::vector<Cluster> filter_out_main_track(std::vector<Cluster>& clusters);
 // void assing_different_label_to_main_tracks(std::vector<Cluster>& clusters, int new_label=77);
 
 // write the clusters to a root file
-void write_clusters_to_root(std::vector<Cluster>& clusters, std::string root_filename, std::string view);
+void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, std::string view);
 
 std::vector<Cluster> read_clusters_from_root(std::string root_filename);
 
@@ -61,27 +32,19 @@ std::map<int, std::vector<Cluster>> create_event_mapping(std::vector<Cluster>& c
 std::map<int, std::vector<TriggerPrimitive>> create_background_event_mapping(std::vector<TriggerPrimitive>& bkg_tps);
 
 // Write condensed TPs and truth to a ROOT file for later clustering
-void write_tps_to_root(
+void write_tps(
 	const std::string& out_filename,
 	const std::vector<std::vector<TriggerPrimitive>>& tps_by_event,
 	const std::vector<std::vector<TrueParticle>>& true_particles_by_event,
 	const std::vector<std::vector<Neutrino>>& neutrinos_by_event);
 
 // Read condensed TPs and truth back from a ROOT file
-void read_tps_from_root(
+void read_tps(
 	const std::string& in_filename,
 	std::map<int, std::vector<TriggerPrimitive>>& tps_by_event,
 	std::map<int, std::vector<TrueParticle>>& true_particles_by_event,
 	std::map<int, std::vector<Neutrino>>& neutrinos_by_event);
 
-// Direct TP-SimIDE matching based on time and channel proximity
-void match_tps_to_simides_direct(
-	std::vector<TriggerPrimitive>& tps,
-	std::vector<TrueParticle>& true_particles,
-	TFile* file,
-	int event_number,
-	double time_tolerance_ticks = 50.0,
-	int channel_tolerance = 5);
 
 #endif
 

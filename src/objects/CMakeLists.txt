@@ -3,9 +3,9 @@
 set( LIB_NAME "objectsLibs" )
 
 set( SRC_FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/Cluster.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/functions.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/Neutrino.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Cluster.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/functions.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Neutrino.cpp
 )
 
 if( USE_STATIC_LINKS )
@@ -17,7 +17,7 @@ endif()
 
 target_include_directories(
     ${LIB_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/src/backtracking
 )
 

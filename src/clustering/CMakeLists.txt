@@ -1,10 +1,10 @@
 set( LIB_NAME "clusteringLibs" )
 
 set( SRC_FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/aggregate_clusters_within_volume_libs.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/create_volume_clusters_libs.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/superimpose_root_files_libs.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/cluster_to_root_libs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/aggregate_clusters_within_volume_libs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/create_volume_clusters_libs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/superimpose_root_files_libs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cluster_to_root_libs.cpp
 )
 
 if( USE_STATIC_LINKS )
@@ -16,8 +16,8 @@ endif()
 
 target_include_directories(
     ${LIB_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/inc
-    ${CMAKE_SOURCE_DIR}/src/objects/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/src/objects
     ${CMAKE_SOURCE_DIR}/src/backtracking
 )
 

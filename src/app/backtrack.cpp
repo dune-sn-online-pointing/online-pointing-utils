@@ -3,6 +3,7 @@
 
 #include "cluster_to_root_libs.h"
 #include "Cluster.h"
+#include "Backtracking.h"
 
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
@@ -143,9 +144,9 @@ int main(int argc, char* argv[]) {
         for (int iEvent = first_event; iEvent < first_event + n_events; ++iEvent) {
             int event_index = iEvent - first_event;
             if (verboseMode) LogInfo << "Reading event " << iEvent << std::endl;
-            if (debugMode) LogDebug << "Beginning file_reader for event " << iEvent << std::endl;
+            if (debugMode) LogDebug << "Beginning read_tpstream for event " << iEvent << std::endl;
             
-            file_reader(
+            read_tpstream(
                 filename,
                 tps.at(event_index),
                 true_particles.at(event_index),
@@ -156,7 +157,7 @@ int main(int argc, char* argv[]) {
                 channel_tolerance
             );
 
-            // Summarise direct TP-to-truth associations built inside file_reader
+            // Summarise direct TP-to-truth associations built inside read_tpstream
             int matched_tps_counter = 0;
             for (const auto& tp : tps.at(event_index)) {
                 if (tp.GetTrueParticle() != nullptr) { matched_tps_counter++; }
@@ -183,7 +184,7 @@ int main(int argc, char* argv[]) {
         std::string out_abs = _ec_abs ? out : out_abs_p.string();
         
         if (verboseMode) LogInfo << "Writing output to: " << out_abs << std::endl;
-        write_tps_to_root(out_abs, tps, true_particles, neutrinos);
+        write_tps(out_abs, tps, true_particles, neutrinos);
         produced.push_back(out_abs);
     }
 

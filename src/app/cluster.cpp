@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
         std::map<int, std::vector<TriggerPrimitive>> tps_by_event;
         std::map<int, std::vector<TrueParticle>> true_by_event;
         std::map<int, std::vector<Neutrino>> nu_by_event;
-        read_tps_from_root(tps_file, tps_by_event, true_by_event, nu_by_event);
+        read_tps(tps_file, tps_by_event, true_by_event, nu_by_event);
 
         // Apply ToT cut to TPs if requested
         if (tot_cut > 0) {
@@ -110,9 +110,9 @@ int main(int argc, char* argv[]) {
 
             std::vector<std::vector<Cluster>> clusters_per_view; clusters_per_view.reserve(APA::views.size());
             std::vector<int> adc_cut = {adc_integral_cut_ind, adc_integral_cut_ind, adc_integral_cut_col};
-            for (size_t iView=0;iView<APA::views.size();++iView){ clusters_per_view.emplace_back(cluster_maker(tps_per_view.at(iView), ticks_limit, channel_limit, min_tps_to_cluster, adc_cut.at(iView))); }
+            for (size_t iView=0;iView<APA::views.size();++iView){ clusters_per_view.emplace_back(make_cluster(tps_per_view.at(iView), ticks_limit, channel_limit, min_tps_to_cluster, adc_cut.at(iView))); }
 
-            for (size_t iView=0;iView<APA::views.size();++iView){ write_clusters_to_root(clusters_per_view.at(iView), clusters_filename, APA::views.at(iView)); }
+            for (size_t iView=0;iView<APA::views.size();++iView){ write_clusters(clusters_per_view.at(iView), clusters_filename, APA::views.at(iView)); }
         }
 
         produced.push_back(clusters_filename);

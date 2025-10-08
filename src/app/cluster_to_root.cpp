@@ -1,25 +1,10 @@
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <ctime>
-#include <map>
-#include <sstream>
-#include <climits>
-#include <algorithm>
-#include <set>
-#include <nlohmann/json.hpp>
-
-#include "CmdLineParser.h"
-#include "Logger.h"
-#include "GenericToolbox.Utils.h"
-
 // #include "position_calculator.h"
 #include "cluster_to_root_libs.h"
 #include "Cluster.h"
 #include "functions.h"
 #include "ParametersManager.h"
-#include "utils.h"
+#include "global.h"
+#include "Backtracking.h"
 
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
@@ -224,7 +209,7 @@ int main(int argc, char* argv[]) {
 
             LogInfo << "Reading event " << iEvent << std::endl;
             
-            file_reader(
+            read_tpstream(
                 filename,
                 tps.at(iEvent),
                 true_particles.at(iEvent),
@@ -233,7 +218,7 @@ int main(int argc, char* argv[]) {
                 iEvent,
                 static_cast<double>(effective_time_window),
                 channel_tolerance);
-            // file_reader(filenames, tps, true_particles, neutrinos, supernova_option, max_events_per_filename);
+            // read_tpstream(filenames, tps, true_particles, neutrinos, supernova_option, max_events_per_filename);
 
             LogInfo << "Loaded TPs and true particles from file, for event " << iEvent << ". Number of TPs is now: " << tps.at(iEvent).size() << std::endl;
 
@@ -300,14 +285,14 @@ int main(int argc, char* argv[]) {
                 LogInfo << "Number of TPs in " << APA::views.at(iView) << " view: " << these_tps_per_view.size() << std::endl;
                 tps_per_view.emplace_back(these_tps_per_view);
                 // Cluster the tps
-                clusters_per_view.emplace_back(cluster_maker(tps_per_view.at(iView), ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut.at(iView)));
+                clusters_per_view.emplace_back(make_cluster(tps_per_view.at(iView), ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut.at(iView)));
                 LogInfo << "Number of clusters in " << APA::views.at(iView) << " view: " << clusters_per_view.at(iView).size() << std::endl;
                 LogInfo << "-------------------------" << std::endl;
             }
 
             for (int iView = 0; iView < APA::views.size(); iView++) {
                 LogInfo << "Writing " << APA::views.at(iView) << " clusters " << std::endl;
-                write_clusters_to_root(clusters_per_view.at(iView), clusters_filename, APA::views.at(iView));
+                write_clusters(clusters_per_view.at(iView), clusters_filename, APA::views.at(iView));
             }
 
             LogInfo << "############################" << std::endl;

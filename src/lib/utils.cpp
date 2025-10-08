@@ -1,7 +1,10 @@
-#include "utils.h"
-#include <Logger.h>
+#include "global.h"
 
 LoggerInit([]{Logger::getUserHeader() << "[utils]";});
+
+
+
+
 
 std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix) {
     std::vector<std::string> filenames;

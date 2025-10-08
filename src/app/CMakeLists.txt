@@ -1,51 +1,65 @@
-# plot_avg_times app
+# Applications
+
 cmessage( STATUS "Creating plot_avg_times app..." )
-add_executable( plot_avg_times ${CMAKE_CURRENT_SOURCE_DIR}/src/plot_avg_times.cpp )
+add_executable( plot_avg_times ${CMAKE_CURRENT_SOURCE_DIR}/plot_avg_times.cpp )
 target_link_libraries( plot_avg_times clusteringLibs globalLib)
 install( TARGETS plot_avg_times DESTINATION bin )
 
-cmessage( STATUS "Creating backtrack app..." )
-add_executable( backtrack ${CMAKE_CURRENT_SOURCE_DIR}/src/backtrack.cpp )
-target_link_libraries( backtrack clusteringLibs globalLib )
-install( TARGETS backtrack DESTINATION bin )
-
 cmessage( STATUS "Creating cluster app..." )
-add_executable( cluster ${CMAKE_CURRENT_SOURCE_DIR}/src/cluster.cpp )
-target_link_libraries( cluster clusteringLibs globalLib )
+add_executable( cluster ${CMAKE_CURRENT_SOURCE_DIR}/cluster.cpp )
+target_link_libraries( cluster clusteringLibs )
 install( TARGETS cluster DESTINATION bin )
 
-cmessage( STATUS "Creating analyze_tps app..." )
-add_executable( analyze_tps ${CMAKE_CURRENT_SOURCE_DIR}/src/analyze_tps.cpp )
-target_link_libraries( analyze_tps clusteringLibs globalLib )
-install( TARGETS analyze_tps DESTINATION bin )
+cmessage( STATUS "Creating cluster_to_root app..." )
+add_executable( cluster_to_root ${CMAKE_CURRENT_SOURCE_DIR}/cluster_to_root.cpp )
+target_link_libraries( cluster_to_root clusteringLibs )
+install( TARGETS cluster_to_root DESTINATION bin )
+
+cmessage( STATUS "Creating backtrack app..." )
+add_executable( backtrack ${CMAKE_CURRENT_SOURCE_DIR}/backtrack.cpp )
+target_link_libraries( backtrack backtrackingLibs clusteringLibs )
+install( TARGETS backtrack DESTINATION bin )
 
 cmessage( STATUS "Creating analyze_clusters app..." )
-add_executable( analyze_clusters ${CMAKE_CURRENT_SOURCE_DIR}/src/analyze_clusters.cpp )
+add_executable( analyze_clusters ${CMAKE_CURRENT_SOURCE_DIR}/analyze_clusters.cpp )
 target_link_libraries( analyze_clusters clusteringLibs globalLib )
 install( TARGETS analyze_clusters DESTINATION bin )
 
+cmessage( STATUS "Creating analyze_tps app..." )
+add_executable( analyze_tps ${CMAKE_CURRENT_SOURCE_DIR}/analyze_tps.cpp )
+target_link_libraries( analyze_tps clusteringLibs globalLib )
+install( TARGETS analyze_tps DESTINATION bin )
+
 cmessage( STATUS "Creating extract_calibration app..." )
-add_executable( extract_calibration ${CMAKE_CURRENT_SOURCE_DIR}/src/extract_calibration.cpp )
+add_executable( extract_calibration ${CMAKE_CURRENT_SOURCE_DIR}/extract_calibration.cpp )
 target_link_libraries( extract_calibration clusteringLibs globalLib )
 install( TARGETS extract_calibration DESTINATION bin )
 
 cmessage( STATUS "Creating cluster_display app..." )
-add_executable( cluster_display ${CMAKE_CURRENT_SOURCE_DIR}/src/cluster_display.cpp )
+add_executable( cluster_display ${CMAKE_CURRENT_SOURCE_DIR}/cluster_display.cpp )
 target_link_libraries( cluster_display clusteringLibs globalLib )
 install( TARGETS cluster_display DESTINATION bin )
 
-# cmessage( STATUS "Creating createVolume app..." )
-# add_executable( createVolume ${CMAKE_CURRENT_SOURCE_DIR}/src/create_volume_clusters.cpp )
-# target_link_libraries( createVolume clusteringLibs )
-# install( TARGETS createVolume DESTINATION bin )
+# Temporarily commented out due to compilation errors
+# cmessage( STATUS "Creating create_volume_clusters app..." )
+# add_executable( create_volume_clusters ${CMAKE_CURRENT_SOURCE_DIR}/create_volume_clusters.cpp )
+# target_link_libraries( create_volume_clusters clusteringLibs )
+# install( TARGETS create_volume_clusters DESTINATION bin )
 
-# cmessage( STATUS "Creating matchClusters app..." )
-# add_executable( matchClusters ${CMAKE_CURRENT_SOURCE_DIR}/src/match_clusters.cpp )
-# target_link_libraries( matchClusters planesMatchingLibs )
-# install( TARGETS matchClusters DESTINATION bin )
+# Temporarily commented out due to compilation errors
+# cmessage( STATUS "Creating match_clusters app..." )
+# add_executable( match_clusters ${CMAKE_CURRENT_SOURCE_DIR}/match_clusters.cpp )
+# target_link_libraries( match_clusters planesMatchingLibs )
+# install( TARGETS match_clusters DESTINATION bin )
 
+# Temporarily commented out due to missing main function
+# cmessage( STATUS "Creating plot_var app..." )
+# add_executable( plot_var ${CMAKE_CURRENT_SOURCE_DIR}/plot_var.cpp )
+# target_link_libraries( plot_var clusteringLibs globalLib )
+# install( TARGETS plot_var DESTINATION bin )
 
-# cmessage( STATUS "Creating superimposeBackground app..." )
-# add_executable( superimposeBackground ${CMAKE_CURRENT_SOURCE_DIR}/src/superimpose_signal_and_backgrounds.cpp )
-# target_link_libraries( superimposeBackground planesMatchingLibs )
-# install( TARGETS superimposeBackground DESTINATION bin )
+# Temporarily commented out due to compilation errors
+# cmessage( STATUS "Creating superimpose_signal_and_backgrounds app..." )
+# add_executable( superimpose_signal_and_backgrounds ${CMAKE_CURRENT_SOURCE_DIR}/superimpose_signal_and_backgrounds.cpp )
+# target_link_libraries( superimpose_signal_and_backgrounds clusteringLibs )
+# install( TARGETS superimpose_signal_and_backgrounds DESTINATION bin )

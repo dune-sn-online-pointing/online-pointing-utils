@@ -1,7 +1,7 @@
 set( LIB_NAME "calculatePositionLibs" )
 
 set( SRC_FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/position_calculator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/position_calculator.cpp
 )
 
 if( USE_STATIC_LINKS )
@@ -13,7 +13,7 @@ endif()
 
 target_include_directories(
     ${LIB_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 

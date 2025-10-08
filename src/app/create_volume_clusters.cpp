@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
     std::vector<TriggerPrimitive> tps_object; 
     std::vector<Neutrino> neutrinos;
     std::vector<TrueParticle> true_particles;
-    file_reader(filenames, tps_object, true_particles, neutrinos ,supernova_option, max_events_per_filename);
+    read_tpstream(filenames, tps_object, true_particles, neutrinos ,supernova_option, max_events_per_filename);
     // create a vector of TriggerPrimitive pointers
     std::vector<TriggerPrimitive*> tps;
     for (int i = 0; i < tps_object.size(); i++) tps.push_back(&tps_object[i]);
@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
         c.set_reco_pos(clusters[i].get_reco_pos());        
         clusters_in_volume.push_back(c);
     }
-    write_clusters_to_root(clusters_in_volume, output_dir+"clusters_in_volume.root");
+    write_clusters(clusters_in_volume, output_dir+"clusters_in_volume.root");
 
     return 0;
 }

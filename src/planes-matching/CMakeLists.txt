@@ -3,7 +3,7 @@
 set( LIB_NAME "planesMatchingLibs" )
 
 set( SRC_FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/match_clusters_libs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/match_clusters_libs.cpp
 )
 
 if( USE_STATIC_LINKS )
@@ -15,8 +15,8 @@ endif()
 
 target_include_directories(
     ${LIB_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/inc
-    ${CMAKE_SOURCE_DIR}/src/objects/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/src/objects
 )
 
 
