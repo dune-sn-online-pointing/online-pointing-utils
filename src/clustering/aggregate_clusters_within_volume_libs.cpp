@@ -21,7 +21,7 @@ std::vector<Cluster> aggregate_clusters_within_volume(std::vector<Cluster> clust
         for (int j = 0; j < vec_aggregated_clusters.size(); j++) {
             if (distance(clusters[i], vec_aggregated_clusters[j][0]) < radius) {
                 // check if the Cluster[i] == vec_aggregated_clusters[j][0]
-                if (clusters[i].get_reco_pos() == vec_aggregated_clusters[j][0].get_reco_pos()) {
+                if (clusters[i].get_true_pos() == vec_aggregated_clusters[j][0].get_true_pos()) {
                 continue;
                 } else {
                     vec_aggregated_clusters[j].push_back(clusters[i]);

@@ -1,6 +1,6 @@
 #include "global.h"
 
-LoggerInit([]{Logger::getUserHeader() << "[utils]";});
+LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 std::string toLower(std::string s){
   std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c); });
@@ -162,12 +162,13 @@ template <typename T> bool SetBranchWithFallback(TTree* tree,
     }
     oss << "] not found";
 
-    LogError << oss.str() << " in " << context << std::endl;
+    LogWarning << oss.str() << " in " << context << std::endl;
     return false;
 }
 
 // Explicit template instantiations for SetBranchWithFallback
 template bool SetBranchWithFallback<double>(TTree*, std::initializer_list<const char*>, double*, const std::string&);
+template bool SetBranchWithFallback<float>(TTree*, std::initializer_list<const char*>, float*, const std::string&);
 template bool SetBranchWithFallback<int>(TTree*, std::initializer_list<const char*>, int*, const std::string&);
 template bool SetBranchWithFallback<unsigned int>(TTree*, std::initializer_list<const char*>, unsigned int*, const std::string&);
 template bool SetBranchWithFallback<unsigned short>(TTree*, std::initializer_list<const char*>, unsigned short*, const std::string&);

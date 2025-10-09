@@ -19,7 +19,7 @@ print_help(){
 # settingsFile="json/backtrack/example.json"
 cleanCompile=false
 noCompile=false
-output_folder="$HOME_DIR/data"
+# output_folder="" # a default could be data/
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

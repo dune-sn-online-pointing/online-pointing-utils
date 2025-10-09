@@ -1,0 +1,4 @@
+{
+  "inputListFile": "data/prod_cc_clusters_files.txt",
+  "output_folder": "output/prod_cc_analysis"
+}

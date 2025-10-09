@@ -1,0 +1,27 @@
+{
+    "filename": "/home/virgolaema/dune/online-pointing-utils/data/cleanES60_tpstream.root",
+    "output_NOfolder": "",
+
+    "backtrackerTicksTolerance": 0,
+
+    "max_events_per_filename": 10000, 
+
+    "supernova_option": 0,          
+    "main_track_option": 3,         
+
+    "tick_limit": 1,                
+    "channel_limit": 1,             
+    "min_tps_to_cluster": 1,
+    "plane": 3,
+    "min_time_over_threshold": 1,        
+    
+    "adc_to_mev_induction": 0.0001,
+    "adc_to_mev_collection": 0.0001,
+
+    "adc_integral_cut_induction": 1,
+    "adc_integral_cut_collection": 1,
+    "adc_integral_cut": 1,
+
+    "energy_cut_mev": 0.0,
+    "use_electron_direction": 1
+}

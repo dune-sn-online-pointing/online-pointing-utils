@@ -106,7 +106,14 @@ int main(int argc, char* argv[]) {
     }
     LogInfo << "Channel tolerance (channels): " << channel_tolerance << std::endl;
 
+    int count_files = 0;
+
     for (auto& filename : filenames) {
+
+        //TEMP
+        if (count_files > 100) {LogWarning << "Processed 100 files, stopping to avoid excessive run time." << std::endl; break;}
+        count_files++;
+
         if (verboseMode) LogInfo << "Reading file: " << filename << std::endl;
         // count events
         // using this tree just because it's the smallest
@@ -166,7 +173,11 @@ int main(int argc, char* argv[]) {
         std::string input_basename = filename.substr(filename.find_last_of("/\\") + 1);
         input_basename = input_basename.substr(0, input_basename.length() - 14); // remove _tpstream.root
         std::ostringstream suffix;
-        suffix << "_tps_bktr" << bktr_margin << ".root";
+        if (bktr_margin != standard_backtracker_error_margin) {
+            suffix << "_tps_bktr" << bktr_margin << ".root";
+        } else {
+            suffix << "_tps.root";
+        }
         std::string out = outfolder + "/" + input_basename + suffix.str();
         // Use absolute path for output
         std::error_code _ec_abs;
@@ -181,7 +192,11 @@ int main(int argc, char* argv[]) {
     // also write a filelist for convenience
     try {
         std::ostringstream list_name;
-        list_name << outfolder << "/test_files_tps_bktr" << bktr_margin << ".txt";
+        if (bktr_margin != standard_backtracker_error_margin) {
+            list_name << outfolder << "/test_files_bktr" << bktr_margin << "_tps.txt";
+        } else {
+            list_name << outfolder << "/test_files_tps.txt";
+        }
         std::string list_out = list_name.str();
         std::error_code _ec_list_abs;
         std::filesystem::path list_abs_p = std::filesystem::absolute(std::filesystem::path(list_out), _ec_list_abs);

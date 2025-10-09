@@ -1,0 +1,6 @@
+{
+  "filelist": "/home/virgolaema/dune/online-pointing-utils/data/test_files_tps_bktr5_clean60.txt",
+  "output_folder": "data",
+  "tot_cut": 0,
+  "tot_hist_max": 120
+}

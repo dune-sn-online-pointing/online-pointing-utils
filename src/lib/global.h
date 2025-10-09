@@ -13,4 +13,6 @@
 
 // This is a header guard for global.cpp, which includes most common includes of the project
 
+static int standard_backtracker_error_margin = 10; // TPC ticks
+
 #endif

@@ -51,7 +51,11 @@ int main(int argc, char* argv[]) {
     LogInfo << "Number of valid files: " << inputs.size() << std::endl;
     LogThrowIf(inputs.empty(), "No valid input files found.");
 
-    std::string outfolder = clp.isOptionTriggered("outFolder") ? clp.getOptionVal<std::string>("outFolder") : std::string("data");
+    std::string outfolder = j.value("outputFolder", std::string("data"));
+    if (clp.isOptionTriggered("outFolder")) {
+        outfolder = clp.getOptionVal<std::string>("outFolder");
+        LogInfo << "Overriding output folder with CLI option: " << outfolder << std::endl;
+    }
 
     int ticks_limit = j.value("tick_limit", 3);
     int channel_limit = j.value("channel_limit", 1);
@@ -61,7 +65,7 @@ int main(int argc, char* argv[]) {
     int tot_cut = j.value("tot_cut", 0);
 
     LogInfo << "Settings from json file:" << std::endl;
-    // LogInfo << " - Output folder: " << outfolder << std::endl;
+    LogInfo << " - Output folder: " << outfolder << std::endl;
     LogInfo << " - Tick limit: " << ticks_limit << std::endl;
     LogInfo << " - Channel limit: " << channel_limit << std::endl;
     LogInfo << " - Minimum TPs to form a cluster: " << min_tps_to_cluster << std::endl;
@@ -69,7 +73,21 @@ int main(int argc, char* argv[]) {
     LogInfo << " - ADC integral cut (collection): " << adc_integral_cut_col << std::endl;
     LogInfo << " - ToT cut: " << tot_cut << std::endl;
 
-    std::vector<std::string> produced;
+    std::string file_prefix;
+    try {
+        file_prefix = j.at("outputFilename").get<std::string>();
+    } catch (...) {
+        std::filesystem::path json_path(json);
+        file_prefix = json_path.stem().string();
+    }
+
+    std::string clusters_filename = outfolder + "/" + file_prefix
+        + "_tick" + std::to_string(ticks_limit)
+        + "_ch" + std::to_string(channel_limit)
+        + "_min" + std::to_string(min_tps_to_cluster)
+        + "_tot" + std::to_string(tot_cut)
+        + "_clusters.root";    
+
     int file_count = 0;
 
     for (const auto& tps_file : inputs) {
@@ -99,17 +117,6 @@ int main(int argc, char* argv[]) {
             }
         }
 
-    // build output file name
-    std::string base = tps_file.substr(tps_file.find_last_of("/\\") + 1);
-    // Remove trailing "_tps.root" or generic ".root" if present
-    if (base.size() > 9 && base.substr(base.size()-9) == "_tps.root") base = base.substr(0, base.size()-9);
-    else if (base.size() > 5 && base.substr(base.size()-5) == ".root") base = base.substr(0, base.size()-5);
-    std::string clusters_filename = outfolder + "/" + base + "_clusters_tick" + std::to_string(ticks_limit) + "_ch" + std::to_string(channel_limit) + "_min" + std::to_string(min_tps_to_cluster) + "_tot" + std::to_string(tot_cut) + "_en0.root";
-    // absolute path for output
-    std::error_code _ec_abs;
-    std::filesystem::path abs_p = std::filesystem::absolute(std::filesystem::path(clusters_filename), _ec_abs);
-    if (!_ec_abs) clusters_filename = abs_p.string();
-
         for (auto& kv : tps_by_event) {
             int event = kv.first;
             auto& tps = kv.second;
@@ -125,16 +132,18 @@ int main(int argc, char* argv[]) {
             std::vector<int> adc_cut = {adc_integral_cut_ind, adc_integral_cut_ind, adc_integral_cut_col};
             
             for (size_t iView=0;iView<APA::views.size();++iView)
-                clusters_per_view.emplace_back(make_cluster(tps_per_view.at(iView), ticks_limit, channel_limit, min_tps_to_cluster, adc_cut.at(iView)));
+                clusters_per_view.emplace_back(make_cluster(tps_per_view.at(iView), 
+                                                ticks_limit, 
+                                                channel_limit, 
+                                                min_tps_to_cluster, 
+                                                adc_cut.at(iView)));
 
             for (size_t iView=0;iView<APA::views.size();++iView)
                 write_clusters(clusters_per_view.at(iView), clusters_filename, APA::views.at(iView)); 
         }
 
-        produced.push_back(clusters_filename);
     }
 
-    LogInfo << "\nSummary of produced files (" << produced.size() << "):" << std::endl;
-    for (const auto& p : produced) LogInfo << " - " << p << std::endl;
+    LogInfo << "\nOutput file is: " << clusters_filename << std::endl;
     return 0;
 }

@@ -42,9 +42,9 @@ std::vector<TriggerPrimitive*> get_tps_around_cluster(std::vector<TriggerPrimiti
     }
 
 
-    float cluster_x = Cluster.get_reco_pos()[0];
-    float cluster_y = Cluster.get_reco_pos()[1];
-    float cluster_z = Cluster.get_reco_pos()[2];
+    float cluster_x = Cluster.get_true_pos()[0];
+    float cluster_y = Cluster.get_true_pos()[1];
+    float cluster_z = Cluster.get_true_pos()[2];
 
 
     while (tps.at(start)->GetTimeStart() < max_time_end + 1.2*radius_in_ticks) {

@@ -1,0 +1,5 @@
+{
+  "inputFolder": "data/prod_es/",
+  "outputFolder": "data/prod_es/",
+  "filePattern": "*_cc_tps_bktr0.root"
+}

@@ -1,0 +1,21 @@
+{
+  "thisIsAComment": "Code will try first input file from cmd line, then inputFile, then inputFolder + inputList, then inputListFile.",
+  "inputFile": "",
+  "inputFolder": "/path/to/input/folder/",
+  "inputList": [
+  ],
+  "inputListFile": "",
+
+  "outputFolder": "/path/to/output/folder/",
+  "thisIsAComment2": "This is the beginning of the output filename, the clustering conditions are added after it",
+  "outputFilename": "example",
+  
+  
+  "tick_limit": 5,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 1,
+  "adc_integral_cut_induction": 0,
+  "adc_integral_cut_collection": 0
+
+}

@@ -1,10 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "root.h"
 #include <nlohmann/json.hpp>
 
 #include "ParametersManager.h"
+#include "root.h"
 
 // File utility functions
 std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix = "_tpstream.root");

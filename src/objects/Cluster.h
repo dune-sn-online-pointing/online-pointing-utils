@@ -20,7 +20,7 @@ class Cluster {
         TriggerPrimitive* get_tp(int i) { return tps_.at(i); }
         int get_size() { return tps_.size(); }
         std::vector<float> get_true_pos() { return true_pos_; }
-        std::vector<float> get_reco_pos() { return reco_pos_; }
+        std::vector<float> get_true_momentum() { return true_momentum_; }
         std::vector<float> get_true_dir() { return true_dir_; }
         float get_true_neutrino_energy() { return true_neutrino_energy_; }
         float get_true_particle_energy() { return true_particle_energy_; }
@@ -32,17 +32,16 @@ class Cluster {
         float get_total_charge(); // { return total_charge_; }
         float get_total_energy(); // { return total_energy_; }
         float get_number_of_tps() { return tps_.size(); }
-        int get_event() { return tps_.at(0)->GetEvent(); } 
-
+        int get_event() { return tps_.at(0)->GetEvent(); }        
         
         // setters
         std::vector<TriggerPrimitive*> get_tps() const { return tps_; }
         void set_tps(std::vector<TriggerPrimitive*> tps) { tps_ = tps;}; //update_cluster_info();} TODO
         void set_true_pos(std::vector<float> pos) { true_pos_ = pos; }
+        void set_true_momentum(std::vector<float> momentum) { true_momentum_ = momentum; }
         void set_true_label(std::string label) { true_label_ = label; }
         void set_true_energy(float energy) { true_neutrino_energy_ = energy; }
         void set_true_dir(std::vector<float> dir) { true_dir_ = dir; }
-        void set_reco_pos(std::vector<float> pos) { reco_pos_ = pos; }
         void set_min_distance_from_true_pos(float min_distance) { min_distance_from_true_pos_ = min_distance; }
         void set_supernova_tp_fraction(float fraction) { supernova_tp_fraction_ = fraction; }
         void set_generator_tp_fraction(float fraction) { generator_tp_fraction_ = fraction; }
@@ -56,8 +55,8 @@ class Cluster {
         // std::vector<std::vector<double>> tps_;
         std::vector<TriggerPrimitive*> tps_ {};
         std::vector<float> true_pos_ {0.0f, 0.0f, 0.0f};    
+        std::vector<float> true_momentum_ {0.0f, 0.0f, 0.0f};
         std::vector<float> true_dir_ {0.0f, 0.0f, 0.0f};
-        std::vector<float> reco_pos_ {0.0f, 0.0f, 0.0f};    
         std::string true_interaction_  {"UNKNOWN"}; // ES or CC
         float min_distance_from_true_pos_ {0.0f};
         float true_neutrino_energy_ {-1.0f};

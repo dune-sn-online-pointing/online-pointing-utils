@@ -1,0 +1,14 @@
+{
+  "thisIsAComment": "Code will try first input file from cmd line, then inputFile, then inputFolder + inputList, then inputListFile.",
+  "inputFile": "",
+  "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+  "inputList": [
+  ],
+  "inputListFile": "",
+
+  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+  
+  "backtracker_error_margin": 10,
+  "backtracker_channel_tolerance": 0
+
+}

@@ -1,0 +1,6 @@
+{
+  "filename": "data/test_files_tps_bkgES60.txt",
+  "output_folder": "data",
+  "backtracker_error_margin": 10,
+  "comment": "Base config for bkgES60 margin scan"
+}

@@ -10,6 +10,7 @@ int main(int argc, char* argv[]){
   clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
   clp.addOption("outFolder", {"--output-folder"}, "Output folder path (optional)");
   clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
+  clp.addTriggerOption("debugMode", {"-d"}, "Run in debug mode (more detailed than verbose)");
   clp.addDummyOption();
   LogInfo << clp.getDescription().str() << std::endl;
   LogInfo << "Usage: " << std::endl;
@@ -17,11 +18,18 @@ int main(int argc, char* argv[]){
   clp.parseCmdLine(argc, argv);
   LogThrowIf(clp.isNoOptionTriggered(), "No option was provided.");
 
+  // verbosity updating global variables
+  if (clp.isOptionTriggered("verboseMode")) verboseMode = true;
+  if (clp.isOptionTriggered("debugMode")) { verboseMode =true; debugMode = true; }
+  gErrorIgnoreLevel = rootVerbosity;
+
   // Load parameters
   ParametersManager::getInstance().loadParameters();
 
   // Avoid ROOT auto-ownership of histograms to prevent double deletes on TFile close
   TH1::AddDirectory(kFALSE);
+
+  gStyle->SetOptStat(111111); // no stats box on plots
 
   std::string json = clp.getOptionVal<std::string>("json");
   std::ifstream jf(json);
@@ -29,20 +37,14 @@ int main(int argc, char* argv[]){
   nlohmann::json j;
   jf >> j;
 
-  auto resolvePath = [](const std::string& p)->std::string{
-    std::error_code ec;
-    auto abs=std::filesystem::absolute(p, ec);
-    return ec? p : abs.string();
-  };
-
   // Use utility function for file finding (clusters files)
-  std::vector<std::string> inputs = find_input_files(j, "_clusters");
+  std::vector<std::string> inputs = find_input_files(j, "_clusters.root");
 
   // Override with CLI input if provided
   if (clp.isOptionTriggered("inputFile")) {
     std::string input_file = clp.getOptionVal<std::string>("inputFile");
     inputs.clear();
-    if (input_file.find("_clusters") != std::string::npos || input_file.find(".root") != std::string::npos) {
+    if (input_file.find("_clusters.root") != std::string::npos || input_file.find(".root") != std::string::npos) {
       inputs.push_back(input_file);
     } else {
       std::ifstream lf(input_file);
@@ -108,7 +110,7 @@ int main(int argc, char* argv[]){
     if (dot!=std::string::npos) base = base.substr(0, dot);
     std::string outDir = outFolder.empty()? clusters_file.substr(0, clusters_file.find_last_of("/\\")) : outFolder;
     if (outDir.empty()) outDir = ".";
-    std::string pdf = outDir + "/" + base + ".pdf";
+    std::string pdf = outDir + "/" + base + "_report.pdf";
 
     // Accumulators across planes
     std::map<std::string, long long> label_counts_all;

@@ -1,0 +1,5 @@
+{
+  "inputFolder": "data",
+  "outputFolder": "data/backtrack_test",
+  "backtracker_error_margin": 10
+}
