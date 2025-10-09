@@ -9,7 +9,7 @@
 #include "Logger.h"
 
 // #include "position_calculator.h"
-#include "cluster_to_root_libs.h"
+#include "Clustering.h"
 #include "Cluster.h"
 #include "match_clusters_libs.h"
 
@@ -122,9 +122,9 @@ int main(int argc, char* argv[]) {
         write_clusters(clusters_x, file_clusters_x);
     }
     else{
-        clusters_u = read_clusters_from_root(file_clusters_u);
-        clusters_v = read_clusters_from_root(file_clusters_v);
-        clusters_x = read_clusters_from_root(file_clusters_x);
+        clusters_u = read_clusters(file_clusters_u);
+        clusters_v = read_clusters(file_clusters_v);
+        clusters_x = read_clusters(file_clusters_x);
     }
 
     std::cout << "Number of clusters after filtering: " << clusters_x.size() << std::endl;

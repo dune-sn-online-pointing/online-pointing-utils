@@ -26,6 +26,6 @@ done
 settingsFile=$($SCRIPTS_DIR/findSettings.sh -j $settingsFile | tail -n 1)
 . $SCRIPTS_DIR/compile.sh -p $HOME_DIR --no-compile $noCompile --clean-compile $cleanCompile
 
-cmd="$BUILD_DIR/src/app/cluster -j $settingsFile --output-folder $output_folder"
+cmd="$BUILD_DIR/src/app/make_clusters -j $settingsFile --output-folder $output_folder"
 echo "Running: $cmd"
 exec $cmd

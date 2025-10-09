@@ -1,4 +1,4 @@
-#include "cluster_to_root_libs.h"
+#include "Clustering.h"
 #include "Cluster.h"
 #include "TriggerPrimitive.hpp"
 #include "global.h"
@@ -6,19 +6,19 @@
 LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 
-bool ensureDirectoryExists(const std::string& folder) {
-    if (folder.empty()) {
-        return true;
-    }
+// bool ensureDirectoryExists(const std::string& folder) {
+//     if (folder.empty()) {
+//         return true;
+//     }
 
-    std::error_code ec;
-    std::filesystem::create_directories(folder, ec);
-    if (ec) {
-        LogError << "Failed to ensure directory '" << folder << "' exists: " << ec.message() << std::endl;
-        return false;
-    }
-    return true;
-}
+//     std::error_code ec;
+//     std::filesystem::create_directories(folder, ec);
+//     if (ec) {
+//         LogError << "Failed to ensure directory '" << folder << "' exists: " << ec.message() << std::endl;
+//         return false;
+//     }
+//     return true;
+// }
 
 // template <typename T>
 // bool SetBranchWithFallback(TTree* tree,
@@ -617,7 +617,7 @@ void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, s
     return;   
 }
 
-std::vector<Cluster> read_clusters_from_root(std::string root_filename){
+std::vector<Cluster> read_clusters(std::string root_filename){
     LogInfo << "Reading clusters from: " << root_filename << std::endl;
     std::vector<Cluster> clusters;
     TFile *f = new TFile();

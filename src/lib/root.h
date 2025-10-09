@@ -19,6 +19,10 @@
 #include <TSystem.h>
 #include <TF1.h>
 #include <TKey.h>
+#include <TPaveStats.h>
+#include <TGaxis.h>
+#include <TButton.h>
+#include <TApplication.h>
 
 #endif // ROOT_H
 

@@ -1,37 +1,4 @@
-#include <algorithm>
-#include <chrono>
-#include <cctype>
-#include <map>
-#include <memory>
-#include <set>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <fstream>
-#include <climits>
-
-#include <nlohmann/json.hpp>
-
-#include "CmdLineParser.h"
-#include "Logger.h"
-#include "GenericToolbox.Utils.h"
-
-#include <TApplication.h>
-#include <TCanvas.h>
-#include <TButton.h>
-#include <TPad.h>
-#include <TFile.h>
-#include <TTree.h>
-#include <TText.h>
-#include <TLine.h>
-#include <TBox.h>
-#include <TLatex.h>
-#include <TH2F.h>
-#include <TStyle.h>
-
-#include "cluster_to_root_libs.h"
-#include "Cluster.h"
-#include "TriggerPrimitive.hpp"
+#include "Clustering.h"
 
 LoggerInit([]{ Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -66,7 +33,7 @@ namespace ViewerState {
   TPad* padGrid = nullptr; // right plotting area
 }
 
-static std::string toLower(std::string s){ std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c);}); return s; }
+// static std::string toLower(std::string s){ std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c);}); return s; }
 static inline int toTPCticks(int tdcTicks){ return tdcTicks/32; }
 
 // Internal callbacks (we'll hook buttons via function pointers to avoid Cling symbol lookup)

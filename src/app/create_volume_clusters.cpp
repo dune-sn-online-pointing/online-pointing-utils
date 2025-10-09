@@ -10,7 +10,7 @@
 
 #include "aggregate_clusters_within_volume_libs.h"
 // #include "position_calculator.h"
-#include "cluster_to_root_libs.h"
+#include "Clustering.h"
 #include "Cluster.h"
 #include "create_volume_clusters_libs.h"
 
@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
     std::vector<TriggerPrimitive*> tps;
     for (int i = 0; i < tps_object.size(); i++) tps.push_back(&tps_object[i]);
     
-    std::vector<Cluster> clusters           = read_clusters_from_root(cluster_filename);
+    std::vector<Cluster> clusters           = read_clusters(cluster_filename);
     std::vector<float> predictions_vector   = read_predictions(predictions);
 
     LogInfo << "Number of clusters: " << clusters.size() << std::endl;

@@ -1,8 +1,8 @@
 #ifndef TRUEPARTICLE_H
 #define TRUEPARTICLE_H
 
-#include "root.h"
 #include <Neutrino.h>
+#include "global.h"
 
 class TrueParticle {
     

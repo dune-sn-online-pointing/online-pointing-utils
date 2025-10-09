@@ -53,7 +53,7 @@ echo $compile_command
 
 ################################################
 # Run this app
-backtrack_cmd="$BUILD_DIR/src/app/backtrack -j $settingsFile" 
+backtrack_cmd="$BUILD_DIR/src/app/backtrack_tpstream -j $settingsFile" 
 # optional overrides
 if [ ! -z ${inputFile+x} ]; then
   backtrack_cmd="$backtrack_cmd --input-file $inputFile"

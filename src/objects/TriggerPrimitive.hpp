@@ -1,12 +1,8 @@
 #ifndef TRIGGERPRIMITIVE_HPP
 #define TRIGGERPRIMITIVE_HPP
 
-#include "root.h"
-
-#include <utils.h>
-#include <Logger.h>
-#include <TrueParticle.h>
-
+#include "TrueParticle.h"
+#include "global.h"
 
 class TriggerPrimitive {
 

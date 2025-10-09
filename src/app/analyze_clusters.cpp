@@ -1,41 +1,6 @@
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <map>
-#include <set>
-#include <algorithm>
-#include <nlohmann/json.hpp>
-#include <filesystem>
-
-#include "CmdLineParser.h"
-#include "Logger.h"
-#include "GenericToolbox.Utils.h"
-
-// ROOT
-#include <TFile.h>
-#include <TTree.h>
-#include <TDirectory.h>
-#include <TKey.h>
-#include <TCanvas.h>
-#include <TH1F.h>
-#include <TH2F.h>
-#include <TGraph.h>
-#include <TLegend.h>
-#include <TStyle.h>
-#include <TROOT.h>
-#include <TText.h>
-
-#include "cluster_to_root_libs.h"
-#include "ParametersManager.h"
-#include "utils.h"
+#include "Clustering.h"
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
-
-static std::string toLower(std::string s){
-  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c); });
-  return s;
-}
 
 int main(int argc, char* argv[]){
   CmdLineParser clp;

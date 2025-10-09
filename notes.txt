@@ -149,3 +149,7 @@ Slight scoring tweak to favor tight time matches more strongly:
 Current score = Δt + 10·Δch; consider increasing the weight on channel or adding a small penalty if Δt > 2–3k ticks.
 Run across a few more events (event 10 diagnostics are enabled; others are already matched silently) and capture simple histograms of Δt and Δch for matched pairs to tune tolerances quantitatively.
 If you’d like, I can implement the plane-consistency check and the scoring tweak now and re-run with margin 150–200 for comparison.
+
+
+TODO
+- remove calibration stuff

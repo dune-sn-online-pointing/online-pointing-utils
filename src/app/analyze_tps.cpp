@@ -1,6 +1,5 @@
 #include "functions.h"
-#include "ParametersManager.h"
-#include "utils.h"
+#include "global.h"
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -998,7 +997,7 @@ int main(int argc, char* argv[]) {
     {
         std::vector<double> xs; xs.reserve(event_label_counts.size());
         std::vector<double> ys; ys.reserve(event_label_counts.size());
-        auto toLower = [](std::string s){ std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c); }); return s; };
+        // auto toLower = [](std::string s){ std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c); }); return s; };
         for (const auto& kv : event_label_counts) {
             int evt = kv.first; const auto& counts = kv.second;
             long long marleyCount = 0;

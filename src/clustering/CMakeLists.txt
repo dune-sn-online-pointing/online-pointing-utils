@@ -4,7 +4,7 @@ set( SRC_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/aggregate_clusters_within_volume_libs.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/create_volume_clusters_libs.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/superimpose_root_files_libs.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cluster_to_root_libs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/Clustering.cpp
 )
 
 if( USE_STATIC_LINKS )

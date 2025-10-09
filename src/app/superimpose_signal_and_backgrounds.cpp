@@ -1,23 +1,10 @@
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <ctime>
-#include <nlohmann/json.hpp>
-
-#include "CmdLineParser.h"
-#include "Logger.h"
-
 #include "aggregate_clusters_within_volume_libs.h"
-// #include "position_calculator.h"
-#include "cluster_to_root_libs.h"
-#include "Cluster.h"
+#include "Clustering.h"
 #include "create_volume_clusters_libs.h"
 
+#include "global.h"
 
-LoggerInit([]{
-  Logger::getUserHeader() << "[" << FILENAME << "]";
-});
+LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 int main(int argc, char* argv[]) {
     CmdLineParser clp;
@@ -73,7 +60,7 @@ int main(int argc, char* argv[]) {
     }
     std::cout << "Number of files: " << filenames.size() << std::endl;
 
-    std::vector<Cluster> sig_clusters = read_clusters_from_root(signal_clusters);
+    std::vector<Cluster> sig_clusters = read_clusters(signal_clusters);
     std::map<int, std::vector<Cluster>> sig_event_mapping = create_event_mapping(sig_clusters);
     std::cout << "Sig event mapping created" << std::endl;
     std::vector<int> sig_list_of_event_numbers;

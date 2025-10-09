@@ -27,8 +27,6 @@
 
 LoggerInit([]{ Logger::getUserHeader() << "[" << FILENAME << "]"; });
 
-static std::string toLower(std::string s){ std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c); }); return s; }
-
 int main(int argc, char* argv[]){
   CmdLineParser clp;
   clp.getDescription() << "> extract_calibration - compute per-event MARLEY TP ADC-integral sums and correlate with true energies" << std::endl;

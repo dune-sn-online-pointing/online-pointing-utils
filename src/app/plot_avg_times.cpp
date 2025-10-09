@@ -1,22 +1,4 @@
-// ROOT includes
-#include <TFile.h>
-#include <TTree.h>
-#include <TH1F.h>
-#include <TCanvas.h>
-#include <TPaveStats.h>
-#include <TStyle.h>
-#include <TLegend.h>
-#include <TDirectoryFile.h>
-#include <TGaxis.h>
-
-// STL
-#include <iostream>
-#include <vector>
-#include <string>
-
-// Project includes
-#include "CmdLineParser.h"
-#include "Logger.h"
+#include "global.h"
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 

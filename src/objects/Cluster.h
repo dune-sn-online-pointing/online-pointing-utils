@@ -1,11 +1,8 @@
 #ifndef CLUSTER_H
 #define CLUSTER_H
 
-#include "root.h"
-
 #include "TriggerPrimitive.hpp"
 #include "global.h"
-#include "verbosity.h"
 
 extern std::map<std::string, int> variables_to_index;
 

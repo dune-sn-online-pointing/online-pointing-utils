@@ -2,9 +2,31 @@
 
 LoggerInit([]{Logger::getUserHeader() << "[utils]";});
 
+std::string toLower(std::string s){
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c); });
+  return s;
+}
+
+bool ensureDirectoryExists(const std::string& folder) {
+    if (folder.empty()) {
+        return true;
+    }
+
+    std::error_code ec;
+    std::filesystem::create_directories(folder, ec);
+    if (ec) {
+        LogError << "Failed to ensure directory '" << folder << "' exists: " << ec.message() << std::endl;
+        return false;
+    }
+    return true;
+}
 
 
-
+void bindBranch(TTree *tree, const char* name, void* address) {
+    if (tree->SetBranchAddress(name, address) < 0) {
+        LogWarning << "Failed to bind branch '" << name << "'" << std::endl;
+    }
+}
 
 std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix) {
     std::vector<std::string> filenames;
@@ -116,6 +138,39 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
 
     return filenames;
 }
+
+template <typename T> bool SetBranchWithFallback(TTree* tree,
+                           std::initializer_list<const char*> candidateNames,
+                           T* address,
+                           const std::string& context) {
+    for (const auto* name : candidateNames) {
+        if (tree->GetBranch(name) != nullptr) {
+            tree->SetBranchAddress(name, address);
+            return true;
+        }
+    }
+
+    std::ostringstream oss;
+    oss << "Branches [";
+    bool first = true;
+    for (const auto* name : candidateNames) {
+        if (!first) {
+            oss << ", ";
+        }
+        oss << name;
+        first = false;
+    }
+    oss << "] not found";
+
+    LogError << oss.str() << " in " << context << std::endl;
+    return false;
+}
+
+// Explicit template instantiations for SetBranchWithFallback
+template bool SetBranchWithFallback<double>(TTree*, std::initializer_list<const char*>, double*, const std::string&);
+template bool SetBranchWithFallback<int>(TTree*, std::initializer_list<const char*>, int*, const std::string&);
+template bool SetBranchWithFallback<unsigned int>(TTree*, std::initializer_list<const char*>, unsigned int*, const std::string&);
+template bool SetBranchWithFallback<unsigned short>(TTree*, std::initializer_list<const char*>, unsigned short*, const std::string&);
 
 // Overloaded version that accepts multiple file suffixes
 std::vector<std::string> find_input_files(const nlohmann::json& j, const std::vector<std::string>& file_suffixes) {

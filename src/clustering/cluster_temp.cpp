@@ -1,4 +1,4 @@
-#include "cluster_to_root_libs.h"
+#include "Clustering.h"
 #include "Cluster.h"
 #include "TriggerPrimitive.hpp"
 #include "global.h"
@@ -7,19 +7,19 @@ LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 namespace {
 
-bool ensureDirectoryExists(const std::string& folder) {
-    if (folder.empty()) {
-        return true;
-    }
+// bool ensureDirectoryExists(const std::string& folder) {
+//     if (folder.empty()) {
+//         return true;
+//     }
 
-    std::error_code ec;
-    std::filesystem::create_directories(folder, ec);
-    if (ec) {
-        LogError << "Failed to ensure directory '" << folder << "' exists: " << ec.message() << std::endl;
-        return false;
-    }
-    return true;
-}
+//     std::error_code ec;
+//     std::filesystem::create_directories(folder, ec);
+//     if (ec) {
+//         LogError << "Failed to ensure directory '" << folder << "' exists: " << ec.message() << std::endl;
+//         return false;
+//     }
+//     return true;
+// }
 
 
 } // namespace

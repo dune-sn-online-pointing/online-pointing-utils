@@ -1,7 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "std.h"
+#include "root.h"
 #include <nlohmann/json.hpp>
 
 #include "ParametersManager.h"
@@ -10,7 +10,17 @@
 std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix = "_tpstream.root");
 std::vector<std::string> find_input_files(const nlohmann::json& j, const std::vector<std::string>& file_suffixes);
 
-// #include "TriggerPrimitive.hpp"
+
+std::string toLower(std::string s);
+
+bool ensureDirectoryExists(const std::string& folder);
+
+
+void bindBranch(TTree* tree, const char* name, void* address);
+
+
+template <typename T> bool SetBranchWithFallback(TTree* , std::initializer_list<const char*>, T*, const std::string& );
+
 
 // APAs
 static std::vector<std::string> views = {"U", "V", "X"};

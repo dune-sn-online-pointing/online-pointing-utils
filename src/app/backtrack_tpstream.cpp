@@ -1,10 +1,4 @@
-#include "global.h"
-#include "utils.h"
-
-#include "cluster_to_root_libs.h"
-#include "Cluster.h"
 #include "Backtracking.h"
-
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -30,12 +24,8 @@ int main(int argc, char* argv[]) {
     LogThrowIf( clp.isNoOptionTriggered(), "No option was provided." );
 
     // Set logging verbosity based on command line options
-    if (clp.isOptionTriggered("debugMode")) {
-        debugMode = true;
-    }
-    else if (clp.isOptionTriggered("verboseMode")) {
-        verboseMode = true;
-    }
+    if (clp.isOptionTriggered("debugMode")) debugMode = true; // global variable
+    if (clp.isOptionTriggered("verboseMode")) verboseMode = true; // global variable
 
     std::string json = clp.getOptionVal<std::string>("json");
     std::ifstream i(json);
@@ -59,7 +49,7 @@ int main(int argc, char* argv[]) {
     auto file_exists = [](const std::string& path){ std::ifstream f(path); return f.good(); };
 
     std::vector<std::string> filenames;
-    filenames.reserve(64);
+    filenames.reserve(64); // arbitrary, could reconsider TODO
 
     // Priority 1: CLI --input-file
     if (clp.isOptionTriggered("inputFile")) {
@@ -84,7 +74,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Priority 2-5: Use utility function for JSON-based file finding
+    // If no CLI, use utility function for JSON-based file finding
     if (filenames.empty()) {
         filenames = find_input_files(j, "_tpstream.root");
     }
@@ -99,7 +89,7 @@ int main(int argc, char* argv[]) {
     if (outfolder.empty()) outfolder = std::string("data");
     LogInfo << "Output folder: " << outfolder << std::endl;
 
-    std::vector<std::string> produced;
+    std::vector<std::string> output_files;
 
     std::vector<std::vector<TriggerPrimitive>> tps;
     std::vector<std::vector<TrueParticle>> true_particles;
@@ -109,7 +99,7 @@ int main(int argc, char* argv[]) {
     int effective_time_window = (1 + bktr_margin) * conversion_tdc_to_tpc;
     LogInfo << "Effective time window (TDC ticks): " << effective_time_window << " (conversion_tdc_to_tpc=" << conversion_tdc_to_tpc << ")" << std::endl;
 
-    int channel_tolerance = 50; // default fallback
+    int channel_tolerance = 0; // default fallback
     if (j.contains("backtracker_channel_tolerance")) {
         try { channel_tolerance = j.at("backtracker_channel_tolerance").get<int>(); }
         catch (...) { LogWarning << "Invalid backtracker_channel_tolerance in JSON, keeping default (50)." << std::endl; }
@@ -117,9 +107,9 @@ int main(int argc, char* argv[]) {
     LogInfo << "Channel tolerance (channels): " << channel_tolerance << std::endl;
 
     for (auto& filename : filenames) {
-        LogInfo << "Reading file: " << filename << std::endl;
+        if (verboseMode) LogInfo << "Reading file: " << filename << std::endl;
         // count events
-        // std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2";
+        // using this tree just because it's the smallest
         std::string MCtree_path = "triggerAnaDumpTPs/mcneutrinos";
         TFile *file = TFile::Open(filename.c_str());
         if (!file || file->IsZombie()) { LogError << "Failed to open file: " << filename << std::endl; continue; }
@@ -134,7 +124,7 @@ int main(int argc, char* argv[]) {
         MCtree->GetEntry(0);
         int first_event = this_event_number;
 
-        LogInfo << "Number of events in file: " << n_events << std::endl;
+        if (verboseMode) LogInfo << "Number of events in file: " << n_events << std::endl;
         file->Close(); delete file; file = nullptr;
 
         tps.clear(); true_particles.clear(); neutrinos.clear();
@@ -162,8 +152,8 @@ int main(int argc, char* argv[]) {
             for (const auto& tp : tps.at(event_index)) {
                 if (tp.GetTrueParticle() != nullptr) { matched_tps_counter++; }
             }
-            LogInfo << "Matched " << matched_tps_counter << "/" << tps.at(event_index).size()
-                    << " TPs to true particles via SimIDE association." << std::endl;
+            if (verboseMode) LogInfo << "Matched " << matched_tps_counter << "/" << tps.at(event_index).size() 
+                << " TPs to true particles via SimIDE association." << std::endl;
                     
             if (debugMode) {
                 LogDebug << "Event " << iEvent << " processing complete with " 
@@ -185,7 +175,7 @@ int main(int argc, char* argv[]) {
         
         if (verboseMode) LogInfo << "Writing output to: " << out_abs << std::endl;
         write_tps(out_abs, tps, true_particles, neutrinos);
-        produced.push_back(out_abs);
+        output_files.push_back(out_abs);
     }
 
     // also write a filelist for convenience
@@ -199,18 +189,18 @@ int main(int argc, char* argv[]) {
         
         if (verboseMode) LogInfo << "Writing file list to: " << list_out_abs << std::endl;
         std::ofstream of(list_out_abs);
-        for (const auto& p : produced) of << p << "\n";
+        for (const auto& p : output_files) of << p << "\n";
         of << "\n### This is a break point\n";
         of.close();
-        LogInfo << "Wrote list of TPs files: " << list_out_abs << std::endl;
+        if (verboseMode) LogInfo << "Wrote list of TPs files: " << list_out_abs << std::endl;
     } catch (...) { LogWarning << "Failed to write TPs file list." << std::endl; }
 
-    LogInfo << "\nList of produced files (" << produced.size() << "):" << std::endl;
-    for (size_t i = 0; i < std::min<size_t>(10, produced.size()); ++i) {
-        LogInfo << " - " << produced[i] << std::endl;
+    LogInfo << "\nList of output files (" << output_files.size() << "):" << std::endl;
+    for (size_t i = 0; i < std::min<size_t>(10, output_files.size()); ++i) {
+        LogInfo << " - " << output_files[i] << std::endl;
     }
-    if (produced.size() > 10) {
-        LogInfo << " ... (" << produced.size() - 10 << " more files not shown)" << std::endl;
+    if (output_files.size() > 10) {
+        LogInfo << " ... (" << output_files.size() - 10 << " more files not shown)" << std::endl;
     }
 
     return 0;
