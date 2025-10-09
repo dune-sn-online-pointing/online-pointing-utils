@@ -34,4 +34,12 @@ Under `build/app/` you will find the executables.
 Just doing `./cluster_to_root` will display their usage, meaning what arguments they require. 
 The apps can also be run through bash scripts under `scripts/`, that will have the same name.
 
+# Notes
+
+To be reorganized better.
+
+The standard for backtracking is in the parameters. 
+tps genereted with that will have no suffix and are the standard to be used. 
+In case for tests different parameters are used, the tps will have a suffix (e.g. `_bktr20.root`).
+
 

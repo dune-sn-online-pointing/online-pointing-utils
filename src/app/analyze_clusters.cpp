@@ -2,6 +2,16 @@
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
+// Helper function to add page number to canvas
+void addPageNumber(TCanvas* canvas, int pageNum, int totalPages) {
+  canvas->cd();
+  TText* pageText = new TText(0.95, 0.02, Form("Page %d/%d", pageNum, totalPages));
+  pageText->SetTextAlign(31); // right-aligned
+  pageText->SetTextSize(0.02);
+  pageText->SetNDC();
+  pageText->Draw();
+}
+
 int main(int argc, char* argv[]){
   CmdLineParser clp;
   clp.getDescription() << "> analyze_clusters app - Generate plots from Cluster ROOT files." << std::endl;
@@ -121,8 +131,23 @@ int main(int argc, char* argv[]){
     std::map<std::string, TH1F*> max_tp_charge_plane_h;
     std::map<std::string, TH1F*> total_length_plane_h;
     std::map<std::string, TH2F*> ntps_vs_total_charge_plane_h;
+    
+    // Additional histograms for interesting quantities
+    TH1F* h_true_particle_energy = new TH1F("h_true_part_e", "True particle energy;Energy [MeV];Clusters", 100, 0, 60000);
+    h_true_particle_energy->SetDirectory(nullptr);
+    TH1F* h_true_neutrino_energy = new TH1F("h_true_nu_e", "True neutrino energy;Energy [MeV];Clusters", 50, 0, 100);
+    h_true_neutrino_energy->SetDirectory(nullptr);
+    TH1F* h_min_distance = new TH1F("h_min_dist", "Min distance from true position;Distance [cm];Clusters", 50, 0, 50);
+    h_min_distance->SetDirectory(nullptr);
+    TH2F* h2_particle_vs_cluster_energy = new TH2F("h2_part_clust_e", "Particle energy vs cluster energy;True particle energy [MeV];Cluster total energy [MeV]", 100, 0, 60000, 100, 0, 10000);
+    h2_particle_vs_cluster_energy->SetDirectory(nullptr);
+    TH2F* h2_neutrino_vs_cluster_energy = new TH2F("h2_nu_clust_e", "Neutrino energy vs cluster energy;True neutrino energy [MeV];Cluster total energy [MeV]", 50, 0, 100, 100, 0, 10000);
+    h2_neutrino_vs_cluster_energy->SetDirectory(nullptr);
+    
     std::vector<double> marley_enu;
     std::vector<double> marley_ncl; // per event MARLEY Cluster count vs Eν
+    std::map<int, double> marley_total_energy_per_event; // sum of total_energy for MARLEY clusters per event
+    std::map<int, double> event_neutrino_energy; // neutrino energy per event
     std::map<int,int> sn_clusters_per_event; // sum across planes
 
     // Marley TP fraction categorization counters (across all planes)
@@ -150,8 +175,9 @@ int main(int argc, char* argv[]){
     for (auto& pd : planes){
       // Branches
       int event=0, n_tps=0;
-      float true_ne=0;
+      float true_ne=0, true_pe=0;
       double total_charge=0, total_energy=0;
+      float min_dist=0;
       std::string* true_label_ptr=nullptr;
       float true_dir_x=0, true_dir_y=0, true_dir_z=0;
       std::string* true_interaction_ptr=nullptr;
@@ -166,6 +192,8 @@ int main(int argc, char* argv[]){
       // prefer new names; fallback if needed
       if (pd.tree->GetBranch("true_neutrino_energy")) pd.tree->SetBranchAddress("true_neutrino_energy", &true_ne);
       else if (pd.tree->GetBranch("true_energy")) pd.tree->SetBranchAddress("true_energy", &true_ne);
+      if (pd.tree->GetBranch("true_particle_energy")) pd.tree->SetBranchAddress("true_particle_energy", &true_pe);
+      if (pd.tree->GetBranch("min_distance_from_true_pos")) pd.tree->SetBranchAddress("min_distance_from_true_pos", &min_dist);
       if (pd.tree->GetBranch("total_charge")) pd.tree->SetBranchAddress("total_charge", &total_charge);
       if (pd.tree->GetBranch("total_energy")) pd.tree->SetBranchAddress("total_energy", &total_energy);
       if (pd.tree->GetBranch("true_label")) pd.tree->SetBranchAddress("true_label", &true_label_ptr);
@@ -196,14 +224,27 @@ int main(int argc, char* argv[]){
         if (n_tps<=0) continue;
         if (true_label_ptr){
           label_counts_all[*true_label_ptr]++;
-          if (toLower(*true_label_ptr).find("marley")!=std::string::npos)
+          if (toLower(*true_label_ptr).find("marley")!=std::string::npos){
             marley_count_evt[event]++;
+            marley_total_energy_per_event[event] += total_energy;
+          }
         }
         h_ntps->Fill(n_tps);
         h_charge->Fill(total_charge);
         h_energy->Fill(total_energy);
+        
+        // Fill global histograms
+        if (true_pe > 0) h_true_particle_energy->Fill(true_pe);
+        if (true_ne > 0) h_true_neutrino_energy->Fill(true_ne);
+        if (min_dist >= 0) h_min_distance->Fill(min_dist);
+        if (true_pe > 0 && total_energy > 0) h2_particle_vs_cluster_energy->Fill(true_pe, total_energy);
+        if (true_ne > 0 && total_energy > 0) h2_neutrino_vs_cluster_energy->Fill(true_ne, total_energy);
+        
         // record event energy when available
-        if (true_ne>0) evt_enu[event] = true_ne;
+        if (true_ne>0) {
+          evt_enu[event] = true_ne;
+          event_neutrino_energy[event] = true_ne;
+        }
 
         // Categorize clusters by Marley TP content
         if (generator_tp_fraction == 1.0f) {
@@ -248,18 +289,34 @@ int main(int argc, char* argv[]){
       }
     }
 
-    // Start PDF
+    // Start PDF with title page
+    int pageNum = 1;
+    int totalPages = 14; // Updated to match actual pages
+    
     TCanvas* c = new TCanvas("c_ac_title","Title",800,600); c->cd();
     c->SetFillColor(kWhite);
     auto t = new TText(0.5,0.8, "Cluster Analysis Report");
     t->SetTextAlign(22); t->SetTextSize(0.06); t->SetNDC(); t->Draw();
-    auto ftxt = new TText(0.5,0.6, Form("Input: %s", clusters_file.c_str()));
-    ftxt->SetTextAlign(22); ftxt->SetTextSize(0.03); ftxt->SetNDC(); ftxt->Draw();
+    
+    // Split path and filename on separate lines
+    std::string path_part = clusters_file.substr(0, clusters_file.find_last_of("/\\")+1);
+    std::string file_part = clusters_file.substr(clusters_file.find_last_of("/\\")+1);
+    auto ptxt = new TText(0.5,0.6, Form("Path: %s", path_part.c_str()));
+    ptxt->SetTextAlign(22); ptxt->SetTextSize(0.025); ptxt->SetNDC(); ptxt->Draw();
+    auto ftxt = new TText(0.5,0.55, Form("File: %s", file_part.c_str()));
+    ftxt->SetTextAlign(22); ftxt->SetTextSize(0.025); ftxt->SetNDC(); ftxt->Draw();
+    
+    // Add timestamp
+    TDatime now;
+    auto date_txt = new TText(0.5, 0.4, Form("Generated on: %s", now.AsString()));
+    date_txt->SetTextAlign(22); date_txt->SetTextSize(0.02); date_txt->SetNDC(); date_txt->Draw();
+    
     c->SaveAs((pdf+"(").c_str());
     delete c;
 
     // Page: counts by label (HBAR)
-    {
+    if (!label_counts_all.empty()) {
+      pageNum++;
       size_t nlabels = label_counts_all.size();
       TCanvas* cl = new TCanvas("c_ac_labels","Labels",1200,700);
       TH1F* h = new TH1F("h_ac_labels","Clusters by true label", std::max<size_t>(1,nlabels), 0, std::max<size_t>(1,nlabels));
@@ -272,63 +329,110 @@ int main(int argc, char* argv[]){
         b++;
       }
       h->Draw("HBAR");
+      addPageNumber(cl, pageNum, totalPages);
       cl->SaveAs(pdf.c_str());
       delete h;
       delete cl;
     }
 
     // Page: per-plane Cluster size and totals
-    {
+    if (!n_tps_plane_h.empty()) {
+      pageNum++;
       TCanvas* csz = new TCanvas("c_ac_sizes","Sizes",1200,900); csz->Divide(3,2);
       int pad=1;
-      for (auto* h : {n_tps_plane_h["U"], n_tps_plane_h["V"], n_tps_plane_h["X"], total_charge_plane_h["U"], total_charge_plane_h["V"], total_charge_plane_h["X"]}){
+      // Use actual plane names from the map
+      std::vector<std::string> plane_order = {"U", "V", "X"};
+      for (const auto& p : plane_order) {
         csz->cd(pad++);
-        if(h){ gPad->SetLogy(); h->Draw("HIST"); }
+        if(n_tps_plane_h.count(std::string("n_tps_")+p) && n_tps_plane_h[std::string("n_tps_")+p]){ 
+          gPad->SetLogy(); 
+          n_tps_plane_h[std::string("n_tps_")+p]->Draw("HIST"); 
+        }
       }
+      for (const auto& p : plane_order) {
+        csz->cd(pad++);
+        if(total_charge_plane_h.count(std::string("total_charge_")+p) && total_charge_plane_h[std::string("total_charge_")+p]){ 
+          gPad->SetLogy(); 
+          total_charge_plane_h[std::string("total_charge_")+p]->Draw("HIST"); 
+        }
+      }
+      csz->cd(0);
+      addPageNumber(csz, pageNum, totalPages);
       csz->SaveAs(pdf.c_str());
       delete csz;
+      
+      pageNum++;
       TCanvas* cen = new TCanvas("c_ac_energy","Energy",1200,500); cen->Divide(3,1);
       int p2=1;
-      for (auto* h : {total_energy_plane_h["U"], total_energy_plane_h["V"], total_energy_plane_h["X"]}){
+      for (const auto& p : plane_order) {
         cen->cd(p2++);
-        if(h){ gPad->SetLogy(); h->Draw("HIST"); }
+        if(total_energy_plane_h.count(std::string("total_energy_")+p) && total_energy_plane_h[std::string("total_energy_")+p]){ 
+          gPad->SetLogy(); 
+          total_energy_plane_h[std::string("total_energy_")+p]->Draw("HIST"); 
+        }
       }
+      cen->cd(0);
+      addPageNumber(cen, pageNum, totalPages);
       cen->SaveAs(pdf.c_str());
       delete cen;
     }
 
     // Page: per-plane max TP charge and total length
-    {
+    if (!max_tp_charge_plane_h.empty()) {
+      pageNum++;
       TCanvas* cmax = new TCanvas("c_ac_max","Max and length",1200,900); cmax->Divide(3,2);
       int pad=1;
-      for (auto* h : {max_tp_charge_plane_h["U"], max_tp_charge_plane_h["V"], max_tp_charge_plane_h["X"], total_length_plane_h["U"], total_length_plane_h["V"], total_length_plane_h["X"]}){
+      std::vector<std::string> plane_order = {"U", "V", "X"};
+      for (const auto& p : plane_order) {
         cmax->cd(pad++);
-        if(h){ gPad->SetLogy(); h->Draw("HIST"); }
+        if(max_tp_charge_plane_h.count(std::string("max_tp_charge_")+p) && max_tp_charge_plane_h[std::string("max_tp_charge_")+p]){ 
+          gPad->SetLogy(); 
+          max_tp_charge_plane_h[std::string("max_tp_charge_")+p]->Draw("HIST"); 
+        }
       }
+      for (const auto& p : plane_order) {
+        cmax->cd(pad++);
+        if(total_length_plane_h.count(std::string("total_length_")+p) && total_length_plane_h[std::string("total_length_")+p]){ 
+          gPad->SetLogy(); 
+          total_length_plane_h[std::string("total_length_")+p]->Draw("HIST"); 
+        }
+      }
+      cmax->cd(0);
+      addPageNumber(cmax, pageNum, totalPages);
       cmax->SaveAs(pdf.c_str());
       delete cmax;
     }
 
     // Page: per-plane 2D n_tps vs total charge
-    {
+    if (!ntps_vs_total_charge_plane_h.empty()) {
+      pageNum++;
       TCanvas* c2d = new TCanvas("c_ac_2d","nTPs vs charge",1200,500); c2d->Divide(3,1);
       int pad=1;
-      for (auto* h2 : {ntps_vs_total_charge_plane_h["U"], ntps_vs_total_charge_plane_h["V"], ntps_vs_total_charge_plane_h["X"]}){
+      std::vector<std::string> plane_order = {"U", "V", "X"};
+      for (const auto& p : plane_order) {
         c2d->cd(pad++);
-        if(h2){ gPad->SetRightMargin(0.12); h2->SetContour(100); h2->Draw("COLZ"); }
+        if(ntps_vs_total_charge_plane_h.count(std::string("ntps_vs_charge_")+p) && ntps_vs_total_charge_plane_h[std::string("ntps_vs_charge_")+p]){ 
+          gPad->SetRightMargin(0.12); 
+          ntps_vs_total_charge_plane_h[std::string("ntps_vs_charge_")+p]->SetContour(100); 
+          ntps_vs_total_charge_plane_h[std::string("ntps_vs_charge_")+p]->Draw("COLZ"); 
+        }
       }
+      c2d->cd(0);
+      addPageNumber(c2d, pageNum, totalPages);
       c2d->SaveAs(pdf.c_str());
       delete c2d;
     }
 
     // Page: number of supernova clusters per event
     if (!sn_clusters_per_event.empty()){
+      pageNum++;
       int maxv = 0;
       for (const auto& kv : sn_clusters_per_event) maxv = std::max(maxv, kv.second);
       TCanvas* csn = new TCanvas("c_ac_sn","SN clusters per event",900,600);
       TH1F* hsn = new TH1F("h_ac_sn","Supernova clusters per event;count;events", maxv+1, -0.5, maxv+0.5);
       for (const auto& kv : sn_clusters_per_event) hsn->Fill(kv.second);
       hsn->Draw("HIST");
+      addPageNumber(csn, pageNum, totalPages);
       csn->SaveAs(pdf.c_str());
       delete hsn;
       delete csn;
@@ -336,6 +440,7 @@ int main(int argc, char* argv[]){
 
     // Page: MARLEY clusters per event vs neutrino energy (scatter)
     if (!marley_enu.empty()){
+      pageNum++;
       TCanvas* csc = new TCanvas("c_ac_scatter","MARLEY clusters vs E#nu",900,600);
       TGraph* gr = new TGraph((int)marley_enu.size(), marley_enu.data(), marley_ncl.data());
       gr->SetTitle("MARLEY clusters vs E_{#nu};E_{#nu} [MeV];N_{clusters} (MARLEY)");
@@ -344,13 +449,134 @@ int main(int argc, char* argv[]){
       gr->Draw("AP");
       gPad->SetGridx();
       gPad->SetGridy();
+      addPageNumber(csc, pageNum, totalPages);
       csc->SaveAs(pdf.c_str());
       delete gr;
       delete csc;
     }
 
+    // Page: Total energy of MARLEY clusters per event vs neutrino energy
+    if (!marley_total_energy_per_event.empty() && !event_neutrino_energy.empty()){
+      pageNum++;
+      std::vector<double> enu_vec, energy_vec;
+      for (const auto& kv : marley_total_energy_per_event) {
+        int evt = kv.first;
+        double tot_e = kv.second;
+        auto it = event_neutrino_energy.find(evt);
+        if (it != event_neutrino_energy.end()) {
+          enu_vec.push_back(it->second);
+          energy_vec.push_back(tot_e);
+        }
+      }
+      if (!enu_vec.empty()) {
+        TCanvas* cen_scatter = new TCanvas("c_ac_energy_scatter","MARLEY total energy vs E#nu",900,600);
+        TGraph* gr_en = new TGraph((int)enu_vec.size(), enu_vec.data(), energy_vec.data());
+        gr_en->SetTitle("Total energy of MARLEY clusters vs E_{#nu};E_{#nu} [MeV];Total energy [MeV]");
+        gr_en->SetMarkerStyle(20);
+        gr_en->SetMarkerColor(kBlue+1);
+        gr_en->Draw("AP");
+        
+        // Perform linear fit
+        TF1* fit = new TF1("fit_marley_energy", "pol1", 0, 100);
+        fit->SetLineColor(kRed);
+        fit->SetLineWidth(2);
+        gr_en->Fit(fit, "Q"); // Q for quiet mode
+        fit->Draw("SAME");
+        
+        // Get fit parameters
+        double slope = fit->GetParameter(1);
+        double intercept = fit->GetParameter(0);
+        double slope_err = fit->GetParError(1);
+        double intercept_err = fit->GetParError(0);
+        double chi2 = fit->GetChisquare();
+        int ndf = fit->GetNDF();
+        
+        // Display fit results on canvas
+        TLatex latex;
+        latex.SetNDC();
+        latex.SetTextSize(0.03);
+        latex.SetTextColor(kRed);
+        latex.DrawLatex(0.15, 0.85, Form("Fit: E_{total} = %.3f #times E_{#nu} + %.3f", slope, intercept));
+        latex.DrawLatex(0.15, 0.81, Form("Slope: %.3f #pm %.3f", slope, slope_err));
+        latex.DrawLatex(0.15, 0.77, Form("Intercept: %.3f #pm %.3f", intercept, intercept_err));
+        latex.DrawLatex(0.15, 0.73, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2, ndf, (ndf > 0 ? chi2/ndf : 0)));
+        
+        gPad->SetGridx();
+        gPad->SetGridy();
+        addPageNumber(cen_scatter, pageNum, totalPages);
+        cen_scatter->SaveAs(pdf.c_str());
+        delete fit;
+        delete gr_en;
+        delete cen_scatter;
+      }
+    }
+
+    // Page: True particle and neutrino energy distributions
+    if (h_true_particle_energy->GetEntries() > 0 || h_true_neutrino_energy->GetEntries() > 0) {
+      pageNum++;
+      TCanvas* ce_dist = new TCanvas("c_ac_energy_dist","Energy distributions",1200,600);
+      ce_dist->Divide(2,1);
+      
+      ce_dist->cd(1);
+      if (h_true_particle_energy->GetEntries() > 0) {
+        gPad->SetLogy();
+        h_true_particle_energy->Draw("HIST");
+      }
+      
+      ce_dist->cd(2);
+      if (h_true_neutrino_energy->GetEntries() > 0) {
+        gPad->SetLogy();
+        h_true_neutrino_energy->Draw("HIST");
+      }
+      
+      ce_dist->cd(0);
+      addPageNumber(ce_dist, pageNum, totalPages);
+      ce_dist->SaveAs(pdf.c_str());
+      delete ce_dist;
+    }
+
+    // Page: Min distance from true position
+    if (h_min_distance->GetEntries() > 0) {
+      pageNum++;
+      TCanvas* cd = new TCanvas("c_ac_dist","Min distance",900,600);
+      gPad->SetLogy();
+      h_min_distance->Draw("HIST");
+      addPageNumber(cd, pageNum, totalPages);
+      cd->SaveAs(pdf.c_str());
+      delete cd;
+    }
+
+    // Page: 2D correlations
+    if (h2_particle_vs_cluster_energy->GetEntries() > 0 || h2_neutrino_vs_cluster_energy->GetEntries() > 0) {
+      pageNum++;
+      TCanvas* c2d_corr = new TCanvas("c_ac_2d_corr","Energy correlations",1200,600);
+      c2d_corr->Divide(2,1);
+      
+      c2d_corr->cd(1);
+      if (h2_particle_vs_cluster_energy->GetEntries() > 0) {
+        gPad->SetRightMargin(0.12);
+        gPad->SetLogz();
+        h2_particle_vs_cluster_energy->SetContour(100);
+        h2_particle_vs_cluster_energy->Draw("COLZ");
+      }
+      
+      c2d_corr->cd(2);
+      if (h2_neutrino_vs_cluster_energy->GetEntries() > 0) {
+        gPad->SetRightMargin(0.12);
+        gPad->SetLogz();
+        h2_neutrino_vs_cluster_energy->SetContour(100);
+        h2_neutrino_vs_cluster_energy->Draw("COLZ");
+      }
+      
+      c2d_corr->cd(0);
+      addPageNumber(c2d_corr, pageNum, totalPages);
+      c2d_corr->SaveAs(pdf.c_str());
+      delete c2d_corr;
+    }
+
     // Page: Marley TP fraction categorization
-    {
+    if (only_marley_clusters > 0 || partial_marley_clusters > 0 || no_marley_clusters > 0) {
+      pageNum++;
       TCanvas* cmarley = new TCanvas("c_ac_marley","Marley TP categorization",900,600);
       TH1F* hmarley = new TH1F("h_ac_marley","Clusters by Marley TP content;Category;Number of clusters", 3, 0, 3);
       hmarley->SetStats(0);
@@ -378,6 +604,7 @@ int main(int argc, char* argv[]){
       auto text3 = new TText(2.8, no_marley_clusters + 0.05 * hmarley->GetMaximum(), Form("%d", no_marley_clusters));
       text3->SetTextAlign(22); text3->SetTextSize(0.04); text3->Draw();
 
+      addPageNumber(cmarley, pageNum, totalPages);
       cmarley->SaveAs(pdf.c_str());
       delete hmarley;
       delete cmarley;
@@ -398,6 +625,11 @@ int main(int argc, char* argv[]){
     for (auto& kv : max_tp_charge_plane_h) delete kv.second; max_tp_charge_plane_h.clear();
     for (auto& kv : total_length_plane_h) delete kv.second; total_length_plane_h.clear();
     for (auto& kv : ntps_vs_total_charge_plane_h) delete kv.second; ntps_vs_total_charge_plane_h.clear();
+    delete h_true_particle_energy;
+    delete h_true_neutrino_energy;
+    delete h_min_distance;
+    delete h2_particle_vs_cluster_energy;
+    delete h2_neutrino_vs_cluster_energy;
 
     // record produced
     produced.push_back(std::filesystem::absolute(pdf).string());
