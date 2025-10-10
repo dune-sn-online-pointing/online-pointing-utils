@@ -1,4 +1,5 @@
 #include "Clustering.h"
+#include "Display.h"
 
 LoggerInit([]{ Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -11,6 +12,7 @@ namespace ViewerState {
     std::vector<int> sot;
     std::vector<int> stopeak;  // samples_to_peak for triangle shape
     std::vector<int> adc_peak; // peak ADC values
+    std::vector<int> adc_integral; // ADC integral for pentagon mode
     std::string label;
     std::string interaction;
     float enu = 0.0f;
@@ -31,10 +33,10 @@ namespace ViewerState {
   TLatex* latex = nullptr;
   TPad* padCtrl = nullptr; // left control pad for buttons
   TPad* padGrid = nullptr; // right plotting area
+  Display::DrawMode drawMode = Display::PENTAGON; // Default to pentagon mode
 }
 
 // static std::string toLower(std::string s){ std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c);}); return s; }
-static inline int toTPCticks(int tdcTicks){ return tdcTicks/32; }
 
 // Internal callbacks (we'll hook buttons via function pointers to avoid Cling symbol lookup)
 static void PrevImpl();
@@ -132,7 +134,7 @@ void drawCurrent(){
   frame->SetTitle(";channel (contiguous);time [ticks]");
   frame->GetXaxis()->CenterTitle();
   frame->GetYaxis()->CenterTitle();
-  frame->GetZaxis()->SetTitle("ADC (triangle model)");
+  frame->GetZaxis()->SetTitle(Form("ADC (%s model)", (drawMode == Display::PENTAGON) ? "pentagon" : "triangle"));
   frame->GetZaxis()->CenterTitle();
 
   gPad->SetRightMargin(0.18);
@@ -141,42 +143,35 @@ void drawCurrent(){
   gPad->SetGridx();
   gPad->SetGridy();
 
-  const double threshold_adc = 60.0;
+  // Get threshold based on plane
+  double threshold_adc = 60.0;
+  if (it.plane == "U") threshold_adc = GET_PARAM_DOUBLE("display.threshold_adc_u");
+  else if (it.plane == "V") threshold_adc = GET_PARAM_DOUBLE("display.threshold_adc_v");
+  else if (it.plane == "X") threshold_adc = GET_PARAM_DOUBLE("display.threshold_adc_x");
+
+  double pentagon_offset = GET_PARAM_DOUBLE("display.pentagon_offset");
 
   for (size_t i=0;i<nTPs;++i){
     int ts = it.tstart[i];
     int tot = it.sot[i];
-    int te = ts + std::max(1, tot);
     int ch_actual = it.ch[i];
     int ch_contiguous = ch_to_idx[ch_actual];
 
     int samples_to_peak = (i < it.stopeak.size()) ? it.stopeak[i] : (tot > 0 ? tot / 2 : 0);
     int peak_adc = (i < it.adc_peak.size()) ? it.adc_peak[i] : 200;
     int peak_time = ts + samples_to_peak;
+    int adc_integral = (i < it.adc_integral.size()) ? it.adc_integral[i] : peak_adc * tot / 2;
 
-    for (int t = ts; t < te; ++t) {
-      double intensity = peak_adc;
-      if (t <= peak_time) {
-        if (peak_time != ts) {
-          double frac = double(t - ts) / double(peak_time - ts);
-          intensity = threshold_adc + frac * (peak_adc - threshold_adc);
-        }
-      }
-      else {
-        int fall_span = (te - 1) - peak_time;
-        if (fall_span > 0) {
-          double frac = double(t - peak_time) / double(fall_span);
-          intensity = peak_adc - frac * (peak_adc - threshold_adc);
-        }
-      }
-
-      // No ceiling on ADC
-      int binx = frame->GetXaxis()->FindBin(ch_contiguous);
-      int biny = frame->GetYaxis()->FindBin(t);
-      double current = frame->GetBinContent(binx, biny);
-      if (intensity > current) {
-        frame->SetBinContent(binx, biny, intensity);
-      }
+    if (drawMode == Display::PENTAGON) {
+      Display::fillHistogramPentagon(
+        frame, ch_contiguous, ts, peak_time, tot,
+        peak_adc, adc_integral, threshold_adc, pentagon_offset
+      );
+    } else {
+      Display::fillHistogramTriangle(
+        frame, ch_contiguous, ts, tot,
+        samples_to_peak, peak_adc, threshold_adc
+      );
     }
   }
 
@@ -207,9 +202,11 @@ int main(int argc, char** argv){
   clp.addDummyOption("Main options");
   clp.addOption("clusters", {"--clusters-file"}, "Input clusters ROOT file (required, must contain 'clusters' in filename)");
   clp.addOption("mode", {"--mode"}, "Display mode: clusters | events (default: clusters)");
+  clp.addOption("drawMode", {"--draw-mode"}, "Drawing mode: triangle | pentagon (default: pentagon)");
   clp.addTriggerOption("onlyMarley", {"--only-marley"}, "In events mode, show only MARLEY clusters");
   clp.addOption("json", {"-j","--json"}, "JSON with input and parameters (optional)");
   clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
+  clp.addTriggerOption("debugMode", {"-d"}, "Run in debug mode (more detailed than verbose)");
   clp.addDummyOption();
   LogInfo << clp.getDescription().str() << std::endl;
   LogInfo << "Usage:\n" << clp.getConfigSummary() << std::endl;
@@ -220,8 +217,15 @@ int main(int argc, char** argv){
     return 1;
   }
 
+  // verbosity updating global variables
+  if (clp.isOptionTriggered("verboseMode")) { verboseMode = true; }
+  if (clp.isOptionTriggered("debugMode")) { verboseMode =true; debugMode = true; }
+  gErrorIgnoreLevel = rootVerbosity;  
+
   std::string clustersFile;
-  std::string mode = "clusters"; bool onlyMarley=false;
+  std::string mode = "clusters"; 
+  std::string drawModeStr = "pentagon";
+  bool onlyMarley=false;
 
   if (clp.isOptionTriggered("json")){
     std::string jpath = clp.getOptionVal<std::string>("json");
@@ -229,11 +233,29 @@ int main(int argc, char** argv){
     nlohmann::json j; jf >> j;
     if (j.contains("clusters_file")) clustersFile = j.value("clusters_file", std::string(""));
     if (j.contains("mode")) mode = j.value("mode", mode);
+    if (j.contains("draw_mode")) drawModeStr = j.value("draw_mode", drawModeStr);
     if (j.contains("only_marley")) onlyMarley = j.value("only_marley", onlyMarley);
   }
   if (clp.isOptionTriggered("clusters")) clustersFile = clp.getOptionVal<std::string>("clusters");
   if (clp.isOptionTriggered("mode")) mode = clp.getOptionVal<std::string>("mode");
+  if (clp.isOptionTriggered("drawMode")) drawModeStr = clp.getOptionVal<std::string>("drawMode");
   if (clp.isOptionTriggered("onlyMarley")) onlyMarley = true;
+
+  // Set draw mode
+  if (toLower(drawModeStr) == "triangle") {
+    ViewerState::drawMode = Display::TRIANGLE;
+  } else {
+    ViewerState::drawMode = Display::PENTAGON;
+  }
+
+  // Load parameters explicitly (in case global initialization failed)
+  try {
+    ParametersManager::getInstance().loadParameters();
+    LogInfo << "Parameters loaded successfully" << std::endl;
+  } catch (const std::exception& e) {
+    LogError << "Failed to load parameters: " << e.what() << std::endl;
+    return 1;
+  }
 
   // Validate clusters file
   LogThrowIf(clustersFile.empty(), "Clusters file is required! Provide via --clusters-file or JSON.");
@@ -255,7 +277,7 @@ int main(int argc, char** argv){
     int n_tps = 0;
     float enu = 0.f; double totQ = 0.0, totE = 0.0; std::string* label=nullptr; std::string* inter=nullptr; int evt= -1;
     std::vector<int>* v_ch=nullptr; std::vector<int>* v_ts=nullptr; std::vector<int>* v_sot=nullptr;
-    std::vector<int>* v_stopeak=nullptr; std::vector<int>* v_adc_peak=nullptr;
+    std::vector<int>* v_stopeak=nullptr; std::vector<int>* v_adc_peak=nullptr; std::vector<int>* v_adc_integral=nullptr;
     
     if (t->GetBranch("n_tps")) t->SetBranchAddress("n_tps", &n_tps);
     if (t->GetBranch("true_neutrino_energy")) t->SetBranchAddress("true_neutrino_energy", &enu);
@@ -269,6 +291,7 @@ int main(int argc, char** argv){
     if (t->GetBranch("tp_samples_over_threshold")) t->SetBranchAddress("tp_samples_over_threshold", &v_sot);
     if (t->GetBranch("tp_samples_to_peak")) t->SetBranchAddress("tp_samples_to_peak", &v_stopeak);
     if (t->GetBranch("tp_adc_peak")) t->SetBranchAddress("tp_adc_peak", &v_adc_peak);
+    if (t->GetBranch("tp_adc_integral")) t->SetBranchAddress("tp_adc_integral", &v_adc_integral);
     
     Long64_t n = t->GetEntries();
     if (toLower(mode)=="clusters"){
@@ -285,13 +308,14 @@ int main(int argc, char** argv){
         it.enu = enu; 
         it.total_charge = totQ; 
         it.total_energy = totE;
-  it.eventId = evt;
+        it.eventId = evt;
         
         if (v_ch) it.ch = *v_ch;
         if (v_ts){ it.tstart.reserve(v_ts->size()); for (int ts : *v_ts) it.tstart.push_back(toTPCticks(ts)); }
         if (v_sot) it.sot = *v_sot; // SoT already in TPC ticks
         if (v_stopeak) it.stopeak = *v_stopeak;
         if (v_adc_peak) it.adc_peak = *v_adc_peak;
+        if (v_adc_integral) it.adc_integral = *v_adc_integral;
         
         ViewerState::items.emplace_back(std::move(it));
       }
@@ -312,6 +336,7 @@ int main(int argc, char** argv){
         if (v_sot){ it.sot.insert(it.sot.end(), v_sot->begin(), v_sot->end()); }
         if (v_stopeak){ it.stopeak.insert(it.stopeak.end(), v_stopeak->begin(), v_stopeak->end()); }
         if (v_adc_peak){ it.adc_peak.insert(it.adc_peak.end(), v_adc_peak->begin(), v_adc_peak->end()); }
+        if (v_adc_integral){ it.adc_integral.insert(it.adc_integral.end(), v_adc_integral->begin(), v_adc_integral->end()); }
       }
       // Only keep events with more than 1 TP
       for (auto &kv : agg){ if (kv.second.ch.size() > 1) ViewerState::items.emplace_back(std::move(kv.second)); }

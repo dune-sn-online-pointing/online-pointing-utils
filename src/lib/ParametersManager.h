@@ -18,6 +18,7 @@ public:
         loadParameterFile(paramDir + "/conversion.dat");
         loadParameterFile(paramDir + "/detector.dat");
         loadParameterFile(paramDir + "/analysis.dat");
+        loadParameterFile(paramDir + "/display.dat");
         
         // Calculate derived parameters
         calculateDerivedParameters();

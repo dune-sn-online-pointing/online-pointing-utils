@@ -155,6 +155,16 @@ int main(int argc, char* argv[]){
     int partial_marley_clusters = 0;  // 0 < generator_tp_fraction < 1.0
     int no_marley_clusters = 0;       // generator_tp_fraction = 0.0
 
+    // Histograms for total ADC integral by cluster family
+    TH1F* h_adc_pure_marley = new TH1F("h_adc_pure_marley", "Total ADC Integral: Pure Marley;Total ADC Integral;Clusters", 50, 0, 50000);
+    TH1F* h_adc_pure_noise = new TH1F("h_adc_pure_noise", "Total ADC Integral: Pure Noise;Total ADC Integral;Clusters", 50, 0, 50000);
+    TH1F* h_adc_hybrid = new TH1F("h_adc_hybrid", "Total ADC Integral: Hybrid;Total ADC Integral;Clusters", 50, 0, 50000);
+    TH1F* h_adc_background = new TH1F("h_adc_background", "Total ADC Integral: Background;Total ADC Integral;Clusters", 50, 0, 50000);
+    h_adc_pure_marley->SetDirectory(nullptr);
+    h_adc_pure_noise->SetDirectory(nullptr);
+    h_adc_hybrid->SetDirectory(nullptr);
+    h_adc_background->SetDirectory(nullptr);
+
     auto ensureHist = [](std::map<std::string, TH1F*>& m, const std::string& key, const char* title){
       if (m.count(key)==0){
         m[key] = new TH1F((key+"_h").c_str(), title, 100, 0, 1000);
@@ -255,6 +265,42 @@ int main(int argc, char* argv[]){
           no_marley_clusters++;
         }
 
+        // --- Fill ADC integral histograms by cluster family ---
+        // We need to look at the TP-level generator information to classify properly
+        // Use the v_adcint vector to compute total ADC integral
+        if (v_adcint && !v_adcint->empty()) {
+          double adc_sum = 0;
+          for (auto val : *v_adcint) adc_sum += val;
+          
+          // Classify based on true_label and generator_tp_fraction
+          bool has_marley = false, has_noise = false, has_other = false;
+          
+          // Check the true_label
+          if (true_label_ptr) {
+            std::string label = *true_label_ptr;
+            if (label == "marley") has_marley = true;
+            else if (label == "UNKNOWN") has_noise = true;
+            else if (!label.empty()) has_other = true;
+          }
+          
+          // Also use generator_tp_fraction for more precise classification
+          if (generator_tp_fraction == 1.0f) {
+            // Pure marley
+            h_adc_pure_marley->Fill(adc_sum);
+          } else if (generator_tp_fraction == 0.0f) {
+            // Pure noise (no generator info)
+            h_adc_pure_noise->Fill(adc_sum);
+          } else if (generator_tp_fraction > 0.0f && generator_tp_fraction < 1.0f) {
+            // Hybrid (mix of marley and noise)
+            h_adc_hybrid->Fill(adc_sum);
+          }
+          
+          // Check if it's a background (not marley, not unknown)
+          if (true_label_ptr && *true_label_ptr != "marley" && *true_label_ptr != "UNKNOWN" && !true_label_ptr->empty()) {
+            h_adc_background->Fill(adc_sum);
+          }
+        }
+
         // derived variables from vectors
         if (v_adcint && !v_adcint->empty()){
           int max_adc = *std::max_element(v_adcint->begin(), v_adcint->end());
@@ -291,7 +337,7 @@ int main(int argc, char* argv[]){
 
     // Start PDF with title page
     int pageNum = 1;
-    int totalPages = 14; // Updated to match actual pages
+    int totalPages = 15; // Updated to match actual pages (added ADC family plot)
     
     TCanvas* c = new TCanvas("c_ac_title","Title",800,600); c->cd();
     c->SetFillColor(kWhite);
@@ -610,6 +656,52 @@ int main(int argc, char* argv[]){
       delete cmarley;
     }
 
+    // --- New Page: Total ADC Integral by Cluster Family ---
+    if (h_adc_pure_marley->GetEntries() > 0 || h_adc_pure_noise->GetEntries() > 0 || 
+        h_adc_hybrid->GetEntries() > 0 || h_adc_background->GetEntries() > 0) {
+      pageNum++;
+      TCanvas* c_adc = new TCanvas("c_adc_family", "Total ADC Integral by Cluster Family", 900, 700);
+      
+      h_adc_pure_marley->SetLineColor(kBlue);
+      h_adc_pure_noise->SetLineColor(kGray+2);
+      h_adc_hybrid->SetLineColor(kGreen+2);
+      h_adc_background->SetLineColor(kRed);
+      h_adc_pure_marley->SetLineWidth(2);
+      h_adc_pure_noise->SetLineWidth(2);
+      h_adc_hybrid->SetLineWidth(2);
+      h_adc_background->SetLineWidth(2);
+
+      // Find max to set proper axis range
+      double max_val = 0;
+      max_val = std::max(max_val, h_adc_pure_marley->GetMaximum());
+      max_val = std::max(max_val, h_adc_pure_noise->GetMaximum());
+      max_val = std::max(max_val, h_adc_hybrid->GetMaximum());
+      max_val = std::max(max_val, h_adc_background->GetMaximum());
+      
+      h_adc_pure_marley->SetMaximum(max_val * 1.2);
+      h_adc_pure_marley->SetTitle("Total ADC Integral by Cluster Family;Total ADC Integral;Clusters");
+      h_adc_pure_marley->Draw("HIST");
+      h_adc_pure_noise->Draw("HIST SAME");
+      h_adc_hybrid->Draw("HIST SAME");
+      h_adc_background->Draw("HIST SAME");
+
+      TLegend* leg = new TLegend(0.65,0.65,0.88,0.88);
+      leg->AddEntry(h_adc_pure_marley, Form("Pure Marley (%.0f)", h_adc_pure_marley->GetEntries()), "l");
+      leg->AddEntry(h_adc_pure_noise, Form("Pure Noise (%.0f)", h_adc_pure_noise->GetEntries()), "l");
+      leg->AddEntry(h_adc_hybrid, Form("Hybrid (%.0f)", h_adc_hybrid->GetEntries()), "l");
+      leg->AddEntry(h_adc_background, Form("Background (%.0f)", h_adc_background->GetEntries()), "l");
+      leg->Draw();
+
+      gPad->SetLogy();
+      gPad->SetGridx();
+      gPad->SetGridy();
+
+      addPageNumber(c_adc, pageNum, totalPages);
+      c_adc->SaveAs(pdf.c_str());
+      delete leg;
+      delete c_adc;
+    }
+
     // Close PDF and file
     {
       TCanvas* cend = new TCanvas("c_ac_end","End",10,10);
@@ -630,6 +722,11 @@ int main(int argc, char* argv[]){
     delete h_min_distance;
     delete h2_particle_vs_cluster_energy;
     delete h2_neutrino_vs_cluster_energy;
+
+    delete h_adc_pure_marley;
+    delete h_adc_pure_noise;
+    delete h_adc_hybrid;
+    delete h_adc_background;
 
     // record produced
     produced.push_back(std::filesystem::absolute(pdf).string());

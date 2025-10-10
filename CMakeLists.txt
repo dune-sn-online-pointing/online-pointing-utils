@@ -18,6 +18,7 @@ add_subdirectory( ${CMAKE_SOURCE_DIR}/src/objects )
 add_subdirectory( ${CMAKE_SOURCE_DIR}/src/backtracking )
 add_subdirectory( ${CMAKE_SOURCE_DIR}/src/clustering )
 add_subdirectory( ${CMAKE_SOURCE_DIR}/src/planes-matching )
+add_subdirectory( ${CMAKE_SOURCE_DIR}/src/ana )
 add_subdirectory( ${CMAKE_SOURCE_DIR}/src/app )
 
 ################################################################

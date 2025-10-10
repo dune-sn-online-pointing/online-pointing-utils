@@ -92,7 +92,7 @@ int main(int argc, char* argv[]) {
 
     for (const auto& tps_file : inputs) {
 
-        if (file_count > 100) break; // TEMP
+        // if (file_count > 100) break; // TEMP
         
         if (verboseMode) LogInfo << "Input TPs file: " << tps_file << std::endl;
 

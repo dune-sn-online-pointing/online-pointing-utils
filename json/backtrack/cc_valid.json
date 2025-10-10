@@ -6,7 +6,7 @@
   ],
   "inputListFile": "/path/list_of_files.txt",
 
-  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/",
   
   "backtracker_error_margin": 10
 

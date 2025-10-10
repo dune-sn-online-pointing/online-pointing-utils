@@ -7,6 +7,10 @@ std::string toLower(std::string s){
   return s;
 }
 
+int toTPCticks(int tdcTicks) {
+  return tdcTicks / get_conversion_tdc_to_tpc();
+}
+
 bool ensureDirectoryExists(const std::string& folder) {
     if (folder.empty()) {
         return true;

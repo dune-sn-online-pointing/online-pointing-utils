@@ -15,6 +15,9 @@ std::string toLower(std::string s);
 
 bool ensureDirectoryExists(const std::string& folder);
 
+// Time conversion utilities (declared here, defined in utils.cpp to avoid circular dependency)
+int toTPCticks(int tdcTicks);
+
 
 void bindBranch(TTree* tree, const char* name, void* address);
 

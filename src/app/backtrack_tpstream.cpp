@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
     for (auto& filename : filenames) {
 
         //TEMP
-        if (count_files > 100) {LogWarning << "Processed 100 files, stopping to avoid excessive run time." << std::endl; break;}
+        // if (count_files > 100) {LogWarning << "Processed 100 files, stopping to avoid excessive run time." << std::endl; break;}
         count_files++;
 
         if (verboseMode) LogInfo << "Reading file: " << filename << std::endl;

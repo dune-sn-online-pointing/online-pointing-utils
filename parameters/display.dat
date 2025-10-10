@@ -1,0 +1,9 @@
+*******************************************************************************
+Display parameters
+*******************************************************************************
+
+< display.threshold_adc_x = 60 >               ADC threshold for X plane (collection)
+< display.threshold_adc_u = 70 >               ADC threshold for U plane (induction)
+< display.threshold_adc_v = 70 >               ADC threshold for V plane (induction)
+< display.pentagon_offset = 120 >              Offset to add to adc_integral for pentagon area calculation
+< display.default_mode = "pentagon" >          Default drawing mode: "triangle" or "pentagon"
