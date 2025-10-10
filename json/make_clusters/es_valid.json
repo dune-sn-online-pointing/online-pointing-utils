@@ -9,6 +9,7 @@
   "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
   "outputFilename": "es_valid",
   
+  "max_files": 20,
   
   "tick_limit": 5,
   "channel_limit": 2,

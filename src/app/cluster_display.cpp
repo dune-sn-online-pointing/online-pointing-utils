@@ -33,7 +33,7 @@ namespace ViewerState {
   TLatex* latex = nullptr;
   TPad* padCtrl = nullptr; // left control pad for buttons
   TPad* padGrid = nullptr; // right plotting area
-  Display::DrawMode drawMode = Display::PENTAGON; // Default to pentagon mode
+  DrawMode drawMode = PENTAGON; // Default to pentagon mode
 }
 
 // static std::string toLower(std::string s){ std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c);}); return s; }
@@ -134,12 +134,14 @@ void drawCurrent(){
   frame->SetTitle(";channel (contiguous);time [ticks]");
   frame->GetXaxis()->CenterTitle();
   frame->GetYaxis()->CenterTitle();
-  frame->GetZaxis()->SetTitle(Form("ADC (%s model)", (drawMode == Display::PENTAGON) ? "pentagon" : "triangle"));
+  frame->GetZaxis()->SetTitle(Form("ADC (%s model)", (drawMode == PENTAGON) ? "pentagon" : "triangle"));
   frame->GetZaxis()->CenterTitle();
 
-  gPad->SetRightMargin(0.18);
+  // Set margins to accommodate secondary axes
+  gPad->SetRightMargin(0.20);  // Increased for Z-axis legend and Y-axis labels
   gPad->SetLeftMargin(0.12);
   gPad->SetBottomMargin(0.12);
+  gPad->SetTopMargin(0.12);    // Added for top X-axis
   gPad->SetGridx();
   gPad->SetGridy();
 
@@ -162,13 +164,13 @@ void drawCurrent(){
     int peak_time = ts + samples_to_peak;
     int adc_integral = (i < it.adc_integral.size()) ? it.adc_integral[i] : peak_adc * tot / 2;
 
-    if (drawMode == Display::PENTAGON) {
-      Display::fillHistogramPentagon(
+    if (drawMode == PENTAGON) {
+      fillHistogramPentagon(
         frame, ch_contiguous, ts, peak_time, tot,
         peak_adc, adc_integral, threshold_adc, pentagon_offset
       );
     } else {
-      Display::fillHistogramTriangle(
+      fillHistogramTriangle(
         frame, ch_contiguous, ts, tot,
         samples_to_peak, peak_adc, threshold_adc
       );
@@ -178,6 +180,50 @@ void drawCurrent(){
   frame->SetMinimum(threshold_adc);
   gStyle->SetPalette(kBird);
   frame->Draw("COLZ");
+
+  // Add secondary axes showing physical dimensions in cm
+  // Get conversion parameters
+  double wire_pitch_cm = GET_PARAM_DOUBLE("geometry.wire_pitch_collection_cm"); // Default to collection
+  if (it.plane == "U" || it.plane == "V") {
+    wire_pitch_cm = GET_PARAM_DOUBLE("geometry.wire_pitch_induction_diagonal_cm");
+  }
+  double time_tick_cm = GET_PARAM_DOUBLE("timing.time_tick_cm");
+  
+  // Calculate physical ranges
+  double xmin_cm = xmin * wire_pitch_cm;
+  double xmax_cm = xmax * wire_pitch_cm;
+  double ymin_cm = ymin * time_tick_cm;
+  double ymax_cm = ymax * time_tick_cm;
+  
+  // Update main frame to have better title positioning
+  frame->GetXaxis()->SetTitleOffset(1.1);
+  frame->GetYaxis()->SetTitleOffset(1.3);
+  frame->GetZaxis()->SetTitleOffset(1.4);
+  gPad->Update();
+  
+  // Create secondary X axis (top) for channel dimension in cm
+  TGaxis *axis_x_cm = new TGaxis(xmin, ymax, xmax, ymax, xmin_cm, xmax_cm, 510, "-L");
+  axis_x_cm->SetTitle("channel [cm]");
+  axis_x_cm->SetTitleSize(0.030);
+  axis_x_cm->SetLabelSize(0.025);
+  axis_x_cm->SetTitleOffset(0.9);  // Reduced to move closer to axis
+  axis_x_cm->SetLabelOffset(0.002);
+  axis_x_cm->CenterTitle();
+  axis_x_cm->SetLineColor(kBlack);
+  axis_x_cm->SetTextColor(kBlack);
+  axis_x_cm->Draw();
+  
+  // Create secondary Y axis (right) for drift distance in cm  
+  TGaxis *axis_y_cm = new TGaxis(xmax, ymin, xmax, ymax, ymin_cm, ymax_cm, 510, "+L");
+  axis_y_cm->SetTitle("drift [cm]");
+  axis_y_cm->SetTitleSize(0.030);
+  axis_y_cm->SetLabelSize(0.025);
+  axis_y_cm->SetTitleOffset(1.5);  // Adjusted to avoid legend overlap
+  axis_y_cm->SetLabelOffset(0.010);
+  axis_y_cm->CenterTitle();
+  axis_y_cm->SetLineColor(kBlack);
+  axis_y_cm->SetTextColor(kBlack);
+  axis_y_cm->Draw();
 
   // Compose title string for the plot (canvas title, not window)
   std::ostringstream title;
@@ -243,9 +289,9 @@ int main(int argc, char** argv){
 
   // Set draw mode
   if (toLower(drawModeStr) == "triangle") {
-    ViewerState::drawMode = Display::TRIANGLE;
+    ViewerState::drawMode = TRIANGLE;
   } else {
-    ViewerState::drawMode = Display::PENTAGON;
+    ViewerState::drawMode = PENTAGON;
   }
 
   // Load parameters explicitly (in case global initialization failed)
@@ -256,6 +302,13 @@ int main(int argc, char** argv){
     LogError << "Failed to load parameters: " << e.what() << std::endl;
     return 1;
   }
+
+  // print all info
+  LogInfo << "Input clusters file: " << clustersFile << std::endl;
+  LogInfo << "Display mode: " << mode << std::endl;
+  LogInfo << "Draw mode: " << (ViewerState::drawMode == PENTAGON ? "pentagon" : "triangle") << std::endl;
+  LogInfo << "Only MARLEY clusters in events mode: " << (onlyMarley ? "enabled" : "disabled") << std::endl;
+  
 
   // Validate clusters file
   LogThrowIf(clustersFile.empty(), "Clusters file is required! Provide via --clusters-file or JSON.");
@@ -345,6 +398,8 @@ int main(int argc, char** argv){
   
   readPlaneClusters("U"); readPlaneClusters("V"); readPlaneClusters("X");
   f->Close(); delete f;
+
+  LogInfo << "Loaded " << ViewerState::items.size() << " MARLEY clusters total (all planes)" << std::endl;
 
   if (ViewerState::items.empty()){
     LogWarning << "No MARLEY clusters found with current settings." << std::endl;

@@ -82,6 +82,14 @@ int main(int argc, char* argv[]) {
     LogInfo << "Number of valid files: " << filenames.size() << std::endl;
     LogThrowIf(filenames.empty(), "No valid input files.");
 
+    // Check if we should limit the number of files to process
+    int max_files = j.value("max_files", -1);
+    if (max_files > 0) {
+        LogInfo << "Max files: " << max_files << std::endl;
+    } else {
+        LogInfo << "Max files: unlimited" << std::endl;
+    }
+
     // Output folder: CLI outFolder > JSON outputFolder > "data"
     std::string outfolder;
     if (clp.isOptionTriggered("outFolder")) outfolder = clp.getOptionVal<std::string>("outFolder");
@@ -110,9 +118,11 @@ int main(int argc, char* argv[]) {
 
     for (auto& filename : filenames) {
 
-        //TEMP
-        // if (count_files > 100) {LogWarning << "Processed 100 files, stopping to avoid excessive run time." << std::endl; break;}
         count_files++;
+        if (max_files > 0 && count_files > max_files) {
+            LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
+            break;
+        }
 
         if (verboseMode) LogInfo << "Reading file: " << filename << std::endl;
         // count events

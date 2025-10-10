@@ -1,14 +1,7 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include <string>
-#include <vector>
-#include <map>
-
-class TH2F;
-class TCanvas;
-
-namespace Display {
+#include "global.h"
 
 enum DrawMode {
   TRIANGLE,
@@ -103,7 +96,5 @@ void drawCluster(
   int idx,
   DrawMode mode
 );
-
-} // namespace Display
 
 #endif // DISPLAY_H

@@ -8,3 +8,4 @@ Timing parameters
 < timing.clock_tick_ns = 16.0 >                  Clock tick in ns
 < timing.time_window = 32 >                      Time window for TP-truth association (TDC ticks)
 < timing.backtracker_error_margin = 0 >         Backtracker error margin
+< timing.drift_time_ms = 3.25 >                  Maximum drift time in ms

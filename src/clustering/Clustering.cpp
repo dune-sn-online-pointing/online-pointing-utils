@@ -163,6 +163,11 @@ bool channel_condition_with_pbc(TriggerPrimitive *tp1, TriggerPrimitive* tp2, in
 std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
     
     if (verboseMode) LogInfo << "Creating clusters from TPs" << std::endl;
+    
+    // Convert ticks_limit to nanoseconds for comparison with time differences
+    double ticks_limit_ns = ticks_limit * TPC_sample_length;
+    
+    if (verboseMode) LogInfo << "Ticks limit: " << ticks_limit << " ticks = " << ticks_limit_ns << " ns" << std::endl;
 
     std::vector<std::vector<TriggerPrimitive*>> buffer;
     std::vector<Cluster> clusters;
@@ -179,24 +184,42 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
         bool appended = false;
 
         for (auto& candidate : buffer) {
-            // Calculate the maximum time in the current candidate
-            double max_time = 0;
+            // Check if tp1 can be added to this candidate
+            // It must be within ticks_limit AND channel_limit of at least ONE TP in the candidate
+            bool can_append = false;
+            
             for (auto& tp2 : candidate) {
-                max_time = std::max(max_time, tp2->GetTimeStart() + tp2->GetSamplesOverThreshold() * TPC_sample_length);
-            }
-
-            // Check time and channel conditions
-            if ((tp1->GetTimeStart() - max_time) <= ticks_limit) {
-                for (auto& tp2 : candidate) {
+                double tp2_end_time = tp2->GetTimeStart() + tp2->GetSamplesOverThreshold() * TPC_sample_length;
+                double time_diff = tp1->GetTimeStart() - tp2_end_time;
+                
+                // Check if tp1 is close in time to this specific tp2 (forward in time)
+                if (time_diff <= ticks_limit_ns && time_diff >= 0) {
+                    // Also check channel condition with this same tp2
                     if (channel_condition_with_pbc(tp1, tp2, channel_limit)) {
-                        candidate.push_back(tp1);
-                        appended = true;
-                        if (debugMode) LogInfo << "Appended TP to candidate Cluster" << std::endl;
+                        can_append = true;
                         break;
                     }
                 }
-                if (appended) break;
-                if (debugMode) LogInfo << "Not appended to candidate Cluster" << std::endl;
+                // Also check backward in time (tp1 comes before tp2)
+                // This allows TPs to be added in any time order
+                else if (time_diff < 0) {
+                    double tp1_end_time = tp1->GetTimeStart() + tp1->GetSamplesOverThreshold() * TPC_sample_length;
+                    double reverse_time_diff = tp2->GetTimeStart() - tp1_end_time;
+                    
+                    if (reverse_time_diff <= ticks_limit_ns && reverse_time_diff >= 0) {
+                        if (channel_condition_with_pbc(tp1, tp2, channel_limit)) {
+                            can_append = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (can_append) {
+                candidate.push_back(tp1);
+                appended = true;
+                if (debugMode) LogInfo << "Appended TP to candidate Cluster" << std::endl;
+                break;
             }
         }
 

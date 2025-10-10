@@ -70,6 +70,14 @@ int main(int argc, char* argv[]){
   LogInfo << "Number of valid files: " << inputs.size() << std::endl;
   LogThrowIf(inputs.empty(), "No valid input files found.");
 
+  // Check if we should limit the number of files to process
+  int max_files = j.value("max_files", -1);
+  if (max_files > 0) {
+    LogInfo << "Max files: " << max_files << std::endl;
+  } else {
+    LogInfo << "Max files: unlimited" << std::endl;
+  }
+
   std::string outFolder;
   if (clp.isOptionTriggered("outFolder"))
     outFolder = clp.getOptionVal<std::string>("outFolder");
@@ -78,7 +86,13 @@ int main(int argc, char* argv[]){
 
   std::vector<std::string> produced;
 
+  int file_count = 0;
   for (const auto& clusters_file : inputs){
+    file_count++;
+    if (max_files > 0 && file_count > max_files) {
+      LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
+      break;
+    }
     LogInfo << "Input clusters file: " << clusters_file << std::endl;
     // Read clusters per plane; the file may contain multiple trees (U/V/X)
     TFile* f = TFile::Open(clusters_file.c_str());

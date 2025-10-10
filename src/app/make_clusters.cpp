@@ -63,6 +63,7 @@ int main(int argc, char* argv[]) {
     int adc_integral_cut_ind = j.value("adc_integral_cut_induction", 0);
     int adc_integral_cut_col = j.value("adc_integral_cut_collection", 0);
     int tot_cut = j.value("tot_cut", 0);
+    int max_files = j.value("max_files", -1); // -1 means no limit
 
     LogInfo << "Settings from json file:" << std::endl;
     LogInfo << " - Output folder: " << outfolder << std::endl;
@@ -72,6 +73,11 @@ int main(int argc, char* argv[]) {
     LogInfo << " - ADC integral cut (induction): " << adc_integral_cut_ind << std::endl;
     LogInfo << " - ADC integral cut (collection): " << adc_integral_cut_col << std::endl;
     LogInfo << " - ToT cut: " << tot_cut << std::endl;
+    if (max_files > 0) {
+        LogInfo << " - Max files to process: " << max_files << std::endl;
+    } else {
+        LogInfo << " - Max files to process: unlimited" << std::endl;
+    }
 
     std::string file_prefix;
     try {
@@ -92,7 +98,11 @@ int main(int argc, char* argv[]) {
 
     for (const auto& tps_file : inputs) {
 
-        // if (file_count > 100) break; // TEMP
+        // Check if we've reached max_files limit
+        if (max_files > 0 && file_count >= max_files) {
+            LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
+            break;
+        }
         
         if (verboseMode) LogInfo << "Input TPs file: " << tps_file << std::endl;
 

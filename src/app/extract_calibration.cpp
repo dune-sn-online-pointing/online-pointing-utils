@@ -79,9 +79,23 @@ int main(int argc, char* argv[]){
 
   int tot_cut = j.value("tot_cut", 0);
 
+  // Check if we should limit the number of files to process
+  int max_files = j.value("max_files", -1);
+  if (max_files > 0) {
+    LogInfo << "Max files: " << max_files << std::endl;
+  } else {
+    LogInfo << "Max files: unlimited" << std::endl;
+  }
+
   std::vector<std::string> produced;
 
+  int file_count = 0;
   for (const auto& inFile : inputs){
+    file_count++;
+    if (max_files > 0 && file_count > max_files) {
+      LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
+      break;
+    }
     TFile* f = TFile::Open(inFile.c_str());
     if (!f || f->IsZombie()){ LogError << "Cannot open: " << inFile << std::endl; if(f){f->Close(); delete f;} continue; }
 

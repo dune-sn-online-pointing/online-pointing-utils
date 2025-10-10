@@ -1,12 +1,4 @@
 #include "Display.h"
-#include "ParametersManager.h"
-#include <TH2F.h>
-#include <TCanvas.h>
-#include <cmath>
-#include <algorithm>
-#include <iostream>
-
-namespace Display {
 
 PentagonParams calculatePentagonParams(
   double time_start, 
@@ -220,5 +212,3 @@ void fillHistogramPentagon(
     }
   }
 }
-
-} // namespace Display

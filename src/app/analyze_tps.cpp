@@ -190,9 +190,23 @@ int main(int argc, char* argv[]) {
     };
     std::map<int, NeutrinoInfo> event_nu_info;
 
+    // Check if we should limit the number of files to process
+    int max_files = j.value("max_files", -1);
+    if (max_files > 0) {
+        LogInfo << "Max files: " << max_files << std::endl;
+    } else {
+        LogInfo << "Max files: unlimited" << std::endl;
+    }
+
     // Process all input files
     LogInfo << "Processing " << inputs.size() << " input file(s)..." << std::endl;
+    int file_count = 0;
     for (const auto& input_file : inputs) {
+        file_count++;
+        if (max_files > 0 && file_count > max_files) {
+            LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
+            break;
+        }
         if (verboseMode)LogInfo << "Opening file: " << input_file << std::endl;
         
         TFile* file = TFile::Open(input_file.c_str());
