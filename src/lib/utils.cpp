@@ -11,6 +11,10 @@ int toTPCticks(int tdcTicks) {
   return tdcTicks / get_conversion_tdc_to_tpc();
 }
 
+int toTDCticks(int tpcTicks) {
+  return tpcTicks * get_conversion_tdc_to_tpc();
+}
+
 bool ensureDirectoryExists(const std::string& folder) {
     if (folder.empty()) {
         return true;

@@ -33,7 +33,7 @@ namespace ViewerState {
   TLatex* latex = nullptr;
   TPad* padCtrl = nullptr; // left control pad for buttons
   TPad* padGrid = nullptr; // right plotting area
-  DrawMode drawMode = PENTAGON; // Default to pentagon mode
+  DrawMode drawMode = PENTAGON; // Default to rectangle mode
 }
 
 // static std::string toLower(std::string s){ std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c);}); return s; }
@@ -134,14 +134,15 @@ void drawCurrent(){
   frame->SetTitle(";channel (contiguous);time [ticks]");
   frame->GetXaxis()->CenterTitle();
   frame->GetYaxis()->CenterTitle();
-  frame->GetZaxis()->SetTitle(Form("ADC (%s model)", (drawMode == PENTAGON) ? "pentagon" : "triangle"));
+  const char* mode_name = (drawMode == PENTAGON) ? "pentagon" : (drawMode == TRIANGLE) ? "triangle" : "rectangle";
+  frame->GetZaxis()->SetTitle(Form("ADC (%s model)", mode_name));
   frame->GetZaxis()->CenterTitle();
 
-  // Set margins to accommodate secondary axes
+  // Set margins to accommodate secondary axes and title
   gPad->SetRightMargin(0.20);  // Increased for Z-axis legend and Y-axis labels
   gPad->SetLeftMargin(0.12);
   gPad->SetBottomMargin(0.12);
-  gPad->SetTopMargin(0.12);    // Added for top X-axis
+  gPad->SetTopMargin(0.15);    // Increased for top X-axis + title
   gPad->SetGridx();
   gPad->SetGridy();
 
@@ -164,22 +165,46 @@ void drawCurrent(){
     int peak_time = ts + samples_to_peak;
     int adc_integral = (i < it.adc_integral.size()) ? it.adc_integral[i] : peak_adc * tot / 2;
 
+    if (debugMode) {
+      LogInfo << "Drawing TP " << i << ": ch=" << ch_actual << " ts=" << ts 
+              << " tot=" << tot << " end=" << (ts+tot) 
+              << " samples_to_peak=" << samples_to_peak << " peak_time=" << peak_time << std::endl;
+    }
+
     if (drawMode == PENTAGON) {
       fillHistogramPentagon(
         frame, ch_contiguous, ts, peak_time, tot,
         peak_adc, adc_integral, threshold_adc, pentagon_offset
       );
-    } else {
+    } else if (drawMode == TRIANGLE) {
       fillHistogramTriangle(
         frame, ch_contiguous, ts, tot,
         samples_to_peak, peak_adc, threshold_adc
+      );
+    } else { // RECTANGLE
+      fillHistogramRectangle(
+        frame, ch_contiguous, ts, tot, adc_integral
       );
     }
   }
 
   frame->SetMinimum(threshold_adc);
-  gStyle->SetPalette(kBird);
+  // Use Viridis perceptually-uniform palette
+  gStyle->SetPalette(55);
   frame->Draw("COLZ");
+  
+  // Relabel X-axis bins with actual channel numbers instead of contiguous indices
+  {
+    auto xax = frame->GetXaxis();
+    xax->LabelsOption("v");
+    const int labelOffset = /* pad_bins */ 2 + 1; // pad_bins + 1
+    for (const auto& kv : ch_to_idx) {
+      int actual_ch = kv.first;
+      int idx = kv.second;
+      int bin = idx + labelOffset;
+      xax->SetBinLabel(bin, Form("%d", actual_ch));
+    }
+  }
 
   // Add secondary axes showing physical dimensions in cm
   // Get conversion parameters
@@ -202,24 +227,27 @@ void drawCurrent(){
   gPad->Update();
   
   // Create secondary X axis (top) for channel dimension in cm
+  // Position it slightly below the top edge to avoid title overlap
   TGaxis *axis_x_cm = new TGaxis(xmin, ymax, xmax, ymax, xmin_cm, xmax_cm, 510, "-L");
   axis_x_cm->SetTitle("channel [cm]");
-  axis_x_cm->SetTitleSize(0.030);
-  axis_x_cm->SetLabelSize(0.025);
-  axis_x_cm->SetTitleOffset(0.9);  // Reduced to move closer to axis
-  axis_x_cm->SetLabelOffset(0.002);
+  axis_x_cm->SetTitleSize(0.028);
+  axis_x_cm->SetLabelSize(0.023);
+  axis_x_cm->SetTitleOffset(1.1);  // Push title away from labels
+  axis_x_cm->SetLabelOffset(0.005);
   axis_x_cm->CenterTitle();
   axis_x_cm->SetLineColor(kBlack);
   axis_x_cm->SetTextColor(kBlack);
   axis_x_cm->Draw();
   
-  // Create secondary Y axis (right) for drift distance in cm  
-  TGaxis *axis_y_cm = new TGaxis(xmax, ymin, xmax, ymax, ymin_cm, ymax_cm, 510, "+L");
+  // Create secondary Y axis (inside) for drift distance in cm  
+  // Shift axis left by one bin to avoid overlapping with Z colorbar
+  double axis_y_pos = xmax - 1.0;
+  TGaxis *axis_y_cm = new TGaxis(axis_y_pos, ymin, axis_y_pos, ymax, ymin_cm, ymax_cm, 510, "+L");
   axis_y_cm->SetTitle("drift [cm]");
-  axis_y_cm->SetTitleSize(0.030);
-  axis_y_cm->SetLabelSize(0.025);
-  axis_y_cm->SetTitleOffset(1.5);  // Adjusted to avoid legend overlap
-  axis_y_cm->SetLabelOffset(0.010);
+  axis_y_cm->SetTitleSize(0.028);
+  axis_y_cm->SetLabelSize(0.023);
+  axis_y_cm->SetTitleOffset(1.7);  // Push away from Z-axis legend
+  axis_y_cm->SetLabelOffset(0.015);  // Space from plot edge
   axis_y_cm->CenterTitle();
   axis_y_cm->SetLineColor(kBlack);
   axis_y_cm->SetTextColor(kBlack);
@@ -248,7 +276,7 @@ int main(int argc, char** argv){
   clp.addDummyOption("Main options");
   clp.addOption("clusters", {"--clusters-file"}, "Input clusters ROOT file (required, must contain 'clusters' in filename)");
   clp.addOption("mode", {"--mode"}, "Display mode: clusters | events (default: clusters)");
-  clp.addOption("drawMode", {"--draw-mode"}, "Drawing mode: triangle | pentagon (default: pentagon)");
+  clp.addOption("drawMode", {"--draw-mode"}, "Drawing mode: triangle | pentagon | rectangle (default: pentagon)");
   clp.addTriggerOption("onlyMarley", {"--only-marley"}, "In events mode, show only MARLEY clusters");
   clp.addOption("json", {"-j","--json"}, "JSON with input and parameters (optional)");
   clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
@@ -290,8 +318,10 @@ int main(int argc, char** argv){
   // Set draw mode
   if (toLower(drawModeStr) == "triangle") {
     ViewerState::drawMode = TRIANGLE;
-  } else {
+  } else if (toLower(drawModeStr) == "pentagon") {
     ViewerState::drawMode = PENTAGON;
+  } else {
+    ViewerState::drawMode = RECTANGLE;
   }
 
   // Load parameters explicitly (in case global initialization failed)
@@ -306,9 +336,10 @@ int main(int argc, char** argv){
   // print all info
   LogInfo << "Input clusters file: " << clustersFile << std::endl;
   LogInfo << "Display mode: " << mode << std::endl;
-  LogInfo << "Draw mode: " << (ViewerState::drawMode == PENTAGON ? "pentagon" : "triangle") << std::endl;
+  const char* mode_name = (ViewerState::drawMode == PENTAGON) ? "pentagon" : (ViewerState::drawMode == TRIANGLE) ? "triangle" : "rectangle";
+  LogInfo << "Draw mode: " << mode_name << std::endl;
   LogInfo << "Only MARLEY clusters in events mode: " << (onlyMarley ? "enabled" : "disabled") << std::endl;
-  
+
 
   // Validate clusters file
   LogThrowIf(clustersFile.empty(), "Clusters file is required! Provide via --clusters-file or JSON.");

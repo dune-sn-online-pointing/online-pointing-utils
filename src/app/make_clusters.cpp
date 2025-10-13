@@ -94,6 +94,13 @@ int main(int argc, char* argv[]) {
         + "_tot" + std::to_string(tot_cut)
         + "_clusters.root";    
 
+    // delete clusters_filename file if already existing
+    if (std::filesystem::exists(clusters_filename)) {
+        LogInfo << "Output file " << clusters_filename << " already exists, deleting it." << std::endl;
+        std::filesystem::remove(clusters_filename);
+    }
+
+
     int file_count = 0;
 
     for (const auto& tps_file : inputs) {

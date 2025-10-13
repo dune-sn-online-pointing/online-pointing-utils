@@ -18,6 +18,7 @@ bool ensureDirectoryExists(const std::string& folder);
 // Time conversion utilities (declared here, defined in utils.cpp to avoid circular dependency)
 int toTPCticks(int tdcTicks);
 
+int toTDCticks(int tpcTicks);
 
 void bindBranch(TTree* tree, const char* name, void* address);
 

@@ -11,11 +11,12 @@ current_dir=$(pwd)
 
 print_help() {
   echo "************************************************************************************************"
-  echo "Usage: $0 --clusters-file <file.root> [-j <json_settings.json>] [options]"
+  echo "Usage: $0 --input-clusters <file.root> [-j <json_settings.json>] [options]"
   echo "Options:"
-  echo "  --clusters-file <file>     Input clusters ROOT file (required unless provided via JSON)"
+  echo "  -i|--input-clusters <file>     Input clusters ROOT file (required unless provided via JSON)"
   echo "  -j|--json-settings <json>  Json file used as input. Relative path inside json/"
   echo "  --mode <clusters|events>   Display mode (default: clusters)"
+  echo "  --draw-mode <triangle|pentagon|rectangle>  Drawing mode (default: pentagon)"
   echo "  --only-marley              In events mode, show only MARLEY clusters"
   echo "  -v|--verbose-mode          Turn on verbosity"
   echo "  --no-compile               Do not recompile the code"
@@ -33,13 +34,15 @@ verboseMode=false
 # CLI parse mirroring cluster_to_root.sh style
 clustersFile=""
 mode=""
+drawMode="pentagon"  # default to pentagon
 onlyMarley=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -j|--json-settings) settingsFile="$2"; shift 2 ;;
-  --clusters-file)    clustersFile="$2"; shift 2 ;;
+        --input-clusters)   clustersFile="$2"; shift 2 ;;
         --mode)             mode="$2"; shift 2 ;;
+        --draw-mode)        drawMode="$2"; shift 2 ;;
         --only-marley)      onlyMarley=true; shift ;;
         -v|--verbose-mode)  verboseMode=true; shift ;;
         --no-compile)       noCompile=true; shift ;;
@@ -92,6 +95,9 @@ if [[ -n "$clustersFile" ]]; then
 fi
 if [[ -n "$mode" ]]; then
   args+=( --mode "$mode" )
+fi
+if [[ -n "$drawMode" ]]; then
+  args+=( --draw-mode "$drawMode" )
 fi
 if [[ "$onlyMarley" == true ]]; then
   args+=( --only-marley )

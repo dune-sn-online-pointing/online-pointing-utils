@@ -153,16 +153,25 @@ int main(int argc, char* argv[]){
     h_true_neutrino_energy->SetDirectory(nullptr);
     TH1F* h_min_distance = new TH1F("h_min_dist", "Min distance from true position;Distance [cm];Clusters", 50, 0, 50);
     h_min_distance->SetDirectory(nullptr);
-    TH2F* h2_particle_vs_cluster_energy = new TH2F("h2_part_clust_e", "Particle energy vs cluster energy;True particle energy [MeV];Cluster total energy [MeV]", 100, 0, 60000, 100, 0, 10000);
+    TH2F* h2_particle_vs_cluster_energy = new TH2F("h2_part_clust_e", "Particle energy vs cluster energy;True particle energy [MeV];Cluster total energy [MeV]", 100, 0, 70, 100, 0, 10000);
     h2_particle_vs_cluster_energy->SetDirectory(nullptr);
     TH2F* h2_neutrino_vs_cluster_energy = new TH2F("h2_nu_clust_e", "Neutrino energy vs cluster energy;True neutrino energy [MeV];Cluster total energy [MeV]", 50, 0, 100, 100, 0, 10000);
     h2_neutrino_vs_cluster_energy->SetDirectory(nullptr);
+    TH2F* h2_total_particle_energy_vs_total_charge = new TH2F("h2_tot_part_e_vs_charge", "Total visible energy vs total cluster charge per event;Total visible particle energy [MeV];Total cluster charge [ADC]", 100, 0, 70, 100, 0, 500000);
+    h2_total_particle_energy_vs_total_charge->SetDirectory(nullptr);
     
     std::vector<double> marley_enu;
     std::vector<double> marley_ncl; // per event MARLEY Cluster count vs Eν
     std::map<int, double> marley_total_energy_per_event; // sum of total_energy for MARLEY clusters per event
     std::map<int, double> event_neutrino_energy; // neutrino energy per event
     std::map<int,int> sn_clusters_per_event; // sum across planes
+    std::map<int, double> event_total_particle_energy; // sum of unique particle energies per event (excluding neutrinos)
+    std::map<int, double> event_total_cluster_charge; // sum of all cluster charges per event
+    // Track unique particles per event using a set of (energy, position) pairs
+    std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles; // event -> set of (energy, x, y, z)
+    // Vectors for the calibration graph
+    std::vector<double> vec_total_particle_energy;
+    std::vector<double> vec_total_cluster_charge;
 
     // Marley TP fraction categorization counters (across all planes)
     int only_marley_clusters = 0;     // generator_tp_fraction = 1.0
@@ -179,9 +188,9 @@ int main(int argc, char* argv[]){
     h_adc_hybrid->SetDirectory(nullptr);
     h_adc_background->SetDirectory(nullptr);
 
-    auto ensureHist = [](std::map<std::string, TH1F*>& m, const std::string& key, const char* title){
+    auto ensureHist = [](std::map<std::string, TH1F*>& m, const std::string& key, const char* title, int nbins=100, double xmin=0, double xmax=100){
       if (m.count(key)==0){
-        m[key] = new TH1F((key+"_h").c_str(), title, 100, 0, 1000);
+        m[key] = new TH1F((key+"_h").c_str(), title, nbins, xmin, xmax);
         m[key]->SetStats(0);
         m[key]->SetDirectory(nullptr);
       }
@@ -189,7 +198,7 @@ int main(int argc, char* argv[]){
     };
     auto ensureHist2D = [](std::map<std::string, TH2F*>& m, const std::string& key, const char* title){
       if (m.count(key)==0){
-        m[key] = new TH2F((key+"_h2").c_str(), title, 100, 0, 100, 100, 0, 1e6);
+        m[key] = new TH2F((key+"_h2").c_str(), title, 60, 0, 60, 100, 0, 300); // Changed from 100,0,100,100,0,1e6 to 60,0,60,100,0,300
         m[key]->SetDirectory(nullptr);
       }
       return m[key];
@@ -204,6 +213,7 @@ int main(int argc, char* argv[]){
       float min_dist=0;
       std::string* true_label_ptr=nullptr;
       float true_dir_x=0, true_dir_y=0, true_dir_z=0;
+      float true_pos_x=0, true_pos_y=0, true_pos_z=0;
       std::string* true_interaction_ptr=nullptr;
       float supernova_tp_fraction=0.f, generator_tp_fraction=0.f;
       // vector branches for derived quantities
@@ -224,6 +234,9 @@ int main(int argc, char* argv[]){
       if (pd.tree->GetBranch("true_interaction")) pd.tree->SetBranchAddress("true_interaction", &true_interaction_ptr);
       if (pd.tree->GetBranch("supernova_tp_fraction")) pd.tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
       if (pd.tree->GetBranch("generator_tp_fraction")) pd.tree->SetBranchAddress("generator_tp_fraction", &generator_tp_fraction);
+      if (pd.tree->GetBranch("true_pos_x")) pd.tree->SetBranchAddress("true_pos_x", &true_pos_x);
+      if (pd.tree->GetBranch("true_pos_y")) pd.tree->SetBranchAddress("true_pos_y", &true_pos_y);
+      if (pd.tree->GetBranch("true_pos_z")) pd.tree->SetBranchAddress("true_pos_z", &true_pos_z);
       // vectors
       if (pd.tree->GetBranch("tp_detector_channel")) pd.tree->SetBranchAddress("tp_detector_channel", &v_chan);
       if (pd.tree->GetBranch("tp_time_start")) pd.tree->SetBranchAddress("tp_time_start", &v_tstart);
@@ -231,12 +244,12 @@ int main(int argc, char* argv[]){
       if (pd.tree->GetBranch("tp_adc_integral")) pd.tree->SetBranchAddress("tp_adc_integral", &v_adcint);
 
       // Histos per plane
-      TH1F* h_ntps = ensureHist(n_tps_plane_h, std::string("n_tps_")+pd.name, (std::string("Cluster size (n_tps) - ")+pd.name).c_str());
-      TH1F* h_charge = ensureHist(total_charge_plane_h, std::string("total_charge_")+pd.name, (std::string("Total charge - ")+pd.name).c_str());
-      TH1F* h_energy = ensureHist(total_energy_plane_h, std::string("total_energy_")+pd.name, (std::string("Total energy - ")+pd.name).c_str());
-      TH1F* h_maxadc = ensureHist(max_tp_charge_plane_h, std::string("max_tp_charge_")+pd.name, (std::string("Max TP adc_integral - ")+pd.name).c_str());
-      TH1F* h_tlen = ensureHist(total_length_plane_h, std::string("total_length_")+pd.name, (std::string("Total length (cm) - ")+pd.name).c_str());
-      TH2F* h2_ntps_charge = ensureHist2D(ntps_vs_total_charge_plane_h, std::string("ntps_vs_charge_")+pd.name, (std::string("n_{TPs} vs total charge - ")+pd.name+";n_{TPs};total charge").c_str());
+      TH1F* h_ntps = ensureHist(n_tps_plane_h, std::string("n_tps_")+pd.name, (std::string("Cluster size (n_tps) - ")+pd.name+";n_{TPs};Clusters").c_str(), 100, 0, 100);
+      TH1F* h_charge = ensureHist(total_charge_plane_h, std::string("total_charge_")+pd.name, (std::string("Total charge - ")+pd.name+";Total charge [ADC];Clusters").c_str(), 100, 0, 300);
+      TH1F* h_energy = ensureHist(total_energy_plane_h, std::string("total_energy_")+pd.name, (std::string("Total energy - ")+pd.name+";Total energy [MeV];Clusters").c_str(), 100, 0, 1000);
+      TH1F* h_maxadc = ensureHist(max_tp_charge_plane_h, std::string("max_tp_charge_")+pd.name, (std::string("Max TP adc_integral - ")+pd.name+";Max ADC integral;Clusters").c_str(), 100, 0, 1000);
+      TH1F* h_tlen = ensureHist(total_length_plane_h, std::string("total_length_")+pd.name, (std::string("Total length (cm) - ")+pd.name+";Length [cm];Clusters").c_str(), 100, 0, 1000);
+      TH2F* h2_ntps_charge = ensureHist2D(ntps_vs_total_charge_plane_h, std::string("ntps_vs_charge_")+pd.name, (std::string("n_{TPs} vs total charge - ")+pd.name+";n_{TPs};Total charge [ADC]").c_str());
 
       // Per-event MARLEY clustering tracking
       std::map<int,long long> marley_count_evt;
@@ -250,7 +263,7 @@ int main(int argc, char* argv[]){
           label_counts_all[*true_label_ptr]++;
           if (toLower(*true_label_ptr).find("marley")!=std::string::npos){
             marley_count_evt[event]++;
-            marley_total_energy_per_event[event] += total_energy;
+            marley_total_energy_per_event[event] += total_charge;
           }
         }
         h_ntps->Fill(n_tps);
@@ -269,6 +282,21 @@ int main(int argc, char* argv[]){
           evt_enu[event] = true_ne;
           event_neutrino_energy[event] = true_ne;
         }
+        
+        // Track unique particles and accumulate their energies (excluding neutrinos)
+        // Use particle energy and position to identify unique particles
+        if (true_pe > 0) {
+          // Create a unique identifier for this particle using energy and position
+          auto particle_id = std::make_tuple(true_pe, true_pos_x, true_pos_y, true_pos_z);
+          // Insert returns pair<iterator, bool> where bool is true if insertion happened
+          if (event_unique_particles[event].insert(particle_id).second) {
+            // This is a new unique particle, add its energy
+            event_total_particle_energy[event] += true_pe;
+          }
+        }
+        
+        // Accumulate per-event total cluster charge (sum across all clusters in the event)
+        event_total_cluster_charge[event] += total_charge;
 
         // Categorize clusters by Marley TP content
         if (generator_tp_fraction == 1.0f) {
@@ -348,27 +376,86 @@ int main(int argc, char* argv[]){
         marley_ncl.push_back((double)kv.second);
       }
     }
+    
+    // After processing all planes, prepare data for the calibration graph
+    for (const auto& kv : event_total_particle_energy) {
+      int evt = kv.first;
+      double tot_part_e = kv.second;
+      auto it = event_total_cluster_charge.find(evt);
+      if (it != event_total_cluster_charge.end()) {
+        double tot_charge = it->second;
+        vec_total_particle_energy.push_back(tot_part_e);
+        vec_total_cluster_charge.push_back(tot_charge);
+        // Also fill the histogram for backup
+        h2_total_particle_energy_vs_total_charge->Fill(tot_part_e, tot_charge);
+      }
+    }
 
     // Start PDF with title page
     int pageNum = 1;
-    int totalPages = 15; // Updated to match actual pages (added ADC family plot)
+    int totalPages = 15; // Updated to include new page
     
     TCanvas* c = new TCanvas("c_ac_title","Title",800,600); c->cd();
     c->SetFillColor(kWhite);
-    auto t = new TText(0.5,0.8, "Cluster Analysis Report");
+    auto t = new TText(0.5,0.85, "Cluster Analysis Report");
     t->SetTextAlign(22); t->SetTextSize(0.06); t->SetNDC(); t->Draw();
     
     // Split path and filename on separate lines
     std::string path_part = clusters_file.substr(0, clusters_file.find_last_of("/\\")+1);
     std::string file_part = clusters_file.substr(clusters_file.find_last_of("/\\")+1);
-    auto ptxt = new TText(0.5,0.6, Form("Path: %s", path_part.c_str()));
+    auto ptxt = new TText(0.5,0.65, Form("Path: %s", path_part.c_str()));
     ptxt->SetTextAlign(22); ptxt->SetTextSize(0.025); ptxt->SetNDC(); ptxt->Draw();
-    auto ftxt = new TText(0.5,0.55, Form("File: %s", file_part.c_str()));
+    auto ftxt = new TText(0.5,0.60, Form("File: %s", file_part.c_str()));
     ftxt->SetTextAlign(22); ftxt->SetTextSize(0.025); ftxt->SetNDC(); ftxt->Draw();
+    
+    // Extract clustering parameters from filename (e.g., tick5_ch2_min2_tot1)
+    std::string params_str = "";
+    size_t pos = file_part.find("tick");
+    if (pos != std::string::npos) {
+      size_t end_pos = file_part.find("_clusters");
+      if (end_pos != std::string::npos) {
+        params_str = file_part.substr(pos, end_pos - pos);
+        // Parse parameters
+        auto param_txt = new TText(0.5, 0.50, "Clustering Parameters:");
+        param_txt->SetTextAlign(22); param_txt->SetTextSize(0.03); param_txt->SetNDC(); param_txt->SetTextFont(62); param_txt->Draw();
+        
+        // Extract values
+        std::string tick_val, ch_val, min_val, tot_val;
+        std::stringstream ss(params_str);
+        std::string token;
+        while (std::getline(ss, token, '_')) {
+          if (token.find("tick") == 0) tick_val = token.substr(4);
+          else if (token.find("ch") == 0) ch_val = token.substr(2);
+          else if (token.find("min") == 0) min_val = token.substr(3);
+          else if (token.find("tot") == 0) tot_val = token.substr(3);
+        }
+        
+        float ypos = 0.44;
+        if (!tick_val.empty()) {
+          auto txt = new TText(0.5, ypos, Form("Time tolerance: %s ticks", tick_val.c_str()));
+          txt->SetTextAlign(22); txt->SetTextSize(0.025); txt->SetNDC(); txt->Draw();
+          ypos -= 0.04;
+        }
+        if (!ch_val.empty()) {
+          auto txt = new TText(0.5, ypos, Form("Channel tolerance: %s", ch_val.c_str()));
+          txt->SetTextAlign(22); txt->SetTextSize(0.025); txt->SetNDC(); txt->Draw();
+          ypos -= 0.04;
+        }
+        if (!min_val.empty()) {
+          auto txt = new TText(0.5, ypos, Form("Min cluster size: %s TPs", min_val.c_str()));
+          txt->SetTextAlign(22); txt->SetTextSize(0.025); txt->SetNDC(); txt->Draw();
+          ypos -= 0.04;
+        }
+        if (!tot_val.empty()) {
+          auto txt = new TText(0.5, ypos, Form("Min total charge threshold: %s", tot_val.c_str()));
+          txt->SetTextAlign(22); txt->SetTextSize(0.025); txt->SetNDC(); txt->Draw();
+        }
+      }
+    }
     
     // Add timestamp
     TDatime now;
-    auto date_txt = new TText(0.5, 0.4, Form("Generated on: %s", now.AsString()));
+    auto date_txt = new TText(0.5, 0.15, Form("Generated on: %s", now.AsString()));
     date_txt->SetTextAlign(22); date_txt->SetTextSize(0.02); date_txt->SetNDC(); date_txt->Draw();
     
     c->SaveAs((pdf+"(").c_str());
@@ -488,9 +575,12 @@ int main(int argc, char* argv[]){
       pageNum++;
       int maxv = 0;
       for (const auto& kv : sn_clusters_per_event) maxv = std::max(maxv, kv.second);
+      maxv = std::min(maxv, 40); // Cap at 40 for better visualization
       TCanvas* csn = new TCanvas("c_ac_sn","SN clusters per event",900,600);
-      TH1F* hsn = new TH1F("h_ac_sn","Supernova clusters per event;count;events", maxv+1, -0.5, maxv+0.5);
-      for (const auto& kv : sn_clusters_per_event) hsn->Fill(kv.second);
+      TH1F* hsn = new TH1F("h_ac_sn","Supernova clusters per event;Cluster count;Events", maxv+1, -0.5, maxv+0.5);
+      for (const auto& kv : sn_clusters_per_event) {
+        if (kv.second <= maxv) hsn->Fill(kv.second);
+      }
       hsn->Draw("HIST");
       addPageNumber(csn, pageNum, totalPages);
       csn->SaveAs(pdf.c_str());
@@ -585,7 +675,7 @@ int main(int argc, char* argv[]){
       
       ce_dist->cd(2);
       if (h_true_neutrino_energy->GetEntries() > 0) {
-        gPad->SetLogy();
+        // Linear scale (not log) as requested
         h_true_neutrino_energy->Draw("HIST");
       }
       
@@ -593,17 +683,6 @@ int main(int argc, char* argv[]){
       addPageNumber(ce_dist, pageNum, totalPages);
       ce_dist->SaveAs(pdf.c_str());
       delete ce_dist;
-    }
-
-    // Page: Min distance from true position
-    if (h_min_distance->GetEntries() > 0) {
-      pageNum++;
-      TCanvas* cd = new TCanvas("c_ac_dist","Min distance",900,600);
-      gPad->SetLogy();
-      h_min_distance->Draw("HIST");
-      addPageNumber(cd, pageNum, totalPages);
-      cd->SaveAs(pdf.c_str());
-      delete cd;
     }
 
     // Page: 2D correlations
@@ -632,6 +711,55 @@ int main(int argc, char* argv[]){
       addPageNumber(c2d_corr, pageNum, totalPages);
       c2d_corr->SaveAs(pdf.c_str());
       delete c2d_corr;
+    }
+
+    // Page: Total particle energy vs total cluster charge per event
+    if (!vec_total_particle_energy.empty()) {
+      pageNum++;
+      TCanvas* c_tot_corr = new TCanvas("c_ac_tot_corr","Total energy vs charge per event",900,700);
+      
+      // Create TGraph from vectors
+      TGraph* gr_calib = new TGraph((int)vec_total_particle_energy.size(), 
+                                     vec_total_particle_energy.data(), 
+                                     vec_total_cluster_charge.data());
+      gr_calib->SetTitle("Total visible energy vs total cluster charge per event;Total visible particle energy [MeV];Total cluster charge [ADC]");
+      gr_calib->SetMarkerStyle(20);
+      gr_calib->SetMarkerSize(0.8);
+      gr_calib->SetMarkerColor(kBlue+1);
+      gr_calib->Draw("AP");
+      
+      // Perform linear fit
+      TF1* fit_tot = new TF1("fit_tot_energy_charge", "pol1", 0, 70);
+      fit_tot->SetLineColor(kRed);
+      fit_tot->SetLineWidth(2);
+      gr_calib->Fit(fit_tot, "Q"); // Q for quiet mode
+      fit_tot->Draw("SAME");
+      
+      // Get fit parameters
+      double slope = fit_tot->GetParameter(1);
+      double intercept = fit_tot->GetParameter(0);
+      double slope_err = fit_tot->GetParError(1);
+      double intercept_err = fit_tot->GetParError(0);
+      double chi2 = fit_tot->GetChisquare();
+      int ndf = fit_tot->GetNDF();
+      
+      // Display fit results on canvas
+      TLatex latex;
+      latex.SetNDC();
+      latex.SetTextSize(0.03);
+      latex.SetTextColor(kRed);
+      latex.DrawLatex(0.15, 0.85, Form("Fit: Charge = %.3f #times E_{visible} + %.3f", slope, intercept));
+      latex.DrawLatex(0.15, 0.81, Form("Slope: %.3f #pm %.3f ADC/MeV", slope, slope_err));
+      latex.DrawLatex(0.15, 0.77, Form("Intercept: %.3f #pm %.3f ADC", intercept, intercept_err));
+      latex.DrawLatex(0.15, 0.73, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2, ndf, (ndf > 0 ? chi2/ndf : 0)));
+      
+      gPad->SetGridx();
+      gPad->SetGridy();
+      addPageNumber(c_tot_corr, pageNum, totalPages);
+      c_tot_corr->SaveAs(pdf.c_str());
+      delete fit_tot;
+      delete gr_calib;
+      delete c_tot_corr;
     }
 
     // Page: Marley TP fraction categorization
@@ -736,6 +864,7 @@ int main(int argc, char* argv[]){
     delete h_min_distance;
     delete h2_particle_vs_cluster_energy;
     delete h2_neutrino_vs_cluster_energy;
+    delete h2_total_particle_energy_vs_total_charge;
 
     delete h_adc_pure_marley;
     delete h_adc_pure_noise;

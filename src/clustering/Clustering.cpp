@@ -164,10 +164,10 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
     
     if (verboseMode) LogInfo << "Creating clusters from TPs" << std::endl;
     
-    // Convert ticks_limit to nanoseconds for comparison with time differences
-    double ticks_limit_ns = ticks_limit * TPC_sample_length;
-    
-    if (verboseMode) LogInfo << "Ticks limit: " << ticks_limit << " ticks = " << ticks_limit_ns << " ns" << std::endl;
+    if (verboseMode) LogInfo << "Ticks limit: " << ticks_limit << " TPC ticks" << std::endl;
+
+    int ticks_limit_tdc = toTDCticks(ticks_limit);
+    if (verboseMode) LogInfo << "Ticks limit: " << ticks_limit_tdc << " TDC ticks" << std::endl;
 
     std::vector<std::vector<TriggerPrimitive*>> buffer;
     std::vector<Cluster> clusters;
@@ -175,7 +175,33 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
     // Reset the buffer for each event
     buffer.clear();
 
+    // int this_event = all_tps.empty() ? -1 : all_tps[0]->GetEvent();
+    // int debugEvent = -1;
+    // if (this_event != debugEvent ) return clusters;
+
+
+    // Helper: non-overlap time gap between two TP time intervals in TPC ticks (overlap -> 0)
+    auto interval_gap_ticks = [&](TriggerPrimitive* a, TriggerPrimitive* b) -> int {
+        const int a_start = a->GetTimeStart();
+        const int a_end   = a_start + toTDCticks(a->GetSamplesOverThreshold());
+        const int b_start = b->GetTimeStart();
+        const int b_end   = b_start + toTDCticks(b->GetSamplesOverThreshold());
+        const int gap1 = a_start - b_end;  // a starts after b ends
+        const int gap2 = b_start - a_end;  // b starts after a ends
+        const int gap = std::max(0, std::max(gap1, gap2));
+        // if (this_event == debugEvent && a->GetView() == "V" && a->GetDetectorChannel() >= 1316 && a->GetDetectorChannel() <= 1319){
+        //     std::cout << "Channels are " << a->GetDetectorChannel() << " and " << b->GetDetectorChannel() << std::endl;
+        //     std::cout << "Interval gap between TP1 (start: " << a_start/32 << ", end: " << a_end/32 << ") and TP2 (start: " << b_start/32 << ", end: " << b_end/32 << ") is " << gap/32 << " TPC ticks" << std::endl;
+        //     std::cout << "Time start TP1: " << a_start/32 << ", Time start TP2: " << b_start/32 << std::endl;
+        //     std::cout << "Time end TP1: " << a_end/32 << ", Time end TP2: " << b_end/32 << std::endl;
+        // }
+        return gap;
+    };
+
+
+
     for (int iTP = 0; iTP < all_tps.size(); iTP++) {
+        
         
         TriggerPrimitive* tp1 = all_tps.at(iTP);
 
@@ -185,36 +211,49 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
 
         for (auto& candidate : buffer) {
             // Check if tp1 can be added to this candidate
-            // It must be within ticks_limit AND channel_limit of at least ONE TP in the candidate
+            // Rule A (strict): If any TP in candidate is on the SAME channel as tp1 and
+            // the time gap > ticks_limit, this candidate must be REJECTED.
+            // Rule B: Otherwise, allow append if there exists at least one TP in the candidate
+            // such that (time gap <= ticks_limit) AND (channel_condition_with_pbc holds).
+
+            bool reject_due_to_same_channel = false;
             bool can_append = false;
-            
+
             for (auto& tp2 : candidate) {
-                double tp2_end_time = tp2->GetTimeStart() + tp2->GetSamplesOverThreshold() * TPC_sample_length;
-                double time_diff = tp1->GetTimeStart() - tp2_end_time;
-                
-                // Check if tp1 is close in time to this specific tp2 (forward in time)
-                if (time_diff <= ticks_limit_ns && time_diff >= 0) {
-                    // Also check channel condition with this same tp2
-                    if (channel_condition_with_pbc(tp1, tp2, channel_limit)) {
-                        can_append = true;
-                        break;
+                const bool same_channel = (tp1->GetDetectorChannel() == tp2->GetDetectorChannel());
+                const int gap = interval_gap_ticks(tp1, tp2);
+
+                if (same_channel) {
+                    if (gap > ticks_limit_tdc) {
+                        reject_due_to_same_channel = true;
+                        break; // No need to check more TPs in this candidate
                     }
-                }
-                // Also check backward in time (tp1 comes before tp2)
-                // This allows TPs to be added in any time order
-                else if (time_diff < 0) {
-                    double tp1_end_time = tp1->GetTimeStart() + tp1->GetSamplesOverThreshold() * TPC_sample_length;
-                    double reverse_time_diff = tp2->GetTimeStart() - tp1_end_time;
-                    
-                    if (reverse_time_diff <= ticks_limit_ns && reverse_time_diff >= 0) {
-                        if (channel_condition_with_pbc(tp1, tp2, channel_limit)) {
-                            can_append = true;
-                            break;
-                        }
+                    // gap <= ticks_limit_tdc on same channel is sufficient to allow append
+                    can_append = true;
+                } else {
+                    if (gap <= ticks_limit_tdc && channel_condition_with_pbc(tp1, tp2, channel_limit)) {
+                        // if (this_event == debugEvent && tp1->GetView() == "V") {
+                        //     std::cout << "Appending TP to candidate Cluster" << std::endl;
+                        //     // print all info 
+                        //     std::cout << "TP1 - TimeStart: " << tp1->GetTimeStart()/32 << ", DetChannel: " << tp1->GetDetectorChannel() << std::endl;
+                        //     std::cout << "TP2 - TimeStart: " << tp2->GetTimeStart()/32 << ", DetChannel: " << tp2->GetDetectorChannel() << std::endl;
+                        //     std::cout << "Gap: " << gap << " TDC ticks" << std::endl;
+                        //     std::cout << "Ticks limit: " << ticks_limit_tdc << " TDC ticks" << std::endl;
+                        //     std::cout << "Channel gap: " << std::abs(tp1->GetDetectorChannel() - tp2->GetDetectorChannel()) << std::endl;
+                        //     std::cout << "Channel limit: " << channel_limit << std::endl;
+                        // }
+
+
+                        can_append = true;
                     }
                 }
             }
-            
+
+            if (reject_due_to_same_channel) {
+                if (debugMode) LogInfo << "Rejecting candidate due to same-channel time gap > limit" << std::endl;
+                continue; // Try next candidate
+            }
+
             if (can_append) {
                 candidate.push_back(tp1);
                 appended = true;
@@ -239,14 +278,31 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
             }
             if (adc_integral > adc_integral_cut) {
                 // check validity of tps in candidate
-                // LogInfo << "Candidate Cluster has " << candidate.size() << " TPs" << std::endl;
+                if (debugMode) LogInfo << "Candidate Cluster has " << candidate.size() << " TPs" << std::endl;
                 clusters.emplace_back(Cluster(std::move(candidate)));
-                // LogInfo << "Cluster created with " << clusters.back().get_tps().size() << " TPs" << std::endl;
+                if (debugMode) LogInfo << "Cluster created with " << clusters.back().get_tps().size() << " TPs" << std::endl;
             }
             else {
             }
         }
     }
+
+    // if event is 101353 print channel and time of all tps in all clusters
+
+
+
+    // std::cout << "Event: " << this_event << " has " << clusters.size() << " clusters" << std::endl;
+    // if (this_event == debugEvent && all_tps[0]->GetView() == "V") {
+    //     LogInfo << "Event " << this_event << " clusters:" << std::endl;
+    //     for (const auto& cluster : clusters) {
+    //         LogInfo << "Cluster with " << cluster.get_tps().size() << " TPs:" << std::endl;
+    //         for (const auto* tp : cluster.get_tps()) {
+    //             LogInfo << "  TP - TimeStart: " << tp->GetTimeStart()/32 << ", DetChannel: " << tp->GetDetectorChannel() << std::endl;
+    //         }
+    //     }
+        
+    // }
+
 
     if (verboseMode) LogInfo << "Finished clustering. Number of clusters: " << clusters.size() << std::endl;
 
@@ -361,7 +417,7 @@ void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, s
         return;
     }
     // create the root file if it does not exist, otherwise just update it
-    TFile *clusters_file = new TFile(root_filename.c_str(), "UPDATE"); // TODO handle better
+    TFile *clusters_file = new TFile(root_filename.c_str(), "UPDATE"); // TODO decide if to handle differently
     // Ensure a fixed TDirectory inside the ROOT file for Cluster trees
     TDirectory* clusters_dir = clusters_file->GetDirectory("clusters");
     if (!clusters_dir) clusters_dir = clusters_file->mkdir("clusters");
@@ -453,8 +509,8 @@ void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, s
     }
     else {
         // Existing tree: bind branch addresses to current output variables so Fill() works
-    true_label_point = &true_label; // point to stack string for fill
-    true_interaction_point = &true_interaction; // point to stack string for fill
+        true_label_point = &true_label; // point to stack string for fill
+        true_interaction_point = &true_interaction; // point to stack string for fill
         clusters_tree->SetBranchAddress("event", &event);
         clusters_tree->SetBranchAddress("n_tps", &n_tps);
         clusters_tree->SetBranchAddress("true_pos_x", &true_pos_x);
@@ -468,11 +524,11 @@ void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, s
         clusters_tree->SetBranchAddress("true_mom_z", &true_mom_z);
         clusters_tree->SetBranchAddress("true_neutrino_energy", &true_neutrino_energy);
         clusters_tree->SetBranchAddress("true_particle_energy", &true_particle_energy);
-    clusters_tree->SetBranchAddress("true_label", &true_label_point);
+        clusters_tree->SetBranchAddress("true_label", &true_label_point);
         clusters_tree->SetBranchAddress("min_distance_from_true_pos", &min_distance_from_true_pos);
         clusters_tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
         clusters_tree->SetBranchAddress("generator_tp_fraction", &generator_tp_fraction);
-    clusters_tree->SetBranchAddress("true_interaction", &true_interaction_point);
+        clusters_tree->SetBranchAddress("true_interaction", &true_interaction_point);
         clusters_tree->SetBranchAddress("total_charge", &total_charge);
         clusters_tree->SetBranchAddress("total_energy", &total_energy);
         clusters_tree->SetBranchAddress("conversion_factor", &conversion_factor);

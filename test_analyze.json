@@ -1,0 +1,4 @@
+{
+  "inputFile": "data/prod_cc/cc_valid_tick5_ch2_min2_tot1_clusters.root",
+  "output_folder": "output/"
+}

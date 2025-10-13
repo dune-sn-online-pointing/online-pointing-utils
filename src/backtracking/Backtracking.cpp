@@ -316,8 +316,17 @@ void read_tpstream(std::string filename,
             mc_true_particles.emplace_back(
                 TrueParticle(
                     event,
-                    // std::string(static_cast<const char*>(MCtruthtree->GetLeaf("generator_name")->GetValuePointer())),
+                    x,
+                    y,
+                    z,
+                    px,
+                    py,
+                    pz,
+                    energy*1e3, // converting to MeV
                     *generator_name,
+                    pdg,
+                    "", // process not available from mctruth tree
+                    -1, // track_id not available from mctruth, will be set later from mcparticles
                     block_id
                 )
             );

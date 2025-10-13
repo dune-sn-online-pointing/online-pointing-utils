@@ -52,7 +52,7 @@ void Cluster::update_cluster_info() {
     
     for (auto& tp : tps_) {
         total_charge_ += tp->GetAdcIntegral();
-        total_energy_ += tp->GetAdcPeak();
+        // total_energy_ += tp->GetAdcPeak(); // TODO just convert charge to energy, later
         
         // Get truth information from TP
         const TrueParticle* true_particle = tp->GetTrueParticle();

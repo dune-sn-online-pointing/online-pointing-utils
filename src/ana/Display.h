@@ -5,7 +5,8 @@
 
 enum DrawMode {
   TRIANGLE,
-  PENTAGON
+  PENTAGON,
+  RECTANGLE
 };
 
 // Pentagon calculation result
@@ -81,6 +82,22 @@ void fillHistogramPentagon(
   double adc_integral,
   double threshold_adc,
   double offset = 120.0
+);
+
+/**
+ * @brief Fill histogram with TP using rectangle model (uniform intensity)
+ * @param frame Histogram to fill
+ * @param ch_contiguous Contiguous channel index
+ * @param time_start Start time in ticks
+ * @param samples_over_threshold Duration in ticks
+ * @param adc_integral Total ADC integral
+ */
+void fillHistogramRectangle(
+  TH2F* frame,
+  int ch_contiguous,
+  int time_start,
+  int samples_over_threshold,
+  double adc_integral
 );
 
 /**
