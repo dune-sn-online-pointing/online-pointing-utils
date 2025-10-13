@@ -1,0 +1,14 @@
+{
+  "thisIsAComment": "Backtracking with margin 10 on 20 ES files",
+  "inputFile": "",
+  "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+  "inputList": [
+  ],
+  "inputListFile": "",
+
+  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/backtracking_last_tests/",
+  
+  "backtracker_error_margin": 10,
+  
+  "max_files": 20
+}

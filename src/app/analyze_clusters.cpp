@@ -734,7 +734,7 @@ int main(int argc, char* argv[]){
       TGraph* gr_calib = new TGraph((int)vec_total_particle_energy.size(), 
                                      vec_total_particle_energy.data(), 
                                      vec_total_cluster_charge.data());
-      gr_calib->SetTitle("Total visible energy vs total cluster charge per event;Total visible particle energy [MeV];Total cluster charge [ADC]");
+      gr_calib->SetTitle("Total visible energy vs total cluster charge per event (Collection Plane);Total visible particle energy [MeV];Total cluster charge [ADC]");
       gr_calib->SetMarkerStyle(20);
       gr_calib->SetMarkerSize(0.8);
       gr_calib->SetMarkerColor(kBlue+1);
