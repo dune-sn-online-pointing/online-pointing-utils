@@ -157,7 +157,7 @@ int main(int argc, char* argv[]){
     h2_particle_vs_cluster_energy->SetDirectory(nullptr);
     TH2F* h2_neutrino_vs_cluster_energy = new TH2F("h2_nu_clust_e", "Neutrino energy vs cluster energy;True neutrino energy [MeV];Cluster total energy [MeV]", 50, 0, 100, 100, 0, 10000);
     h2_neutrino_vs_cluster_energy->SetDirectory(nullptr);
-    TH2F* h2_total_particle_energy_vs_total_charge = new TH2F("h2_tot_part_e_vs_charge", "Total visible energy vs total cluster charge per event;Total visible particle energy [MeV];Total cluster charge [ADC]", 100, 0, 70, 100, 0, 500000);
+    TH2F* h2_total_particle_energy_vs_total_charge = new TH2F("h2_tot_part_e_vs_charge", "Total visible energy vs total cluster charge per event (Collection Plane);Total visible particle energy [MeV];Total cluster charge [ADC]", 100, 0, 70, 100, 0, 6000);
     h2_total_particle_energy_vs_total_charge->SetDirectory(nullptr);
     
     std::vector<double> marley_enu;
@@ -295,8 +295,10 @@ int main(int argc, char* argv[]){
           }
         }
         
-        // Accumulate per-event total cluster charge (sum across all clusters in the event)
-        event_total_cluster_charge[event] += total_charge;
+        // Accumulate per-event total cluster charge (only from collection plane X)
+        if (pd.name == "X") {
+          event_total_cluster_charge[event] += total_charge;
+        }
 
         // Categorize clusters by Marley TP content
         if (generator_tp_fraction == 1.0f) {
@@ -378,6 +380,7 @@ int main(int argc, char* argv[]){
     }
     
     // After processing all planes, prepare data for the calibration graph
+    // Note: We only use collection plane (X) data, no need to divide
     for (const auto& kv : event_total_particle_energy) {
       int evt = kv.first;
       double tot_part_e = kv.second;
@@ -389,6 +392,15 @@ int main(int argc, char* argv[]){
         // Also fill the histogram for backup
         h2_total_particle_energy_vs_total_charge->Fill(tot_part_e, tot_charge);
       }
+    }
+    
+    // Print some debug info
+    if (verboseMode && !vec_total_particle_energy.empty()) {
+      LogInfo << "Calibration data: " << vec_total_particle_energy.size() << " events" << std::endl;
+      LogInfo << "Energy range: " << *std::min_element(vec_total_particle_energy.begin(), vec_total_particle_energy.end())
+              << " - " << *std::max_element(vec_total_particle_energy.begin(), vec_total_particle_energy.end()) << " MeV" << std::endl;
+      LogInfo << "Charge range: " << *std::min_element(vec_total_cluster_charge.begin(), vec_total_cluster_charge.end())
+              << " - " << *std::max_element(vec_total_cluster_charge.begin(), vec_total_cluster_charge.end()) << " ADC" << std::endl;
     }
 
     // Start PDF with title page
