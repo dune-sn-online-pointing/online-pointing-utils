@@ -19,6 +19,9 @@ int main(int argc, char* argv[]) {
     clp.parseCmdLine(argc, argv);
     LogThrowIf(clp.isNoOptionTriggered(), "No option was provided.");
 
+    // Configure ROOT style for statistics box (show overflow/underflow)
+    gStyle->SetOptStat(11111);
+
     // Load parameters
     ParametersManager::getInstance().loadParameters();
 
@@ -101,7 +104,7 @@ int main(int argc, char* argv[]) {
     h_peak_V_marley_fine->Reset();
 
     // Add missing variable declarations
-    int tot_hist_max = 100; // adjust as needed
+    int tot_hist_max = 40; // Limit TOT range to 40 for ND280
 
     // ToT histograms (after ToT cut): integer-aligned bins from -0.5..tot_hist_max+0.5
     int tot_bins = std::max(1, tot_hist_max + 1);
@@ -208,6 +211,8 @@ int main(int argc, char* argv[]) {
             break;
         }
         if (verboseMode)LogInfo << "Opening file: " << input_file << std::endl;
+
+        // GenericToolbox::DisplayProg
         
         TFile* file = TFile::Open(input_file.c_str());
         if (!file || file->IsZombie()) {
@@ -404,7 +409,29 @@ int main(int argc, char* argv[]) {
     title_text->Draw();
     
     // Summary info text
-    TText *tot_info = new TText(0.5, 0.5, "Summary of TP analysis results");
+    std::ostringstream source_info_stream;
+    if (clp.isOptionTriggered("inputFile")) {
+        std::string inf = clp.getOptionVal<std::string>("inputFile");
+        if (inf.find("_tps") != std::string::npos) {
+            source_info_stream << "Input: Single file - " << inf;
+        } else {
+            source_info_stream << "Input: File list - " << inf;
+        }
+    } else if (j.contains("inputFolder")) {
+        source_info_stream << "Input: Folder - " << j.value("inputFolder", std::string(""));
+    } else if (j.contains("inputFile")) {
+        source_info_stream << "Input: " << j.value("inputFile", std::string(""));
+    } else {
+        source_info_stream << "Input: " << inputs.size() << " files";
+    }
+    TText *source_info_text = new TText(0.5, 0.6, source_info_stream.str().c_str());
+    source_info_text->SetTextAlign(22);
+    source_info_text->SetTextSize(0.02);
+    source_info_text->SetTextFont(42);
+    source_info_text->SetNDC();
+    source_info_text->Draw();
+    
+    TText *tot_info = new TText(0.5, 0.5, Form("Total files processed: %lu", inputs.size()));
     
     // (The rest of the code from the file should be inside this main function)
 
@@ -505,7 +532,7 @@ int main(int argc, char* argv[]) {
     gPad->SetLogy();
     h_peak_all_coarse->Draw("HIST");
     if (h_peak_all_marley_coarse && h_peak_all_marley_coarse->GetEntries()>0) h_peak_all_marley_coarse->Draw("HIST SAME");
-    TLegend *leg_all = new TLegend(0.50, 0.78, 0.88, 0.92);
+    TLegend *leg_all = new TLegend(0.35, 0.78, 0.65, 0.92);
     leg_all->SetBorderSize(0);
     leg_all->AddEntry(h_peak_all_coarse, "All Planes (All)", "f");
     if (h_peak_all_marley_coarse && h_peak_all_marley_coarse->GetEntries()>0) leg_all->AddEntry(h_peak_all_marley_coarse, "All Planes (MARLEY)", "l");
@@ -515,7 +542,7 @@ int main(int argc, char* argv[]) {
     gPad->SetLogy();
     h_peak_X_coarse->Draw("HIST");
     if (h_peak_X_marley_coarse && h_peak_X_marley_coarse->GetEntries()>0) h_peak_X_marley_coarse->Draw("HIST SAME");
-    TLegend *leg_X = new TLegend(0.50, 0.78, 0.88, 0.92);
+    TLegend *leg_X = new TLegend(0.35, 0.78, 0.65, 0.92);
     leg_X->SetBorderSize(0);
     leg_X->AddEntry(h_peak_X_coarse, "Plane X (All)", "f");
     if (h_peak_X_marley_coarse && h_peak_X_marley_coarse->GetEntries()>0) leg_X->AddEntry(h_peak_X_marley_coarse, "Plane X (MARLEY)", "l");
@@ -525,7 +552,7 @@ int main(int argc, char* argv[]) {
     gPad->SetLogy();
     h_peak_U_coarse->Draw("HIST");
     if (h_peak_U_marley_coarse && h_peak_U_marley_coarse->GetEntries()>0) h_peak_U_marley_coarse->Draw("HIST SAME");
-    TLegend *leg_U = new TLegend(0.50, 0.78, 0.88, 0.92);
+    TLegend *leg_U = new TLegend(0.35, 0.78, 0.65, 0.92);
     leg_U->SetBorderSize(0);
     leg_U->AddEntry(h_peak_U_coarse, "Plane U (All)", "f");
     if (h_peak_U_marley_coarse && h_peak_U_marley_coarse->GetEntries()>0) leg_U->AddEntry(h_peak_U_marley_coarse, "Plane U (MARLEY)", "l");
@@ -535,7 +562,7 @@ int main(int argc, char* argv[]) {
     gPad->SetLogy();
     h_peak_V_coarse->Draw("HIST");
     if (h_peak_V_marley_coarse && h_peak_V_marley_coarse->GetEntries()>0) h_peak_V_marley_coarse->Draw("HIST SAME");
-    TLegend *leg_V = new TLegend(0.50, 0.78, 0.88, 0.92);
+    TLegend *leg_V = new TLegend(0.35, 0.78, 0.65, 0.92);
     leg_V->SetBorderSize(0);
     leg_V->AddEntry(h_peak_V_coarse, "Plane V (All)", "f");
     if (h_peak_V_marley_coarse && h_peak_V_marley_coarse->GetEntries()>0) leg_V->AddEntry(h_peak_V_marley_coarse, "Plane V (MARLEY)", "l");
@@ -555,7 +582,7 @@ int main(int argc, char* argv[]) {
     h_peak_all_fine->GetXaxis()->SetRangeUser(0, 250);
     h_peak_all_fine->Draw("HIST");
     if (h_peak_all_marley_fine && h_peak_all_marley_fine->GetEntries()>0) { h_peak_all_marley_fine->GetXaxis()->SetRangeUser(0, 250); h_peak_all_marley_fine->Draw("HIST SAME"); }
-    TLegend *leg_all_zoom = new TLegend(0.50, 0.78, 0.88, 0.92);
+    TLegend *leg_all_zoom = new TLegend(0.35, 0.78, 0.65, 0.92);
     leg_all_zoom->SetBorderSize(0);
     leg_all_zoom->AddEntry(h_peak_all_fine, "All Planes (All)", "f");
     if (h_peak_all_marley_fine && h_peak_all_marley_fine->GetEntries()>0) leg_all_zoom->AddEntry(h_peak_all_marley_fine, "All Planes (MARLEY)", "l");
@@ -581,7 +608,7 @@ int main(int argc, char* argv[]) {
         }
     }
     if (h_peak_X_marley_fine && h_peak_X_marley_fine->GetEntries()>0) { h_peak_X_marley_fine->GetXaxis()->SetRangeUser(0, 250); h_peak_X_marley_fine->Draw("HIST SAME"); }
-    TLegend *leg_X_zoom = new TLegend(0.50, 0.78, 0.88, 0.92);
+    TLegend *leg_X_zoom = new TLegend(0.35, 0.78, 0.65, 0.92);
     leg_X_zoom->SetBorderSize(0);
     leg_X_zoom->AddEntry(h_peak_X_fine, "Plane X (All)", "f");
     if (h_peak_X_marley_fine && h_peak_X_marley_fine->GetEntries()>0) leg_X_zoom->AddEntry(h_peak_X_marley_fine, "Plane X (MARLEY)", "l");
@@ -607,7 +634,7 @@ int main(int argc, char* argv[]) {
         }
     }
     if (h_peak_U_marley_fine && h_peak_U_marley_fine->GetEntries()>0) { h_peak_U_marley_fine->GetXaxis()->SetRangeUser(0, 250); h_peak_U_marley_fine->Draw("HIST SAME"); }
-    TLegend *leg_U_zoom = new TLegend(0.50, 0.78, 0.88, 0.92);
+    TLegend *leg_U_zoom = new TLegend(0.35, 0.78, 0.65, 0.92);
     leg_U_zoom->SetBorderSize(0);
     leg_U_zoom->AddEntry(h_peak_U_fine, "Plane U (All)", "f");
     if (h_peak_U_marley_fine && h_peak_U_marley_fine->GetEntries()>0) leg_U_zoom->AddEntry(h_peak_U_marley_fine, "Plane U (MARLEY)", "l");
@@ -633,7 +660,7 @@ int main(int argc, char* argv[]) {
         }
     }
     if (h_peak_V_marley_fine && h_peak_V_marley_fine->GetEntries()>0) { h_peak_V_marley_fine->GetXaxis()->SetRangeUser(0, 250); h_peak_V_marley_fine->Draw("HIST SAME"); }
-    TLegend *leg_V_zoom = new TLegend(0.50, 0.78, 0.88, 0.92);
+    TLegend *leg_V_zoom = new TLegend(0.35, 0.78, 0.65, 0.92);
     leg_V_zoom->SetBorderSize(0);
     leg_V_zoom->AddEntry(h_peak_V_fine, "Plane V (All)", "f");
     if (h_peak_V_marley_fine && h_peak_V_marley_fine->GetEntries()>0) leg_V_zoom->AddEntry(h_peak_V_marley_fine, "Plane V (MARLEY)", "l");
@@ -688,22 +715,22 @@ int main(int argc, char* argv[]) {
     c_tot->cd(1); gPad->SetLogy();
     h_tot_all->Draw("HIST");
     if (h_tot_all_marley && h_tot_all_marley->GetEntries() > 0) h_tot_all_marley->Draw("HIST SAME");
-    { auto *leg = new TLegend(0.55, 0.78, 0.88, 0.92); leg->SetBorderSize(0); leg->AddEntry(h_tot_all, "All Planes (All)", "f"); if (h_tot_all_marley && h_tot_all_marley->GetEntries()>0) leg->AddEntry(h_tot_all_marley, "All Planes (MARLEY)", "l"); leg->Draw(); }
+    { auto *leg = new TLegend(0.35, 0.78, 0.65, 0.92); leg->SetBorderSize(0); leg->AddEntry(h_tot_all, "All Planes (All)", "f"); if (h_tot_all_marley && h_tot_all_marley->GetEntries()>0) leg->AddEntry(h_tot_all_marley, "All Planes (MARLEY)", "l"); leg->Draw(); }
     // Pad 2: X plane
     c_tot->cd(2); gPad->SetLogy();
     h_tot_X->Draw("HIST");
     if (h_tot_X_marley && h_tot_X_marley->GetEntries() > 0) h_tot_X_marley->Draw("HIST SAME");
-    { auto *leg = new TLegend(0.55, 0.78, 0.88, 0.92); leg->SetBorderSize(0); leg->AddEntry(h_tot_X, "Plane X (All)", "f"); if (h_tot_X_marley && h_tot_X_marley->GetEntries()>0) leg->AddEntry(h_tot_X_marley, "Plane X (MARLEY)", "l"); leg->Draw(); }
+    { auto *leg = new TLegend(0.35, 0.78, 0.65, 0.92); leg->SetBorderSize(0); leg->AddEntry(h_tot_X, "Plane X (All)", "f"); if (h_tot_X_marley && h_tot_X_marley->GetEntries()>0) leg->AddEntry(h_tot_X_marley, "Plane X (MARLEY)", "l"); leg->Draw(); }
     // Pad 3: U plane
     c_tot->cd(3); gPad->SetLogy();
     h_tot_U->Draw("HIST");
     if (h_tot_U_marley && h_tot_U_marley->GetEntries() > 0) h_tot_U_marley->Draw("HIST SAME");
-    { auto *leg = new TLegend(0.55, 0.78, 0.88, 0.92); leg->SetBorderSize(0); leg->AddEntry(h_tot_U, "Plane U (All)", "f"); if (h_tot_U_marley && h_tot_U_marley->GetEntries()>0) leg->AddEntry(h_tot_U_marley, "Plane U (MARLEY)", "l"); leg->Draw(); }
+    { auto *leg = new TLegend(0.35, 0.78, 0.65, 0.92); leg->SetBorderSize(0); leg->AddEntry(h_tot_U, "Plane U (All)", "f"); if (h_tot_U_marley && h_tot_U_marley->GetEntries()>0) leg->AddEntry(h_tot_U_marley, "Plane U (MARLEY)", "l"); leg->Draw(); }
     // Pad 4: V plane
     c_tot->cd(4); gPad->SetLogy();
     h_tot_V->Draw("HIST");
     if (h_tot_V_marley && h_tot_V_marley->GetEntries() > 0) h_tot_V_marley->Draw("HIST SAME");
-    { auto *leg = new TLegend(0.55, 0.78, 0.88, 0.92); leg->SetBorderSize(0); leg->AddEntry(h_tot_V, "Plane V (All)", "f"); if (h_tot_V_marley && h_tot_V_marley->GetEntries()>0) leg->AddEntry(h_tot_V_marley, "Plane V (MARLEY)", "l"); leg->Draw(); }
+    { auto *leg = new TLegend(0.35, 0.78, 0.65, 0.92); leg->SetBorderSize(0); leg->AddEntry(h_tot_V, "Plane V (All)", "f"); if (h_tot_V_marley && h_tot_V_marley->GetEntries()>0) leg->AddEntry(h_tot_V_marley, "Plane V (MARLEY)", "l"); leg->Draw(); }
     c_tot->SaveAs(pdf_output.c_str());
 
     // ADC vs ToT (Page 5): All, X, U, V
@@ -743,18 +770,20 @@ int main(int argc, char* argv[]) {
     c_int->Divide(2,2);
     c_int->cd(1); gPad->SetLogy(); h_int_all->Draw("HIST"); 
     if (h_int_all_marley && h_int_all_marley->GetEntries() > 0) h_int_all_marley->Draw("HIST SAME");
-    { TLegend *leg=new TLegend(0.6,0.78,0.88,0.92); leg->SetBorderSize(0); leg->AddEntry(h_int_all, "All Planes (All)", "f"); if (h_int_all_marley && h_int_all_marley->GetEntries()>0) leg->AddEntry(h_int_all_marley, "All Planes (MARLEY)", "l"); leg->Draw(); }
+    { TLegend *leg=new TLegend(0.35,0.78,0.65,0.92); leg->SetBorderSize(0); leg->AddEntry(h_int_all, "All Planes (All)", "f"); if (h_int_all_marley && h_int_all_marley->GetEntries()>0) leg->AddEntry(h_int_all_marley, "All Planes (MARLEY)", "l"); leg->Draw(); }
     c_int->cd(2); gPad->SetLogy(); h_int_X->Draw("HIST");   
     if (h_int_X_marley && h_int_X_marley->GetEntries() > 0) h_int_X_marley->Draw("HIST SAME");
-    { TLegend *leg=new TLegend(0.6,0.78,0.88,0.92); leg->SetBorderSize(0); leg->AddEntry(h_int_X, "Plane X (All)", "f"); if (h_int_X_marley && h_int_X_marley->GetEntries()>0) leg->AddEntry(h_int_X_marley, "Plane X (MARLEY)", "l"); leg->Draw(); }
+    { TLegend *leg=new TLegend(0.35,0.78,0.65,0.92); leg->SetBorderSize(0); leg->AddEntry(h_int_X, "Plane X (All)", "f"); if (h_int_X_marley && h_int_X_marley->GetEntries()>0) leg->AddEntry(h_int_X_marley, "Plane X (MARLEY)", "l"); leg->Draw(); }
     c_int->cd(3); gPad->SetLogy(); h_int_U->Draw("HIST");   
     if (h_int_U_marley && h_int_U_marley->GetEntries() > 0) h_int_U_marley->Draw("HIST SAME");
-    { TLegend *leg=new TLegend(0.6,0.78,0.88,0.92); leg->SetBorderSize(0); leg->AddEntry(h_int_U, "Plane U (All)", "f"); if (h_int_U_marley && h_int_U_marley->GetEntries()>0) leg->AddEntry(h_int_U_marley, "Plane U (MARLEY)", "l"); leg->Draw(); }
+    { TLegend *leg=new TLegend(0.35,0.78,0.65,0.92); leg->SetBorderSize(0); leg->AddEntry(h_int_U, "Plane U (All)", "f"); if (h_int_U_marley && h_int_U_marley->GetEntries()>0) leg->AddEntry(h_int_U_marley, "Plane U (MARLEY)", "l"); leg->Draw(); }
     c_int->cd(4); gPad->SetLogy(); h_int_V->Draw("HIST");   
     if (h_int_V_marley && h_int_V_marley->GetEntries() > 0) h_int_V_marley->Draw("HIST SAME");
-    { TLegend *leg=new TLegend(0.6,0.78,0.88,0.92); leg->SetBorderSize(0); leg->AddEntry(h_int_V, "Plane V (All)", "f"); if (h_int_V_marley && h_int_V_marley->GetEntries()>0) leg->AddEntry(h_int_V_marley, "Plane V (MARLEY)", "l"); leg->Draw(); }
+    { TLegend *leg=new TLegend(0.35,0.78,0.65,0.92); leg->SetBorderSize(0); leg->AddEntry(h_int_V, "Plane V (All)", "f"); if (h_int_V_marley && h_int_V_marley->GetEntries()>0) leg->AddEntry(h_int_V_marley, "Plane V (MARLEY)", "l"); leg->Draw(); }
     c_int->SaveAs(pdf_output.c_str());
 
+    // Backtracking diagnostics page removed as requested - placeholder was not useful
+    /*
     // Backtracking sanity page: tail composition at 95% and 99%
     LogInfo << "Creating backtracking diagnostics page (tails composition)..." << std::endl;
     auto percentile_from_hist = [](TH1* h, double p) -> double {
@@ -804,6 +833,7 @@ int main(int argc, char* argv[]) {
     }
     c_bktr->SaveAs(pdf_output.c_str());
     delete c_bktr;
+    */
 
     // New page: MARLEY presence per plane (event-level)
     LogInfo << "Creating MARLEY per-plane diagnostic page..." << std::endl;
@@ -896,13 +926,13 @@ int main(int argc, char* argv[]) {
     TH1F *h_peak_V_marley_clone = (TH1F*)h_peak_V_marley_fine->Clone("h_peak_V_marley_clone");
     
     c1_m_zoom->cd(1); gPad->SetLogy(); h_peak_all_marley_clone->GetXaxis()->SetRangeUser(0, 250); h_peak_all_marley_clone->Draw("HIST");
-    { TLegend *leg = new TLegend(0.5, 0.8, 0.7, 0.9); leg->AddEntry(h_peak_all_marley_clone, "All Planes (MARLEY)", "f"); leg->Draw(); }
+    { TLegend *leg = new TLegend(0.35, 0.78, 0.65, 0.92); leg->AddEntry(h_peak_all_marley_clone, "All Planes (MARLEY)", "f"); leg->Draw(); }
     c1_m_zoom->cd(2); gPad->SetLogy(); h_peak_X_marley_clone->GetXaxis()->SetRangeUser(0, 250); h_peak_X_marley_clone->SetTitle("ADC Peak Histogram (MARLEY, Zoomed 0-250)"); h_peak_X_marley_clone->Draw("HIST");
-    { TLegend *leg = new TLegend(0.5, 0.8, 0.7, 0.9); leg->AddEntry(h_peak_X_marley_clone, "Plane X (MARLEY)", "f"); leg->Draw(); }
+    { TLegend *leg = new TLegend(0.35, 0.78, 0.65, 0.92); leg->AddEntry(h_peak_X_marley_clone, "Plane X (MARLEY)", "f"); leg->Draw(); }
     c1_m_zoom->cd(3); gPad->SetLogy(); h_peak_U_marley_clone->GetXaxis()->SetRangeUser(0, 250); h_peak_U_marley_clone->SetTitle("ADC Peak Histogram (MARLEY, Zoomed 0-250)"); h_peak_U_marley_clone->Draw("HIST");
-    { TLegend *leg = new TLegend(0.5, 0.8, 0.7, 0.9); leg->AddEntry(h_peak_U_marley_clone, "Plane U (MARLEY)", "f"); leg->Draw(); }
+    { TLegend *leg = new TLegend(0.35, 0.78, 0.65, 0.92); leg->AddEntry(h_peak_U_marley_clone, "Plane U (MARLEY)", "f"); leg->Draw(); }
     c1_m_zoom->cd(4); gPad->SetLogy(); h_peak_V_marley_clone->GetXaxis()->SetRangeUser(0, 250); h_peak_V_marley_clone->SetTitle("ADC Peak Histogram (MARLEY, Zoomed 0-250)"); h_peak_V_marley_clone->Draw("HIST");
-    { TLegend *leg = new TLegend(0.5, 0.8, 0.7, 0.9); leg->AddEntry(h_peak_V_marley_clone, "Plane V (MARLEY)", "f"); leg->Draw(); }
+    { TLegend *leg = new TLegend(0.35, 0.78, 0.65, 0.92); leg->AddEntry(h_peak_V_marley_clone, "Plane V (MARLEY)", "f"); leg->Draw(); }
     // c1_m_zoom->SaveAs(pdf_output.c_str());
     
     // Cleanup cloned histograms
@@ -1181,18 +1211,18 @@ int main(int argc, char* argv[]) {
     TH1F *h_labels = new TH1F("h_labels", "TP count by generator label", std::max<size_t>(1, nlabels), 0, std::max<size_t>(1, nlabels));
     // Use horizontal bar chart for overall counts
     h_labels->SetOption("HBAR");
-    h_labels->SetXTitle("Number of TPs (after ToT cut)");
-    h_labels->SetYTitle("");
+    h_labels->SetYTitle("Number of TPs (after ToT cut)");
+    h_labels->SetXTitle("");
     h_labels->SetStats(0);
     h_labels->SetLineColor(kMagenta+2);
     h_labels->SetFillColorAlpha(kMagenta+2, 0.25);
     
     // Styling: ensure long labels fit on Y axis
     double leftMargin = 0.28;
-    double yLabelSize = 0.065;
-    if (nlabels > 6 && nlabels <= 12) { leftMargin = 0.34; yLabelSize = 0.052; }
-    else if (nlabels > 12 && nlabels <= 20) { leftMargin = 0.40; yLabelSize = 0.042; }
-    else if (nlabels > 20) { leftMargin = 0.46; yLabelSize = 0.036; }
+    double yLabelSize = 0.08;  // Increased from 0.065
+    if (nlabels > 6 && nlabels <= 12) { leftMargin = 0.34; yLabelSize = 0.07; }  // Increased from 0.052
+    else if (nlabels > 12 && nlabels <= 20) { leftMargin = 0.40; yLabelSize = 0.06; }  // Increased from 0.042
+    else if (nlabels > 20) { leftMargin = 0.46; yLabelSize = 0.05; }  // Increased from 0.036
     c_labels->SetLeftMargin(leftMargin);
     c_labels->SetBottomMargin(0.12);
     c_labels->SetRightMargin(0.06);
