@@ -1,0 +1,8 @@
+{
+  "inputFolder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
+
+  "outputFolder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
+  
+  "backtracker_error_margin": 10
+
+}

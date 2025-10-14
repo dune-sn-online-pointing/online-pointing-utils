@@ -12,6 +12,7 @@ print_help(){
   echo "  --clean-compile             Clean and recompile the code"
   echo "  -i|--input-file <file>      Input file with list of input ROOT files. Overrides json."
   echo "  --output-folder <dir>       Output folder (default: data/). Overrides json."
+  echo "  -f|--override               Force reprocessing even if output already exists (default: false)"
   echo "  -h|--help                   Print this help message."
   exit 0;
 }
@@ -19,6 +20,7 @@ print_help(){
 # settingsFile="json/backtrack/example.json"
 cleanCompile=false
 noCompile=false
+override=false
 # output_folder="" # a default could be data/
 
 while [[ $# -gt 0 ]]; do
@@ -28,6 +30,7 @@ while [[ $# -gt 0 ]]; do
     --output-folder) output_folder="$2"; shift 2;;
     --no-compile) noCompile=true; shift;;
     --clean-compile) cleanCompile=true; shift;;
+    -f|--override) override=true; shift;;
     -h|--help) print_help;;
     *) shift;;
   esac
@@ -60,6 +63,9 @@ if [ ! -z ${inputFile+x} ]; then
 fi
 if [ ! -z ${output_folder+x} ]; then
   backtrack_cmd="$backtrack_cmd --output-folder $output_folder"
+fi
+if [ "$override" = true ]; then
+  backtrack_cmd="$backtrack_cmd --override"
 fi
 echo "Running: $backtrack_cmd"
 exec $backtrack_cmd

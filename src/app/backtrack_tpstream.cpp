@@ -16,6 +16,7 @@ int main(int argc, char* argv[]) {
     clp.addDummyOption("Triggers");
     clp.addTriggerOption("verboseMode", {"-v", "--verbose"}, "Run in verbose mode");
     clp.addTriggerOption("debugMode", {"-d", "--debug"}, "Run in debug mode (more detailed than verbose)");
+    clp.addTriggerOption("overrideMode", {"-f", "--override"}, "Force reprocessing even if output already exists");
     clp.addDummyOption();
     LogInfo << clp.getDescription().str() << std::endl;
     LogInfo << "Usage: " << std::endl;
@@ -26,6 +27,7 @@ int main(int argc, char* argv[]) {
     // Set logging verbosity based on command line options
     if (clp.isOptionTriggered("debugMode")) debugMode = true; // global variable
     if (clp.isOptionTriggered("verboseMode")) verboseMode = true; // global variable
+    bool overrideMode = clp.isOptionTriggered("overrideMode");
 
     std::string json = clp.getOptionVal<std::string>("json");
     std::ifstream i(json);
@@ -124,6 +126,29 @@ int main(int argc, char* argv[]) {
             break;
         }
 
+        // Compute expected output path early to allow skip-if-exists behavior
+        std::string input_basename = filename.substr(filename.find_last_of("/\\") + 1);
+        input_basename = input_basename.substr(0, input_basename.length() - 14); // remove _tpstream.root
+        std::ostringstream suffix;
+        if (bktr_margin != standard_backtracker_error_margin) {
+            suffix << "_tps_bktr" << bktr_margin << ".root";
+        } else {
+            suffix << "_tps.root";
+        }
+        std::string out = outfolder + "/" + input_basename + suffix.str();
+        // Use absolute path for output
+        std::error_code _ec_abs;
+        std::filesystem::path out_abs_p = std::filesystem::absolute(std::filesystem::path(out), _ec_abs);
+        std::string out_abs = _ec_abs ? out : out_abs_p.string();
+
+        // Skip processing if output already exists and override is not set
+        if (!overrideMode && file_exists(out_abs)) {
+            LogInfo << "Output already exists, skipping: " << out_abs 
+                    << " (use --override to force reprocessing)" << std::endl;
+            output_files.push_back(out_abs);
+            continue;
+        }
+
         if (verboseMode) LogInfo << "Reading file: " << filename << std::endl;
         // count events
         // using this tree just because it's the smallest
@@ -136,7 +161,23 @@ int main(int argc, char* argv[]) {
         if (!MCtree) { LogError << "Tree not found: " << MCtree_path << std::endl; file->Close(); delete file; continue; }
         UInt_t this_event_number = 0; 
         MCtree->SetBranchAddress("Event", &this_event_number);
-        int n_events = MCtree->GetEntries(); 
+        int n_events = MCtree->GetEntries();
+        
+        // For background files, mcneutrinos may be empty - fall back to counting unique events in TPs tree
+        if (n_events == 0) {
+            std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2";
+            TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
+            if (TPtree) {
+                TPtree->SetBranchAddress("Event", &this_event_number);
+                std::set<UInt_t> unique_events;
+                for (Long64_t i = 0; i < TPtree->GetEntries(); ++i) {
+                    TPtree->GetEntry(i);
+                    unique_events.insert(this_event_number);
+                }
+                n_events = unique_events.size();
+                if (verboseMode) LogInfo << "Background file detected (no MC neutrinos), found " << n_events << " unique events from TPs tree" << std::endl;
+            }
+        } 
 
         MCtree->GetEntry(0);
         int first_event = this_event_number;
@@ -180,20 +221,6 @@ int main(int argc, char* argv[]) {
         }
 
         // write *_tps_bktr<N>.root where N is backtracker_error_margin
-        std::string input_basename = filename.substr(filename.find_last_of("/\\") + 1);
-        input_basename = input_basename.substr(0, input_basename.length() - 14); // remove _tpstream.root
-        std::ostringstream suffix;
-        if (bktr_margin != standard_backtracker_error_margin) {
-            suffix << "_tps_bktr" << bktr_margin << ".root";
-        } else {
-            suffix << "_tps.root";
-        }
-        std::string out = outfolder + "/" + input_basename + suffix.str();
-        // Use absolute path for output
-        std::error_code _ec_abs;
-        std::filesystem::path out_abs_p = std::filesystem::absolute(std::filesystem::path(out), _ec_abs);
-        std::string out_abs = _ec_abs ? out : out_abs_p.string();
-        
         if (verboseMode) LogInfo << "Writing output to: " << out_abs << std::endl;
         write_tps(out_abs, tps, true_particles, neutrinos);
         output_files.push_back(out_abs);
