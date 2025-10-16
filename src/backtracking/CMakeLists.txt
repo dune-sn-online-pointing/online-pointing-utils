@@ -19,4 +19,13 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/src/objects
 )
 
+target_link_libraries(
+    ${LIB_NAME} PUBLIC
+    objectsLibs
+    globalLib
+    ${ROOT_LIBRARIES}
+)
+
+install( TARGETS ${LIB_NAME} DESTINATION lib )
+
 target_link_libraries( ${LIB_NAME} PRIVATE globalLib )

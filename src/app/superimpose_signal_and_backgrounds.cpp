@@ -2,8 +2,6 @@
 #include "Clustering.h"
 #include "create_volume_clusters_libs.h"
 
-#include "global.h"
-
 LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 int main(int argc, char* argv[]) {
@@ -44,25 +42,25 @@ int main(int argc, char* argv[]) {
     int plane = j["plane"];
     int max_events_per_filename = j["max_events_per_filename"];
 
-    std::cout << "bkg_filenames: " << bkg_filenames << std::endl;
-    std::cout << "signal_clusters: " << signal_clusters << std::endl;
-    std::cout << "output_dir: " << output_dir << std::endl;
-    std::cout << "radius: " << radius << std::endl;
-    std::cout << "plane: " << plane << std::endl;
-    std::cout << "max_events_per_filename: " << max_events_per_filename << std::endl;
+    LogInfo << "bkg_filenames: " << bkg_filenames << std::endl;
+    LogInfo << "signal_clusters: " << signal_clusters << std::endl;
+    LogInfo << "output_dir: " << output_dir << std::endl;
+    LogInfo << "radius: " << radius << std::endl;
+    LogInfo << "plane: " << plane << std::endl;
+    LogInfo << "max_events_per_filename: " << max_events_per_filename << std::endl;
 
     std::vector<std::string> filenames;
     std::ifstream infile(bkg_filenames);
     std::string line;
-    std::cout<<"Opening file: "<< bkg_filenames << std::endl;
+    LogInfo<<"Opening file: "<< bkg_filenames << std::endl;
     while (std::getline(infile, line)) {
         filenames.push_back(line);
     }
-    std::cout << "Number of files: " << filenames.size() << std::endl;
+    LogInfo << "Number of files: " << filenames.size() << std::endl;
 
     std::vector<Cluster> sig_clusters = read_clusters(signal_clusters);
     std::map<int, std::vector<Cluster>> sig_event_mapping = create_event_mapping(sig_clusters);
-    std::cout << "Sig event mapping created" << std::endl;
+    LogInfo << "Sig event mapping created" << std::endl;
     std::vector<int> sig_list_of_event_numbers;
     for (auto const& x : sig_event_mapping) {
         sig_list_of_event_numbers.push_back(x.first);
@@ -71,7 +69,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::vector<double>> bkg_tps = read_tpstream(filenames, plane, 2, max_events_per_filename);
     std::map<int, std::vector<std::vector<double>>> bkg_event_mapping = create_background_event_mapping(bkg_tps);
-    std::cout << "Bkg event mapping created" << std::endl;
+    LogInfo << "Bkg event mapping created" << std::endl;
     std::vector<int> bkg_list_of_event_numbers;
     for (auto const& x : bkg_event_mapping) {
         bkg_list_of_event_numbers.push_back(x.first);
@@ -81,7 +79,7 @@ int main(int argc, char* argv[]) {
     std::vector<Cluster> clusters_in_volume;
     for (int i = 0; i < sig_list_of_event_numbers.size(); i++) {
         if (i % 100 == 0) {
-            std::cout << "Cluster number: " << i << std::endl;
+            LogInfo << "Cluster number: " << i << std::endl;
         }
         std::vector<std::vector<double>> tps;
         // get the tps in the clusters of the event
@@ -94,13 +92,13 @@ int main(int argc, char* argv[]) {
             }
         }
         if (main_track_idx == -1) {
-            std::cout << "No main track found in the event" << std::endl;
+            LogInfo << "No main track found in the event" << std::endl;
             continue;
         }
         // extract a random background event
         int random_bkg_event = rand() % bkg_event_mapping.size();
         int random_bkg_event_index = bkg_list_of_event_numbers[random_bkg_event];
-        // std::cout << "Random bkg event: " << random_bkg_event_index << std::endl;
+        // LogInfo << "Random bkg event: " << random_bkg_event_index << std::endl;
         std::vector<std::vector<double>> tps_bkg = bkg_event_mapping[random_bkg_event_index];
         int this_offset = int(sig_event_mapping[sig_list_of_event_numbers[i]][main_track_idx].get_tps()[0][0]/EVENTS_OFFSET);
         for (int j = 0; j < tps_bkg.size(); j++) {
@@ -110,18 +108,18 @@ int main(int argc, char* argv[]) {
             tps_bkg[j][2] += this_offset*EVENTS_OFFSET;
         }
         tps.insert(tps.end(), tps_bkg.begin(), tps_bkg.end());
-        // std::cout << tps_bkg.size() << std::endl;
-        // std::cout << tps.size() << std::endl;
+        // LogInfo << tps_bkg.size() << std::endl;
+        // LogInfo << tps.size() << std::endl;
         std::sort(tps.begin(), tps.end(), [](const std::vector<double>& a, const std::vector<double>& b) {
             return a[0] < b[0];
         });
 
-        // std::cout << sig_event_mapping[sig_list_of_event_numbers[i]].size() << std::endl;
-        // std::cout << sig_event_mapping[sig_list_of_event_numbers[i]][main_track_idx].get_tps().size() << std::endl;
-        // std::cout << main_track_idx << std::endl;
+        // LogInfo << sig_event_mapping[sig_list_of_event_numbers[i]].size() << std::endl;
+        // LogInfo << sig_event_mapping[sig_list_of_event_numbers[i]][main_track_idx].get_tps().size() << std::endl;
+        // LogInfo << main_track_idx << std::endl;
 
         std::vector<std::vector<double>> tps_around_cluster = get_tps_around_cluster(tps, sig_event_mapping[sig_list_of_event_numbers[i]][main_track_idx], radius);
-        // std::cout<<tps_around_cluster.size()<<std::endl;
+        // LogInfo<<tps_around_cluster.size()<<std::endl;
         Cluster c(tps_around_cluster);
         c.set_true_pos(sig_event_mapping[sig_list_of_event_numbers[i]][main_track_idx].get_true_pos());
         c.set_true_dir(sig_event_mapping[sig_list_of_event_numbers[i]][main_track_idx].get_true_dir());
@@ -134,7 +132,7 @@ int main(int argc, char* argv[]) {
         clusters_in_volume.push_back(c);
 
     }
-    std::cout << "Number of clusters in volume: " << clusters_in_volume.size() << std::endl;
+    LogInfo << "Number of clusters in volume: " << clusters_in_volume.size() << std::endl;
     write_clusters(clusters_in_volume, output_dir+"clusters_in_volume.root");
     return 0;
 }

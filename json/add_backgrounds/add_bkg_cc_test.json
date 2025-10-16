@@ -1,0 +1,17 @@
+{
+  "signal_type": "cc",
+  "signal_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/",
+  "bkg_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
+  
+  "inputFolder": "/eos/user/e/evilla/dune/sn-tps/production_cc/",
+  "inputFile": "",
+  "inputList": [],
+  "inputListFile": "",
+  
+  "around_vertex_only": false,
+  "vertex_radius": 100,
+  
+  "max_files": 2,
+  
+  "root_verbosity": "kWarning"
+}

@@ -13,5 +13,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <unordered_map>
+#include <random>
+#include <ctime>
 
 #endif // CPP_H

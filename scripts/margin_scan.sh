@@ -16,6 +16,14 @@ echo "======================================="
 samples=("cleanES909080" "cleanES60" "bkgES909080" "bkgES60")
 margins=(0 5 10 15)
 
+# Parse verbose flag from command line
+VERBOSE=false
+for arg in "$@"; do
+  case "$arg" in
+    -v|--verbose) VERBOSE=true;;
+  esac
+done
+
 # Build directory
 BUILD_DIR="/home/virgolaema/dune/online-pointing-utils/build"
 JSON_DIR="/home/virgolaema/dune/online-pointing-utils/json"
@@ -48,7 +56,11 @@ for sample in "${samples[@]}"; do
         
         # Run backtracking
         echo "    Backtracking with margin $margin..."
-        "$BUILD_DIR/src/app/backtrack" -j "$temp_json" > "temp_backtrack_output.log" 2>&1
+        backtrack_cmd="$BUILD_DIR/src/app/backtrack -j \"$temp_json\""
+        if [ "$VERBOSE" = true ]; then
+            backtrack_cmd="$backtrack_cmd -v"
+        fi
+        eval $backtrack_cmd > "temp_backtrack_output.log" 2>&1
         
         # Extract output filename from log by looking for the expected pattern
         base_name=$(echo "$sample" | tr -d '\n')
@@ -72,7 +84,11 @@ EOF
         
         # Run analyze_tps 
         echo "    Analyzing results..."
-        "$BUILD_DIR/src/app/analyze_tps" -j "$analyze_json" > "temp_analyze_output.log" 2>&1
+        analyze_cmd="$BUILD_DIR/src/app/analyze_tps -j \"$analyze_json\""
+        if [ "$VERBOSE" = true ]; then
+            analyze_cmd="$analyze_cmd -v"
+        fi
+        eval $analyze_cmd > "temp_analyze_output.log" 2>&1
         
         # Extract key metrics from analyze output
         marley_events=$(grep "MARLEY diagnostic:" "temp_analyze_output.log" | grep "events contain MARLEY" | sed 's/.*MARLEY diagnostic: \([0-9]*\)\/\([0-9]*\) events contain MARLEY.*/\1\/\2/')

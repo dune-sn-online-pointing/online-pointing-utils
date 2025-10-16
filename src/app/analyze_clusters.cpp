@@ -128,13 +128,22 @@ int main(int argc, char* argv[]){
     }
     LogThrowIf(planes.empty(), "No clusters trees found in file: " << clusters_file);
 
+    // Determine output file prefix: JSON outputFilename > JSON filename stem
+    std::string file_prefix;
+    try {
+        file_prefix = j.at("outputFilename").get<std::string>();
+    } catch (...) {
+        std::filesystem::path json_path(json);
+        file_prefix = json_path.stem().string();
+    }
+
     // Output PDF path
     std::string base = clusters_file.substr(clusters_file.find_last_of("/\\")+1);
     auto dot = base.find_last_of('.');
     if (dot!=std::string::npos) base = base.substr(0, dot);
     std::string outDir = outFolder.empty()? clusters_file.substr(0, clusters_file.find_last_of("/\\")) : outFolder;
     if (outDir.empty()) outDir = ".";
-    std::string pdf = outDir + "/" + base + "_report.pdf";
+    std::string pdf = outDir + "/" + file_prefix + "_" + base + "_report.pdf";
 
     // Accumulators across planes
     std::map<std::string, long long> label_counts_all;

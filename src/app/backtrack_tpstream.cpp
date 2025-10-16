@@ -126,6 +126,8 @@ int main(int argc, char* argv[]) {
             break;
         }
 
+        GenericToolbox::displayProgressBar(count_files, filenames.size(), "Processing files...");
+
         // Compute expected output path early to allow skip-if-exists behavior
         std::string input_basename = filename.substr(filename.find_last_of("/\\") + 1);
         input_basename = input_basename.substr(0, input_basename.length() - 14); // remove _tpstream.root
@@ -152,33 +154,26 @@ int main(int argc, char* argv[]) {
         if (verboseMode) LogInfo << "Reading file: " << filename << std::endl;
         // count events
         // using this tree just because it's the smallest
-        std::string MCtree_path = "triggerAnaDumpTPs/mcneutrinos";
+        std::string MCtree_path = "triggerAnaDumpTPs/mctruths";
         TFile *file = TFile::Open(filename.c_str());
         if (!file || file->IsZombie()) { LogError << "Failed to open file: " << filename << std::endl; continue; }
         // TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
         // if (!TPtree) { LogError << "Tree not found: " << TPtree_path << std::endl; file->Close(); delete file; continue; }
         TTree *MCtree = dynamic_cast<TTree*>(file->Get(MCtree_path.c_str()));
+        int n_events = 0;
+        UInt_t this_event_number = 0;
         if (!MCtree) { LogError << "Tree not found: " << MCtree_path << std::endl; file->Close(); delete file; continue; }
-        UInt_t this_event_number = 0; 
-        MCtree->SetBranchAddress("Event", &this_event_number);
-        int n_events = MCtree->GetEntries();
-        
-        // For background files, mcneutrinos may be empty - fall back to counting unique events in TPs tree
-        if (n_events == 0) {
-            std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2";
-            TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
-            if (TPtree) {
-                TPtree->SetBranchAddress("Event", &this_event_number);
-                std::set<UInt_t> unique_events;
-                for (Long64_t i = 0; i < TPtree->GetEntries(); ++i) {
-                    TPtree->GetEntry(i);
-                    unique_events.insert(this_event_number);
-                }
-                n_events = unique_events.size();
-                if (verboseMode) LogInfo << "Background file detected (no MC neutrinos), found " << n_events << " unique events from TPs tree" << std::endl;
+        if (MCtree) {
+            MCtree->SetBranchAddress("Event", &this_event_number);
+            std::set<UInt_t> unique_events;
+            for (Long64_t i = 0; i < MCtree->GetEntries(); ++i) {
+                MCtree->GetEntry(i);
+                unique_events.insert(this_event_number);
             }
-        } 
-
+            n_events = unique_events.size();
+            if (verboseMode) LogInfo << " Found " << n_events << " unique events in tree: " << MCtree_path << std::endl;
+        }
+        
         MCtree->GetEntry(0);
         int first_event = this_event_number;
 

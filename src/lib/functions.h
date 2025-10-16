@@ -2,7 +2,7 @@
 #define FUNCTIONS_H
 
 #include "TriggerPrimitive.hpp"
-#include "cluster.h"
+#include "Cluster.h"
 #include "utils.h"
 
 #include "root.h"

@@ -1,4 +1,5 @@
 {
-  "inputListFile": "data/prod_es_clusters_files.txt",
-  "output_folder": "output/prod_es_analysis"
+    "inputListFile": "data/prod_es_clusters_files.txt",
+    "output_folder": "output/prod_es_analysis",
+    "outputFilename": "es"
 }

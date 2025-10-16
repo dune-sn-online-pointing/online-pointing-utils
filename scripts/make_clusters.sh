@@ -4,12 +4,13 @@ export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source $SCRIPTS_DIR/init.sh
 
 print_help(){
-  echo "Usage: $0 -j <json> [--no-compile] [--clean-compile] [--output-folder <dir>]"; exit 0;
+  echo "Usage: $0 -j <json> [--no-compile] [--clean-compile] [--output-folder <dir>] [-v|--verbose]"; exit 0;
 }
 
 settingsFile="json/cluster/example.json"
 cleanCompile=false
 noCompile=false
+verbose=false
 # output_folder="data" # no standard
 
 while [[ $# -gt 0 ]]; do
@@ -18,6 +19,7 @@ while [[ $# -gt 0 ]]; do
     --output-folder) output_folder="$2"; shift 2;;
     --no-compile) noCompile=true; shift;;
     --clean-compile) cleanCompile=true; shift;;
+    -v|--verbose) verbose=true; shift;;
     -h|--help) print_help;;
     *) shift;;
   esac
@@ -29,6 +31,9 @@ settingsFile=$($SCRIPTS_DIR/findSettings.sh -j $settingsFile | tail -n 1)
 cmd="$BUILD_DIR/src/app/make_clusters -j $settingsFile"
 if [[ -n $output_folder ]]; then
   cmd+=" --outFolder $output_folder"
+fi
+if [ "$verbose" = true ]; then
+  cmd+=" -v"
 fi
 echo "Running: $cmd"
 exec $cmd

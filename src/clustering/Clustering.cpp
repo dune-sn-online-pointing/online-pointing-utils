@@ -461,6 +461,8 @@ void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, s
     double total_charge;
     double total_energy;    
     double conversion_factor;
+    int true_pdg;
+    bool is_main_cluster;
     
     // TP information (allocate vectors once and reuse/clear per entry)
     std::vector<int>* tp_detector_channel = new std::vector<int>();
@@ -496,6 +498,8 @@ void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, s
         clusters_tree->Branch("total_charge", &total_charge, "total_charge/D");
         clusters_tree->Branch("total_energy", &total_energy, "total_energy/D");
         clusters_tree->Branch("conversion_factor", &conversion_factor, "conversion_factor/D");
+        clusters_tree->Branch("true_pdg", &true_pdg, "true_pdg/I");
+        clusters_tree->Branch("is_main_cluster", &is_main_cluster, "is_main_cluster/O");
 
         clusters_tree->Branch("tp_detector_channel", &tp_detector_channel);
         clusters_tree->Branch("tp_detector", &tp_detector);
@@ -532,6 +536,8 @@ void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, s
         clusters_tree->SetBranchAddress("total_charge", &total_charge);
         clusters_tree->SetBranchAddress("total_energy", &total_energy);
         clusters_tree->SetBranchAddress("conversion_factor", &conversion_factor);
+        clusters_tree->SetBranchAddress("true_pdg", &true_pdg);
+        clusters_tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
         clusters_tree->SetBranchAddress("tp_detector_channel", &tp_detector_channel);
         clusters_tree->SetBranchAddress("tp_detector", &tp_detector);
         clusters_tree->SetBranchAddress("tp_samples_over_threshold", &tp_samples_over_threshold);
@@ -579,6 +585,8 @@ void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, s
         total_charge = Cluster.get_total_charge();
         total_energy = Cluster.get_total_energy();
         conversion_factor = adc_to_energy_conversion_factor; // should be in settings, still keep as metadata
+        true_pdg = Cluster.get_true_pdg();
+        is_main_cluster = Cluster.get_is_main_cluster();
         // TODO create different tree for metadata? Currently in filename
 
         if (tp_detector_channel) tp_detector_channel->clear();

@@ -99,7 +99,9 @@ int main(int argc, char* argv[]) {
         LogInfo << "Output file " << clusters_filename << " already exists, deleting it." << std::endl;
         std::filesystem::remove(clusters_filename);
     }
-
+    else{
+        LogInfo << "Output file will be: " << clusters_filename << std::endl;
+    }
 
     int file_count = 0;
 
@@ -154,6 +156,28 @@ int main(int argc, char* argv[]) {
                                                 channel_limit, 
                                                 min_tps_to_cluster, 
                                                 adc_cut.at(iView)));
+            
+            // Identify the main cluster (most energetic) in each view for this event
+            for (size_t iView=0; iView<APA::views.size(); ++iView) {
+                auto& clusters = clusters_per_view.at(iView);
+                if (clusters.empty()) continue;
+                
+                // Find cluster with highest true particle energy
+                Cluster* main_cluster = nullptr;
+                float max_energy = -1.0f;
+                for (auto& cluster : clusters) {
+                    float energy = cluster.get_true_particle_energy();
+                    if (energy > max_energy) {
+                        max_energy = energy;
+                        main_cluster = &cluster;
+                    }
+                }
+                
+                // Mark the main cluster
+                if (main_cluster != nullptr) {
+                    main_cluster->set_is_main_cluster(true);
+                }
+            }
 
             for (size_t iView=0;iView<APA::views.size();++iView)
                 write_clusters(clusters_per_view.at(iView), clusters_filename, APA::views.at(iView)); 

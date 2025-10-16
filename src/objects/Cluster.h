@@ -32,7 +32,9 @@ class Cluster {
         float get_total_charge(); // { return total_charge_; }
         float get_total_energy(); // { return total_energy_; }
         float get_number_of_tps() { return tps_.size(); }
-        int get_event() { return tps_.at(0)->GetEvent(); }        
+        int get_event() { return tps_.at(0)->GetEvent(); }
+        int get_true_pdg() const { return true_pdg_; }
+        bool get_is_main_cluster() const { return is_main_cluster_; }        
         
         // setters
         std::vector<TriggerPrimitive*> get_tps() const { return tps_; }
@@ -46,6 +48,8 @@ class Cluster {
         void set_supernova_tp_fraction(float fraction) { supernova_tp_fraction_ = fraction; }
         void set_generator_tp_fraction(float fraction) { generator_tp_fraction_ = fraction; }
         void set_true_interaction(std::string interaction) { true_interaction_ = interaction; }
+        void set_true_pdg(int pdg) { true_pdg_ = pdg; }
+        void set_is_main_cluster(bool is_main) { is_main_cluster_ = is_main; }
         // void set_total_charge(float charge) { total_charge_ = charge; }
 
         // methods 
@@ -66,6 +70,8 @@ class Cluster {
         float generator_tp_fraction_ {0.0f};
         float total_charge_ {0.0f};
         float total_energy_ {0.0f};
+        int true_pdg_ {0};
+        bool is_main_cluster_ {false};
 };
 
 float distance(Cluster cluster1, Cluster cluster2);

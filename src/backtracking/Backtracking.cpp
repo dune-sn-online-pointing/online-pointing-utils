@@ -1,6 +1,5 @@
 #include "Backtracking.h"
 #include "TriggerPrimitive.hpp"
-#include "global.h"
 
 LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -54,6 +53,13 @@ void read_tpstream(std::string filename,
 
     if (debugMode) LogInfo << "First entry having this event number: " << first_tp_entry_in_event << std::endl;
     if (debugMode) LogInfo << "Last entry having this event number: " << last_tp_entry_in_event << std::endl;
+
+    // Check if we found the event in TPs tree - if not, skip this event (can happen with backgrounds)
+    if (first_tp_entry_in_event == -1) {
+        if (verboseMode) LogInfo << "Event " << event_number << " has no TPs in file " << filename << " (skipping)" << std::endl;
+        return; // Return with empty vectors - this is normal for some background events
+    }
+
     if (verboseMode) LogInfo << "Number of TPs in event " << event_number << ": " << last_tp_entry_in_event - first_tp_entry_in_event + 1 << std::endl;
 
     tps.reserve(last_tp_entry_in_event - first_tp_entry_in_event + 1);
@@ -132,8 +138,14 @@ void read_tpstream(std::string filename,
                     << " (filtered " << tot_filtered_count << ")" << std::endl;
         } else {
             // No meaningful ToT data; skip the filter to avoid dropping everything
-            LogWarning << " ToT field absent or all zeros; skipping ToT<2 filter. Kept "
-                       << tps.size() << " TPs from file " << filename << std::endl;
+            // This is expected for older file formats or certain simulation types
+            if (verboseMode) LogInfo << " Event " << this_event_number << ": ToT field absent or all zeros for " << tps.size() 
+                       << " TPs; skipping ToT<2 filter (keeping all TPs from file " << filename << ")" << std::endl;
+            // Only warn if we have very few TPs AND they all have ToT=0, which might indicate a problem
+            if (tps.size() < 10 && tps.size() > 0) {
+                LogWarning << " Event " << this_event_number << ": Low TP count (" << tps.size() 
+                           << ") with all ToT=0 in file " << filename << " - this may be normal for background events" << std::endl;
+            }
         }
     } else {
         LogWarning << " Found no TPs in file " << filename << " (nothing to filter)" << std::endl;
@@ -441,9 +453,9 @@ void read_tpstream(std::string filename,
     if (verboseMode) LogInfo << " If not 100%, it's ok. Some particles (nuclei) don't produce SimIDEs" << std::endl;
 
     // NEW: Apply direct TP-SimIDE matching to replace/supplement trueParticle-based matching
-    if (verboseMode) LogInfo << " Applying direct TP-SimIDE matching for event " << event_number << std::endl;
+    if (verboseMode) LogInfo << " Applying direct TP-SimIDE matching for event " << this_event_number << std::endl;
     const double effective_time_tolerance = (time_tolerance_ticks >= 0.0) ? time_tolerance_ticks : 5000.0;
-    match_tps_to_simides_direct(tps, true_particles, file, event_number, effective_time_tolerance, channel_tolerance);
+    match_tps_to_simides_direct(tps, true_particles, file, this_event_number, effective_time_tolerance, channel_tolerance);
 
     file->Close(); // don't need anymore
 
@@ -570,6 +582,9 @@ void match_tps_to_simides_direct(
     simidestree->SetBranchAddress("Event", &event_number_simides);
     get_first_and_last_event(simidestree, &event_number_simides, event_number, first_simide_entry, last_simide_entry);
     
+    if (verboseMode)  LogInfo << "SimIDEs in event " << event_number << ": " 
+            << ((first_simide_entry != -1) ? std::to_string(last_simide_entry - first_simide_entry + 1) : "0") << std::endl;
+
     if (first_simide_entry == -1) {
         LogWarning << "No SimIDEs found for event " << event_number << std::endl;
         return;

@@ -1,22 +1,9 @@
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <ctime>
-#include <nlohmann/json.hpp>
-
-#include "CmdLineParser.h"
-#include "Logger.h"
-
 // #include "position_calculator.h"
 #include "Clustering.h"
 #include "Cluster.h"
 #include "match_clusters_libs.h"
 
-
-LoggerInit([]{
-  Logger::getUserHeader() << "[" << FILENAME << "]";
-});
+LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 int main(int argc, char* argv[]) {
     CmdLineParser clp;
@@ -75,25 +62,25 @@ int main(int argc, char* argv[]) {
         // read the file containing the filenames and save them in a vector
         std::ifstream infile(filename);
         std::string line;
-        std::cout<<"Opening file: "<< filename << std::endl;
+        LogInfo<<"Opening file: "<< filename << std::endl;
         // read and save the TPs
         while (std::getline(infile, line)) {
             filenames.push_back(line);
         }
-        std::cout << "Number of files: " << filenames.size() << std::endl;
+        LogInfo << "Number of files: " << filenames.size() << std::endl;
         std::vector<TriggerPrimitive> tps_u = read_tpstream(filenames, 0, supernova_option, max_events_per_filename);
         std::vector<TriggerPrimitive> tps_v = read_tpstream(filenames, 1, supernova_option, max_events_per_filename);
         std::vector<TriggerPrimitive> tps_x = read_tpstream(filenames, 2, supernova_option, max_events_per_filename);
-        std::cout << "Number of tps: " << tps_u.size() << " " << tps_v.size() << " " << tps_x.size() << std::endl;
+        LogInfo << "Number of tps: " << tps_u.size() << " " << tps_v.size() << " " << tps_x.size() << std::endl;
         std::map<int, std::vector<float>> file_idx_to_true_xyz_map = file_idx_to_true_xyz(filenames);
         std::map<int, int> file_idx_to_true_interaction_map = file_idx_to_true_interaction(filenames);
-        std::cout << "XYZ map created" << std::endl;
+        LogInfo << "XYZ map created" << std::endl;
         
         clusters_u = make_cluster(tps_u, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut/2);
         clusters_v = make_cluster(tps_v, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut/2);
         clusters_x = make_cluster(tps_x, ticks_limit, channel_limit, min_tps_to_cluster, adc_integral_cut);
 
-        std::cout << "Number of clusters: " << clusters_u.size() << " " << clusters_v.size() << " " << clusters_x.size() << std::endl;
+        LogInfo << "Number of clusters: " << clusters_u.size() << " " << clusters_v.size() << " " << clusters_x.size() << std::endl;
         // add true x y z dir
         for (int i = 0; i < clusters_u.size(); i++) {
             clusters_u[i].set_true_dir(file_idx_to_true_xyz_map[clusters_u[i].get_tp(0)[clusters_u[i].get_tp(0).size() - 1]]);
@@ -127,7 +114,7 @@ int main(int argc, char* argv[]) {
         clusters_x = read_clusters(file_clusters_x);
     }
 
-    std::cout << "Number of clusters after filtering: " << clusters_x.size() << std::endl;
+    LogInfo << "Number of clusters after filtering: " << clusters_x.size() << std::endl;
     std::map<int, int> label_to_count;
 
     for (int i = 0; i < clusters_x.size(); i++) {
@@ -137,18 +124,18 @@ int main(int argc, char* argv[]) {
         label_to_count[clusters_x[i].get_true_label()]++;
     }
     for (auto const& x : label_to_count) {
-        // std::cout << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
-        std::cout << x.first << " ";
+        // LogInfo << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
+        LogInfo << x.first << " ";
     }
-    std::cout << std::endl;
+    LogInfo << std::endl;
     // if no clusters are found, return 0
     for (auto const& x : label_to_count) {
-        // std::cout << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
-        std::cout << x.second << " ";
+        // LogInfo << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
+        LogInfo << x.second << " ";
     }
-    std::cout << std::endl;
-    std::cout << "clusters written to " << file_clusters_u << " " << file_clusters_v << " " << file_clusters_x << std::endl;
-    std::cout << "Number of clusters: " << clusters_u.size() << " " << clusters_v.size() << " " << clusters_x.size() << std::endl;
+    LogInfo << std::endl;
+    LogInfo << "clusters written to " << file_clusters_u << " " << file_clusters_v << " " << file_clusters_x << std::endl;
+    LogInfo << "Number of clusters: " << clusters_u.size() << " " << clusters_v.size() << " " << clusters_x.size() << std::endl;
     std::vector<std::vector<Cluster>> clusters;
     std::vector<Cluster> multiplane_clusters;
 
@@ -159,8 +146,8 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < clusters_x.size(); i++) {
         if (i % 10000 == 0 && i != 0) {
             str = std::clock();
-            std::cout << "Cluster " << i << " Time: " << (str - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
-            std::cout << "Number of compatible clusters: " << multiplane_clusters.size() << std::endl;
+            LogInfo << "Cluster " << i << " Time: " << (str - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+            LogInfo << "Number of compatible clusters: " << multiplane_clusters.size() << std::endl;
         }
 
         int min_range_j = 0;
@@ -177,12 +164,12 @@ int main(int argc, char* argv[]) {
         for (int j = start_j; j < clusters_u.size(); j++) {
 
             if (clusters_u[j].get_tps()[0][variables_to_index["time_start"]] > clusters_x[i].get_tps()[0][variables_to_index["time_start"]] + 5000) {
-                // std::cout << "continue" << std::endl;
+                // LogInfo << "continue" << std::endl;
                 break;
             }
 
             if (clusters_u[j].get_tps()[0][variables_to_index["time_start"]] < clusters_x[i].get_tps()[0][variables_to_index["time_start"]] - 5000) {
-                // std::cout << "continue" << std::endl;
+                // LogInfo << "continue" << std::endl;
                 continue;
             }
 
@@ -203,11 +190,11 @@ int main(int argc, char* argv[]) {
             start_k = std::max(start_k-10, 0);
             for (int k = start_k; k < clusters_v.size(); k++) {
                 if (clusters_v[k].get_tps()[0][variables_to_index["time_start"]] > clusters_u[j].get_tps()[0][variables_to_index["time_start"]] + 5000) {
-                    // std::cout << "break" << std::endl;
+                    // LogInfo << "break" << std::endl;
                     break;
                 }
                 if (clusters_v[k].get_tps()[0][variables_to_index["time_start"]] < clusters_u[j].get_tps()[0][variables_to_index["time_start"]] - 5000) {
-                    // std::cout << "break" << std::endl;
+                    // LogInfo << "break" << std::endl;
                     continue;
                 }
                 
@@ -232,7 +219,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    std::cout << "Number of compatible clusters: " << clusters.size() << std::endl;
+    LogInfo << "Number of compatible clusters: " << clusters.size() << std::endl;
     // return counts of label
     std::map<int, int> label_to_count_compatible;
     for (int i = 0; i < clusters.size(); i++) {
@@ -242,24 +229,24 @@ int main(int argc, char* argv[]) {
         label_to_count_compatible[clusters[i][2].get_true_label()]++;
     }
     for (auto const& x : label_to_count_compatible) {
-        // std::cout << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
-        std::cout << x.first << " ";
+        // LogInfo << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
+        LogInfo << x.first << " ";
     }
-    std::cout << std::endl;
+    LogInfo << std::endl;
     for (auto const& x : label_to_count_compatible) {
-        // std::cout << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
-        std::cout << x.second << " ";
+        // LogInfo << "Label " << x.first << " has " << x.second << " clusters" << std::endl;
+        LogInfo << x.second << " ";
     }
-    std::cout << std::endl;
+    LogInfo << std::endl;
 
     // save the multiplane clusters to a root file
     write_clusters(multiplane_clusters, outfolder + "multiplane_clusters.root");
-    std::cout << "multiplane clusters written to " << outfolder + "multiplane_clusters.root" << std::endl;
+    LogInfo << "multiplane clusters written to " << outfolder + "multiplane_clusters.root" << std::endl;
        
 
     // stop the clock
     std::clock_t end;
     end = std::clock();
-    std::cout << "Time: " << (end - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+    LogInfo << "Time: " << (end - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
     return 0;
 }

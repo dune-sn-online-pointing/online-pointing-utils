@@ -13,6 +13,7 @@ print_help(){
   echo "  -i|--input-file <file>      Input file with list of input ROOT files. Overrides json."
   echo "  --output-folder <dir>       Output folder (default: data/). Overrides json."
   echo "  -f|--override               Force reprocessing even if output already exists (default: false)"
+  echo "  -v|--verbose                Enable verbose mode"
   echo "  -h|--help                   Print this help message."
   exit 0;
 }
@@ -21,6 +22,7 @@ print_help(){
 cleanCompile=false
 noCompile=false
 override=false
+verbose=false
 # output_folder="" # a default could be data/
 
 while [[ $# -gt 0 ]]; do
@@ -31,6 +33,7 @@ while [[ $# -gt 0 ]]; do
     --no-compile) noCompile=true; shift;;
     --clean-compile) cleanCompile=true; shift;;
     -f|--override) override=true; shift;;
+    -v|--verbose) verbose=true; shift;;
     -h|--help) print_help;;
     *) shift;;
   esac
@@ -66,6 +69,9 @@ if [ ! -z ${output_folder+x} ]; then
 fi
 if [ "$override" = true ]; then
   backtrack_cmd="$backtrack_cmd --override"
+fi
+if [ "$verbose" = true ]; then
+  backtrack_cmd="$backtrack_cmd -v"
 fi
 echo "Running: $backtrack_cmd"
 exec $backtrack_cmd

@@ -21,6 +21,7 @@ print_help() {
 INPUT_FILE=""
 cleanCompile=false
 noCompile=false
+verbose=false
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
@@ -48,6 +49,9 @@ echo $compile_command
 ################################################
 # Run the app
 command_to_run="$BUILD_DIR/src/app/plot_avg_times -i $INPUT_FILE"
+if [ "$verbose" = true ]; then
+    command_to_run="$command_to_run -v"
+fi
 echo "Running command: ${command_to_run}"
 eval $command_to_run
 

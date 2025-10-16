@@ -147,25 +147,21 @@ int main(int argc, char* argv[]) {
     TH1F *h_int_V_marley   = new TH1F("h_int_V_marley",   "ADC Integral (MARLEY, Plane V)",    bins_adc_intgl, int_lo, int_hi);
     h_int_all_marley->Reset(); h_int_X_marley->Reset(); h_int_U_marley->Reset(); h_int_V_marley->Reset();
 
-    // Generate output filename based on first input file
-    std::string pdf_output = "tp_analysis_report.pdf";
-    if (!inputs.empty() && !outFolder.empty()) {
-        // Extract base name from first input file
-        std::string first_input = inputs[0];
-        auto pos = first_input.find_last_of("/\\");
-        std::string basename = (pos == std::string::npos) ? first_input : first_input.substr(pos + 1);
-        // Remove file extension and _tps_bktr suffix
-        if (basename.size() > 5 && basename.substr(basename.size()-5) == ".root") {
-            basename = basename.substr(0, basename.size()-5);
-        }
-        auto bktr_pos = basename.find("_tps_bktr");
-        if (bktr_pos != std::string::npos) {
-            basename = basename.substr(0, bktr_pos);
-        }
-        
-        pdf_output = outFolder + "/" + basename + "_tp_analysis_report.pdf";
-    } else if (!outFolder.empty()) {
-        pdf_output = outFolder + "/tp_analysis_report.pdf";
+    // Determine output file prefix: JSON outputFilename > JSON filename stem
+    std::string file_prefix;
+    try {
+        file_prefix = j.at("outputFilename").get<std::string>();
+    } catch (...) {
+        std::filesystem::path json_path(json);
+        file_prefix = json_path.stem().string();
+    }
+
+    // Generate output filename
+    std::string pdf_output;
+    if (!outFolder.empty()) {
+        pdf_output = outFolder + "/" + file_prefix + "_tp_analysis_report.pdf";
+    } else {
+        pdf_output = file_prefix + "_tp_analysis_report.pdf";
     }
     
     std::vector<std::string> producedFiles;
@@ -212,7 +208,7 @@ int main(int argc, char* argv[]) {
         }
         if (verboseMode)LogInfo << "Opening file: " << input_file << std::endl;
 
-        // GenericToolbox::DisplayProg
+        GenericToolbox::displayProgressBar(file_count, inputs.size(), "Analyzing files...");
         
         TFile* file = TFile::Open(input_file.c_str());
         if (!file || file->IsZombie()) {
@@ -1211,7 +1207,7 @@ int main(int argc, char* argv[]) {
     TH1F *h_labels = new TH1F("h_labels", "TP count by generator label", std::max<size_t>(1, nlabels), 0, std::max<size_t>(1, nlabels));
     // Use horizontal bar chart for overall counts
     h_labels->SetOption("HBAR");
-    h_labels->SetYTitle("Number of TPs (after ToT cut)");
+    // h_labels->SetYTitle("Number of TPs (after ToT cut)");
     h_labels->SetXTitle("");
     h_labels->SetStats(0);
     h_labels->SetLineColor(kMagenta+2);

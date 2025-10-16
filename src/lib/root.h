@@ -23,6 +23,7 @@
 #include <TGaxis.h>
 #include <TButton.h>
 #include <TApplication.h>
+#include <TVector3.h>
 
 #endif // ROOT_H
 

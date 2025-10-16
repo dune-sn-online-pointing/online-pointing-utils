@@ -99,6 +99,7 @@ void Cluster::update_cluster_info() {
         true_momentum_ = {dominant_particle->GetPx(), dominant_particle->GetPy(), dominant_particle->GetPz()};
         true_particle_energy_ = dominant_particle->GetEnergy();
         true_label_ = dominant_particle->GetGeneratorName();
+        true_pdg_ = dominant_particle->GetPdg();
         
         // Set neutrino information
         const Neutrino* dominant_neutrino = dominant_particle->GetNeutrino();
@@ -118,6 +119,7 @@ void Cluster::update_cluster_info() {
         true_label_ = "UNKNOWN";
         true_neutrino_energy_ = -1.0f;
         true_interaction_ = "UNKNOWN";
+        true_pdg_ = 0;
     }
 }
 
