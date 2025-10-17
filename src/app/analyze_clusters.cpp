@@ -36,6 +36,9 @@ int main(int argc, char* argv[]){
   // Load parameters
   ParametersManager::getInstance().loadParameters();
 
+  // Check if tpstream files should be used for SimIDE energy calculation
+  bool use_simide_energy = j.value("use_simide_energy", false);
+
   // Avoid ROOT auto-ownership of histograms to prevent double deletes on TFile close
   TH1::AddDirectory(kFALSE);
 
@@ -47,8 +50,17 @@ int main(int argc, char* argv[]){
   nlohmann::json j;
   jf >> j;
 
+<<<<<<< HEAD
   std::vector<std::string> inputs ;
   
+=======
+  // Check if tpstream files should be used for SimIDE energy calculation
+  bool use_simide_energy = j.value("use_simide_energy", false);
+
+  // Use utility function for file finding (clusters files)
+  std::vector<std::string> inputs = find_input_files(j, "_clusters.root");
+
+>>>>>>> fa616d2 (Use tp_simide_energy branch in cluster analysis and plots; remove old tpstream SimIDE reading logic)
   // Override with CLI input if provided
   if (clp.isOptionTriggered("inputFile")) {
     std::string input_file = clp.getOptionVal<std::string>("inputFile");
@@ -87,6 +99,17 @@ int main(int argc, char* argv[]){
     outFolder = j.value("output_folder", std::string(""));
 
   std::vector<std::string> produced;
+
+  // SimIDE energy data structures (if enabled) - declared outside loop
+  std::map<int, double> event_total_simide_energy_X; // sum of SimIDE energies per event (Collection plane X)
+  std::map<int, double> event_total_simide_energy_U; // sum of SimIDE energies per event (U plane)
+  std::map<int, double> event_total_simide_energy_V; // sum of SimIDE energies per event (V plane)
+  std::vector<double> vec_total_simide_energy;
+  std::vector<double> vec_total_simide_energy_U;
+  std::vector<double> vec_total_simide_energy_V;
+  std::vector<double> vec_total_cluster_charge_for_simide;
+  std::vector<double> vec_total_cluster_charge_U_for_simide;
+  std::vector<double> vec_total_cluster_charge_V_for_simide;
 
   int file_count = 0;
   for (const auto& clusters_file : inputs){
@@ -130,6 +153,7 @@ int main(int argc, char* argv[]){
     }
     LogThrowIf(planes.empty(), "No clusters trees found in file: " << clusters_file);
 
+<<<<<<< HEAD
     // Determine output file prefix: JSON outputFilename > JSON filename stem
     std::string file_prefix;
     try {
@@ -138,6 +162,10 @@ int main(int argc, char* argv[]){
         std::filesystem::path json_path(json);
         file_prefix = json_path.stem().string();
     }
+=======
+    // SimIDE energies will be accumulated from tp_simide_energy branch during cluster loop
+    // (No need to read separate tpstream file - energy is now stored per TP in clusters file)
+>>>>>>> fa616d2 (Use tp_simide_energy branch in cluster analysis and plots; remove old tpstream SimIDE reading logic)
 
     // Output PDF path
     std::string base = clusters_file.substr(clusters_file.find_last_of("/\\")+1);
@@ -177,15 +205,26 @@ int main(int argc, char* argv[]){
     std::map<int, double> event_neutrino_energy; // neutrino energy per event
     std::map<int,int> sn_clusters_per_event; // sum across planes
     std::map<int, double> event_total_particle_energy; // sum of unique particle energies per event (excluding neutrinos)
-    std::map<int, double> event_total_cluster_charge; // sum of all cluster charges per event
+    std::map<int, double> event_total_cluster_charge; // sum of all cluster charges per event (Collection plane X)
+    std::map<int, double> event_total_cluster_charge_U; // sum of all cluster charges per event (U plane)
+    std::map<int, double> event_total_cluster_charge_V; // sum of all cluster charges per event (V plane)
     // Track unique particles per event using a set of (energy, position) pairs
     std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles; // event -> set of (energy, x, y, z)
-    // Vectors for the calibration graph
+    // Vectors for the calibration graph (Collection plane X)
     std::vector<double> vec_total_particle_energy;
     std::vector<double> vec_total_cluster_charge;
+<<<<<<< HEAD
     
     // Track minimum cluster charges per plane
     std::map<std::string, double> min_cluster_charge;
+=======
+    // Vectors for the calibration graph (U plane)
+    std::vector<double> vec_total_particle_energy_U;
+    std::vector<double> vec_total_cluster_charge_U;
+    // Vectors for the calibration graph (V plane)
+    std::vector<double> vec_total_particle_energy_V;
+    std::vector<double> vec_total_cluster_charge_V;
+>>>>>>> fa616d2 (Use tp_simide_energy branch in cluster analysis and plots; remove old tpstream SimIDE reading logic)
 
     // Marley TP fraction categorization counters (across all planes)
     int only_marley_clusters = 0;     // marley_tp_fraction = 1.0
@@ -215,6 +254,9 @@ int main(int argc, char* argv[]){
     };
     auto ensureHist2D = [](std::map<std::string, TH2F*>& m, const std::string& key, const char* title){
       if (m.count(key)==0){
+      // Determine output file prefix: JSON outputFilename > JSON filename stem
+      std::string file_prefix;
+      try {
         m[key] = new TH2F((key+"_h2").c_str(), title, 60, 0, 60, 100, 0, 300); // Changed from 100,0,100,100,0,1e6 to 60,0,60,100,0,300
         m[key]->SetDirectory(nullptr);
       }
@@ -222,6 +264,9 @@ int main(int argc, char* argv[]){
     };
 
     // Iterate planes
+      // Vectors for the calibration graph (U plane)
+      std::vector<double> vec_total_particle_energy_U;
+      std::vector<double> vec_total_cluster_charge_U;
     for (auto& pd : planes){
       // Branches
       int event=0, n_tps=0;
@@ -239,6 +284,7 @@ int main(int argc, char* argv[]){
       std::vector<int>* v_tstart=nullptr;
       std::vector<int>* v_sot=nullptr;
       std::vector<int>* v_adcint=nullptr;
+      std::vector<double>* v_simide_energy=nullptr;
       pd.tree->SetBranchAddress("event", &event);
       pd.tree->SetBranchAddress("n_tps", &n_tps);
       // prefer new names; fallback if needed
@@ -264,6 +310,7 @@ int main(int argc, char* argv[]){
       if (pd.tree->GetBranch("tp_time_start")) pd.tree->SetBranchAddress("tp_time_start", &v_tstart);
       if (pd.tree->GetBranch("tp_samples_over_threshold")) pd.tree->SetBranchAddress("tp_samples_over_threshold", &v_sot);
       if (pd.tree->GetBranch("tp_adc_integral")) pd.tree->SetBranchAddress("tp_adc_integral", &v_adcint);
+      if (pd.tree->GetBranch("tp_simide_energy")) pd.tree->SetBranchAddress("tp_simide_energy", &v_simide_energy);
 
       // Histos per plane
       TH1F* h_ntps = ensureHist(n_tps_plane_h, std::string("n_tps_")+pd.name, (std::string("Cluster size (n_tps) - ")+pd.name+";n_{TPs};Clusters").c_str(), 40, 0, 40);
@@ -323,9 +370,26 @@ int main(int argc, char* argv[]){
           }
         }
         
-        // Accumulate per-event total cluster charge (only from collection plane X)
+        // Accumulate per-event total cluster charge per plane
         if (pd.name == "X") {
           event_total_cluster_charge[event] += total_charge;
+        } else if (pd.name == "U") {
+          event_total_cluster_charge_U[event] += total_charge;
+        } else if (pd.name == "V") {
+          event_total_cluster_charge_V[event] += total_charge;
+        }
+
+        // Accumulate per-event total SimIDE energy per plane (from tp_simide_energy branch)
+        if (use_simide_energy && v_simide_energy && !v_simide_energy->empty()) {
+          double simide_energy_sum = 0.0;
+          for (auto e : *v_simide_energy) simide_energy_sum += e;
+          if (pd.name == "X") {
+            event_total_simide_energy_X[event] += simide_energy_sum;
+          } else if (pd.name == "U") {
+            event_total_simide_energy_U[event] += simide_energy_sum;
+          } else if (pd.name == "V") {
+            event_total_simide_energy_V[event] += simide_energy_sum;
+          }
         }
 
         // Categorize clusters by Marley TP content
@@ -438,7 +502,7 @@ int main(int argc, char* argv[]){
     }
     
     // After processing all planes, prepare data for the calibration graph
-    // Note: We only use collection plane (X) data, no need to divide
+    // Collection plane (X)
     for (const auto& kv : event_total_particle_energy) {
       int evt = kv.first;
       double tot_part_e = kv.second;
@@ -449,6 +513,65 @@ int main(int argc, char* argv[]){
         vec_total_cluster_charge.push_back(tot_charge);
         // Also fill the histogram for backup
         h2_total_particle_energy_vs_total_charge->Fill(tot_part_e, tot_charge);
+      }
+    }
+    // U plane
+    for (const auto& kv : event_total_particle_energy) {
+      int evt = kv.first;
+      double tot_part_e = kv.second;
+      auto it = event_total_cluster_charge_U.find(evt);
+      if (it != event_total_cluster_charge_U.end()) {
+        double tot_charge = it->second;
+        vec_total_particle_energy_U.push_back(tot_part_e);
+        vec_total_cluster_charge_U.push_back(tot_charge);
+      }
+    }
+    // V plane
+    for (const auto& kv : event_total_particle_energy) {
+      int evt = kv.first;
+      double tot_part_e = kv.second;
+      auto it = event_total_cluster_charge_V.find(evt);
+      if (it != event_total_cluster_charge_V.end()) {
+        double tot_charge = it->second;
+        vec_total_particle_energy_V.push_back(tot_part_e);
+        vec_total_cluster_charge_V.push_back(tot_charge);
+      }
+    }
+    
+    // Prepare SimIDE energy vectors if available
+    if (use_simide_energy && !event_total_simide_energy_X.empty()) {
+      for (const auto& kv : event_total_simide_energy_X) {
+        int evt = kv.first;
+        double simide_e = kv.second;
+        auto it = event_total_cluster_charge.find(evt);
+        if (it != event_total_cluster_charge.end()) {
+          vec_total_simide_energy.push_back(simide_e);
+          vec_total_cluster_charge_for_simide.push_back(it->second);
+        }
+      }
+      for (const auto& kv : event_total_simide_energy_U) {
+        int evt = kv.first;
+        double simide_e = kv.second;
+        auto it = event_total_cluster_charge_U.find(evt);
+        if (it != event_total_cluster_charge_U.end()) {
+          vec_total_simide_energy_U.push_back(simide_e);
+          vec_total_cluster_charge_U_for_simide.push_back(it->second);
+        }
+      }
+      for (const auto& kv : event_total_simide_energy_V) {
+        int evt = kv.first;
+        double simide_e = kv.second;
+        auto it = event_total_cluster_charge_V.find(evt);
+        if (it != event_total_cluster_charge_V.end()) {
+          vec_total_simide_energy_V.push_back(simide_e);
+          vec_total_cluster_charge_V_for_simide.push_back(it->second);
+        }
+      }
+      
+      if (verboseMode && !vec_total_simide_energy.empty()) {
+        LogInfo << "SimIDE energy data (X): " << vec_total_simide_energy.size() << " events" << std::endl;
+        LogInfo << "SimIDE energy range: " << *std::min_element(vec_total_simide_energy.begin(), vec_total_simide_energy.end())
+                << " - " << *std::max_element(vec_total_simide_energy.begin(), vec_total_simide_energy.end()) << " MeV" << std::endl;
       }
     }
     
@@ -463,7 +586,7 @@ int main(int argc, char* argv[]){
 
     // Start PDF with title page
     int pageNum = 1;
-    int totalPages = 15; // Updated to include new page
+    int totalPages = use_simide_energy ? 20 : 17; // Updated: +3 pages if SimIDE energy plots are included
     
     TCanvas* c = new TCanvas("c_ac_title","Title",800,600); c->cd();
     c->SetFillColor(kWhite);
@@ -806,16 +929,20 @@ int main(int argc, char* argv[]){
       delete c2d_corr;
     }
 
-    // Page: Total particle energy vs total cluster charge per event
+    // Page: Total particle energy vs total cluster charge per event (Collection Plane X)
     if (!vec_total_particle_energy.empty()) {
       pageNum++;
       TCanvas* c_tot_corr = new TCanvas("c_ac_tot_corr","Total energy vs charge per event",900,700);
+      c_tot_corr->SetBottomMargin(0.12);
+      c_tot_corr->SetTopMargin(0.10);
+      c_tot_corr->SetLeftMargin(0.12);
+      c_tot_corr->SetRightMargin(0.05);
       
       // Create TGraph from vectors
       TGraph* gr_calib = new TGraph((int)vec_total_particle_energy.size(), 
                                      vec_total_particle_energy.data(), 
                                      vec_total_cluster_charge.data());
-      gr_calib->SetTitle("Total visible energy vs total cluster charge per event (Collection Plane);Total visible particle energy [MeV];Total cluster charge [ADC]");
+      gr_calib->SetTitle("Total visible energy vs total cluster charge per event (Collection Plane X);Total visible particle energy [MeV];Total cluster charge [ADC]");
       gr_calib->SetMarkerStyle(20);
       gr_calib->SetMarkerSize(0.8);
       gr_calib->SetMarkerColor(kBlue+1);
@@ -839,12 +966,12 @@ int main(int argc, char* argv[]){
       // Display fit results on canvas
       TLatex latex;
       latex.SetNDC();
-      latex.SetTextSize(0.03);
+      latex.SetTextSize(0.028);
       latex.SetTextColor(kRed);
-      latex.DrawLatex(0.15, 0.85, Form("Fit: Charge = %.3f #times E_{visible} + %.3f", slope, intercept));
-      latex.DrawLatex(0.15, 0.81, Form("Slope: %.3f #pm %.3f ADC/MeV", slope, slope_err));
-      latex.DrawLatex(0.15, 0.77, Form("Intercept: %.3f #pm %.3f ADC", intercept, intercept_err));
-      latex.DrawLatex(0.15, 0.73, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2, ndf, (ndf > 0 ? chi2/ndf : 0)));
+      latex.DrawLatex(0.15, 0.88, Form("Fit: Charge = %.3f #times E_{visible} + %.3f", slope, intercept));
+      latex.DrawLatex(0.15, 0.84, Form("Slope: %.3f #pm %.3f ADC/MeV", slope, slope_err));
+      latex.DrawLatex(0.15, 0.80, Form("Intercept: %.3f #pm %.3f ADC", intercept, intercept_err));
+      latex.DrawLatex(0.15, 0.76, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2, ndf, (ndf > 0 ? chi2/ndf : 0)));
       
       gPad->SetGridx();
       gPad->SetGridy();
@@ -853,6 +980,271 @@ int main(int argc, char* argv[]){
       delete fit_tot;
       delete gr_calib;
       delete c_tot_corr;
+    }
+
+    // Page: Total particle energy vs total cluster charge per event (U Plane)
+    if (!vec_total_particle_energy_U.empty()) {
+      pageNum++;
+      TCanvas* c_tot_corr_U = new TCanvas("c_ac_tot_corr_U","Total energy vs charge per event (U)",900,700);
+      c_tot_corr_U->SetBottomMargin(0.12);
+      c_tot_corr_U->SetTopMargin(0.10);
+      c_tot_corr_U->SetLeftMargin(0.12);
+      c_tot_corr_U->SetRightMargin(0.05);
+      
+      // Create TGraph from vectors
+      TGraph* gr_calib_U = new TGraph((int)vec_total_particle_energy_U.size(), 
+                                       vec_total_particle_energy_U.data(), 
+                                       vec_total_cluster_charge_U.data());
+      gr_calib_U->SetTitle("Total visible energy vs total cluster charge per event (U Plane);Total visible particle energy [MeV];Total cluster charge [ADC]");
+      gr_calib_U->SetMarkerStyle(20);
+      gr_calib_U->SetMarkerSize(0.8);
+      gr_calib_U->SetMarkerColor(kGreen+2);
+      gr_calib_U->Draw("AP");
+      
+      // Perform linear fit
+      TF1* fit_tot_U = new TF1("fit_tot_energy_charge_U", "pol1", 0, 70);
+      fit_tot_U->SetLineColor(kRed);
+      fit_tot_U->SetLineWidth(2);
+      gr_calib_U->Fit(fit_tot_U, "Q"); // Q for quiet mode
+      fit_tot_U->Draw("SAME");
+      
+      // Get fit parameters
+      double slope_U = fit_tot_U->GetParameter(1);
+      double intercept_U = fit_tot_U->GetParameter(0);
+      double slope_err_U = fit_tot_U->GetParError(1);
+      double intercept_err_U = fit_tot_U->GetParError(0);
+      double chi2_U = fit_tot_U->GetChisquare();
+      int ndf_U = fit_tot_U->GetNDF();
+      
+      // Display fit results on canvas
+      TLatex latex_U;
+      latex_U.SetNDC();
+      latex_U.SetTextSize(0.028);
+      latex_U.SetTextColor(kRed);
+      latex_U.DrawLatex(0.15, 0.88, Form("Fit: Charge = %.3f #times E_{visible} + %.3f", slope_U, intercept_U));
+      latex_U.DrawLatex(0.15, 0.84, Form("Slope: %.3f #pm %.3f ADC/MeV", slope_U, slope_err_U));
+      latex_U.DrawLatex(0.15, 0.80, Form("Intercept: %.3f #pm %.3f ADC", intercept_U, intercept_err_U));
+      latex_U.DrawLatex(0.15, 0.76, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2_U, ndf_U, (ndf_U > 0 ? chi2_U/ndf_U : 0)));
+      
+      gPad->SetGridx();
+      gPad->SetGridy();
+      addPageNumber(c_tot_corr_U, pageNum, totalPages);
+      c_tot_corr_U->SaveAs(pdf.c_str());
+      delete fit_tot_U;
+      delete gr_calib_U;
+      delete c_tot_corr_U;
+    }
+
+    // Page: Total particle energy vs total cluster charge per event (V Plane)
+    if (!vec_total_particle_energy_V.empty()) {
+      pageNum++;
+      TCanvas* c_tot_corr_V = new TCanvas("c_ac_tot_corr_V","Total energy vs charge per event (V)",900,700);
+      c_tot_corr_V->SetBottomMargin(0.12);
+      c_tot_corr_V->SetTopMargin(0.10);
+      c_tot_corr_V->SetLeftMargin(0.12);
+      c_tot_corr_V->SetRightMargin(0.05);
+      
+      // Create TGraph from vectors
+      TGraph* gr_calib_V = new TGraph((int)vec_total_particle_energy_V.size(), 
+                                       vec_total_particle_energy_V.data(), 
+                                       vec_total_cluster_charge_V.data());
+      gr_calib_V->SetTitle("Total visible energy vs total cluster charge per event (V Plane);Total visible particle energy [MeV];Total cluster charge [ADC]");
+      gr_calib_V->SetMarkerStyle(20);
+      gr_calib_V->SetMarkerSize(0.8);
+      gr_calib_V->SetMarkerColor(kMagenta+2);
+      gr_calib_V->Draw("AP");
+      
+      // Perform linear fit
+      TF1* fit_tot_V = new TF1("fit_tot_energy_charge_V", "pol1", 0, 70);
+      fit_tot_V->SetLineColor(kRed);
+      fit_tot_V->SetLineWidth(2);
+      gr_calib_V->Fit(fit_tot_V, "Q"); // Q for quiet mode
+      fit_tot_V->Draw("SAME");
+      
+      // Get fit parameters
+      double slope_V = fit_tot_V->GetParameter(1);
+      double intercept_V = fit_tot_V->GetParameter(0);
+      double slope_err_V = fit_tot_V->GetParError(1);
+      double intercept_err_V = fit_tot_V->GetParError(0);
+      double chi2_V = fit_tot_V->GetChisquare();
+      int ndf_V = fit_tot_V->GetNDF();
+      
+      // Display fit results on canvas
+      TLatex latex_V;
+      latex_V.SetNDC();
+      latex_V.SetTextSize(0.028);
+      latex_V.SetTextColor(kRed);
+      latex_V.DrawLatex(0.15, 0.88, Form("Fit: Charge = %.3f #times E_{visible} + %.3f", slope_V, intercept_V));
+      latex_V.DrawLatex(0.15, 0.84, Form("Slope: %.3f #pm %.3f ADC/MeV", slope_V, slope_err_V));
+      latex_V.DrawLatex(0.15, 0.80, Form("Intercept: %.3f #pm %.3f ADC", intercept_V, intercept_err_V));
+      latex_V.DrawLatex(0.15, 0.76, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2_V, ndf_V, (ndf_V > 0 ? chi2_V/ndf_V : 0)));
+      
+      gPad->SetGridx();
+      gPad->SetGridy();
+      addPageNumber(c_tot_corr_V, pageNum, totalPages);
+      c_tot_corr_V->SaveAs(pdf.c_str());
+      delete fit_tot_V;
+      delete gr_calib_V;
+      delete c_tot_corr_V;
+    }
+
+    // Page: SimIDE visible energy vs total cluster charge per event (Collection Plane X)
+    if (use_simide_energy && !vec_total_simide_energy.empty()) {
+      pageNum++;
+      TCanvas* c_simide_corr = new TCanvas("c_ac_simide_corr","SimIDE energy vs charge per event",900,700);
+      c_simide_corr->SetBottomMargin(0.12);
+      c_simide_corr->SetTopMargin(0.10);
+      c_simide_corr->SetLeftMargin(0.12);
+      c_simide_corr->SetRightMargin(0.05);
+      
+      // Create TGraph from vectors
+      TGraph* gr_simide = new TGraph((int)vec_total_simide_energy.size(), 
+                                      vec_total_simide_energy.data(), 
+                                      vec_total_cluster_charge_for_simide.data());
+      gr_simide->SetTitle("Total SimIDE visible energy vs total cluster charge per event (Collection Plane X);Total SimIDE energy [MeV];Total cluster charge [ADC]");
+      gr_simide->SetMarkerStyle(20);
+      gr_simide->SetMarkerSize(0.8);
+      gr_simide->SetMarkerColor(kBlue+1);
+      gr_simide->Draw("AP");
+      
+      // Perform linear fit
+      TF1* fit_simide = new TF1("fit_simide_energy_charge", "pol1", 0, 70);
+      fit_simide->SetLineColor(kRed);
+      fit_simide->SetLineWidth(2);
+      gr_simide->Fit(fit_simide, "Q"); // Q for quiet mode
+      fit_simide->Draw("SAME");
+      
+      // Get fit parameters
+      double slope_sim = fit_simide->GetParameter(1);
+      double intercept_sim = fit_simide->GetParameter(0);
+      double slope_err_sim = fit_simide->GetParError(1);
+      double intercept_err_sim = fit_simide->GetParError(0);
+      double chi2_sim = fit_simide->GetChisquare();
+      int ndf_sim = fit_simide->GetNDF();
+      
+      // Display fit results on canvas
+      TLatex latex_sim;
+      latex_sim.SetNDC();
+      latex_sim.SetTextSize(0.028);
+      latex_sim.SetTextColor(kRed);
+      latex_sim.DrawLatex(0.15, 0.88, Form("Fit: Charge = %.3f #times E_{SimIDE} + %.3f", slope_sim, intercept_sim));
+      latex_sim.DrawLatex(0.15, 0.84, Form("Slope: %.3f #pm %.3f ADC/MeV", slope_sim, slope_err_sim));
+      latex_sim.DrawLatex(0.15, 0.80, Form("Intercept: %.3f #pm %.3f ADC", intercept_sim, intercept_err_sim));
+      latex_sim.DrawLatex(0.15, 0.76, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2_sim, ndf_sim, (ndf_sim > 0 ? chi2_sim/ndf_sim : 0)));
+      
+      gPad->SetGridx();
+      gPad->SetGridy();
+      addPageNumber(c_simide_corr, pageNum, totalPages);
+      c_simide_corr->SaveAs(pdf.c_str());
+      delete fit_simide;
+      delete gr_simide;
+      delete c_simide_corr;
+    }
+
+    // Page: SimIDE visible energy vs total cluster charge per event (U Plane)
+    if (use_simide_energy && !vec_total_simide_energy_U.empty()) {
+      pageNum++;
+      TCanvas* c_simide_corr_U = new TCanvas("c_ac_simide_corr_U","SimIDE energy vs charge per event (U)",900,700);
+      c_simide_corr_U->SetBottomMargin(0.12);
+      c_simide_corr_U->SetTopMargin(0.10);
+      c_simide_corr_U->SetLeftMargin(0.12);
+      c_simide_corr_U->SetRightMargin(0.05);
+      
+      // Create TGraph from vectors
+      TGraph* gr_simide_U = new TGraph((int)vec_total_simide_energy_U.size(), 
+                                        vec_total_simide_energy_U.data(), 
+                                        vec_total_cluster_charge_U_for_simide.data());
+      gr_simide_U->SetTitle("Total SimIDE visible energy vs total cluster charge per event (U Plane);Total SimIDE energy [MeV];Total cluster charge [ADC]");
+      gr_simide_U->SetMarkerStyle(20);
+      gr_simide_U->SetMarkerSize(0.8);
+      gr_simide_U->SetMarkerColor(kGreen+2);
+      gr_simide_U->Draw("AP");
+      
+      // Perform linear fit
+      TF1* fit_simide_U = new TF1("fit_simide_energy_charge_U", "pol1", 0, 70);
+      fit_simide_U->SetLineColor(kRed);
+      fit_simide_U->SetLineWidth(2);
+      gr_simide_U->Fit(fit_simide_U, "Q"); // Q for quiet mode
+      fit_simide_U->Draw("SAME");
+      
+      // Get fit parameters
+      double slope_sim_U = fit_simide_U->GetParameter(1);
+      double intercept_sim_U = fit_simide_U->GetParameter(0);
+      double slope_err_sim_U = fit_simide_U->GetParError(1);
+      double intercept_err_sim_U = fit_simide_U->GetParError(0);
+      double chi2_sim_U = fit_simide_U->GetChisquare();
+      int ndf_sim_U = fit_simide_U->GetNDF();
+      
+      // Display fit results on canvas
+      TLatex latex_sim_U;
+      latex_sim_U.SetNDC();
+      latex_sim_U.SetTextSize(0.028);
+      latex_sim_U.SetTextColor(kRed);
+      latex_sim_U.DrawLatex(0.15, 0.88, Form("Fit: Charge = %.3f #times E_{SimIDE} + %.3f", slope_sim_U, intercept_sim_U));
+      latex_sim_U.DrawLatex(0.15, 0.84, Form("Slope: %.3f #pm %.3f ADC/MeV", slope_sim_U, slope_err_sim_U));
+      latex_sim_U.DrawLatex(0.15, 0.80, Form("Intercept: %.3f #pm %.3f ADC", intercept_sim_U, intercept_err_sim_U));
+      latex_sim_U.DrawLatex(0.15, 0.76, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2_sim_U, ndf_sim_U, (ndf_sim_U > 0 ? chi2_sim_U/ndf_sim_U : 0)));
+      
+      gPad->SetGridx();
+      gPad->SetGridy();
+      addPageNumber(c_simide_corr_U, pageNum, totalPages);
+      c_simide_corr_U->SaveAs(pdf.c_str());
+      delete fit_simide_U;
+      delete gr_simide_U;
+      delete c_simide_corr_U;
+    }
+
+    // Page: SimIDE visible energy vs total cluster charge per event (V Plane)
+    if (use_simide_energy && !vec_total_simide_energy_V.empty()) {
+      pageNum++;
+      TCanvas* c_simide_corr_V = new TCanvas("c_ac_simide_corr_V","SimIDE energy vs charge per event (V)",900,700);
+      c_simide_corr_V->SetBottomMargin(0.12);
+      c_simide_corr_V->SetTopMargin(0.10);
+      c_simide_corr_V->SetLeftMargin(0.12);
+      c_simide_corr_V->SetRightMargin(0.05);
+      
+      // Create TGraph from vectors
+      TGraph* gr_simide_V = new TGraph((int)vec_total_simide_energy_V.size(), 
+                                        vec_total_simide_energy_V.data(), 
+                                        vec_total_cluster_charge_V_for_simide.data());
+      gr_simide_V->SetTitle("Total SimIDE visible energy vs total cluster charge per event (V Plane);Total SimIDE energy [MeV];Total cluster charge [ADC]");
+      gr_simide_V->SetMarkerStyle(20);
+      gr_simide_V->SetMarkerSize(0.8);
+      gr_simide_V->SetMarkerColor(kMagenta+2);
+      gr_simide_V->Draw("AP");
+      
+      // Perform linear fit
+      TF1* fit_simide_V = new TF1("fit_simide_energy_charge_V", "pol1", 0, 70);
+      fit_simide_V->SetLineColor(kRed);
+      fit_simide_V->SetLineWidth(2);
+      gr_simide_V->Fit(fit_simide_V, "Q"); // Q for quiet mode
+      fit_simide_V->Draw("SAME");
+      
+      // Get fit parameters
+      double slope_sim_V = fit_simide_V->GetParameter(1);
+      double intercept_sim_V = fit_simide_V->GetParameter(0);
+      double slope_err_sim_V = fit_simide_V->GetParError(1);
+      double intercept_err_sim_V = fit_simide_V->GetParError(0);
+      double chi2_sim_V = fit_simide_V->GetChisquare();
+      int ndf_sim_V = fit_simide_V->GetNDF();
+      
+      // Display fit results on canvas
+      TLatex latex_sim_V;
+      latex_sim_V.SetNDC();
+      latex_sim_V.SetTextSize(0.028);
+      latex_sim_V.SetTextColor(kRed);
+      latex_sim_V.DrawLatex(0.15, 0.88, Form("Fit: Charge = %.3f #times E_{SimIDE} + %.3f", slope_sim_V, intercept_sim_V));
+      latex_sim_V.DrawLatex(0.15, 0.84, Form("Slope: %.3f #pm %.3f ADC/MeV", slope_sim_V, slope_err_sim_V));
+      latex_sim_V.DrawLatex(0.15, 0.80, Form("Intercept: %.3f #pm %.3f ADC", intercept_sim_V, intercept_err_sim_V));
+      latex_sim_V.DrawLatex(0.15, 0.76, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2_sim_V, ndf_sim_V, (ndf_sim_V > 0 ? chi2_sim_V/ndf_sim_V : 0)));
+      
+      gPad->SetGridx();
+      gPad->SetGridy();
+      addPageNumber(c_simide_corr_V, pageNum, totalPages);
+      c_simide_corr_V->SaveAs(pdf.c_str());
+      delete fit_simide_V;
+      delete gr_simide_V;
+      delete c_simide_corr_V;
     }
 
     // Page: Marley TP fraction categorization
