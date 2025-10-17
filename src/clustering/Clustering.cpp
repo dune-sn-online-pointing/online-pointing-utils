@@ -100,6 +100,7 @@ void read_tps(const std::string& in_filename,
         std::string* view=nullptr, *gen_name=nullptr, *process=nullptr;
         Int_t truth_id=-1, track_id=-1, pdg=0, nu_truth_id=-1; 
         Float_t nu_energy=-1.0f;
+        Double_t simide_energy=0.0;  // SimIDE energy for this TP
         
         tpTree->SetBranchAddress("event", &event); 
         tpTree->SetBranchAddress("version", &version); 
@@ -120,6 +121,9 @@ void read_tps(const std::string& in_filename,
         tpTree->SetBranchAddress("process", &process);
         tpTree->SetBranchAddress("neutrino_truth_id", &nu_truth_id);
         tpTree->SetBranchAddress("neutrino_energy", &nu_energy);
+        if (tpTree->GetBranch("simide_energy")) {
+            tpTree->SetBranchAddress("simide_energy", &simide_energy);
+        }
 
         for (Long64_t i=0;i<tpTree->GetEntries();++i){ 
 
@@ -129,6 +133,7 @@ void read_tps(const std::string& in_filename,
             tp.SetEvent(event); 
             tp.SetDetector(det);
             tp.SetDetectorChannel(det_channel); // SetView already in constructor
+            tp.SetSimideEnergy(simide_energy);  // Set the SimIDE energy read from file
             
             auto it = truthLookup.find({event, truth_id}); 
             if (it != truthLookup.end()) tp.SetTrueParticle(it->second); 
@@ -470,6 +475,7 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
     std::vector<int>* tp_samples_to_peak = new std::vector<int>();
     std::vector<int>* tp_adc_peak = new std::vector<int>();
     std::vector<int>* tp_adc_integral = new std::vector<int>();
+    std::vector<double>* tp_simide_energy = new std::vector<double>();
 
     if (!clusters_tree) {
         clusters_tree = new TTree(Form("clusters_tree_%s", view.c_str()), "Tree of clusters");
@@ -507,6 +513,7 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         clusters_tree->Branch("tp_time_start", &tp_time_start);
         clusters_tree->Branch("tp_adc_peak", &tp_adc_peak);
         clusters_tree->Branch("tp_adc_integral", &tp_adc_integral);
+        clusters_tree->Branch("tp_simide_energy", &tp_simide_energy);
 
         // LogInfo << "Tree created" << std::endl;
     }
@@ -544,6 +551,10 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         clusters_tree->SetBranchAddress("tp_time_start", &tp_time_start);
         clusters_tree->SetBranchAddress("tp_adc_peak", &tp_adc_peak);
         clusters_tree->SetBranchAddress("tp_adc_integral", &tp_adc_integral);
+        // Optional: only set if branch exists (for backward compatibility)
+        if (clusters_tree->GetBranch("tp_simide_energy")) {
+            clusters_tree->SetBranchAddress("tp_simide_energy", &tp_simide_energy);
+        }
     }
     
 
@@ -604,6 +615,7 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         if (tp_samples_to_peak) tp_samples_to_peak->clear();
         if (tp_adc_peak) tp_adc_peak->clear();
         if (tp_adc_integral) tp_adc_integral->clear();
+        if (tp_simide_energy) tp_simide_energy->clear();
         for (auto& tp : Cluster.get_tps()) {
             tp_detector_channel->push_back(tp->GetDetectorChannel());
             tp_detector->push_back(tp->GetDetector());
@@ -612,6 +624,7 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
             tp_samples_to_peak->push_back(tp->GetSamplesToPeak());
             tp_adc_peak->push_back(tp->GetAdcPeak());
             tp_adc_integral->push_back(tp->GetAdcIntegral());
+            tp_simide_energy->push_back(tp->GetSimideEnergy());
         }
         clusters_tree->Fill();
     }
