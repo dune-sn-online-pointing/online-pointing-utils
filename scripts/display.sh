@@ -17,6 +17,7 @@ print_help() {
   echo "  -j|--json-settings <json>  Json file used as input. Relative path inside json/"
   echo "  --mode <clusters|events>   Display mode (default: clusters)"
   echo "  --draw-mode <triangle|pentagon|rectangle>  Drawing mode (default: pentagon)"
+  echo "  --units <cm|det>           Axis units: cm (default) or det (detector: channels/ticks)"
   echo "  --only-marley              In events mode, show only MARLEY clusters"
   echo "  --no-tps                   Show clusters as blobs without individual TPs (with category legend)"
   echo "  -v|--verbose-mode          Turn on verbosity"
@@ -36,6 +37,7 @@ verboseMode=false
 clustersFile=""
 mode=""
 drawMode="pentagon"  # default to pentagon
+unitsMode="cm"       # default to cm
 onlyMarley=false
 noTPs=false
 
@@ -45,6 +47,7 @@ while [[ $# -gt 0 ]]; do
         -i|--input-clusters)   clustersFile="$2"; shift 2 ;;
         --mode)             mode="$2"; shift 2 ;;
         --draw-mode)        drawMode="$2"; shift 2 ;;
+        --units)            unitsMode="$2"; shift 2 ;;
         --only-marley)      onlyMarley=true; shift ;;
         --no-tps)           noTPs=true; shift ;;
         -v|--verbose-mode)  verboseMode=true; shift ;;
@@ -85,8 +88,8 @@ echo $compile_command
 . $compile_command || exit
 
 ################################################
-# Build command to run cluster_display
-app="$BUILD_DIR/src/app/cluster_display"
+# Build command to run display
+app="$BUILD_DIR/src/app/display"
 
 # Assemble args for the binary
 args=()
@@ -101,6 +104,9 @@ if [[ -n "$mode" ]]; then
 fi
 if [[ -n "$drawMode" ]]; then
   args+=( --draw-mode "$drawMode" )
+fi
+if [[ -n "$unitsMode" ]]; then
+  args+=( --units "$unitsMode" )
 fi
 if [[ "$onlyMarley" == true ]]; then
   args+=( --only-marley )

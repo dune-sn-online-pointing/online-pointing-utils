@@ -35,10 +35,10 @@ add_executable( extract_calibration ${CMAKE_CURRENT_SOURCE_DIR}/extract_calibrat
 target_link_libraries( extract_calibration clusteringLibs globalLib )
 install( TARGETS extract_calibration DESTINATION bin )
 
-cmessage( STATUS "Creating cluster_display app..." )
-add_executable( cluster_display ${CMAKE_CURRENT_SOURCE_DIR}/cluster_display.cpp )
-target_link_libraries( cluster_display clusteringLibs globalLib anaLib )
-install( TARGETS cluster_display DESTINATION bin )
+cmessage( STATUS "Creating display app..." )
+add_executable( display ${CMAKE_CURRENT_SOURCE_DIR}/display.cpp )
+target_link_libraries( display clusteringLibs globalLib anaLib )
+install( TARGETS display DESTINATION bin )
 
 cmessage( STATUS "Creating add_backgrounds app..." )
 add_executable( add_backgrounds ${CMAKE_CURRENT_SOURCE_DIR}/add_backgrounds.cpp )
