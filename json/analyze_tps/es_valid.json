@@ -3,12 +3,15 @@
   "inputFile": "",
   "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
   "inputList": [
+    "es_valid_tick3_ch2_min2_tot1_clusters.root"
   ],
   "inputListFile": "",
 
   "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
   
   "backtracker_error_margin": 10,
-  "backtracker_channel_tolerance": 0
+  "backtracker_channel_tolerance": 0,
+  
+  "use_simide_energy": true
 
 }
