@@ -183,6 +183,9 @@ int main(int argc, char* argv[]){
     // Vectors for the calibration graph
     std::vector<double> vec_total_particle_energy;
     std::vector<double> vec_total_cluster_charge;
+    
+    // Track minimum cluster charges per plane
+    std::map<std::string, double> min_cluster_charge;
 
     // Marley TP fraction categorization counters (across all planes)
     int only_marley_clusters = 0;     // marley_tp_fraction = 1.0
@@ -190,11 +193,12 @@ int main(int argc, char* argv[]){
     int no_marley_clusters = 0;       // marley_tp_fraction = 0.0
 
     // Histograms for total ADC integral by cluster family
-    TH1F* h_adc_pure_marley = new TH1F("h_adc_pure_marley", "Total ADC Integral: Pure Marley;Total ADC Integral;Clusters", 50, 0, 50000);
-    TH1F* h_adc_pure_noise = new TH1F("h_adc_pure_noise", "Total ADC Integral: Pure Noise;Total ADC Integral;Clusters", 50, 0, 50000);
-    TH1F* h_adc_hybrid = new TH1F("h_adc_hybrid", "Total ADC Integral: Hybrid (Marley+Noise);Total ADC Integral;Clusters", 50, 0, 50000);
-    TH1F* h_adc_background = new TH1F("h_adc_background", "Total ADC Integral: Pure Background;Total ADC Integral;Clusters", 50, 0, 50000);
-    TH1F* h_adc_mixed_signal_bkg = new TH1F("h_adc_mixed_signal_bkg", "Total ADC Integral: Mixed Marley+Background;Total ADC Integral;Clusters", 50, 0, 50000);
+    // Increase the range to 200000 to capture marley+background clusters
+    TH1F* h_adc_pure_marley = new TH1F("h_adc_pure_marley", "Total ADC Integral: Pure Marley;Total ADC Integral;Clusters", 50, 0, 200000);
+    TH1F* h_adc_pure_noise = new TH1F("h_adc_pure_noise", "Total ADC Integral: Pure Noise;Total ADC Integral;Clusters", 50, 0, 200000);
+    TH1F* h_adc_hybrid = new TH1F("h_adc_hybrid", "Total ADC Integral: Hybrid (Marley+Noise);Total ADC Integral;Clusters", 50, 0, 200000);
+    TH1F* h_adc_background = new TH1F("h_adc_background", "Total ADC Integral: Pure Background;Total ADC Integral;Clusters", 50, 0, 200000);
+    TH1F* h_adc_mixed_signal_bkg = new TH1F("h_adc_mixed_signal_bkg", "Total ADC Integral: Mixed Marley+Background;Total ADC Integral;Clusters", 50, 0, 200000);
     h_adc_pure_marley->SetDirectory(nullptr);
     h_adc_pure_noise->SetDirectory(nullptr);
     h_adc_hybrid->SetDirectory(nullptr);
@@ -262,7 +266,7 @@ int main(int argc, char* argv[]){
       if (pd.tree->GetBranch("tp_adc_integral")) pd.tree->SetBranchAddress("tp_adc_integral", &v_adcint);
 
       // Histos per plane
-      TH1F* h_ntps = ensureHist(n_tps_plane_h, std::string("n_tps_")+pd.name, (std::string("Cluster size (n_tps) - ")+pd.name+";n_{TPs};Clusters").c_str(), 100, 0, 100);
+      TH1F* h_ntps = ensureHist(n_tps_plane_h, std::string("n_tps_")+pd.name, (std::string("Cluster size (n_tps) - ")+pd.name+";n_{TPs};Clusters").c_str(), 40, 0, 40);
       TH1F* h_charge = ensureHist(total_charge_plane_h, std::string("total_charge_")+pd.name, (std::string("Total charge - ")+pd.name+";Total charge [ADC];Clusters").c_str(), 100, 0, 300);
       TH1F* h_energy = ensureHist(total_energy_plane_h, std::string("total_energy_")+pd.name, (std::string("Total energy - ")+pd.name+";Total energy [MeV];Clusters").c_str(), 100, 0, 1000);
       TH1F* h_maxadc = ensureHist(max_tp_charge_plane_h, std::string("max_tp_charge_")+pd.name, (std::string("Max TP adc_integral - ")+pd.name+";Max ADC integral;Clusters").c_str(), 100, 0, 1000);
@@ -277,6 +281,12 @@ int main(int argc, char* argv[]){
       for (Long64_t i=0;i<n;++i){
         pd.tree->GetEntry(i);
         if (n_tps<=0) continue;
+        
+        // Track minimum cluster charge per plane
+        if (min_cluster_charge.count(pd.name) == 0 || total_charge < min_cluster_charge[pd.name]) {
+          min_cluster_charge[pd.name] = total_charge;
+        }
+        
         if (true_label_ptr){
           label_counts_all[*true_label_ptr]++;
           if (toLower(*true_label_ptr).find("marley")!=std::string::npos){
@@ -416,6 +426,17 @@ int main(int argc, char* argv[]){
       }
     }
     
+    // Debug: Print summary of cluster categorization
+    if (verboseMode) {
+      LogInfo << "\n=== Cluster Categorization Summary ===" << std::endl;
+      LogInfo << "Pure Marley clusters: " << h_adc_pure_marley->GetEntries() << std::endl;
+      LogInfo << "Pure Noise/UNKNOWN clusters: " << h_adc_pure_noise->GetEntries() << std::endl;
+      LogInfo << "Marley+Noise (hybrid) clusters: " << h_adc_hybrid->GetEntries() << std::endl;
+      LogInfo << "Pure Background clusters: " << h_adc_background->GetEntries() << std::endl;
+      LogInfo << "Marley+Background (mixed) clusters: " << h_adc_mixed_signal_bkg->GetEntries() << std::endl;
+      LogInfo << "======================================\n" << std::endl;
+    }
+    
     // After processing all planes, prepare data for the calibration graph
     // Note: We only use collection plane (X) data, no need to divide
     for (const auto& kv : event_total_particle_energy) {
@@ -496,9 +517,32 @@ int main(int argc, char* argv[]){
           ypos -= 0.04;
         }
         if (!tot_val.empty()) {
-          auto txt = new TText(0.5, ypos, Form("Min total charge threshold: %s", tot_val.c_str()));
+          auto txt = new TText(0.5, ypos, Form("Min TOT threshold: %s samples (time over threshold)", tot_val.c_str()));
           txt->SetTextAlign(22); txt->SetTextSize(0.025); txt->SetNDC(); txt->Draw();
         }
+      }
+    }
+    
+    // Display minimum cluster charges per plane
+    if (!min_cluster_charge.empty()) {
+      float ypos = 0.30;
+      auto min_charge_txt = new TText(0.5, ypos, "Minimum Cluster Charge:");
+      min_charge_txt->SetTextAlign(22); min_charge_txt->SetTextSize(0.03); min_charge_txt->SetNDC(); min_charge_txt->SetTextFont(62); min_charge_txt->Draw();
+      ypos -= 0.04;
+      
+      if (min_cluster_charge.count("U")) {
+        auto txt = new TText(0.5, ypos, Form("Induction U: %.1f ADC", min_cluster_charge["U"]));
+        txt->SetTextAlign(22); txt->SetTextSize(0.025); txt->SetNDC(); txt->Draw();
+        ypos -= 0.03;
+      }
+      if (min_cluster_charge.count("V")) {
+        auto txt = new TText(0.5, ypos, Form("Induction V: %.1f ADC", min_cluster_charge["V"]));
+        txt->SetTextAlign(22); txt->SetTextSize(0.025); txt->SetNDC(); txt->Draw();
+        ypos -= 0.03;
+      }
+      if (min_cluster_charge.count("X")) {
+        auto txt = new TText(0.5, ypos, Form("Collection X: %.1f ADC", min_cluster_charge["X"]));
+        txt->SetTextAlign(22); txt->SetTextSize(0.025); txt->SetNDC(); txt->Draw();
       }
     }
     
@@ -833,12 +877,18 @@ int main(int argc, char* argv[]){
       cmarley->SetBottomMargin(0.15);
       hmarley->Draw("HIST");
 
-      // Add text annotations with counts
-      auto text1 = new TText(0.8, only_marley_clusters + 0.05 * hmarley->GetMaximum(), Form("%d", only_marley_clusters));
+      // Calculate total and percentages
+      int total_clusters = only_marley_clusters + partial_marley_clusters + no_marley_clusters;
+      double pct1 = (total_clusters > 0) ? 100.0 * only_marley_clusters / total_clusters : 0.0;
+      double pct2 = (total_clusters > 0) ? 100.0 * partial_marley_clusters / total_clusters : 0.0;
+      double pct3 = (total_clusters > 0) ? 100.0 * no_marley_clusters / total_clusters : 0.0;
+
+      // Add text annotations with percentages instead of absolute numbers
+      auto text1 = new TText(0.8, only_marley_clusters + 0.05 * hmarley->GetMaximum(), Form("%.1f%%", pct1));
       text1->SetTextAlign(22); text1->SetTextSize(0.04); text1->Draw();
-      auto text2 = new TText(1.8, partial_marley_clusters + 0.05 * hmarley->GetMaximum(), Form("%d", partial_marley_clusters));
+      auto text2 = new TText(1.8, partial_marley_clusters + 0.05 * hmarley->GetMaximum(), Form("%.1f%%", pct2));
       text2->SetTextAlign(22); text2->SetTextSize(0.04); text2->Draw();
-      auto text3 = new TText(2.8, no_marley_clusters + 0.05 * hmarley->GetMaximum(), Form("%d", no_marley_clusters));
+      auto text3 = new TText(2.8, no_marley_clusters + 0.05 * hmarley->GetMaximum(), Form("%.1f%%", pct3));
       text3->SetTextAlign(22); text3->SetTextSize(0.04); text3->Draw();
 
       addPageNumber(cmarley, pageNum, totalPages);
@@ -854,6 +904,7 @@ int main(int argc, char* argv[]){
       pageNum++;
       TCanvas* c_adc = new TCanvas("c_adc_family", "Total ADC Integral by Cluster Family", 900, 700);
       
+      // Set line colors
       h_adc_pure_marley->SetLineColor(kBlue);
       h_adc_pure_noise->SetLineColor(kGray+2);
       h_adc_hybrid->SetLineColor(kGreen+2);
@@ -864,6 +915,13 @@ int main(int argc, char* argv[]){
       h_adc_hybrid->SetLineWidth(2);
       h_adc_background->SetLineWidth(2);
       h_adc_mixed_signal_bkg->SetLineWidth(2);
+      
+      // Set fill colors with transparency for better visualization
+      h_adc_pure_marley->SetFillColorAlpha(kBlue, 0.3);
+      h_adc_pure_noise->SetFillColorAlpha(kGray+2, 0.3);
+      h_adc_hybrid->SetFillColorAlpha(kGreen+2, 0.3);
+      h_adc_background->SetFillColorAlpha(kRed, 0.3);
+      h_adc_mixed_signal_bkg->SetFillColorAlpha(kMagenta+2, 0.3);
 
       // Find max to set proper axis range
       double max_val = 0;

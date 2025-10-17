@@ -18,6 +18,7 @@ print_help() {
   echo "  --mode <clusters|events>   Display mode (default: clusters)"
   echo "  --draw-mode <triangle|pentagon|rectangle>  Drawing mode (default: pentagon)"
   echo "  --only-marley              In events mode, show only MARLEY clusters"
+  echo "  --no-tps                   Show clusters as blobs without individual TPs (with category legend)"
   echo "  -v|--verbose-mode          Turn on verbosity"
   echo "  --no-compile               Do not recompile the code"
   echo "  --clean-compile            Clean and recompile the code"
@@ -36,14 +37,16 @@ clustersFile=""
 mode=""
 drawMode="pentagon"  # default to pentagon
 onlyMarley=false
+noTPs=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -j|--json-settings) settingsFile="$2"; shift 2 ;;
-        --input-clusters)   clustersFile="$2"; shift 2 ;;
+        -i|--input-clusters)   clustersFile="$2"; shift 2 ;;
         --mode)             mode="$2"; shift 2 ;;
         --draw-mode)        drawMode="$2"; shift 2 ;;
         --only-marley)      onlyMarley=true; shift ;;
+        --no-tps)           noTPs=true; shift ;;
         -v|--verbose-mode)  verboseMode=true; shift ;;
         --no-compile)       noCompile=true; shift ;;
         --clean-compile)    cleanCompile=true; shift ;;
@@ -101,6 +104,9 @@ if [[ -n "$drawMode" ]]; then
 fi
 if [[ "$onlyMarley" == true ]]; then
   args+=( --only-marley )
+fi
+if [[ "$noTPs" == true ]]; then
+  args+=( --no-tps )
 fi
 if [[ "$verboseMode" == true ]]; then
   args+=( -v )

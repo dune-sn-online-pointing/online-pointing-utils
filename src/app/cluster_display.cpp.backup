@@ -394,8 +394,6 @@ int main(int argc, char** argv){
   if (clp.isOptionTriggered("debugMode")) { verboseMode =true; debugMode = true; }
   gErrorIgnoreLevel = rootVerbosity;  
 
-  TApplication app("cluster_display", &argc, argv);
-
   std::string clustersFile;
   std::string mode = "clusters"; 
   std::string drawModeStr = "pentagon";
@@ -552,6 +550,7 @@ int main(int argc, char** argv){
     LogWarning << "No MARLEY clusters found with current settings." << std::endl;
   }
 
+  int fake_argc = 0; char** fake_argv = nullptr; TApplication app("cluster_display", &fake_argc, fake_argv);
   ViewerState::canvas = new TCanvas("cluster_display", "MARLEY Cluster viewer", 1200, 800);
   ViewerState::idx = 0;
   drawCurrent();
