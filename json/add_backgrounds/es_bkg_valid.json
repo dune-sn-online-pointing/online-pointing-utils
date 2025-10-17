@@ -1,0 +1,15 @@
+{
+  "signal_type": "es",
+  "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+  "signal_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+  "bkg_folder": "/home/virgolaema/dune/online-pointing-utils/data/bkgs/",
+
+  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
+  
+  "around_vertex_only": false,
+  "vertex_radius": 100,
+  
+  "max_files": 20,
+  
+  "root_verbosity": "kWarning"
+}

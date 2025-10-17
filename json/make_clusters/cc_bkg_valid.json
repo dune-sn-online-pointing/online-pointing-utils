@@ -1,0 +1,20 @@
+{
+  "inputFile": "",
+  "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/bkgs/",
+  "inputList": [
+  ],
+  "inputListFile": "",
+
+  "max_files": 20,
+
+  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/bkgs/",
+  "outputFilename": "cc_bkg_myproc",
+
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 2,
+  "adc_integral_cut_induction": 0,
+  "adc_integral_cut_collection": 0
+
+}
