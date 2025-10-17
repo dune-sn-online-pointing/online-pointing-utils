@@ -6,7 +6,7 @@ LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 // Helper function to add page number to canvas
 void addPageNumber(TCanvas* canvas, int pageNum, int totalPages) {
   canvas->cd();
-  TText* pageText = new TText(0.95, 0.02, Form("Page %d/%d", pageNum, totalPages));
+  TText* pageText = new TText(0.95, 0.97, Form("Page %d/%d", pageNum, totalPages));
   pageText->SetTextAlign(31); // right-aligned
   pageText->SetTextSize(0.02);
   pageText->SetNDC();
@@ -1504,8 +1504,8 @@ int main(int argc, char* argv[]){
 
     // --- New Page: Total ADC Integral by Cluster Family ---
     if (h_adc_pure_marley->GetEntries() > 0 || h_adc_pure_noise->GetEntries() > 0 || 
-        h_adc_hybrid->GetEntries() > 0 || h_adc_background->GetEntries() > 0 ||
-        h_adc_mixed_signal_bkg->GetEntries() > 0) {
+      h_adc_hybrid->GetEntries() > 0 || h_adc_background->GetEntries() > 0 ||
+      h_adc_mixed_signal_bkg->GetEntries() > 0) {
       pageNum++;
       TCanvas* c_adc = new TCanvas("c_adc_family", "Total ADC Integral by Cluster Family", 900, 700);
       
@@ -1527,6 +1527,13 @@ int main(int argc, char* argv[]){
       h_adc_hybrid->SetFillColorAlpha(kGreen+2, 0.3);
       h_adc_background->SetFillColorAlpha(kRed, 0.3);
       h_adc_mixed_signal_bkg->SetFillColorAlpha(kMagenta+2, 0.3);
+
+      // Hide stat boxes
+      h_adc_pure_marley->SetStats(0);
+      h_adc_pure_noise->SetStats(0);
+      h_adc_hybrid->SetStats(0);
+      h_adc_background->SetStats(0);
+      h_adc_mixed_signal_bkg->SetStats(0);
 
       // Find max to set proper axis range
       double max_val = 0;
@@ -1587,6 +1594,14 @@ int main(int argc, char* argv[]){
       h_energy_hybrid->SetFillColorAlpha(kGreen+2, 0.3);
       h_energy_background->SetFillColorAlpha(kRed, 0.3);
       h_energy_mixed_signal_bkg->SetFillColorAlpha(kMagenta+2, 0.3);
+
+      // Hide stat boxes
+      h_energy_pure_marley->SetStats(0);
+      h_energy_pure_noise->SetStats(0);
+      h_energy_hybrid->SetStats(0);
+      h_energy_background->SetStats(0);
+      h_energy_mixed_signal_bkg->SetStats(0);
+
 
       // Find max to set proper axis range
       double max_val_e = 0;
