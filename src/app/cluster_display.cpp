@@ -293,7 +293,6 @@ void drawCurrent(){
   // Relabel X-axis bins with actual channel numbers instead of contiguous indices
   {
     auto xax = frame->GetXaxis();
-    xax->LabelsOption("v");
     const int labelOffset = /* pad_bins */ 2 + 1; // pad_bins + 1
     for (const auto& kv : ch_to_idx) {
       int actual_ch = kv.first;
@@ -301,6 +300,8 @@ void drawCurrent(){
       int bin = idx + labelOffset;
       xax->SetBinLabel(bin, Form("%d", actual_ch));
     }
+    // Set labels vertical AFTER setting all labels to avoid sorting warnings
+    xax->LabelsOption("v");
   }
 
   // Add secondary axes showing physical dimensions in cm

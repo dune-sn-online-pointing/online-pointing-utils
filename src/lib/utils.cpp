@@ -67,6 +67,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
                     return filenames; // Return empty vector
                 }
                 filenames.push_back(single);
+                std::sort(filenames.begin(), filenames.end());
                 return filenames;
             }
         }
@@ -111,7 +112,10 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
                 }
                 filenames.push_back(p);
             }
-            if (!filenames.empty()) return filenames;
+            if (!filenames.empty()) {
+                std::sort(filenames.begin(), filenames.end());
+                return filenames;
+            }
         }
     } catch (...) { /* ignore */ }
 
@@ -139,6 +143,9 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
                         continue; 
                     }
                     filenames.push_back(line);
+                }
+                if (!filenames.empty()) {
+                    std::sort(filenames.begin(), filenames.end());
                 }
             }
         }

@@ -147,6 +147,7 @@ int main(int argc, char* argv[]) {
         if (!overrideMode && file_exists(out_abs)) {
             LogInfo << "Output already exists, skipping: " << out_abs 
                     << " (use --override to force reprocessing)" << std::endl;
+            count_files--;
             output_files.push_back(out_abs);
             continue;
         }

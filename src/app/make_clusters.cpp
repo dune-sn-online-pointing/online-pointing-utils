@@ -78,6 +78,7 @@ int main(int argc, char* argv[]) {
         LogInfo << " - Max files to process: " << max_files << std::endl;
     } else {
         LogInfo << " - Max files to process: unlimited" << std::endl;
+        max_files = inputs.size();
     }
 
     std::string file_prefix;
@@ -95,12 +96,18 @@ int main(int argc, char* argv[]) {
         + "_tot" + std::to_string(tot_cut)
         + "_clusters.root";    
 
+    // Ensure output directory exists
+    std::filesystem::path outfolder_path(outfolder);
+    if (!std::filesystem::exists(outfolder_path)) {
+        LogInfo << "Output folder does not exist, creating: " << outfolder << std::endl;
+        std::filesystem::create_directories(outfolder_path);
+    }
+
     // delete clusters_filename file if already existing
     if (std::filesystem::exists(clusters_filename)) {
         LogInfo << "Output file " << clusters_filename << " already exists, deleting it." << std::endl;
         std::filesystem::remove(clusters_filename);
-    }
-    else{
+    } else {
         LogInfo << "Output file will be: " << clusters_filename << std::endl;
     }
 
@@ -109,7 +116,8 @@ int main(int argc, char* argv[]) {
     if (!clusters_file || clusters_file->IsZombie()) {
         LogError << "Cannot create output file: " << clusters_filename << std::endl;
         return 1;
-    }
+    } 
+
     LogInfo << "Opened output file for writing: " << clusters_filename << std::endl;
 
     int file_count = 0;
@@ -117,7 +125,7 @@ int main(int argc, char* argv[]) {
     for (const auto& tps_file : inputs) {
 
         // Check if we've reached max_files limit
-        if (max_files > 0 && file_count >= max_files) {
+        if (file_count >= max_files) {
             LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
             break;
         }
@@ -125,8 +133,8 @@ int main(int argc, char* argv[]) {
         if (verboseMode) LogInfo << "Input TPs file: " << tps_file << std::endl;
 
         file_count++;
-        int progress = (file_count * 100) / inputs.size();
-        GenericToolbox::displayProgressBar(file_count, inputs.size(), "Making clusters...");
+        int progress = (file_count * 100) / max_files;
+        GenericToolbox::displayProgressBar(file_count, max_files, "Making clusters...");
 
         std::map<int, std::vector<TriggerPrimitive>> tps_by_event;
         std::map<int, std::vector<TrueParticle>> true_by_event;
