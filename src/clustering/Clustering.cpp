@@ -409,15 +409,12 @@ std::vector<Cluster> filter_out_main_track(std::vector<Cluster>& clusters) { // 
 }
 
 
-void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, std::string view) {
-    // create folder if it does not exist
-    std::string folder = root_filename.substr(0, root_filename.find_last_of("/"));
-    if (!ensureDirectoryExists(folder)) {
-        LogError << "Cannot create or access directory for clusters output: " << folder << std::endl;
+void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::string view) {
+    // File is already open and managed by caller
+    if (!clusters_file || clusters_file->IsZombie()) {
+        LogError << "Invalid TFile pointer provided to write_clusters" << std::endl;
         return;
     }
-    // create the root file if it does not exist, otherwise just update it
-    TFile *clusters_file = new TFile(root_filename.c_str(), "UPDATE"); // TODO decide if to handle differently
     // Ensure a fixed TDirectory inside the ROOT file for Cluster trees
     TDirectory* clusters_dir = clusters_file->GetDirectory("clusters");
     if (!clusters_dir) clusters_dir = clusters_file->mkdir("clusters");
@@ -458,6 +455,7 @@ void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, s
     float min_distance_from_true_pos;
     float supernova_tp_fraction;
     float generator_tp_fraction;
+    float marley_tp_fraction;
     double total_charge;
     double total_energy;    
     double conversion_factor;
@@ -494,6 +492,7 @@ void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, s
         clusters_tree->Branch("min_distance_from_true_pos", &min_distance_from_true_pos, "min_distance_from_true_pos/F");
         clusters_tree->Branch("supernova_tp_fraction", &supernova_tp_fraction, "supernova_tp_fraction/F");
         clusters_tree->Branch("generator_tp_fraction", &generator_tp_fraction, "generator_tp_fraction/F");
+        clusters_tree->Branch("marley_tp_fraction", &marley_tp_fraction, "marley_tp_fraction/F");
         clusters_tree->Branch("true_interaction", &true_interaction);
         clusters_tree->Branch("total_charge", &total_charge, "total_charge/D");
         clusters_tree->Branch("total_energy", &total_energy, "total_energy/D");
@@ -568,16 +567,25 @@ void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, s
         min_distance_from_true_pos = Cluster.get_min_distance_from_true_pos();
         supernova_tp_fraction = Cluster.get_supernova_tp_fraction();
         // Compute fraction of TPs in this Cluster with a non-UNKNOWN generator
+        // Also compute marley-specific fraction
         {
             int cluster_truth_count = 0;
+            int marley_count = 0;
             const auto& cl_tps = Cluster.get_tps();
             for (auto* tp : cl_tps) {
                 auto* tpTruth = tp->GetTrueParticle();
-                if (tpTruth != nullptr && tpTruth->GetGeneratorName() != "UNKNOWN") {
-                    cluster_truth_count++;
+                if (tpTruth != nullptr) {
+                    std::string gen_name = tpTruth->GetGeneratorName();
+                    if (gen_name != "UNKNOWN") {
+                        cluster_truth_count++;
+                    }
+                    if (gen_name == "marley") {
+                        marley_count++;
+                    }
                 }
             }
             generator_tp_fraction = cl_tps.empty() ? 0.f : static_cast<float>(cluster_truth_count) / static_cast<float>(cl_tps.size());
+            marley_tp_fraction = cl_tps.empty() ? 0.f : static_cast<float>(marley_count) / static_cast<float>(cl_tps.size());
             // std::cout << "Fraction of TPs with non-null generator: " << generator_tp_fraction << std::endl;
         }
         true_interaction = Cluster.get_true_interaction();
@@ -611,7 +619,7 @@ void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, s
     // Write inside 'clusters' directory
     clusters_dir->cd();
     clusters_tree->Write("", TObject::kOverwrite);
-    clusters_file->Close();
+    // File close is managed by caller
 
     return;   
 }

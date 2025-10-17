@@ -42,14 +42,12 @@ int main(int argc, char* argv[]) {
         outFolder = j.value("output_folder", std::string(""));
     }
 
-    // Use utility function for file finding
-    std::vector<std::string> inputs = find_input_files(j, std::vector<std::string>{"_tps.root", "_tps_bktr"});
-    
+    std::vector<std::string> inputs;
     // Override with CLI input if provided
     if (clp.isOptionTriggered("inputFile")) {
         std::string input_file = clp.getOptionVal<std::string>("inputFile");
         inputs.clear();
-        if (input_file.find("_tps.root") != std::string::npos || input_file.find("_tps_bktr") != std::string::npos) {
+        if (input_file.find("_tps.root") != std::string::npos || input_file.find("_tps_") != std::string::npos) {
             inputs.push_back(input_file);
         } else {
             std::ifstream lf(input_file);
@@ -61,6 +59,9 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+
+    // Use utility function for file finding
+    if (inputs.empty()) inputs = find_input_files(j, std::vector<std::string>{"_tps.root", "_tps_bktr"});
 
     LogInfo << "Number of valid files: " << inputs.size() << std::endl;
     LogThrowIf(inputs.empty(), "No valid input files found.");

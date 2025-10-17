@@ -1,0 +1,20 @@
+{
+  "inputFile": "",
+  "inputFolder": "/eos/user/e/evilla/dune/sn-tps/production_es/bkgs/",
+  "inputList": [
+  ],
+  "inputListFile": "",
+  
+  "max_files": 100,
+
+  "outputFolder": "/eos/user/e/evilla/dune/sn-tps/production_es/bkgs/",
+  "outputFilename": "es_bkg_myproc",
+
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 2,
+  "adc_integral_cut_induction": 0,
+  "adc_integral_cut_collection": 0
+
+}

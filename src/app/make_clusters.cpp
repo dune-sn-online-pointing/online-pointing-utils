@@ -29,7 +29,8 @@ int main(int argc, char* argv[]) {
     std::ifstream i(json); nlohmann::json j; i >> j;
 
     // Use utility function for file finding
-    std::vector<std::string> inputs = find_input_files(j, "_tps.root");
+    std::vector<std::string> patterns = {"_tps.root", "_tps_bkg.root"};
+    std::vector<std::string> inputs = find_input_files(j, patterns);
     
     // Override with CLI input if provided
     if (clp.isOptionTriggered("inputFile")) {
@@ -102,6 +103,14 @@ int main(int argc, char* argv[]) {
     else{
         LogInfo << "Output file will be: " << clusters_filename << std::endl;
     }
+
+    // Open the output file ONCE with RECREATE mode (more robust than UPDATE)
+    TFile* clusters_file = new TFile(clusters_filename.c_str(), "RECREATE");
+    if (!clusters_file || clusters_file->IsZombie()) {
+        LogError << "Cannot create output file: " << clusters_filename << std::endl;
+        return 1;
+    }
+    LogInfo << "Opened output file for writing: " << clusters_filename << std::endl;
 
     int file_count = 0;
 
@@ -180,11 +189,15 @@ int main(int argc, char* argv[]) {
             }
 
             for (size_t iView=0;iView<APA::views.size();++iView)
-                write_clusters(clusters_per_view.at(iView), clusters_filename, APA::views.at(iView)); 
+                write_clusters(clusters_per_view.at(iView), clusters_file, APA::views.at(iView)); 
         }
 
     }
 
+    // Close the file ONCE at the end
+    clusters_file->Close();
+    delete clusters_file;
+    
     LogInfo << "\nOutput file is: " << clusters_filename << std::endl;
     return 0;
 }

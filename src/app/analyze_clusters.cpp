@@ -47,9 +47,8 @@ int main(int argc, char* argv[]){
   nlohmann::json j;
   jf >> j;
 
-  // Use utility function for file finding (clusters files)
-  std::vector<std::string> inputs = find_input_files(j, "_clusters.root");
-
+  std::vector<std::string> inputs ;
+  
   // Override with CLI input if provided
   if (clp.isOptionTriggered("inputFile")) {
     std::string input_file = clp.getOptionVal<std::string>("inputFile");
@@ -66,6 +65,9 @@ int main(int argc, char* argv[]){
       }
     }
   }
+
+  // Use utility function for file finding (clusters files)
+  if (inputs.empty()) inputs = find_input_files(j, "_clusters.root");
 
   LogInfo << "Number of valid files: " << inputs.size() << std::endl;
   LogThrowIf(inputs.empty(), "No valid input files found.");
@@ -183,19 +185,21 @@ int main(int argc, char* argv[]){
     std::vector<double> vec_total_cluster_charge;
 
     // Marley TP fraction categorization counters (across all planes)
-    int only_marley_clusters = 0;     // generator_tp_fraction = 1.0
-    int partial_marley_clusters = 0;  // 0 < generator_tp_fraction < 1.0
-    int no_marley_clusters = 0;       // generator_tp_fraction = 0.0
+    int only_marley_clusters = 0;     // marley_tp_fraction = 1.0
+    int partial_marley_clusters = 0;  // 0 < marley_tp_fraction < 1.0
+    int no_marley_clusters = 0;       // marley_tp_fraction = 0.0
 
     // Histograms for total ADC integral by cluster family
     TH1F* h_adc_pure_marley = new TH1F("h_adc_pure_marley", "Total ADC Integral: Pure Marley;Total ADC Integral;Clusters", 50, 0, 50000);
     TH1F* h_adc_pure_noise = new TH1F("h_adc_pure_noise", "Total ADC Integral: Pure Noise;Total ADC Integral;Clusters", 50, 0, 50000);
-    TH1F* h_adc_hybrid = new TH1F("h_adc_hybrid", "Total ADC Integral: Hybrid;Total ADC Integral;Clusters", 50, 0, 50000);
-    TH1F* h_adc_background = new TH1F("h_adc_background", "Total ADC Integral: Background;Total ADC Integral;Clusters", 50, 0, 50000);
+    TH1F* h_adc_hybrid = new TH1F("h_adc_hybrid", "Total ADC Integral: Hybrid (Marley+Noise);Total ADC Integral;Clusters", 50, 0, 50000);
+    TH1F* h_adc_background = new TH1F("h_adc_background", "Total ADC Integral: Pure Background;Total ADC Integral;Clusters", 50, 0, 50000);
+    TH1F* h_adc_mixed_signal_bkg = new TH1F("h_adc_mixed_signal_bkg", "Total ADC Integral: Mixed Marley+Background;Total ADC Integral;Clusters", 50, 0, 50000);
     h_adc_pure_marley->SetDirectory(nullptr);
     h_adc_pure_noise->SetDirectory(nullptr);
     h_adc_hybrid->SetDirectory(nullptr);
     h_adc_background->SetDirectory(nullptr);
+    h_adc_mixed_signal_bkg->SetDirectory(nullptr);
 
     auto ensureHist = [](std::map<std::string, TH1F*>& m, const std::string& key, const char* title, int nbins=100, double xmin=0, double xmax=100){
       if (m.count(key)==0){
@@ -224,7 +228,8 @@ int main(int argc, char* argv[]){
       float true_dir_x=0, true_dir_y=0, true_dir_z=0;
       float true_pos_x=0, true_pos_y=0, true_pos_z=0;
       std::string* true_interaction_ptr=nullptr;
-      float supernova_tp_fraction=0.f, generator_tp_fraction=0.f;
+      float supernova_tp_fraction=0.f, generator_tp_fraction=0.f, marley_tp_fraction=0.f;
+      bool has_marley_tp_fraction_branch = false; // Track if new branch exists
       // vector branches for derived quantities
       std::vector<int>* v_chan=nullptr;
       std::vector<int>* v_tstart=nullptr;
@@ -243,6 +248,10 @@ int main(int argc, char* argv[]){
       if (pd.tree->GetBranch("true_interaction")) pd.tree->SetBranchAddress("true_interaction", &true_interaction_ptr);
       if (pd.tree->GetBranch("supernova_tp_fraction")) pd.tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
       if (pd.tree->GetBranch("generator_tp_fraction")) pd.tree->SetBranchAddress("generator_tp_fraction", &generator_tp_fraction);
+      if (pd.tree->GetBranch("marley_tp_fraction")) {
+        pd.tree->SetBranchAddress("marley_tp_fraction", &marley_tp_fraction);
+        has_marley_tp_fraction_branch = true;
+      }
       if (pd.tree->GetBranch("true_pos_x")) pd.tree->SetBranchAddress("true_pos_x", &true_pos_x);
       if (pd.tree->GetBranch("true_pos_y")) pd.tree->SetBranchAddress("true_pos_y", &true_pos_y);
       if (pd.tree->GetBranch("true_pos_z")) pd.tree->SetBranchAddress("true_pos_z", &true_pos_z);
@@ -310,11 +319,13 @@ int main(int argc, char* argv[]){
         }
 
         // Categorize clusters by Marley TP content
-        if (generator_tp_fraction == 1.0f) {
+        // Use marley_tp_fraction if available, otherwise fall back to generator_tp_fraction (old behavior)
+        float marley_frac = has_marley_tp_fraction_branch ? marley_tp_fraction : generator_tp_fraction;
+        if (marley_frac == 1.0f) {
           only_marley_clusters++;
-        } else if (generator_tp_fraction > 0.0f && generator_tp_fraction < 1.0f) {
+        } else if (marley_frac > 0.0f && marley_frac < 1.0f) {
           partial_marley_clusters++;
-        } else if (generator_tp_fraction == 0.0f) {
+        } else if (marley_frac == 0.0f) {
           no_marley_clusters++;
         }
 
@@ -325,32 +336,49 @@ int main(int argc, char* argv[]){
           double adc_sum = 0;
           for (auto val : *v_adcint) adc_sum += val;
           
-          // Classify based on true_label and generator_tp_fraction
-          bool has_marley = false, has_noise = false, has_other = false;
-          
-          // Check the true_label
-          if (true_label_ptr) {
-            std::string label = *true_label_ptr;
-            if (label == "marley") has_marley = true;
-            else if (label == "UNKNOWN") has_noise = true;
-            else if (!label.empty()) has_other = true;
-          }
-          
-          // Also use generator_tp_fraction for more precise classification
-          if (generator_tp_fraction == 1.0f) {
-            // Pure marley
-            h_adc_pure_marley->Fill(adc_sum);
-          } else if (generator_tp_fraction == 0.0f) {
-            // Pure noise (no generator info)
-            h_adc_pure_noise->Fill(adc_sum);
-          } else if (generator_tp_fraction > 0.0f && generator_tp_fraction < 1.0f) {
-            // Hybrid (mix of marley and noise)
-            h_adc_hybrid->Fill(adc_sum);
-          }
-          
-          // Check if it's a background (not marley, not unknown)
-          if (true_label_ptr && *true_label_ptr != "marley" && *true_label_ptr != "UNKNOWN" && !true_label_ptr->empty()) {
-            h_adc_background->Fill(adc_sum);
+          if (has_marley_tp_fraction_branch) {
+            // NEW BEHAVIOR: Use both marley_tp_fraction and generator_tp_fraction
+            // marley_tp_fraction: fraction of TPs with generator == "marley"
+            // generator_tp_fraction: fraction of TPs with generator != "UNKNOWN" (includes marley + backgrounds)
+            
+            if (marley_tp_fraction == 1.0f) {
+              // Pure marley (all TPs are marley)
+              h_adc_pure_marley->Fill(adc_sum);
+            } else if (marley_tp_fraction == 0.0f && generator_tp_fraction == 0.0f) {
+              // Pure noise (no generator info at all)
+              h_adc_pure_noise->Fill(adc_sum);
+            } else if (marley_tp_fraction == 0.0f && generator_tp_fraction > 0.0f) {
+              // Pure background (has generator info, but no marley)
+              h_adc_background->Fill(adc_sum);
+            } else if (marley_tp_fraction > 0.0f && marley_tp_fraction < 1.0f) {
+              // Has some marley TPs
+              if (generator_tp_fraction == marley_tp_fraction) {
+                // Only marley and UNKNOWN (no backgrounds) - Hybrid marley+noise
+                h_adc_hybrid->Fill(adc_sum);
+              } else {
+                // Has marley + backgrounds (and possibly UNKNOWN) - Mixed signal+background
+                h_adc_mixed_signal_bkg->Fill(adc_sum);
+              }
+            }
+          } else {
+            // OLD BEHAVIOR: Fall back to using generator_tp_fraction and true_label
+            // This is for backward compatibility with old cluster files
+            
+            if (generator_tp_fraction == 1.0f) {
+              // Assume pure marley if all TPs have generator info
+              h_adc_pure_marley->Fill(adc_sum);
+            } else if (generator_tp_fraction == 0.0f) {
+              // Pure noise (no generator info)
+              h_adc_pure_noise->Fill(adc_sum);
+            } else if (generator_tp_fraction > 0.0f && generator_tp_fraction < 1.0f) {
+              // Hybrid (mix of with-generator and without-generator)
+              h_adc_hybrid->Fill(adc_sum);
+            }
+            
+            // Check if it's a background (not marley, not unknown)
+            if (true_label_ptr && *true_label_ptr != "marley" && *true_label_ptr != "UNKNOWN" && !true_label_ptr->empty()) {
+              h_adc_background->Fill(adc_sum);
+            }
           }
         }
 
@@ -821,7 +849,8 @@ int main(int argc, char* argv[]){
 
     // --- New Page: Total ADC Integral by Cluster Family ---
     if (h_adc_pure_marley->GetEntries() > 0 || h_adc_pure_noise->GetEntries() > 0 || 
-        h_adc_hybrid->GetEntries() > 0 || h_adc_background->GetEntries() > 0) {
+        h_adc_hybrid->GetEntries() > 0 || h_adc_background->GetEntries() > 0 ||
+        h_adc_mixed_signal_bkg->GetEntries() > 0) {
       pageNum++;
       TCanvas* c_adc = new TCanvas("c_adc_family", "Total ADC Integral by Cluster Family", 900, 700);
       
@@ -829,10 +858,12 @@ int main(int argc, char* argv[]){
       h_adc_pure_noise->SetLineColor(kGray+2);
       h_adc_hybrid->SetLineColor(kGreen+2);
       h_adc_background->SetLineColor(kRed);
+      h_adc_mixed_signal_bkg->SetLineColor(kMagenta+2);
       h_adc_pure_marley->SetLineWidth(2);
       h_adc_pure_noise->SetLineWidth(2);
       h_adc_hybrid->SetLineWidth(2);
       h_adc_background->SetLineWidth(2);
+      h_adc_mixed_signal_bkg->SetLineWidth(2);
 
       // Find max to set proper axis range
       double max_val = 0;
@@ -840,6 +871,7 @@ int main(int argc, char* argv[]){
       max_val = std::max(max_val, h_adc_pure_noise->GetMaximum());
       max_val = std::max(max_val, h_adc_hybrid->GetMaximum());
       max_val = std::max(max_val, h_adc_background->GetMaximum());
+      max_val = std::max(max_val, h_adc_mixed_signal_bkg->GetMaximum());
       
       h_adc_pure_marley->SetMaximum(max_val * 1.2);
       h_adc_pure_marley->SetTitle("Total ADC Integral by Cluster Family;Total ADC Integral;Clusters");
@@ -847,12 +879,14 @@ int main(int argc, char* argv[]){
       h_adc_pure_noise->Draw("HIST SAME");
       h_adc_hybrid->Draw("HIST SAME");
       h_adc_background->Draw("HIST SAME");
+      h_adc_mixed_signal_bkg->Draw("HIST SAME");
 
-      TLegend* leg = new TLegend(0.65,0.65,0.88,0.88);
+      TLegend* leg = new TLegend(0.55,0.60,0.88,0.88);
       leg->AddEntry(h_adc_pure_marley, Form("Pure Marley (%.0f)", h_adc_pure_marley->GetEntries()), "l");
-      leg->AddEntry(h_adc_pure_noise, Form("Pure Noise (%.0f)", h_adc_pure_noise->GetEntries()), "l");
-      leg->AddEntry(h_adc_hybrid, Form("Hybrid (%.0f)", h_adc_hybrid->GetEntries()), "l");
-      leg->AddEntry(h_adc_background, Form("Background (%.0f)", h_adc_background->GetEntries()), "l");
+      leg->AddEntry(h_adc_pure_noise, Form("Pure Noise/UNKNOWN (%.0f)", h_adc_pure_noise->GetEntries()), "l");
+      leg->AddEntry(h_adc_hybrid, Form("Marley+Noise (%.0f)", h_adc_hybrid->GetEntries()), "l");
+      leg->AddEntry(h_adc_background, Form("Pure Background (%.0f)", h_adc_background->GetEntries()), "l");
+      leg->AddEntry(h_adc_mixed_signal_bkg, Form("Marley+Background (%.0f)", h_adc_mixed_signal_bkg->GetEntries()), "l");
       leg->Draw();
 
       gPad->SetLogy();
@@ -891,6 +925,7 @@ int main(int argc, char* argv[]){
     delete h_adc_pure_noise;
     delete h_adc_hybrid;
     delete h_adc_background;
+    delete h_adc_mixed_signal_bkg;
 
     // record produced
     produced.push_back(std::filesystem::absolute(pdf).string());

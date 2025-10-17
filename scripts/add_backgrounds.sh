@@ -7,11 +7,12 @@ export SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/init.sh"
 
 print_help() {
-    echo "Usage: $0 -j <json_config> [-v|--verbose] [--no-compile] [--clean-compile]"
+    echo "Usage: $0 -j <json_config> [-v|--verbose] [-o|--override] [--no-compile] [--clean-compile]"
     echo ""
     echo "Options:"
     echo "  -j, --json            <JSON configuration file> (required). Local path json/<>/<>.json is accepted."
     echo "  -v, --verbose         Enable verbose output"
+    echo "  -o, --override        Override existing output files"
     echo "      --no-compile      Skip compilation step"
     echo "      --clean-compile   Force a clean compilation"
     echo "  -h, --help            Show this help message"
@@ -24,6 +25,7 @@ print_help() {
 # Parse all command line arguments
 settingsFile=""
 verbose=false
+override=false
 noCompile=""
 cleanCompile=""
 
@@ -31,6 +33,7 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         -j|--json) settingsFile="$2"; shift 2 ;;
         -v|--verbose) verbose=true; shift ;;
+        -o|--override) override=true; shift ;;
         --no-compile) noCompile="--no-compile"; shift ;;
         --clean-compile) cleanCompile="--clean-compile"; shift ;;
         -h|--help) print_help; exit 0 ;;
@@ -65,6 +68,10 @@ command_to_run="$BUILD_DIR/src/app/add_backgrounds -j $settingsFile"
 
 if [ "$verbose" = true ]; then
     command_to_run="$command_to_run -v"
+fi
+
+if [ "$override" = true ]; then
+    command_to_run="$command_to_run -o"
 fi
 
 # Run the command

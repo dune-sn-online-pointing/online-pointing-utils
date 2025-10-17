@@ -24,7 +24,7 @@ std::vector<Cluster> filter_out_main_track(std::vector<Cluster>& clusters);
 // void assing_different_label_to_main_tracks(std::vector<Cluster>& clusters, int new_label=77);
 
 // write the clusters to a root file
-void write_clusters(std::vector<Cluster>& clusters, std::string root_filename, std::string view);
+void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::string view);
 
 std::vector<Cluster> read_clusters(std::string root_filename);
 
