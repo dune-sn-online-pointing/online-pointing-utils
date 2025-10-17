@@ -1,4 +1,5 @@
 #include "Clustering.h"
+#include "TGraphErrors.h"
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -12,7 +13,92 @@ void addPageNumber(TCanvas* canvas, int pageNum, int totalPages) {
   pageText->Draw();
 }
 
+// Helper function to create binned averages with equal bin sizes
+// Returns a TGraphErrors with averaged points
+TGraphErrors* createBinnedAverageGraph(const std::vector<double>& x_data, const std::vector<double>& y_data) {
+  if (x_data.size() != y_data.size() || x_data.empty()) {
+    return nullptr;
+  }
+  
+  // Create pairs and sort by x value
+  std::vector<std::pair<double, double>> data;
+  for (size_t i = 0; i < x_data.size(); i++) {
+    data.push_back({x_data[i], y_data[i]});
+  }
+  std::sort(data.begin(), data.end());
+  
+  // Define bins with equal size of 5 MeV
+  std::vector<double> bin_edges;
+  
+  // Find data range
+  double x_min = 0.0;  // Start from 0
+  double x_max = 70.0; // Maximum energy we care about
+  
+  // Create equal-sized bins of 5 MeV
+  double bin_width = 5.0;
+  for (double edge = x_min; edge <= x_max; edge += bin_width) {
+    bin_edges.push_back(edge);
+  }
+  
+  // Calculate averages in each bin
+  std::vector<double> bin_centers, bin_y_avg, bin_x_err, bin_y_err;
+  
+  size_t data_idx = 0;
+  for (size_t bin_idx = 0; bin_idx < bin_edges.size() - 1; bin_idx++) {
+    double bin_low = bin_edges[bin_idx];
+    double bin_high = bin_edges[bin_idx + 1];
+    
+    std::vector<double> x_in_bin, y_in_bin;
+    
+    // Collect points in this bin
+    while (data_idx < data.size() && data[data_idx].first < bin_high) {
+      if (data[data_idx].first >= bin_low) {
+        x_in_bin.push_back(data[data_idx].first);
+        y_in_bin.push_back(data[data_idx].second);
+      }
+      data_idx++;
+    }
+    
+    // Calculate averages if we have points
+    if (!x_in_bin.empty()) {
+      double x_mean = std::accumulate(x_in_bin.begin(), x_in_bin.end(), 0.0) / x_in_bin.size();
+      double y_mean = std::accumulate(y_in_bin.begin(), y_in_bin.end(), 0.0) / y_in_bin.size();
+      
+      // Calculate standard errors
+      double x_std = 0, y_std = 0;
+      for (size_t i = 0; i < x_in_bin.size(); i++) {
+        x_std += (x_in_bin[i] - x_mean) * (x_in_bin[i] - x_mean);
+        y_std += (y_in_bin[i] - y_mean) * (y_in_bin[i] - y_mean);
+      }
+      x_std = std::sqrt(x_std / x_in_bin.size()) / std::sqrt(x_in_bin.size());
+      y_std = std::sqrt(y_std / y_in_bin.size()) / std::sqrt(y_in_bin.size());
+      
+      bin_centers.push_back(x_mean);
+      bin_y_avg.push_back(y_mean);
+      bin_x_err.push_back(x_std);
+      bin_y_err.push_back(y_std);
+    }
+    
+    // Reset index for next bin (allow overlap)
+    data_idx = 0;
+    while (data_idx < data.size() && data[data_idx].first < bin_high) {
+      data_idx++;
+    }
+  }
+  
+  // Create TGraphErrors
+  TGraphErrors* gr = new TGraphErrors(bin_centers.size(),
+                                       bin_centers.data(),
+                                       bin_y_avg.data(),
+                                       bin_x_err.data(),
+                                       bin_y_err.data());
+  return gr;
+}
+
 int main(int argc, char* argv[]){
+  // Enable ROOT batch mode to avoid GUI crashes
+  gROOT->SetBatch(kTRUE);
+  
   CmdLineParser clp;
   clp.getDescription() << "> analyze_clusters app - Generate plots from Cluster ROOT files." << std::endl;
   clp.addDummyOption("Main options");
@@ -184,7 +270,7 @@ int main(int argc, char* argv[]){
     h2_particle_vs_cluster_energy->SetDirectory(nullptr);
     TH2F* h2_neutrino_vs_cluster_energy = new TH2F("h2_nu_clust_e", "Neutrino energy vs cluster energy;True neutrino energy [MeV];Cluster total energy [MeV]", 50, 0, 100, 100, 0, 10000);
     h2_neutrino_vs_cluster_energy->SetDirectory(nullptr);
-    TH2F* h2_total_particle_energy_vs_total_charge = new TH2F("h2_tot_part_e_vs_charge", "Total visible energy vs total cluster charge per event (Collection Plane);Total visible particle energy [MeV];Total cluster charge [ADC]", 100, 0, 70, 100, 0, 6000);
+    TH2F* h2_total_particle_energy_vs_total_charge = new TH2F("h2_tot_part_e_vs_charge", "Total visible energy vs total cluster charge per event (All Planes);Total visible particle energy [MeV];Total cluster charge [ADC]", 100, 0, 70, 100, 0, 18000);
     h2_total_particle_energy_vs_total_charge->SetDirectory(nullptr);
     
     std::vector<double> marley_enu;
@@ -192,12 +278,18 @@ int main(int argc, char* argv[]){
     std::map<int, double> marley_total_energy_per_event; // sum of total_energy for MARLEY clusters per event
     std::map<int, double> event_neutrino_energy; // neutrino energy per event
     std::map<int,int> sn_clusters_per_event; // sum across planes
-    std::map<int, double> event_total_particle_energy; // sum of unique particle energies per event (excluding neutrinos)
+    std::map<int, double> event_total_particle_energy; // sum of unique particle energies per event (Collection plane X)
+    std::map<int, double> event_total_particle_energy_U; // sum of unique particle energies per event (U plane)
+    std::map<int, double> event_total_particle_energy_V; // sum of unique particle energies per event (V plane)
     std::map<int, double> event_total_cluster_charge; // sum of all cluster charges per event (Collection plane X)
     std::map<int, double> event_total_cluster_charge_U; // sum of all cluster charges per event (U plane)
     std::map<int, double> event_total_cluster_charge_V; // sum of all cluster charges per event (V plane)
-    // Track unique particles per event using a set of (energy, position) pairs
-    std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles; // event -> set of (energy, x, y, z)
+    // Track unique particles per event using a set of (energy, position) pairs - per plane
+    std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles; // event -> set of (energy, x, y, z) for X plane
+    std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles_U; // event -> set of (energy, x, y, z) for U plane
+    std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles_V; // event -> set of (energy, x, y, z) for V plane
+    std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles_global; // event -> set of (energy, x, y, z) GLOBAL across all planes for per-event total
+    std::map<int, double> event_total_particle_energy_global; // sum of unique particle energies per event (GLOBAL across all planes, no double counting)
     // Vectors for the calibration graph (Collection plane X)
     std::vector<double> vec_total_particle_energy;
     std::vector<double> vec_total_cluster_charge;
@@ -215,6 +307,11 @@ int main(int argc, char* argv[]){
     int partial_marley_clusters = 0;  // 0 < marley_tp_fraction < 1.0
     int no_marley_clusters = 0;       // marley_tp_fraction = 0.0
 
+    // Charge to energy conversion factors (ADC/MeV)
+    const double ADC_TO_MEV_X = 3591.8;  // Collection plane (X)
+    const double ADC_TO_MEV_U = 636.6;   // Induction plane U
+    const double ADC_TO_MEV_V = 728.5;   // Induction plane V
+
     // Histograms for total ADC integral by cluster family
     // Increase the range to 200000 to capture marley+background clusters
     TH1F* h_adc_pure_marley = new TH1F("h_adc_pure_marley", "Total ADC Integral: Pure Marley;Total ADC Integral;Clusters", 50, 0, 200000);
@@ -227,6 +324,18 @@ int main(int argc, char* argv[]){
     h_adc_hybrid->SetDirectory(nullptr);
     h_adc_background->SetDirectory(nullptr);
     h_adc_mixed_signal_bkg->SetDirectory(nullptr);
+
+    // Histograms for total energy (converted from ADC) by cluster family
+    TH1F* h_energy_pure_marley = new TH1F("h_energy_pure_marley", "Total Energy: Pure Marley;Total Energy [MeV];Clusters", 50, 0, 100);
+    TH1F* h_energy_pure_noise = new TH1F("h_energy_pure_noise", "Total Energy: Pure Noise;Total Energy [MeV];Clusters", 50, 0, 100);
+    TH1F* h_energy_hybrid = new TH1F("h_energy_hybrid", "Total Energy: Hybrid (Marley+Noise);Total Energy [MeV];Clusters", 50, 0, 100);
+    TH1F* h_energy_background = new TH1F("h_energy_background", "Total Energy: Pure Background;Total Energy [MeV];Clusters", 50, 0, 100);
+    TH1F* h_energy_mixed_signal_bkg = new TH1F("h_energy_mixed_signal_bkg", "Total Energy: Mixed Marley+Background;Total Energy [MeV];Clusters", 50, 0, 100);
+    h_energy_pure_marley->SetDirectory(nullptr);
+    h_energy_pure_noise->SetDirectory(nullptr);
+    h_energy_hybrid->SetDirectory(nullptr);
+    h_energy_background->SetDirectory(nullptr);
+    h_energy_mixed_signal_bkg->SetDirectory(nullptr);
 
     auto ensureHist = [&](std::map<std::string, TH1F*>& m, const std::string& key, const char* title, int nbins=100, double xmin=0, double xmax=100){
       if (m.count(key)==0){
@@ -316,7 +425,7 @@ int main(int argc, char* argv[]){
           label_counts_all[*true_label_ptr]++;
           if (toLower(*true_label_ptr).find("marley")!=std::string::npos){
             marley_count_evt[event]++;
-            marley_total_energy_per_event[event] += total_charge;
+            marley_total_energy_per_event[event] += total_energy;
           }
         }
         h_ntps->Fill(n_tps);
@@ -336,15 +445,32 @@ int main(int argc, char* argv[]){
           event_neutrino_energy[event] = true_ne;
         }
         
-        // Track unique particles and accumulate their energies (excluding neutrinos)
+        // Track unique particles and accumulate their energies (excluding neutrinos) - per plane
         // Use particle energy and position to identify unique particles
         if (true_pe > 0) {
           // Create a unique identifier for this particle using energy and position
           auto particle_id = std::make_tuple(true_pe, true_pos_x, true_pos_y, true_pos_z);
           // Insert returns pair<iterator, bool> where bool is true if insertion happened
-          if (event_unique_particles[event].insert(particle_id).second) {
-            // This is a new unique particle, add its energy
-            event_total_particle_energy[event] += true_pe;
+          if (pd.name == "X") {
+            if (event_unique_particles[event].insert(particle_id).second) {
+              // This is a new unique particle for X plane, add its energy
+              event_total_particle_energy[event] += true_pe;
+            }
+          } else if (pd.name == "U") {
+            if (event_unique_particles_U[event].insert(particle_id).second) {
+              // This is a new unique particle for U plane, add its energy
+              event_total_particle_energy_U[event] += true_pe;
+            }
+          } else if (pd.name == "V") {
+            if (event_unique_particles_V[event].insert(particle_id).second) {
+              // This is a new unique particle for V plane, add its energy
+              event_total_particle_energy_V[event] += true_pe;
+            }
+          }
+          // Also track globally across all planes (for per-event total plot)
+          if (event_unique_particles_global[event].insert(particle_id).second) {
+            // This is a new unique particle globally, add its energy (no double counting)
+            event_total_particle_energy_global[event] += true_pe;
           }
         }
         
@@ -388,6 +514,12 @@ int main(int argc, char* argv[]){
           double adc_sum = 0;
           for (auto val : *v_adcint) adc_sum += val;
           
+          // Convert ADC to energy based on plane
+          double adc_to_mev = ADC_TO_MEV_X; // default to collection
+          if (pd.name == "U") adc_to_mev = ADC_TO_MEV_U;
+          else if (pd.name == "V") adc_to_mev = ADC_TO_MEV_V;
+          double energy_sum = adc_sum / adc_to_mev;
+          
           if (has_marley_tp_fraction_branch) {
             // NEW BEHAVIOR: Use both marley_tp_fraction and generator_tp_fraction
             // marley_tp_fraction: fraction of TPs with generator == "marley"
@@ -396,20 +528,25 @@ int main(int argc, char* argv[]){
             if (marley_tp_fraction == 1.0f) {
               // Pure marley (all TPs are marley)
               h_adc_pure_marley->Fill(adc_sum);
+              h_energy_pure_marley->Fill(energy_sum);
             } else if (marley_tp_fraction == 0.0f && generator_tp_fraction == 0.0f) {
               // Pure noise (no generator info at all)
               h_adc_pure_noise->Fill(adc_sum);
+              h_energy_pure_noise->Fill(energy_sum);
             } else if (marley_tp_fraction == 0.0f && generator_tp_fraction > 0.0f) {
               // Pure background (has generator info, but no marley)
               h_adc_background->Fill(adc_sum);
+              h_energy_background->Fill(energy_sum);
             } else if (marley_tp_fraction > 0.0f && marley_tp_fraction < 1.0f) {
               // Has some marley TPs
               if (generator_tp_fraction == marley_tp_fraction) {
                 // Only marley and UNKNOWN (no backgrounds) - Hybrid marley+noise
                 h_adc_hybrid->Fill(adc_sum);
+                h_energy_hybrid->Fill(energy_sum);
               } else {
                 // Has marley + backgrounds (and possibly UNKNOWN) - Mixed signal+background
                 h_adc_mixed_signal_bkg->Fill(adc_sum);
+                h_energy_mixed_signal_bkg->Fill(energy_sum);
               }
             }
           } else {
@@ -419,17 +556,21 @@ int main(int argc, char* argv[]){
             if (generator_tp_fraction == 1.0f) {
               // Assume pure marley if all TPs have generator info
               h_adc_pure_marley->Fill(adc_sum);
+              h_energy_pure_marley->Fill(energy_sum);
             } else if (generator_tp_fraction == 0.0f) {
               // Pure noise (no generator info)
               h_adc_pure_noise->Fill(adc_sum);
+              h_energy_pure_noise->Fill(energy_sum);
             } else if (generator_tp_fraction > 0.0f && generator_tp_fraction < 1.0f) {
               // Hybrid (mix of with-generator and without-generator)
               h_adc_hybrid->Fill(adc_sum);
+              h_energy_hybrid->Fill(energy_sum);
             }
             
             // Check if it's a background (not marley, not unknown)
             if (true_label_ptr && *true_label_ptr != "marley" && *true_label_ptr != "UNKNOWN" && !true_label_ptr->empty()) {
               h_adc_background->Fill(adc_sum);
+              h_energy_background->Fill(energy_sum);
             }
           }
         }
@@ -489,12 +630,28 @@ int main(int argc, char* argv[]){
         double tot_charge = it->second;
         vec_total_particle_energy.push_back(tot_part_e);
         vec_total_cluster_charge.push_back(tot_charge);
-        // Also fill the histogram for backup
-        h2_total_particle_energy_vs_total_charge->Fill(tot_part_e, tot_charge);
+      }
+    }
+    
+    // Fill per-event total histogram (global across all planes, no double counting)
+    for (const auto& kv : event_total_particle_energy_global) {
+      int evt = kv.first;
+      double tot_part_e_global = kv.second;
+      // Sum charges across all planes for this event
+      double tot_charge_all_planes = 0;
+      auto it_X = event_total_cluster_charge.find(evt);
+      auto it_U = event_total_cluster_charge_U.find(evt);
+      auto it_V = event_total_cluster_charge_V.find(evt);
+      if (it_X != event_total_cluster_charge.end()) tot_charge_all_planes += it_X->second;
+      if (it_U != event_total_cluster_charge_U.end()) tot_charge_all_planes += it_U->second;
+      if (it_V != event_total_cluster_charge_V.end()) tot_charge_all_planes += it_V->second;
+      
+      if (tot_charge_all_planes > 0) {
+        h2_total_particle_energy_vs_total_charge->Fill(tot_part_e_global, tot_charge_all_planes);
       }
     }
     // U plane
-    for (const auto& kv : event_total_particle_energy) {
+    for (const auto& kv : event_total_particle_energy_U) {
       int evt = kv.first;
       double tot_part_e = kv.second;
       auto it = event_total_cluster_charge_U.find(evt);
@@ -505,7 +662,7 @@ int main(int argc, char* argv[]){
       }
     }
     // V plane
-    for (const auto& kv : event_total_particle_energy) {
+    for (const auto& kv : event_total_particle_energy_V) {
       int evt = kv.first;
       double tot_part_e = kv.second;
       auto it = event_total_cluster_charge_V.find(evt);
@@ -916,46 +1073,58 @@ int main(int argc, char* argv[]){
       c_tot_corr->SetLeftMargin(0.12);
       c_tot_corr->SetRightMargin(0.05);
       
-      // Create TGraph from vectors
+      // Create TGraph from vectors (background points)
       TGraph* gr_calib = new TGraph((int)vec_total_particle_energy.size(), 
                                      vec_total_particle_energy.data(), 
                                      vec_total_cluster_charge.data());
       gr_calib->SetTitle("Total visible energy vs total cluster charge per event (Collection Plane X);Total visible particle energy [MeV];Total cluster charge [ADC]");
       gr_calib->SetMarkerStyle(20);
       gr_calib->SetMarkerSize(0.8);
-      gr_calib->SetMarkerColor(kBlue+1);
+      gr_calib->SetMarkerColor(kBlue);
+      gr_calib->SetMarkerColorAlpha(kBlue, 0.15);
+      gr_calib->GetXaxis()->SetLimits(0, 70);
       gr_calib->Draw("AP");
       
-      // Perform linear fit
+      // Create binned average graph
+      TGraphErrors* gr_binned = createBinnedAverageGraph(vec_total_particle_energy, vec_total_cluster_charge);
+      gr_binned->SetMarkerStyle(20);
+      gr_binned->SetMarkerSize(1.2);
+      gr_binned->SetMarkerColor(kBlue);
+      gr_binned->SetLineColor(kBlue);
+      gr_binned->Draw("P SAME");
+      
+      // Perform linear fit on binned data
       TF1* fit_tot = new TF1("fit_tot_energy_charge", "pol1", 0, 70);
       fit_tot->SetLineColor(kRed);
       fit_tot->SetLineWidth(2);
-      gr_calib->Fit(fit_tot, "Q"); // Q for quiet mode
+      gr_binned->Fit(fit_tot, "Q");
       fit_tot->Draw("SAME");
       
       // Get fit parameters
       double slope = fit_tot->GetParameter(1);
       double intercept = fit_tot->GetParameter(0);
-      double slope_err = fit_tot->GetParError(1);
-      double intercept_err = fit_tot->GetParError(0);
       double chi2 = fit_tot->GetChisquare();
       int ndf = fit_tot->GetNDF();
       
-      // Display fit results on canvas
-      TLatex latex;
-      latex.SetNDC();
-      latex.SetTextSize(0.028);
-      latex.SetTextColor(kRed);
-      latex.DrawLatex(0.15, 0.88, Form("Fit: Charge = %.3f #times E_{visible} + %.3f", slope, intercept));
-      latex.DrawLatex(0.15, 0.84, Form("Slope: %.3f #pm %.3f ADC/MeV", slope, slope_err));
-      latex.DrawLatex(0.15, 0.80, Form("Intercept: %.3f #pm %.3f ADC", intercept, intercept_err));
-      latex.DrawLatex(0.15, 0.76, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2, ndf, (ndf > 0 ? chi2/ndf : 0)));
+      // Display fit results in a box
+      TPaveText* pt_tot = new TPaveText(0.15, 0.75, 0.55, 0.88, "NDC");
+      pt_tot->SetFillColor(kWhite);
+      pt_tot->SetBorderSize(1);
+      pt_tot->SetTextAlign(12);
+      pt_tot->SetTextSize(0.030);
+      pt_tot->AddText(Form("Fit: Charge = %.1f #times E_{visible} + %.1f", slope, intercept));
+      pt_tot->AddText(Form("Slope: %.1f ADC/MeV", slope));
+      pt_tot->AddText(Form("Intercept: %.1f ADC", intercept));
+      pt_tot->AddText(Form("#chi^{2}/ndf = %.2f", (ndf > 0 ? chi2/ndf : 0)));
+      pt_tot->Draw();
       
       gPad->SetGridx();
       gPad->SetGridy();
       addPageNumber(c_tot_corr, pageNum, totalPages);
       c_tot_corr->SaveAs(pdf.c_str());
+      delete pt_tot;
       delete fit_tot;
+      delete gr_binned;
       delete gr_calib;
       delete c_tot_corr;
     }
@@ -969,7 +1138,7 @@ int main(int argc, char* argv[]){
       c_tot_corr_U->SetLeftMargin(0.12);
       c_tot_corr_U->SetRightMargin(0.05);
       
-      // Create TGraph from vectors
+      // Create TGraph from vectors (background points)
       TGraph* gr_calib_U = new TGraph((int)vec_total_particle_energy_U.size(), 
                                        vec_total_particle_energy_U.data(), 
                                        vec_total_cluster_charge_U.data());
@@ -977,38 +1146,50 @@ int main(int argc, char* argv[]){
       gr_calib_U->SetMarkerStyle(20);
       gr_calib_U->SetMarkerSize(0.8);
       gr_calib_U->SetMarkerColor(kGreen+2);
+      gr_calib_U->SetMarkerColorAlpha(kGreen+2, 0.15);
+      gr_calib_U->GetXaxis()->SetLimits(0, 70);
       gr_calib_U->Draw("AP");
       
-      // Perform linear fit
+      // Create binned average graph
+      TGraphErrors* gr_binned_U = createBinnedAverageGraph(vec_total_particle_energy_U, vec_total_cluster_charge_U);
+      gr_binned_U->SetMarkerStyle(20);
+      gr_binned_U->SetMarkerSize(1.2);
+      gr_binned_U->SetMarkerColor(kGreen+2);
+      gr_binned_U->SetLineColor(kGreen+2);
+      gr_binned_U->Draw("P SAME");
+      
+      // Perform linear fit on binned data
       TF1* fit_tot_U = new TF1("fit_tot_energy_charge_U", "pol1", 0, 70);
       fit_tot_U->SetLineColor(kRed);
       fit_tot_U->SetLineWidth(2);
-      gr_calib_U->Fit(fit_tot_U, "Q"); // Q for quiet mode
+      gr_binned_U->Fit(fit_tot_U, "Q");
       fit_tot_U->Draw("SAME");
       
       // Get fit parameters
       double slope_U = fit_tot_U->GetParameter(1);
       double intercept_U = fit_tot_U->GetParameter(0);
-      double slope_err_U = fit_tot_U->GetParError(1);
-      double intercept_err_U = fit_tot_U->GetParError(0);
       double chi2_U = fit_tot_U->GetChisquare();
       int ndf_U = fit_tot_U->GetNDF();
       
-      // Display fit results on canvas
-      TLatex latex_U;
-      latex_U.SetNDC();
-      latex_U.SetTextSize(0.028);
-      latex_U.SetTextColor(kRed);
-      latex_U.DrawLatex(0.15, 0.88, Form("Fit: Charge = %.3f #times E_{visible} + %.3f", slope_U, intercept_U));
-      latex_U.DrawLatex(0.15, 0.84, Form("Slope: %.3f #pm %.3f ADC/MeV", slope_U, slope_err_U));
-      latex_U.DrawLatex(0.15, 0.80, Form("Intercept: %.3f #pm %.3f ADC", intercept_U, intercept_err_U));
-      latex_U.DrawLatex(0.15, 0.76, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2_U, ndf_U, (ndf_U > 0 ? chi2_U/ndf_U : 0)));
+      // Display fit results in a box
+      TPaveText* pt_tot_U = new TPaveText(0.15, 0.75, 0.55, 0.88, "NDC");
+      pt_tot_U->SetFillColor(kWhite);
+      pt_tot_U->SetBorderSize(1);
+      pt_tot_U->SetTextAlign(12);
+      pt_tot_U->SetTextSize(0.030);
+      pt_tot_U->AddText(Form("Fit: Charge = %.1f #times E_{visible} + %.1f", slope_U, intercept_U));
+      pt_tot_U->AddText(Form("Slope: %.1f ADC/MeV", slope_U));
+      pt_tot_U->AddText(Form("Intercept: %.1f ADC", intercept_U));
+      pt_tot_U->AddText(Form("#chi^{2}/ndf = %.2f", (ndf_U > 0 ? chi2_U/ndf_U : 0)));
+      pt_tot_U->Draw();
       
       gPad->SetGridx();
       gPad->SetGridy();
       addPageNumber(c_tot_corr_U, pageNum, totalPages);
       c_tot_corr_U->SaveAs(pdf.c_str());
+      delete pt_tot_U;
       delete fit_tot_U;
+      delete gr_binned_U;
       delete gr_calib_U;
       delete c_tot_corr_U;
     }
@@ -1022,7 +1203,7 @@ int main(int argc, char* argv[]){
       c_tot_corr_V->SetLeftMargin(0.12);
       c_tot_corr_V->SetRightMargin(0.05);
       
-      // Create TGraph from vectors
+      // Create TGraph from vectors (background points)
       TGraph* gr_calib_V = new TGraph((int)vec_total_particle_energy_V.size(), 
                                        vec_total_particle_energy_V.data(), 
                                        vec_total_cluster_charge_V.data());
@@ -1030,38 +1211,50 @@ int main(int argc, char* argv[]){
       gr_calib_V->SetMarkerStyle(20);
       gr_calib_V->SetMarkerSize(0.8);
       gr_calib_V->SetMarkerColor(kMagenta+2);
+      gr_calib_V->SetMarkerColorAlpha(kMagenta+2, 0.15);
+      gr_calib_V->GetXaxis()->SetLimits(0, 70);
       gr_calib_V->Draw("AP");
       
-      // Perform linear fit
+      // Create binned average graph
+      TGraphErrors* gr_binned_V = createBinnedAverageGraph(vec_total_particle_energy_V, vec_total_cluster_charge_V);
+      gr_binned_V->SetMarkerStyle(20);
+      gr_binned_V->SetMarkerSize(1.2);
+      gr_binned_V->SetMarkerColor(kMagenta+2);
+      gr_binned_V->SetLineColor(kMagenta+2);
+      gr_binned_V->Draw("P SAME");
+      
+      // Perform linear fit on binned data
       TF1* fit_tot_V = new TF1("fit_tot_energy_charge_V", "pol1", 0, 70);
       fit_tot_V->SetLineColor(kRed);
       fit_tot_V->SetLineWidth(2);
-      gr_calib_V->Fit(fit_tot_V, "Q"); // Q for quiet mode
+      gr_binned_V->Fit(fit_tot_V, "Q");
       fit_tot_V->Draw("SAME");
       
       // Get fit parameters
       double slope_V = fit_tot_V->GetParameter(1);
       double intercept_V = fit_tot_V->GetParameter(0);
-      double slope_err_V = fit_tot_V->GetParError(1);
-      double intercept_err_V = fit_tot_V->GetParError(0);
       double chi2_V = fit_tot_V->GetChisquare();
       int ndf_V = fit_tot_V->GetNDF();
       
-      // Display fit results on canvas
-      TLatex latex_V;
-      latex_V.SetNDC();
-      latex_V.SetTextSize(0.028);
-      latex_V.SetTextColor(kRed);
-      latex_V.DrawLatex(0.15, 0.88, Form("Fit: Charge = %.3f #times E_{visible} + %.3f", slope_V, intercept_V));
-      latex_V.DrawLatex(0.15, 0.84, Form("Slope: %.3f #pm %.3f ADC/MeV", slope_V, slope_err_V));
-      latex_V.DrawLatex(0.15, 0.80, Form("Intercept: %.3f #pm %.3f ADC", intercept_V, intercept_err_V));
-      latex_V.DrawLatex(0.15, 0.76, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2_V, ndf_V, (ndf_V > 0 ? chi2_V/ndf_V : 0)));
+      // Display fit results in a box
+      TPaveText* pt_tot_V = new TPaveText(0.15, 0.75, 0.55, 0.88, "NDC");
+      pt_tot_V->SetFillColor(kWhite);
+      pt_tot_V->SetBorderSize(1);
+      pt_tot_V->SetTextAlign(12);
+      pt_tot_V->SetTextSize(0.030);
+      pt_tot_V->AddText(Form("Fit: Charge = %.1f #times E_{visible} + %.1f", slope_V, intercept_V));
+      pt_tot_V->AddText(Form("Slope: %.1f ADC/MeV", slope_V));
+      pt_tot_V->AddText(Form("Intercept: %.1f ADC", intercept_V));
+      pt_tot_V->AddText(Form("#chi^{2}/ndf = %.2f", (ndf_V > 0 ? chi2_V/ndf_V : 0)));
+      pt_tot_V->Draw();
       
       gPad->SetGridx();
       gPad->SetGridy();
       addPageNumber(c_tot_corr_V, pageNum, totalPages);
       c_tot_corr_V->SaveAs(pdf.c_str());
+      delete pt_tot_V;
       delete fit_tot_V;
+      delete gr_binned_V;
       delete gr_calib_V;
       delete c_tot_corr_V;
     }
@@ -1075,47 +1268,61 @@ int main(int argc, char* argv[]){
       c_simide_corr->SetLeftMargin(0.12);
       c_simide_corr->SetRightMargin(0.05);
       
-      // Create TGraph from vectors
-      TGraph* gr_simide = new TGraph((int)vec_total_simide_energy.size(), 
-                                      vec_total_simide_energy.data(), 
-                                      vec_total_cluster_charge_for_simide.data());
-      gr_simide->SetTitle("Total SimIDE visible energy vs total cluster charge per event (Collection Plane X);Total SimIDE energy [MeV];Total cluster charge [ADC]");
-      gr_simide->SetMarkerStyle(20);
-      gr_simide->SetMarkerSize(0.8);
-      gr_simide->SetMarkerColor(kBlue+1);
-      gr_simide->Draw("AP");
+      // Create TGraph for all individual points (background)
+      TGraph* gr_simide_all = new TGraph((int)vec_total_simide_energy.size(), 
+                                          vec_total_simide_energy.data(), 
+                                          vec_total_cluster_charge_for_simide.data());
+      gr_simide_all->SetTitle("Total SimIDE visible energy vs total cluster charge per event (Collection Plane X);Total SimIDE energy [MeV];Total cluster charge [ADC]");
+      gr_simide_all->SetMarkerStyle(20);
+      gr_simide_all->SetMarkerSize(0.8);
+      gr_simide_all->SetMarkerColor(kBlue);
+      gr_simide_all->SetMarkerColorAlpha(kBlue, 0.3);
+      gr_simide_all->GetXaxis()->SetLimits(0, 70);
+      gr_simide_all->Draw("AP");
       
-      // Perform linear fit
-      TF1* fit_simide = new TF1("fit_simide_energy_charge", "pol1", 0, 70);
-      fit_simide->SetLineColor(kRed);
-      fit_simide->SetLineWidth(2);
-      gr_simide->Fit(fit_simide, "Q"); // Q for quiet mode
-      fit_simide->Draw("SAME");
-      
-      // Get fit parameters
-      double slope_sim = fit_simide->GetParameter(1);
-      double intercept_sim = fit_simide->GetParameter(0);
-      double slope_err_sim = fit_simide->GetParError(1);
-      double intercept_err_sim = fit_simide->GetParError(0);
-      double chi2_sim = fit_simide->GetChisquare();
-      int ndf_sim = fit_simide->GetNDF();
-      
-      // Display fit results on canvas
-      TLatex latex_sim;
-      latex_sim.SetNDC();
-      latex_sim.SetTextSize(0.028);
-      latex_sim.SetTextColor(kRed);
-      latex_sim.DrawLatex(0.15, 0.88, Form("Fit: Charge = %.3f #times E_{SimIDE} + %.3f", slope_sim, intercept_sim));
-      latex_sim.DrawLatex(0.15, 0.84, Form("Slope: %.3f #pm %.3f ADC/MeV", slope_sim, slope_err_sim));
-      latex_sim.DrawLatex(0.15, 0.80, Form("Intercept: %.3f #pm %.3f ADC", intercept_sim, intercept_err_sim));
-      latex_sim.DrawLatex(0.15, 0.76, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2_sim, ndf_sim, (ndf_sim > 0 ? chi2_sim/ndf_sim : 0)));
+      // Create binned average graph
+      TGraphErrors* gr_simide = createBinnedAverageGraph(vec_total_simide_energy, vec_total_cluster_charge_for_simide);
+      if (gr_simide) {
+        gr_simide->SetMarkerStyle(21);
+        gr_simide->SetMarkerSize(1.6);
+        gr_simide->SetMarkerColor(kRed+1);
+        gr_simide->SetLineColor(kRed+1);
+        gr_simide->SetLineWidth(2);
+        gr_simide->Draw("P SAME");
+        
+        // Perform linear fit on binned averages
+  TF1* fit_simide = new TF1("fit_simide_energy_charge", "pol1", 0, 70);
+        fit_simide->SetLineColor(kRed);
+        fit_simide->SetLineWidth(3);
+        gr_simide->Fit(fit_simide, "RQ"); // R for range, Q for quiet mode
+        
+        // Get fit parameters
+        double slope_sim = fit_simide->GetParameter(1);
+        double intercept_sim = fit_simide->GetParameter(0);
+        double chi2_sim = fit_simide->GetChisquare();
+        int ndf_sim = fit_simide->GetNDF();
+        
+        // Draw the fit line explicitly on top
+        fit_simide->Draw("L SAME");
+        
+        // Display fit results in a box
+        TPaveText* pt_sim = new TPaveText(0.15, 0.75, 0.55, 0.88, "NDC");
+        pt_sim->SetFillColor(kWhite);
+        pt_sim->SetBorderSize(1);
+        pt_sim->SetTextAlign(12);
+        pt_sim->SetTextSize(0.030);
+        pt_sim->AddText(Form("Fit: Charge = %.1f #times E_{SimIDE} + %.1f", slope_sim, intercept_sim));
+        pt_sim->AddText(Form("Slope: %.1f ADC/MeV", slope_sim));
+        pt_sim->AddText(Form("Intercept: %.1f ADC", intercept_sim));
+        pt_sim->AddText(Form("#chi^{2}/ndf = %.2f", (ndf_sim > 0 ? chi2_sim/ndf_sim : 0)));
+        pt_sim->Draw();
+      }
       
       gPad->SetGridx();
       gPad->SetGridy();
       addPageNumber(c_simide_corr, pageNum, totalPages);
       c_simide_corr->SaveAs(pdf.c_str());
-      delete fit_simide;
-      delete gr_simide;
+      delete gr_simide_all;
       delete c_simide_corr;
     }
 
@@ -1128,47 +1335,61 @@ int main(int argc, char* argv[]){
       c_simide_corr_U->SetLeftMargin(0.12);
       c_simide_corr_U->SetRightMargin(0.05);
       
-      // Create TGraph from vectors
-      TGraph* gr_simide_U = new TGraph((int)vec_total_simide_energy_U.size(), 
-                                        vec_total_simide_energy_U.data(), 
-                                        vec_total_cluster_charge_U_for_simide.data());
-      gr_simide_U->SetTitle("Total SimIDE visible energy vs total cluster charge per event (U Plane);Total SimIDE energy [MeV];Total cluster charge [ADC]");
-      gr_simide_U->SetMarkerStyle(20);
-      gr_simide_U->SetMarkerSize(0.8);
-      gr_simide_U->SetMarkerColor(kGreen+2);
-      gr_simide_U->Draw("AP");
+      // Create TGraph for all individual points (background)
+      TGraph* gr_simide_U_all = new TGraph((int)vec_total_simide_energy_U.size(), 
+                                            vec_total_simide_energy_U.data(), 
+                                            vec_total_cluster_charge_U_for_simide.data());
+      gr_simide_U_all->SetTitle("Total SimIDE visible energy vs total cluster charge per event (U Plane);Total SimIDE energy [MeV];Total cluster charge [ADC]");
+      gr_simide_U_all->SetMarkerStyle(20);
+      gr_simide_U_all->SetMarkerSize(0.8);
+      gr_simide_U_all->SetMarkerColor(kGreen+2);
+      gr_simide_U_all->SetMarkerColorAlpha(kGreen+2, 0.3);
+      gr_simide_U_all->GetXaxis()->SetLimits(0, 70);
+      gr_simide_U_all->Draw("AP");
       
-      // Perform linear fit
-      TF1* fit_simide_U = new TF1("fit_simide_energy_charge_U", "pol1", 0, 70);
-      fit_simide_U->SetLineColor(kRed);
-      fit_simide_U->SetLineWidth(2);
-      gr_simide_U->Fit(fit_simide_U, "Q"); // Q for quiet mode
-      fit_simide_U->Draw("SAME");
-      
-      // Get fit parameters
-      double slope_sim_U = fit_simide_U->GetParameter(1);
-      double intercept_sim_U = fit_simide_U->GetParameter(0);
-      double slope_err_sim_U = fit_simide_U->GetParError(1);
-      double intercept_err_sim_U = fit_simide_U->GetParError(0);
-      double chi2_sim_U = fit_simide_U->GetChisquare();
-      int ndf_sim_U = fit_simide_U->GetNDF();
-      
-      // Display fit results on canvas
-      TLatex latex_sim_U;
-      latex_sim_U.SetNDC();
-      latex_sim_U.SetTextSize(0.028);
-      latex_sim_U.SetTextColor(kRed);
-      latex_sim_U.DrawLatex(0.15, 0.88, Form("Fit: Charge = %.3f #times E_{SimIDE} + %.3f", slope_sim_U, intercept_sim_U));
-      latex_sim_U.DrawLatex(0.15, 0.84, Form("Slope: %.3f #pm %.3f ADC/MeV", slope_sim_U, slope_err_sim_U));
-      latex_sim_U.DrawLatex(0.15, 0.80, Form("Intercept: %.3f #pm %.3f ADC", intercept_sim_U, intercept_err_sim_U));
-      latex_sim_U.DrawLatex(0.15, 0.76, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2_sim_U, ndf_sim_U, (ndf_sim_U > 0 ? chi2_sim_U/ndf_sim_U : 0)));
+      // Create binned average graph
+      TGraphErrors* gr_simide_U = createBinnedAverageGraph(vec_total_simide_energy_U, vec_total_cluster_charge_U_for_simide);
+      if (gr_simide_U) {
+        gr_simide_U->SetMarkerStyle(21);
+        gr_simide_U->SetMarkerSize(1.6);
+        gr_simide_U->SetMarkerColor(kRed+1);
+        gr_simide_U->SetLineColor(kRed+1);
+        gr_simide_U->SetLineWidth(2);
+        gr_simide_U->Draw("P SAME");
+        
+        // Perform linear fit on binned averages
+  TF1* fit_simide_U = new TF1("fit_simide_energy_charge_U", "pol1", 0, 70);
+        fit_simide_U->SetLineColor(kRed);
+        fit_simide_U->SetLineWidth(3);
+        gr_simide_U->Fit(fit_simide_U, "RQ"); // R for range, Q for quiet mode
+        
+        // Get fit parameters
+        double slope_sim_U = fit_simide_U->GetParameter(1);
+        double intercept_sim_U = fit_simide_U->GetParameter(0);
+        double chi2_sim_U = fit_simide_U->GetChisquare();
+        int ndf_sim_U = fit_simide_U->GetNDF();
+        
+        // Draw the fit line explicitly on top
+        fit_simide_U->Draw("L SAME");
+        
+        // Display fit results in a box
+        TPaveText* pt_sim_U = new TPaveText(0.15, 0.75, 0.55, 0.88, "NDC");
+        pt_sim_U->SetFillColor(kWhite);
+        pt_sim_U->SetBorderSize(1);
+        pt_sim_U->SetTextAlign(12);
+        pt_sim_U->SetTextSize(0.030);
+        pt_sim_U->AddText(Form("Fit: Charge = %.1f #times E_{SimIDE} + %.1f", slope_sim_U, intercept_sim_U));
+        pt_sim_U->AddText(Form("Slope: %.1f ADC/MeV", slope_sim_U));
+        pt_sim_U->AddText(Form("Intercept: %.1f ADC", intercept_sim_U));
+        pt_sim_U->AddText(Form("#chi^{2}/ndf = %.2f", (ndf_sim_U > 0 ? chi2_sim_U/ndf_sim_U : 0)));
+        pt_sim_U->Draw();
+      }
       
       gPad->SetGridx();
       gPad->SetGridy();
       addPageNumber(c_simide_corr_U, pageNum, totalPages);
       c_simide_corr_U->SaveAs(pdf.c_str());
-      delete fit_simide_U;
-      delete gr_simide_U;
+      delete gr_simide_U_all;
       delete c_simide_corr_U;
     }
 
@@ -1181,47 +1402,61 @@ int main(int argc, char* argv[]){
       c_simide_corr_V->SetLeftMargin(0.12);
       c_simide_corr_V->SetRightMargin(0.05);
       
-      // Create TGraph from vectors
-      TGraph* gr_simide_V = new TGraph((int)vec_total_simide_energy_V.size(), 
-                                        vec_total_simide_energy_V.data(), 
-                                        vec_total_cluster_charge_V_for_simide.data());
-      gr_simide_V->SetTitle("Total SimIDE visible energy vs total cluster charge per event (V Plane);Total SimIDE energy [MeV];Total cluster charge [ADC]");
-      gr_simide_V->SetMarkerStyle(20);
-      gr_simide_V->SetMarkerSize(0.8);
-      gr_simide_V->SetMarkerColor(kMagenta+2);
-      gr_simide_V->Draw("AP");
+      // Create TGraph for all individual points (background)
+      TGraph* gr_simide_V_all = new TGraph((int)vec_total_simide_energy_V.size(), 
+                                            vec_total_simide_energy_V.data(), 
+                                            vec_total_cluster_charge_V_for_simide.data());
+      gr_simide_V_all->SetTitle("Total SimIDE visible energy vs total cluster charge per event (V Plane);Total SimIDE energy [MeV];Total cluster charge [ADC]");
+      gr_simide_V_all->SetMarkerStyle(20);
+      gr_simide_V_all->SetMarkerSize(0.8);
+      gr_simide_V_all->SetMarkerColor(kMagenta+2);
+      gr_simide_V_all->SetMarkerColorAlpha(kMagenta+2, 0.3);
+      gr_simide_V_all->GetXaxis()->SetLimits(0, 70);
+      gr_simide_V_all->Draw("AP");
       
-      // Perform linear fit
-      TF1* fit_simide_V = new TF1("fit_simide_energy_charge_V", "pol1", 0, 70);
-      fit_simide_V->SetLineColor(kRed);
-      fit_simide_V->SetLineWidth(2);
-      gr_simide_V->Fit(fit_simide_V, "Q"); // Q for quiet mode
-      fit_simide_V->Draw("SAME");
-      
-      // Get fit parameters
-      double slope_sim_V = fit_simide_V->GetParameter(1);
-      double intercept_sim_V = fit_simide_V->GetParameter(0);
-      double slope_err_sim_V = fit_simide_V->GetParError(1);
-      double intercept_err_sim_V = fit_simide_V->GetParError(0);
-      double chi2_sim_V = fit_simide_V->GetChisquare();
-      int ndf_sim_V = fit_simide_V->GetNDF();
-      
-      // Display fit results on canvas
-      TLatex latex_sim_V;
-      latex_sim_V.SetNDC();
-      latex_sim_V.SetTextSize(0.028);
-      latex_sim_V.SetTextColor(kRed);
-      latex_sim_V.DrawLatex(0.15, 0.88, Form("Fit: Charge = %.3f #times E_{SimIDE} + %.3f", slope_sim_V, intercept_sim_V));
-      latex_sim_V.DrawLatex(0.15, 0.84, Form("Slope: %.3f #pm %.3f ADC/MeV", slope_sim_V, slope_err_sim_V));
-      latex_sim_V.DrawLatex(0.15, 0.80, Form("Intercept: %.3f #pm %.3f ADC", intercept_sim_V, intercept_err_sim_V));
-      latex_sim_V.DrawLatex(0.15, 0.76, Form("#chi^{2}/ndf = %.2f/%d = %.2f", chi2_sim_V, ndf_sim_V, (ndf_sim_V > 0 ? chi2_sim_V/ndf_sim_V : 0)));
+      // Create binned average graph
+      TGraphErrors* gr_simide_V = createBinnedAverageGraph(vec_total_simide_energy_V, vec_total_cluster_charge_V_for_simide);
+      if (gr_simide_V) {
+        gr_simide_V->SetMarkerStyle(21);
+        gr_simide_V->SetMarkerSize(1.6);
+        gr_simide_V->SetMarkerColor(kRed+1);
+        gr_simide_V->SetLineColor(kRed+1);
+        gr_simide_V->SetLineWidth(2);
+        gr_simide_V->Draw("P SAME");
+        
+        // Perform linear fit on binned averages
+  TF1* fit_simide_V = new TF1("fit_simide_energy_charge_V", "pol1", 0, 70);
+        fit_simide_V->SetLineColor(kRed);
+        fit_simide_V->SetLineWidth(3);
+        gr_simide_V->Fit(fit_simide_V, "RQ"); // R for range, Q for quiet mode
+        
+        // Get fit parameters
+        double slope_sim_V = fit_simide_V->GetParameter(1);
+        double intercept_sim_V = fit_simide_V->GetParameter(0);
+        double chi2_sim_V = fit_simide_V->GetChisquare();
+        int ndf_sim_V = fit_simide_V->GetNDF();
+        
+        // Draw the fit line explicitly on top
+        fit_simide_V->Draw("L SAME");
+        
+        // Display fit results in a box
+        TPaveText* pt_sim_V = new TPaveText(0.15, 0.75, 0.55, 0.88, "NDC");
+        pt_sim_V->SetFillColor(kWhite);
+        pt_sim_V->SetBorderSize(1);
+        pt_sim_V->SetTextAlign(12);
+        pt_sim_V->SetTextSize(0.030);
+        pt_sim_V->AddText(Form("Fit: Charge = %.1f #times E_{SimIDE} + %.1f", slope_sim_V, intercept_sim_V));
+        pt_sim_V->AddText(Form("Slope: %.1f ADC/MeV", slope_sim_V));
+        pt_sim_V->AddText(Form("Intercept: %.1f ADC", intercept_sim_V));
+        pt_sim_V->AddText(Form("#chi^{2}/ndf = %.2f", (ndf_sim_V > 0 ? chi2_sim_V/ndf_sim_V : 0)));
+        pt_sim_V->Draw();
+      }
       
       gPad->SetGridx();
       gPad->SetGridy();
       addPageNumber(c_simide_corr_V, pageNum, totalPages);
       c_simide_corr_V->SaveAs(pdf.c_str());
-      delete fit_simide_V;
-      delete gr_simide_V;
+      delete gr_simide_V_all;
       delete c_simide_corr_V;
     }
 
@@ -1327,6 +1562,66 @@ int main(int argc, char* argv[]){
       delete c_adc;
     }
 
+    // --- New Page: Total Energy (from ADC) by Cluster Family ---
+    if (h_energy_pure_marley->GetEntries() > 0 || h_energy_pure_noise->GetEntries() > 0 || 
+        h_energy_hybrid->GetEntries() > 0 || h_energy_background->GetEntries() > 0 ||
+        h_energy_mixed_signal_bkg->GetEntries() > 0) {
+      pageNum++;
+      TCanvas* c_energy = new TCanvas("c_energy_family", "Total Energy by Cluster Family", 900, 700);
+      
+      // Set line colors
+      h_energy_pure_marley->SetLineColor(kBlue);
+      h_energy_pure_noise->SetLineColor(kGray+2);
+      h_energy_hybrid->SetLineColor(kGreen+2);
+      h_energy_background->SetLineColor(kRed);
+      h_energy_mixed_signal_bkg->SetLineColor(kMagenta+2);
+      h_energy_pure_marley->SetLineWidth(2);
+      h_energy_pure_noise->SetLineWidth(2);
+      h_energy_hybrid->SetLineWidth(2);
+      h_energy_background->SetLineWidth(2);
+      h_energy_mixed_signal_bkg->SetLineWidth(2);
+      
+      // Set fill colors with transparency for better visualization
+      h_energy_pure_marley->SetFillColorAlpha(kBlue, 0.3);
+      h_energy_pure_noise->SetFillColorAlpha(kGray+2, 0.3);
+      h_energy_hybrid->SetFillColorAlpha(kGreen+2, 0.3);
+      h_energy_background->SetFillColorAlpha(kRed, 0.3);
+      h_energy_mixed_signal_bkg->SetFillColorAlpha(kMagenta+2, 0.3);
+
+      // Find max to set proper axis range
+      double max_val_e = 0;
+      max_val_e = std::max(max_val_e, h_energy_pure_marley->GetMaximum());
+      max_val_e = std::max(max_val_e, h_energy_pure_noise->GetMaximum());
+      max_val_e = std::max(max_val_e, h_energy_hybrid->GetMaximum());
+      max_val_e = std::max(max_val_e, h_energy_background->GetMaximum());
+      max_val_e = std::max(max_val_e, h_energy_mixed_signal_bkg->GetMaximum());
+      
+      h_energy_pure_marley->SetMaximum(max_val_e * 1.2);
+      h_energy_pure_marley->SetTitle("Total Energy by Cluster Family;Total Energy [MeV];Clusters");
+      h_energy_pure_marley->Draw("HIST");
+      h_energy_pure_noise->Draw("HIST SAME");
+      h_energy_hybrid->Draw("HIST SAME");
+      h_energy_background->Draw("HIST SAME");
+      h_energy_mixed_signal_bkg->Draw("HIST SAME");
+
+      TLegend* leg_e = new TLegend(0.55,0.60,0.88,0.88);
+      leg_e->AddEntry(h_energy_pure_marley, Form("Pure Marley (%.0f)", h_energy_pure_marley->GetEntries()), "l");
+      leg_e->AddEntry(h_energy_pure_noise, Form("Pure Noise/UNKNOWN (%.0f)", h_energy_pure_noise->GetEntries()), "l");
+      leg_e->AddEntry(h_energy_hybrid, Form("Marley+Noise (%.0f)", h_energy_hybrid->GetEntries()), "l");
+      leg_e->AddEntry(h_energy_background, Form("Pure Background (%.0f)", h_energy_background->GetEntries()), "l");
+      leg_e->AddEntry(h_energy_mixed_signal_bkg, Form("Marley+Background (%.0f)", h_energy_mixed_signal_bkg->GetEntries()), "l");
+      leg_e->Draw();
+
+      gPad->SetLogy();
+      gPad->SetGridx();
+      gPad->SetGridy();
+
+      addPageNumber(c_energy, pageNum, totalPages);
+      c_energy->SaveAs(pdf.c_str());
+      delete leg_e;
+      delete c_energy;
+    }
+
     // Close PDF and file
     {
       TCanvas* cend = new TCanvas("c_ac_end","End",10,10);
@@ -1354,6 +1649,12 @@ int main(int argc, char* argv[]){
     delete h_adc_hybrid;
     delete h_adc_background;
     delete h_adc_mixed_signal_bkg;
+
+    delete h_energy_pure_marley;
+    delete h_energy_pure_noise;
+    delete h_energy_hybrid;
+    delete h_energy_background;
+    delete h_energy_mixed_signal_bkg;
 
     // record produced
     produced.push_back(std::filesystem::absolute(pdf).string());
