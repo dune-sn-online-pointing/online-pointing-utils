@@ -1,0 +1,4 @@
+{
+  "input_files": ["data/prod_es/es_valid_tick3_ch2_min2_tot1_clusters.root"],
+  "output_folder": "data/prod_es"
+}

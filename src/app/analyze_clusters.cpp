@@ -36,31 +36,24 @@ int main(int argc, char* argv[]){
   // Load parameters
   ParametersManager::getInstance().loadParameters();
 
-  // Check if tpstream files should be used for SimIDE energy calculation
-  bool use_simide_energy = j.value("use_simide_energy", false);
+
+  // Check if tpstream files should be used for SimIDE energy calculation will be after JSON is loaded below
 
   // Avoid ROOT auto-ownership of histograms to prevent double deletes on TFile close
   TH1::AddDirectory(kFALSE);
 
   gStyle->SetOptStat(111111); // no stats box on plots
 
+
   std::string json = clp.getOptionVal<std::string>("json");
   std::ifstream jf(json);
   LogThrowIf(!jf.is_open(), "Could not open JSON: " << json);
   nlohmann::json j;
   jf >> j;
-
-<<<<<<< HEAD
-  std::vector<std::string> inputs ;
-  
-=======
   // Check if tpstream files should be used for SimIDE energy calculation
   bool use_simide_energy = j.value("use_simide_energy", false);
 
-  // Use utility function for file finding (clusters files)
   std::vector<std::string> inputs = find_input_files(j, "_clusters.root");
-
->>>>>>> fa616d2 (Use tp_simide_energy branch in cluster analysis and plots; remove old tpstream SimIDE reading logic)
   // Override with CLI input if provided
   if (clp.isOptionTriggered("inputFile")) {
     std::string input_file = clp.getOptionVal<std::string>("inputFile");
@@ -153,19 +146,14 @@ int main(int argc, char* argv[]){
     }
     LogThrowIf(planes.empty(), "No clusters trees found in file: " << clusters_file);
 
-<<<<<<< HEAD
-    // Determine output file prefix: JSON outputFilename > JSON filename stem
-    std::string file_prefix;
-    try {
-        file_prefix = j.at("outputFilename").get<std::string>();
-    } catch (...) {
-        std::filesystem::path json_path(json);
-        file_prefix = json_path.stem().string();
-    }
-=======
-    // SimIDE energies will be accumulated from tp_simide_energy branch during cluster loop
-    // (No need to read separate tpstream file - energy is now stored per TP in clusters file)
->>>>>>> fa616d2 (Use tp_simide_energy branch in cluster analysis and plots; remove old tpstream SimIDE reading logic)
+  // Determine output file prefix: JSON outputFilename > JSON filename stem
+  std::string file_prefix;
+  try {
+    file_prefix = j.at("outputFilename").get<std::string>();
+  } catch (...) {
+    std::filesystem::path json_path(json);
+    file_prefix = json_path.stem().string();
+  }
 
     // Output PDF path
     std::string base = clusters_file.substr(clusters_file.find_last_of("/\\")+1);
@@ -213,18 +201,14 @@ int main(int argc, char* argv[]){
     // Vectors for the calibration graph (Collection plane X)
     std::vector<double> vec_total_particle_energy;
     std::vector<double> vec_total_cluster_charge;
-<<<<<<< HEAD
-    
-    // Track minimum cluster charges per plane
-    std::map<std::string, double> min_cluster_charge;
-=======
-    // Vectors for the calibration graph (U plane)
-    std::vector<double> vec_total_particle_energy_U;
-    std::vector<double> vec_total_cluster_charge_U;
-    // Vectors for the calibration graph (V plane)
-    std::vector<double> vec_total_particle_energy_V;
-    std::vector<double> vec_total_cluster_charge_V;
->>>>>>> fa616d2 (Use tp_simide_energy branch in cluster analysis and plots; remove old tpstream SimIDE reading logic)
+  // Vectors for the calibration graph (U plane)
+  std::vector<double> vec_total_particle_energy_U;
+  std::vector<double> vec_total_cluster_charge_U;
+  // Vectors for the calibration graph (V plane)
+  std::vector<double> vec_total_particle_energy_V;
+  std::vector<double> vec_total_cluster_charge_V;
+  // Track minimum cluster charges per plane
+  std::map<std::string, double> min_cluster_charge;
 
     // Marley TP fraction categorization counters (across all planes)
     int only_marley_clusters = 0;     // marley_tp_fraction = 1.0
@@ -244,7 +228,7 @@ int main(int argc, char* argv[]){
     h_adc_background->SetDirectory(nullptr);
     h_adc_mixed_signal_bkg->SetDirectory(nullptr);
 
-    auto ensureHist = [](std::map<std::string, TH1F*>& m, const std::string& key, const char* title, int nbins=100, double xmin=0, double xmax=100){
+    auto ensureHist = [&](std::map<std::string, TH1F*>& m, const std::string& key, const char* title, int nbins=100, double xmin=0, double xmax=100){
       if (m.count(key)==0){
         m[key] = new TH1F((key+"_h").c_str(), title, nbins, xmin, xmax);
         m[key]->SetStats(0);
@@ -252,11 +236,8 @@ int main(int argc, char* argv[]){
       }
       return m[key];
     };
-    auto ensureHist2D = [](std::map<std::string, TH2F*>& m, const std::string& key, const char* title){
+    auto ensureHist2D = [&](std::map<std::string, TH2F*>& m, const std::string& key, const char* title){
       if (m.count(key)==0){
-      // Determine output file prefix: JSON outputFilename > JSON filename stem
-      std::string file_prefix;
-      try {
         m[key] = new TH2F((key+"_h2").c_str(), title, 60, 0, 60, 100, 0, 300); // Changed from 100,0,100,100,0,1e6 to 60,0,60,100,0,300
         m[key]->SetDirectory(nullptr);
       }
@@ -264,9 +245,6 @@ int main(int argc, char* argv[]){
     };
 
     // Iterate planes
-      // Vectors for the calibration graph (U plane)
-      std::vector<double> vec_total_particle_energy_U;
-      std::vector<double> vec_total_cluster_charge_U;
     for (auto& pd : planes){
       // Branches
       int event=0, n_tps=0;
