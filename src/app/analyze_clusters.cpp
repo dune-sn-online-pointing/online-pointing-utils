@@ -326,11 +326,12 @@ int main(int argc, char* argv[]){
     h_adc_mixed_signal_bkg->SetDirectory(nullptr);
 
     // Histograms for total energy (converted from ADC) by cluster family
-    TH1F* h_energy_pure_marley = new TH1F("h_energy_pure_marley", "Total Energy: Pure Marley;Total Energy [MeV];Clusters", 50, 0, 100);
-    TH1F* h_energy_pure_noise = new TH1F("h_energy_pure_noise", "Total Energy: Pure Noise;Total Energy [MeV];Clusters", 50, 0, 100);
-    TH1F* h_energy_hybrid = new TH1F("h_energy_hybrid", "Total Energy: Hybrid (Marley+Noise);Total Energy [MeV];Clusters", 50, 0, 100);
-    TH1F* h_energy_background = new TH1F("h_energy_background", "Total Energy: Pure Background;Total Energy [MeV];Clusters", 50, 0, 100);
-    TH1F* h_energy_mixed_signal_bkg = new TH1F("h_energy_mixed_signal_bkg", "Total Energy: Mixed Marley+Background;Total Energy [MeV];Clusters", 50, 0, 100);
+    int bin_energy = 140, max_energy = 70; // 0.5 MeV bins up to 70 MeV
+    TH1F* h_energy_pure_marley = new TH1F("h_energy_pure_marley", "Total Energy: Pure Marley;Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
+    TH1F* h_energy_pure_noise = new TH1F("h_energy_pure_noise", "Total Energy: Pure Noise;Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
+    TH1F* h_energy_hybrid = new TH1F("h_energy_hybrid", "Total Energy: Hybrid (Marley+Noise);Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
+    TH1F* h_energy_background = new TH1F("h_energy_background", "Total Energy: Pure Background;Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
+    TH1F* h_energy_mixed_signal_bkg = new TH1F("h_energy_mixed_signal_bkg", "Total Energy: Mixed Marley+Background;Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
     h_energy_pure_marley->SetDirectory(nullptr);
     h_energy_pure_noise->SetDirectory(nullptr);
     h_energy_hybrid->SetDirectory(nullptr);
