@@ -32,7 +32,15 @@ while [[ $# -gt 0 ]]; do
     --output-folder) output_folder="$2"; shift 2;;
     --no-compile) noCompile=true; shift;;
     --clean-compile) cleanCompile=true; shift;;
-    -f|--override) override=true; shift;;
+    -f|--override)
+      if [[ $2 == "true" || $2 == "false" ]]; then
+        override=$2
+        shift 2
+      else
+        override=true
+        shift
+      fi
+      ;;
     -v|--verbose) verbose=true; shift;;
     -h|--help) print_help;;
     *) shift;;

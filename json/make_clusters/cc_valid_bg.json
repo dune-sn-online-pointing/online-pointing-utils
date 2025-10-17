@@ -1,14 +1,14 @@
 {
   "inputFile": "",
-  "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
+  "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/bkgs/",
   "inputList": [
   ],
   "inputListFile": "",
-  
+
   "max_files": 20,
 
-  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
-  "outputFilename": "es_bkg_myproc",
+  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/bkgs/",
+  "outputFilename": "cc_valid_bg",
 
   "tick_limit": 3,
   "channel_limit": 2,

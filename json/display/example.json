@@ -1,5 +1,5 @@
 {
-  "clusters_file": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc//cc_valid_tick3_ch2_min2_tot1_clusters.root",
+  "clusters_file": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/bkgs//cc_bkg_myproc_tick3_ch2_min2_tot2_clusters.root",
   "mode": "clusters",
   "only_marley": false
 }

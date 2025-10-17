@@ -1,8 +1,0 @@
-{
-    "bkg_filenames": "",                
-    "signal_clusters": "",              
-    "output_folder": "",                
-    "radius": 50,                       
-    "plane": 2,                         
-    "max_events_per_filename": 1000     
-}
