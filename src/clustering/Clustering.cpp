@@ -152,6 +152,26 @@ bool channel_condition_with_pbc(TriggerPrimitive *tp1, TriggerPrimitive* tp2, in
 
     double diff = std::abs(tp1->GetDetectorChannel() - tp2->GetDetectorChannel());
     int channels_in_this_view = APA::channels_in_view[tp1->GetView()];
+    
+    // For X plane, check if TPs are in the same TPC volume
+    // X plane: 960 channels split into 2 volumes of 480 each
+    // Channels 1600-2079 → volume 0, channels 2080-2559 → volume 1
+    if (tp1->GetView() == "X") {
+        int ch1 = tp1->GetDetectorChannel() % 2560;
+        int ch2 = tp2->GetDetectorChannel() % 2560;
+        
+        // Determine which volume each TP is in
+        bool tp1_in_vol0 = (ch1 >= 1600 && ch1 < 2080);
+        bool tp1_in_vol1 = (ch1 >= 2080 && ch1 < 2560);
+        bool tp2_in_vol0 = (ch2 >= 1600 && ch2 < 2080);
+        bool tp2_in_vol1 = (ch2 >= 2080 && ch2 < 2560);
+        
+        // Reject if TPs are in different volumes
+        if ((tp1_in_vol0 && tp2_in_vol1) || (tp1_in_vol1 && tp2_in_vol0)) {
+            return false;
+        }
+    }
+    
     if (diff <= channel_limit) 
         return true;
     
