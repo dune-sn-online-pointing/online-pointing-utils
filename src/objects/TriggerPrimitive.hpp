@@ -20,6 +20,8 @@ class TriggerPrimitive {
         void SetDetector(int detector)                                { this->detector_ = detector; }
         void SetDetectorChannel(int detector_channel)                 { this->detector_channel_ = detector_channel; }
         void SetEvent(int event)                                      { this->event_ = event; }
+        void SetSimideEnergy(double simide_energy)                    { this->simide_energy_ = simide_energy; }
+        void AddSimideEnergy(double simide_energy)                    { this->simide_energy_ += simide_energy; }
         void SetView(int ch) {
             if (ch < APA::induction_channels)                                      { view_ = "U"; } 
             else if (ch < APA::induction_channels * 2)                             { view_ = "V"; }
@@ -44,6 +46,7 @@ class TriggerPrimitive {
         uint64_t GetSamplesToPeak()         const { return samples_to_peak_; }
         uint64_t GetAdcIntegral()           const { return adc_integral_; }
         uint64_t GetAdcPeak()               const { return adc_peak_; }
+        double GetSimideEnergy()            const { return simide_energy_; }
         const TrueParticle* GetTrueParticle() const {
             if (true_particle_ == nullptr) {
                 // LogWarning << "No true particle associated to this TriggerPrimitive" << std::endl;
@@ -129,6 +132,9 @@ class TriggerPrimitive {
         int event_ = -1;
 
         const TrueParticle* true_particle_ = nullptr;
+        
+        // SimIDE energy in MeV (sum of all SimIDEs contributing to this TP)
+        double simide_energy_ = 0.0;
 
 }; // class TriggerPrimitive
 

@@ -594,6 +594,7 @@ void match_tps_to_simides_direct(
     UInt_t simide_channel;
     UShort_t simide_timestamp;
     Int_t simide_track_id;
+    Float_t simide_energy;  // Energy in MeV
 
     if (!SetBranchWithFallback(simidestree, {"ChannelID", "channel"}, &simide_channel, "SimIDEs channel")) {
         return;
@@ -603,6 +604,15 @@ void match_tps_to_simides_direct(
     }
     if (!SetBranchWithFallback(simidestree, {"trackID", "origTrackID"}, &simide_track_id, "SimIDEs track ID")) {
         return;
+    }
+    
+    // Try to read the energy branch (optional - may not be available in all files)
+    bool has_energy = (simidestree->GetBranch("energy") != nullptr);
+    if (has_energy) {
+        simidestree->SetBranchAddress("energy", &simide_energy);
+        if (verboseMode) LogInfo << "SimIDE energy branch found - will accumulate energy to TPs" << std::endl;
+    } else {
+        LogWarning << "SimIDE energy branch not found - TP simide_energy will remain 0" << std::endl;
     }
     
     // Build lookup map for true particles by trackID
@@ -619,6 +629,7 @@ void match_tps_to_simides_direct(
         double time_tpc_ticks;
         int track_id;
         TrueParticle* particle;
+        double energy;  // Energy in MeV
     };
     std::vector<SimIDEInfo> simides_in_event;
     
@@ -635,11 +646,13 @@ void match_tps_to_simides_direct(
         // Find associated particle
         auto particle_it = track_to_particle.find(std::abs(simide_track_id));
         if (particle_it != track_to_particle.end()) {
+            double energy_mev = has_energy ? simide_energy : 0.0;
             simides_in_event.push_back({
                 (int)simide_channel,
                 time_tpc_aligned,
                 simide_track_id,
-                particle_it->second
+                particle_it->second,
+                energy_mev
             });
         }
     }
@@ -751,6 +764,9 @@ void match_tps_to_simides_direct(
             
             // Check if within tolerance
             if (channel_diff <= channel_tolerance && time_diff <= time_tolerance_ticks) {
+                // Accumulate SimIDE energy to this TP (sum all SimIDEs that overlap)
+                tp.AddSimideEnergy(simide.energy);
+                
                 // Score based on combined time and channel proximity (favor tighter channel matches)
                 // Increased channel weight improves spatial consistency in presence of wide time windows
                 double score = time_diff + (channel_diff * 20.0);
@@ -1054,6 +1070,7 @@ void write_tps(
     Int_t tp_truth_id=-1; Int_t tp_track_id=-1; Int_t tp_pdg=0; Int_t nu_truth_id=-1;
     Float_t nu_energy = -1.0f;
     Float_t time_offset_correction = 0.0f; // TPC ticks correction applied to truth time windows
+    Double_t simide_energy = 0.0; // SimIDE energy accumulated to this TP (in MeV)
     tpsTree.Branch("event", &evt, "event/I");
     tpsTree.Branch("version", &version, "version/s");
     tpsTree.Branch("detid", &detid, "detid/i");
@@ -1074,6 +1091,7 @@ void write_tps(
     tpsTree.Branch("neutrino_truth_id", &nu_truth_id, "neutrino_truth_id/I");
     tpsTree.Branch("neutrino_energy", &nu_energy, "neutrino_energy/F");
     tpsTree.Branch("time_offset_correction", &time_offset_correction, "time_offset_correction/F");
+    tpsTree.Branch("simide_energy", &simide_energy, "simide_energy/D");
 
     // True particles tree
     TTree trueTree("true_particles", "True particles per event");
@@ -1126,6 +1144,7 @@ void write_tps(
         const auto& v = tps_by_event[ev];
         for (const auto& tp : v) {
             evt = tp.GetEvent(); version = TriggerPrimitive::s_trigger_primitive_version; detid = 0; channel = tp.GetChannel(); s_over = tp.GetSamplesOverThreshold(); tstart = tp.GetTimeStart(); s_to_peak = tp.GetSamplesToPeak(); adc_integral = tp.GetAdcIntegral(); adc_peak = tp.GetAdcPeak(); det = tp.GetDetector(); det_channel = tp.GetDetectorChannel(); view = tp.GetView();
+            simide_energy = tp.GetSimideEnergy(); // Get accumulated SimIDE energy from TP
             
             // Set time offset correction for this event
             // auto offset_it = g_event_time_offsets.find(evt);
