@@ -1571,12 +1571,12 @@ int main(int argc, char* argv[]){
     }
 
     // --- New Page: Total Energy (from ADC) by Cluster Family ---
-    if (h_energy_pure_marley->GetEntries() > 0 || h_energy_pure_noise->GetEntries() > 0 || 
+    if (h_energy_pure_marley->GetEntries() > 0 || h_energy_pure_noise->GetEntries() > 0 ||
         h_energy_hybrid->GetEntries() > 0 || h_energy_background->GetEntries() > 0 ||
         h_energy_mixed_signal_bkg->GetEntries() > 0) {
       pageNum++;
       TCanvas* c_energy = new TCanvas("c_energy_family", "Total Energy by Cluster Family", 900, 700);
-      
+
       // Set line colors
       h_energy_pure_marley->SetLineColor(kBlue);
       h_energy_pure_noise->SetLineColor(kGray+2);
@@ -1588,7 +1588,7 @@ int main(int argc, char* argv[]){
       h_energy_hybrid->SetLineWidth(2);
       h_energy_background->SetLineWidth(2);
       h_energy_mixed_signal_bkg->SetLineWidth(2);
-      
+
       // Set fill colors with transparency for better visualization
       h_energy_pure_marley->SetFillColorAlpha(kBlue, 0.3);
       h_energy_pure_noise->SetFillColorAlpha(kGray+2, 0.3);
@@ -1602,6 +1602,22 @@ int main(int argc, char* argv[]){
       h_energy_hybrid->SetStats(0);
       h_energy_background->SetStats(0);
       h_energy_mixed_signal_bkg->SetStats(0);
+
+      // Set custom x-axis labels: every 2 MeV from 0 to 10, then every 5 MeV until 70
+      TAxis* xaxis = h_energy_pure_marley->GetXaxis();
+      // xaxis->SetNdivisions(510, kFALSE); // 5 major, 10 minor divisions per major
+      xaxis->SetTickLength(0.03);
+      // Remove existing labels
+      for (int i = 1; i <= xaxis->GetNbins(); ++i) xaxis->SetBinLabel(i, "");
+      // Set manual labels
+      for (int mev = 0; mev <= 10; mev += 2) {
+        int bin = xaxis->FindBin(mev);
+        xaxis->SetBinLabel(bin, Form("%d", mev));
+      }
+      for (int mev = 15; mev <= 70; mev += 5) {
+        int bin = xaxis->FindBin(mev);
+        xaxis->SetBinLabel(bin, Form("%d", mev));
+      }
 
 
       // Find max to set proper axis range
@@ -1619,6 +1635,26 @@ int main(int argc, char* argv[]){
       h_energy_hybrid->Draw("HIST SAME");
       h_energy_background->Draw("HIST SAME");
       h_energy_mixed_signal_bkg->Draw("HIST SAME");
+      // Draw vertical dotted lines at every 2 units on X
+      double x_min = h_energy_pure_marley->GetXaxis()->GetXmin();
+      double x_max = h_energy_pure_marley->GetXaxis()->GetXmax();
+      // Draw vertical lines only at labeled ticks
+      for (int mev = 0; mev <= 10; mev += 2) {
+        if (mev < x_min || mev > x_max) continue;
+        TLine* line = new TLine(mev, 0, mev, max_val_e * 1.2);
+        line->SetLineStyle(2); // dotted style
+        line->SetLineColor(kBlack);
+        line->SetLineWidth(1);
+        line->Draw("SAME");
+      }
+      for (int mev = 15; mev <= 70; mev += 5) {
+        if (mev < x_min || mev > x_max) continue;
+        TLine* line = new TLine(mev, 0, mev, max_val_e * 1.2);
+        line->SetLineStyle(2); // dotted style
+        line->SetLineColor(kBlack);
+        line->SetLineWidth(1);
+        line->Draw("SAME");
+      }
 
       TLegend* leg_e = new TLegend(0.55,0.60,0.88,0.88);
       leg_e->AddEntry(h_energy_pure_marley, Form("Pure Marley (%.0f)", h_energy_pure_marley->GetEntries()), "l");
@@ -1629,7 +1665,7 @@ int main(int argc, char* argv[]){
       leg_e->Draw();
 
       gPad->SetLogy();
-      gPad->SetGridx();
+      // gPad->SetGridx();
       gPad->SetGridy();
 
       addPageNumber(c_energy, pageNum, totalPages);
