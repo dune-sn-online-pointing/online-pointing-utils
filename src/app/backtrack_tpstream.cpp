@@ -90,6 +90,7 @@ int main(int argc, char* argv[]) {
         LogInfo << "Max files: " << max_files << std::endl;
     } else {
         LogInfo << "Max files: unlimited" << std::endl;
+        max_files = filenames.size();
     }
 
     // Output folder: CLI outFolder > JSON outputFolder > "data"
@@ -121,12 +122,12 @@ int main(int argc, char* argv[]) {
     for (auto& filename : filenames) {
 
         count_files++;
-        if (max_files > 0 && count_files > max_files) {
+        if (count_files > max_files) {
             LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
             break;
         }
 
-        GenericToolbox::displayProgressBar(count_files, filenames.size(), "Processing files...");
+        GenericToolbox::displayProgressBar(count_files, max_files, "Processing files...");
 
         // Compute expected output path early to allow skip-if-exists behavior
         std::string input_basename = filename.substr(filename.find_last_of("/\\") + 1);

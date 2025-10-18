@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
     std::ifstream i(json); nlohmann::json j; i >> j;
 
     // Use utility function for file finding
-    std::vector<std::string> patterns = {"_tps.root", "_tps_bkg.root"};
+    std::vector<std::string> patterns = {"_tps.root"};
     std::vector<std::string> inputs = find_input_files(j, patterns);
     
     // Override with CLI input if provided
