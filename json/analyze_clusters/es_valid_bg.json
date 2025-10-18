@@ -1,0 +1,7 @@
+{
+  "inputFile": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//es_valid_bg_tick3_ch2_min2_tot2_clusters.root",
+
+  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
+  
+  "use_simide_energy": true
+}

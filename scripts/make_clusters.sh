@@ -18,7 +18,16 @@ while [[ $# -gt 0 ]]; do
     -j|--json) settingsFile="$2"; shift 2;;
     --output-folder) output_folder="$2"; shift 2;;
     --no-compile) noCompile=true; shift;;
-    --clean-compile) cleanCompile=true; shift;;
+    --clean-compile) cleanCompile=true; shift;;        
+    -o|--override)
+      if [[ $2 == "true" || $2 == "false" ]]; then
+      override=$2
+      shift 2
+      else
+      override=true
+      shift
+      fi
+      ;;
     -v|--verbose) verbose=true; shift;;
     -h|--help) print_help;;
     *) shift;;
