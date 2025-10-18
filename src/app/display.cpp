@@ -207,22 +207,35 @@ void drawCurrent(){
   double pentagon_offset = GET_PARAM_DOUBLE("display.pentagon_offset");
 
   if (ViewerState::noTPs) {
-    // Blob mode: draw a single filled box representing the cluster extent
-    std::string category = getClusterCategory(it.marley_tp_fraction, it.generator_tp_fraction);
-    int color = getCategoryColor(category);
+    // Blob mode: fill the time extent (min to max) for each channel in the cluster
+    std::map<int, std::pair<int, int>> ch_time_range; // ch_contiguous -> (min_time, max_time)
     
-    // Fill the entire cluster extent with uniform color
-    for (int ch_contiguous = cmin; ch_contiguous <= cmax; ++ch_contiguous) {
-      for (int t = tmin; t <= tmax; ++t) {
-        frame->Fill(ch_contiguous, t, 200.0); // Fixed ADC value for blob
+    // First pass: determine time range for each channel
+    for (size_t i=0;i<nTPs;++i){
+      int ts = it.tstart[i];
+      int tot = it.sot[i];
+      int te = ts + tot;
+      int ch_actual = it.ch[i];
+      int ch_contiguous = ch_to_idx[ch_actual];
+      
+      if (ch_time_range.find(ch_contiguous) == ch_time_range.end()) {
+        ch_time_range[ch_contiguous] = {ts, te};
+      } else {
+        ch_time_range[ch_contiguous].first = std::min(ch_time_range[ch_contiguous].first, ts);
+        ch_time_range[ch_contiguous].second = std::max(ch_time_range[ch_contiguous].second, te);
       }
     }
     
-    // Draw a box outline
-    TBox* box = new TBox(cmin - 0.5, tmin - 0.5, cmax + 0.5, tmax + 0.5);
-    box->SetLineColor(color);
-    box->SetLineWidth(3);
-    box->SetFillStyle(0); // Transparent fill, just outline
+    // Second pass: fill histogram for entire time extent on each channel
+    for (const auto& kv : ch_time_range) {
+      int ch_contiguous = kv.first;
+      int t_min = kv.second.first;
+      int t_max = kv.second.second;
+      
+      for (int t = t_min; t < t_max; ++t) {
+        frame->Fill(ch_contiguous, t, threshold_adc + 5.0);
+      }
+    }
     
   } else {
     // Normal TP mode: draw individual TPs
@@ -266,15 +279,18 @@ void drawCurrent(){
   gStyle->SetPalette(55);
   frame->Draw("COLZ");
   
-  // In blob mode, draw the box after the histogram
+  // In blob mode, draw category-colored boxes around cluster regions
   if (ViewerState::noTPs) {
     std::string category = getClusterCategory(it.marley_tp_fraction, it.generator_tp_fraction);
     int color = getCategoryColor(category);
+    
+    // Draw a box outline around the entire cluster extent
     TBox* box = new TBox(cmin - 0.5, tmin - 0.5, cmax + 0.5, tmax + 0.5);
     box->SetLineColor(color);
     box->SetLineWidth(3);
     box->SetFillStyle(0); // Transparent fill, just outline
     box->Draw("same");
+
     
     // Add legend showing cluster categories
     TLegend* leg = new TLegend(0.15, 0.70, 0.40, 0.88);
