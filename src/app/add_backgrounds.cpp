@@ -38,7 +38,7 @@ std::vector<std::string> find_files_in_folder(const std::string& folder, const s
 
 int main(int argc, char* argv[]) {
     CmdLineParser clp;
-    clp.getDescription() << "> add_backgrounds app - Merge signal TPs with random background events, writing *_tps_bkg.root files." << std::endl;
+    clp.getDescription() << "> add_backgrounds app - Merge signal TPs with random background events, writing *_tps_bg.root files." << std::endl;
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
     clp.addTriggerOption("verboseMode", {"-v", "--verbose"}, "Run in verbose mode");
@@ -147,9 +147,9 @@ int main(int argc, char* argv[]) {
         
         std::string output_filename = outputFolder + "/" + base_name;
         if (around_vertex_only) {
-            output_filename += "_bkg_vtx" + std::to_string((int)vertex_radius) + "_tps.root";
+            output_filename += "_bg_vtx" + std::to_string((int)vertex_radius) + "_tps.root";
         } else {
-            output_filename += "_bkg_tps.root";
+            output_filename += "_bg_tps.root";
         }
         if (verboseMode) LogInfo << "Output file: " << output_filename << std::endl;
         // Check if output file already exists
@@ -244,6 +244,10 @@ int main(int argc, char* argv[]) {
                 std::vector<TrueParticle> bkg_true_copy;
                 if (bkg_true_by_event.count(bkg_event_id) > 0) {
                     bkg_true_copy = bkg_true_by_event.at(bkg_event_id);
+                    // Update event numbers for all background truth particles (CRITICAL BUG FIX)
+                    for (auto& true_particle : bkg_true_copy) {
+                        true_particle.SetEvent(event_id);
+                    }
                 }
                 persistent_bkg_true.push_back(bkg_true_copy);
                 std::vector<TrueParticle>& persistent_bkg = persistent_bkg_true.back();
@@ -254,6 +258,9 @@ int main(int argc, char* argv[]) {
                 // Add background TPs, updating their truth pointers to the persistent copied data
                 for (const auto& bkg_tp : bkg_tps) {
                     TriggerPrimitive tp = bkg_tp;
+                    
+                    // Update the event number to match the signal event (CRITICAL BUG FIX)
+                    tp.SetEvent(event_id);
                     
                     // Update truth pointer to point to our persistent copy
                     const TrueParticle* orig_ptr = bkg_tp.GetTrueParticle();
