@@ -9,7 +9,7 @@
   "around_vertex_only": false,
   "vertex_radius": 100,
   
-  "max_files": 20,
+  "max_files": 1000,
   
   "root_verbosity": "kWarning"
 }

@@ -5,10 +5,10 @@
   ],
   "inputListFile": "",
   
-  "max_files": 100,
+  "max_files": 1000,
 
   "outputFolder": "/eos/user/e/evilla/dune/sn-tps/production_es/bkgs/",
-  "outputFilename": "es_bkg_myproc",
+  "outputFilename": "es_myproc_bg",
 
   "tick_limit": 3,
   "channel_limit": 2,

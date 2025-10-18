@@ -12,7 +12,7 @@ print_help(){
   echo "  --clean-compile             Clean and recompile the code"
   echo "  -i|--input-file <file>      Input file with list of input ROOT files. Overrides json."
   echo "  --output-folder <dir>       Output folder (default: data/). Overrides json."
-  echo "  -f|--override               Force reprocessing even if output already exists (default: false)"
+  echo "  -o|--override               Force reprocessing even if output already exists (default: false)"
   echo "  -v|--verbose                Enable verbose mode"
   echo "  -h|--help                   Print this help message."
   exit 0;
@@ -32,7 +32,7 @@ while [[ $# -gt 0 ]]; do
     --output-folder) output_folder="$2"; shift 2;;
     --no-compile) noCompile=true; shift;;
     --clean-compile) cleanCompile=true; shift;;
-    -f|--override)
+    -o|--override)
       if [[ $2 == "true" || $2 == "false" ]]; then
         override=$2
         shift 2

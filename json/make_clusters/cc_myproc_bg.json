@@ -8,7 +8,7 @@
   "max_files": -1,
 
   "outputFolder": "/eos/user/e/evilla/dune/sn-tps/production_cc/bkgs/",
-  "outputFilename": "cc_bkg_myproc",
+  "outputFilename": "cc_myproc_bg",
 
   "tick_limit": 3,
   "channel_limit": 2,

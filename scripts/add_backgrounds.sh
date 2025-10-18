@@ -33,7 +33,15 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         -j|--json) settingsFile="$2"; shift 2 ;;
         -v|--verbose) verbose=true; shift ;;
-        -o|--override) override=true; shift ;;
+        -o|--override) 
+            if [[ $2 == "true" || $2 == "false" ]]; then
+                override=$2
+                shift 2
+            else
+                override=true
+                shift
+            fi
+            ;;
         --no-compile) noCompile="--no-compile"; shift ;;
         --clean-compile) cleanCompile="--clean-compile"; shift ;;
         -h|--help) print_help; exit 0 ;;
