@@ -20,6 +20,8 @@ namespace ViewerState {
     double total_energy = 0.0;
     float marley_tp_fraction = 0.0f;
     float generator_tp_fraction = 0.0f;
+    // Per-TP cluster membership and category (for events mode)
+    std::vector<std::string> tp_category;  // Category for each TP
   // Event-mode metadata
   bool isEvent = false;
   int eventId = -1;
@@ -207,35 +209,8 @@ void drawCurrent(){
   double pentagon_offset = GET_PARAM_DOUBLE("display.pentagon_offset");
 
   if (ViewerState::noTPs) {
-    // Blob mode: fill the time extent (min to max) for each channel in the cluster
-    std::map<int, std::pair<int, int>> ch_time_range; // ch_contiguous -> (min_time, max_time)
-    
-    // First pass: determine time range for each channel
-    for (size_t i=0;i<nTPs;++i){
-      int ts = it.tstart[i];
-      int tot = it.sot[i];
-      int te = ts + tot;
-      int ch_actual = it.ch[i];
-      int ch_contiguous = ch_to_idx[ch_actual];
-      
-      if (ch_time_range.find(ch_contiguous) == ch_time_range.end()) {
-        ch_time_range[ch_contiguous] = {ts, te};
-      } else {
-        ch_time_range[ch_contiguous].first = std::min(ch_time_range[ch_contiguous].first, ts);
-        ch_time_range[ch_contiguous].second = std::max(ch_time_range[ch_contiguous].second, te);
-      }
-    }
-    
-    // Second pass: fill histogram for entire time extent on each channel
-    for (const auto& kv : ch_time_range) {
-      int ch_contiguous = kv.first;
-      int t_min = kv.second.first;
-      int t_max = kv.second.second;
-      
-      for (int t = t_min; t < t_max; ++t) {
-        frame->Fill(ch_contiguous, t, threshold_adc + 5.0);
-      }
-    }
+    // Blob mode: don't fill histogram, just set it up as background
+    // Boxes will be drawn on top
     
   } else {
     // Normal TP mode: draw individual TPs
@@ -279,17 +254,57 @@ void drawCurrent(){
   gStyle->SetPalette(55);
   frame->Draw("COLZ");
   
-  // In blob mode, draw category-colored boxes around cluster regions
+  // In blob mode, draw category-colored boxes for cluster regions
   if (ViewerState::noTPs) {
-    std::string category = getClusterCategory(it.marley_tp_fraction, it.generator_tp_fraction);
-    int color = getCategoryColor(category);
+    // In events mode, we need to identify individual clusters within the aggregated event
+    // and draw each cluster as a separate blob with its correct category color
     
-    // Draw a box outline around the entire cluster extent
-    TBox* box = new TBox(cmin - 0.5, tmin - 0.5, cmax + 0.5, tmax + 0.5);
-    box->SetLineColor(color);
-    box->SetLineWidth(3);
-    box->SetFillStyle(0); // Transparent fill, just outline
-    box->Draw("same");
+    // Get conversion parameters for coordinate transformation
+    double wire_pitch_cm = GET_PARAM_DOUBLE("geometry.wire_pitch_collection_cm");
+    if (it.plane == "U" || it.plane == "V") {
+      wire_pitch_cm = GET_PARAM_DOUBLE("geometry.wire_pitch_induction_diagonal_cm");
+    }
+    double time_tick_cm = GET_PARAM_DOUBLE("timing.time_tick_cm");
+    
+    // Draw each TP with its correct category color
+    for (size_t i=0;i<nTPs;++i){
+      int ts = it.tstart[i];
+      int tot = it.sot[i];
+      int te = ts + tot;
+      int ch_actual = it.ch[i];
+      int ch_contiguous = ch_to_idx[ch_actual];
+      
+      // Get category and color for this specific TP
+      std::string category;
+      if (it.isEvent && i < it.tp_category.size()) {
+        // Events mode: use stored per-TP category
+        category = it.tp_category[i];
+      } else {
+        // Clusters mode: use overall cluster category
+        category = getClusterCategory(it.marley_tp_fraction, it.generator_tp_fraction);
+      }
+      int color = getCategoryColor(category);
+      
+      // Convert coordinates to correct units (cm if useCmUnits, otherwise detector units)
+      double x1, x2, y1, y2;
+      if (ViewerState::useCmUnits) {
+        x1 = (ch_contiguous - 0.5) * wire_pitch_cm;
+        x2 = (ch_contiguous + 0.5) * wire_pitch_cm;
+        y1 = (ts - 0.5) * time_tick_cm;
+        y2 = (te - 0.5) * time_tick_cm;
+      } else {
+        x1 = ch_contiguous - 0.5;
+        x2 = ch_contiguous + 0.5;
+        y1 = ts - 0.5;
+        y2 = te - 0.5;
+      }
+      
+      TBox* blob = new TBox(x1, y1, x2, y2);
+      blob->SetFillColor(color);
+      blob->SetFillStyle(1001);  // Solid fill
+      blob->SetLineWidth(0);     // No outline
+      blob->Draw("same");
+    }
 
     
     // Add legend showing cluster categories
@@ -300,29 +315,22 @@ void drawCurrent(){
     leg->SetFillColor(kWhite);
     leg->SetBorderSize(1);
     
-    // Add entry for current cluster
-    TBox* boxLegend = new TBox(0,0,1,1);
-    boxLegend->SetLineColor(color);
-    boxLegend->SetLineWidth(3);
-    boxLegend->SetFillStyle(0);
-    leg->AddEntry(boxLegend, Form("%s (this cluster)", category.c_str()), "l");
-    leg->AddEntry((TObject*)0, "", ""); // Spacing
+    // Add all categories as reference
+    TBox* box1 = new TBox(0,0,1,1); box1->SetFillColor(kBlue); box1->SetFillStyle(1001);
+    leg->AddEntry(box1, "Pure Marley", "f");
     
-    // Add all categories
-    TBox* box1 = new TBox(0,0,1,1); box1->SetLineColor(kBlue); box1->SetLineWidth(2); box1->SetFillStyle(0);
-    leg->AddEntry(box1, "Pure Marley", "l");
+    TBox* box2 = new TBox(0,0,1,1); box2->SetFillColor(kGray+2); box2->SetFillStyle(1001);
+    leg->AddEntry(box2, "Pure Noise", "f");
     
-    TBox* box2 = new TBox(0,0,1,1); box2->SetLineColor(kGray+2); box2->SetLineWidth(2); box2->SetFillStyle(0);
-    leg->AddEntry(box2, "Pure Noise", "l");
+    TBox* box3 = new TBox(0,0,1,1); box3->SetFillColor(kGreen+2); box3->SetFillStyle(1001);
+    leg->AddEntry(box3, "Marley+Noise", "f");
     
-    TBox* box3 = new TBox(0,0,1,1); box3->SetLineColor(kGreen+2); box3->SetLineWidth(2); box3->SetFillStyle(0);
-    leg->AddEntry(box3, "Marley+Noise", "l");
+    TBox* box4 = new TBox(0,0,1,1); box4->SetFillColor(kRed); box4->SetFillStyle(1001);
+    leg->AddEntry(box4, "Pure Background", "f");
     
-    TBox* box4 = new TBox(0,0,1,1); box4->SetLineColor(kRed); box4->SetLineWidth(2); box4->SetFillStyle(0);
-    leg->AddEntry(box4, "Pure Background", "l");
-    
-    TBox* box5 = new TBox(0,0,1,1); box5->SetLineColor(kMagenta+2); box5->SetLineWidth(2); box5->SetFillStyle(0);
-    leg->AddEntry(box5, "Marley+Background", "l");
+    TBox* box5 = new TBox(0,0,1,1); box5->SetFillColor(kMagenta+2); box5->SetFillStyle(1001);
+    leg->AddEntry(box5, "Marley+Background", "f");
+
     
     leg->Draw();
   }
@@ -613,12 +621,22 @@ int main(int argc, char** argv){
           it.generator_tp_fraction = gen_frac;
         }
         
+        // Determine category for this cluster
+        std::string cluster_category = getClusterCategory(marley_frac, gen_frac);
+        
         if (v_ch){ it.ch.insert(it.ch.end(), v_ch->begin(), v_ch->end()); }
         if (v_ts){ it.tstart.reserve(it.tstart.size()+v_ts->size()); for (int ts : *v_ts) it.tstart.push_back(toTPCticks(ts)); }
         if (v_sot){ it.sot.insert(it.sot.end(), v_sot->begin(), v_sot->end()); }
         if (v_stopeak){ it.stopeak.insert(it.stopeak.end(), v_stopeak->begin(), v_stopeak->end()); }
         if (v_adc_peak){ it.adc_peak.insert(it.adc_peak.end(), v_adc_peak->begin(), v_adc_peak->end()); }
         if (v_adc_integral){ it.adc_integral.insert(it.adc_integral.end(), v_adc_integral->begin(), v_adc_integral->end()); }
+        
+        // Store category for each TP in this cluster
+        if (v_ch) {
+          for (size_t tp_idx = 0; tp_idx < v_ch->size(); ++tp_idx) {
+            it.tp_category.push_back(cluster_category);
+          }
+        }
       }
       // Only keep events with more than 1 TP
       for (auto &kv : agg){ if (kv.second.ch.size() > 1) ViewerState::items.emplace_back(std::move(kv.second)); }
