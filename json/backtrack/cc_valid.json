@@ -4,6 +4,9 @@
   "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/",
   "inputList": [
   ],
+
+  "max_files": 20,
+  
   "inputListFile": "/path/list_of_files.txt",
 
   "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/",
