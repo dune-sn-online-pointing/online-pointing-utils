@@ -164,26 +164,31 @@ int main(int argc, char* argv[]){
   // Check if tpstream files should be used for SimIDE energy calculation
   bool use_simide_energy = j.value("use_simide_energy", false);
 
-  std::vector<std::string> inputs = find_input_files(j, "_clusters.root");
+  // Accept any file containing _clusters and ending in .root
+  std::vector<std::string> inputs = find_input_files(j, "_clusters");
   // Override with CLI input if provided
   if (clp.isOptionTriggered("inputFile")) {
     std::string input_file = clp.getOptionVal<std::string>("inputFile");
     inputs.clear();
-    if (input_file.find("_clusters.root") != std::string::npos || input_file.find(".root") != std::string::npos) {
+    // Accept any file containing _clusters and ending in .root
+    std::regex clusters_regex(".*_clusters.*\\.root$");
+    if (std::regex_match(input_file, clusters_regex)) {
       inputs.push_back(input_file);
     } else {
       std::ifstream lf(input_file);
       std::string line;
       while (std::getline(lf, line)) {
         if (!line.empty() && line[0] != '#') {
-          inputs.push_back(line);
+          if (std::regex_match(line, clusters_regex)) {
+            inputs.push_back(line);
+          }
         }
       }
     }
   }
 
   // Use utility function for file finding (clusters files)
-  if (inputs.empty()) inputs = find_input_files(j, "_clusters.root");
+  if (inputs.empty()) inputs = find_input_files(j, "_clusters");
 
   LogInfo << "Number of valid files: " << inputs.size() << std::endl;
   LogThrowIf(inputs.empty(), "No valid input files found.");

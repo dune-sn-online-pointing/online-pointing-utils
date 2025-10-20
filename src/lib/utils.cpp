@@ -43,8 +43,15 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
     // Helper functions
     auto has_suffix = [&file_suffix](const std::string& path) {
         std::string basename = path.substr(path.find_last_of("/\\") + 1);
-        return basename.length() >= file_suffix.length() && 
-               basename.substr(basename.length() - file_suffix.length()) == file_suffix;
+        if (file_suffix == "_clusters") {
+            // Accept any file containing '_clusters' and ending with '.root'
+            return basename.find("_clusters") != std::string::npos &&
+                   basename.size() >= 5 &&
+                   basename.substr(basename.size() - 5) == ".root";
+        } else {
+            return basename.length() >= file_suffix.length() && 
+                   basename.substr(basename.length() - file_suffix.length()) == file_suffix;
+        }
     };
     
     auto file_exists = [](const std::string& path) { 
