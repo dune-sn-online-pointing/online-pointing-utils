@@ -270,6 +270,10 @@ int main(int argc, char* argv[]) {
                     // Update the event number to match the signal event (CRITICAL BUG FIX)
                     tp.SetEvent(event_id);
                     
+                    // Reset SimIDE energy for background TPs to avoid artificially high cluster energies
+                    // Background TPs should not contribute truth energy to the clusters
+                    tp.SetSimideEnergy(0.0);
+                    
                     // Update truth pointer to point to our persistent copy
                     if (orig_ptr != nullptr && !persistent_bkg.empty()) {
                         int truth_id = orig_ptr->GetTruthId();
