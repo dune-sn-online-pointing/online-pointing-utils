@@ -453,6 +453,8 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
     float marley_tp_fraction;
     double total_charge;
     double total_energy;    
+    double conversion_factor_collection = 3600.0;
+    double conversion_factor_induction = 900.0;
     double conversion_factor;
     int true_pdg;
     bool is_main_cluster;
@@ -549,6 +551,12 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
     
 
     // fill the tree
+    // Set conversion factor based on view
+    if (view == "X" || view == "Collection") {
+        conversion_factor = conversion_factor_collection;
+    } else {
+        conversion_factor = conversion_factor_induction;
+    }
     for (auto& Cluster : clusters) {
         event = Cluster.get_event();
         n_tps = Cluster.get_size();
@@ -593,7 +601,7 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         true_interaction_point = &true_interaction;
         total_charge = Cluster.get_total_charge();
         total_energy = Cluster.get_total_energy();
-        conversion_factor = adc_to_energy_conversion_factor; // should be in settings, still keep as metadata
+    // conversion_factor is now set per view above
         true_pdg = Cluster.get_true_pdg();
         is_main_cluster = Cluster.get_is_main_cluster();
         // TODO create different tree for metadata? Currently in filename
