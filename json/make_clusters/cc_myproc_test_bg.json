@@ -4,11 +4,11 @@
   "inputList": [
   ],
   "inputListFile": "",
-
-  "max_files": 1000,
+  
+  "max_files": 20,
 
   "outputFolder": "/eos/user/e/evilla/dune/sn-tps/production_cc/bkgs/",
-  "outputFilename": "cc_myproc_bg",
+  "outputFilename": "cc_valid_bg",
 
   "tick_limit": 3,
   "channel_limit": 2,

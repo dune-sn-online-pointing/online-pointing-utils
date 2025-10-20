@@ -132,8 +132,15 @@ echo " Clean clusters (no backgrounds): $clean_clusters"
 echo " No compile: $noCompile"
 echo " Clean compile: $cleanCompile"
 echo " Override: $override"
-
-echo "Dataset selected: $dataset. Verify it makes sense, waiting 5 seconds..."
+echo ""
+echo "Dataset selected: $dataset."
+echo "The list of jsons to be used is:"
+echo " Backtrack: $JSON_DIR/backtrack/${dataset}.json"
+echo " Analyze TPS: $JSON_DIR/analyze_tps/${dataset}.json"
+echo " Add backgrounds: $JSON_DIR/add_backgrounds/${dataset}.json"
+echo " Make clusters: $JSON_DIR/make_clusters/${dataset}${bg_suffix}.json"
+echo " Analyze: $JSON_DIR/analyze_clusters/${dataset}${bg_suffix}.json"
+echo " Verify it makes sense, waiting 5 seconds..."
 sleep 5
 
 ################################################

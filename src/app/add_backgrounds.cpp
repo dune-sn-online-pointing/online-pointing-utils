@@ -254,16 +254,23 @@ int main(int argc, char* argv[]) {
                 
                 int bkg_added = 0;
                 int bkg_truth_linked = 0;
+                int bkg_unknown_filtered = 0;
                 
                 // Add background TPs, updating their truth pointers to the persistent copied data
                 for (const auto& bkg_tp : bkg_tps) {
+                    // Filter out UNKNOWN background TPs (noise already present in signal files)
+                    const TrueParticle* orig_ptr = bkg_tp.GetTrueParticle();
+                    if (orig_ptr == nullptr) {
+                        bkg_unknown_filtered++;
+                        continue;  // Skip UNKNOWN TPs from background
+                    }
+                    
                     TriggerPrimitive tp = bkg_tp;
                     
                     // Update the event number to match the signal event (CRITICAL BUG FIX)
                     tp.SetEvent(event_id);
                     
                     // Update truth pointer to point to our persistent copy
-                    const TrueParticle* orig_ptr = bkg_tp.GetTrueParticle();
                     if (orig_ptr != nullptr && !persistent_bkg.empty()) {
                         int truth_id = orig_ptr->GetTruthId();
                         int track_id = orig_ptr->GetTrackId();
@@ -295,7 +302,8 @@ int main(int argc, char* argv[]) {
                 
                 if (verboseMode) {
                     LogInfo << "Signal event " << event_id << ": " << signal_tps.size() << " signal TPs + "
-                            << bkg_added << " background TPs (truth linked: " << bkg_truth_linked << ") = "
+                            << bkg_added << " background TPs (truth linked: " << bkg_truth_linked 
+                            << ", filtered UNKNOWN: " << bkg_unknown_filtered << ") = "
                             << merged_tps.size() << " total TPs" << std::endl;
                 }
                 

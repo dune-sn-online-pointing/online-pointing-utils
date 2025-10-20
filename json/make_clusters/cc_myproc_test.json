@@ -6,10 +6,10 @@
   "inputListFile": "",
 
   "outputFolder": "/eos/user/e/evilla/dune/sn-tps/production_cc/",
-  "outputFilename": "cc_myproc_test",
-
-  "max_files": 20,
-
+  "outputFilename": "cc_myproc",
+  
+  "max_files": 100,
+  
   "tick_limit": 3,
   "channel_limit": 2,
   "min_tps_to_cluster": 2,

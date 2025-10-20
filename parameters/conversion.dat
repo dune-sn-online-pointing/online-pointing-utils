@@ -2,4 +2,4 @@
 Conversion parameters
 *******************************************************************************
 
-< conversion.adc_to_energy_factor = 4000.0 >     ADC to MeV conversion factor
+< conversion.adc_to_energy_factor = 3600.0 >     ADC to MeV conversion factor

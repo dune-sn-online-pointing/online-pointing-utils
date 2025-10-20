@@ -3,7 +3,7 @@
 
   "outputFolder": "/eos/user/e/evilla/dune/sn-tps/production_cc/",
 
-  "max_files": 10,
+  "max_files": 1000,
   
   "backtracker_error_margin": 10
 

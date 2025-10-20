@@ -1,14 +1,14 @@
 {
   "inputFile": "",
-  "inputFolder": "/eos/user/e/evilla/dune/sn-tps/production_cc/bkgs/",
+  "inputFolder": "/eos/user/e/evilla/dune/sn-tps/production_es/bkgs/",
   "inputList": [
   ],
   "inputListFile": "",
+  
+  "max_files": 20,
 
-  "max_files": 1000,
-
-  "outputFolder": "/eos/user/e/evilla/dune/sn-tps/production_cc/bkgs/",
-  "outputFilename": "cc_myproc_bg",
+  "outputFolder": "/eos/user/e/evilla/dune/sn-tps/production_es/bkgs/",
+  "outputFilename": "es_valid_bg",
 
   "tick_limit": 3,
   "channel_limit": 2,
