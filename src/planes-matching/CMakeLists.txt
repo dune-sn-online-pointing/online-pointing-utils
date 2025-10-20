@@ -22,7 +22,7 @@ target_include_directories(
 
 target_link_libraries(
     ${LIB_NAME} PUBLIC
-    clusteringLibs
+    clustersLibs
     ${ROOT_LIBRARIES}
 )
 

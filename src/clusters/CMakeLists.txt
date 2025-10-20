@@ -1,4 +1,4 @@
-set( LIB_NAME "clusteringLibs" )
+set( LIB_NAME "clustersLibs" )
 
 set( SRC_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/aggregate_clusters_within_volume_libs.cpp

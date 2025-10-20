@@ -94,8 +94,6 @@ int main(int argc, char* argv[]) {
         + "_ch" + std::to_string(channel_limit)
         + "_min" + std::to_string(min_tps_to_cluster)
         + "_tot" + std::to_string(tot_cut)
-        + "_ecutI" + std::to_string(adc_integral_cut_ind)
-        + "_ecutC" + std::to_string(adc_integral_cut_col)
         + "_clusters.root";    
 
     // Ensure output directory exists
@@ -105,81 +103,22 @@ int main(int argc, char* argv[]) {
         std::filesystem::create_directories(outfolder_path);
     }
 
-    // Variables for numbered output files (one per 10 input files)
-    const int FILES_PER_OUTPUT = 10;
-    int output_file_number = 0;
-    TFile* clusters_file = nullptr;
-    std::string current_clusters_filename;
-    std::vector<std::string> produced_files;
-
-    // Helper lambda to create metadata tree
-    auto create_metadata_tree = [&](TFile* file) {
-        file->cd();
-        TTree* metadata_tree = new TTree("clustering_metadata", "Clustering parameters used");
-        
-        int meta_tick_limit = ticks_limit;
-        int meta_channel_limit = channel_limit;
-        int meta_min_tps = min_tps_to_cluster;
-        int meta_adc_cut_ind = adc_integral_cut_ind;
-        int meta_adc_cut_col = adc_integral_cut_col;
-        int meta_tot_cut = tot_cut;
-        
-        metadata_tree->Branch("tick_limit", &meta_tick_limit, "tick_limit/I");
-        metadata_tree->Branch("channel_limit", &meta_channel_limit, "channel_limit/I");
-        metadata_tree->Branch("min_tps_to_cluster", &meta_min_tps, "min_tps_to_cluster/I");
-        metadata_tree->Branch("adc_integral_cut_induction", &meta_adc_cut_ind, "adc_integral_cut_induction/I");
-        metadata_tree->Branch("adc_integral_cut_collection", &meta_adc_cut_col, "adc_integral_cut_collection/I");
-        metadata_tree->Branch("tot_cut", &meta_tot_cut, "tot_cut/I");
-        
-        metadata_tree->Fill();
-        metadata_tree->Write("", TObject::kOverwrite);
-    };
-
-    // Helper lambda to create a new output file
-    auto create_new_output_file = [&]() -> bool {
-        // Close previous file if open
-        if (clusters_file) {
-            LogInfo << "Writing clustering metadata..." << std::endl;
-            create_metadata_tree(clusters_file);
-            clusters_file->Close();
-            delete clusters_file;
-            LogInfo << "Closed output file: " << current_clusters_filename << std::endl;
-        }
-        
-        // Create new filename with progressive number and energy thresholds
-        // Note: we don't use the old clusters_filename variable anymore
-        current_clusters_filename = outfolder + "/" + file_prefix
-            + "_tick" + std::to_string(ticks_limit)
-            + "_ch" + std::to_string(channel_limit)
-            + "_min" + std::to_string(min_tps_to_cluster)
-            + "_tot" + std::to_string(tot_cut)
-            + "_ecutI" + std::to_string(adc_integral_cut_ind)
-            + "_ecutC" + std::to_string(adc_integral_cut_col)
-            + "_clusters_" + std::to_string(output_file_number) + ".root";
-        
-        // Delete if exists
-        if (std::filesystem::exists(current_clusters_filename)) {
-            LogInfo << "Output file " << current_clusters_filename << " already exists, deleting it." << std::endl;
-            std::filesystem::remove(current_clusters_filename);
-        }
-        
-        // Open new file
-        clusters_file = new TFile(current_clusters_filename.c_str(), "RECREATE");
-        if (!clusters_file || clusters_file->IsZombie()) {
-            LogError << "Cannot create output file: " << current_clusters_filename << std::endl;
-            return false;
-        }
-        
-        LogInfo << "Opened new output file: " << current_clusters_filename << std::endl;
-        produced_files.push_back(current_clusters_filename);
-        output_file_number++;
-        return true;
-    };
-
-    // Create first output file
-    if (!create_new_output_file()) {
-        return 1;
+    // delete clusters_filename file if already existing
+    if (std::filesystem::exists(clusters_filename)) {
+        LogInfo << "Output file " << clusters_filename << " already exists, deleting it." << std::endl;
+        std::filesystem::remove(clusters_filename);
+    } else {
+        LogInfo << "Output file will be: " << clusters_filename << std::endl;
     }
+
+    // Open the output file ONCE with RECREATE mode (more robust than UPDATE)
+    TFile* clusters_file = new TFile(clusters_filename.c_str(), "RECREATE");
+    if (!clusters_file || clusters_file->IsZombie()) {
+        LogError << "Cannot create output file: " << clusters_filename << std::endl;
+        return 1;
+    } 
+
+    LogInfo << "Opened output file for writing: " << clusters_filename << std::endl;
 
     int file_count = 0;
 
@@ -194,14 +133,6 @@ int main(int argc, char* argv[]) {
         if (verboseMode) LogInfo << "Input TPs file: " << tps_file << std::endl;
 
         file_count++;
-        
-        // Create new output file every FILES_PER_OUTPUT input files
-        if (file_count > 1 && (file_count - 1) % FILES_PER_OUTPUT == 0) {
-            if (!create_new_output_file()) {
-                return 1;
-            }
-        }
-        
         int progress = (file_count * 100) / max_files;
         GenericToolbox::displayProgressBar(file_count, max_files, "Making clusters...");
 
@@ -272,19 +203,42 @@ int main(int argc, char* argv[]) {
     }
 
 
-    // Close final output file
-    if (clusters_file) {
-        LogInfo << "Writing clustering metadata..." << std::endl;
-        create_metadata_tree(clusters_file);
-        clusters_file->Close();
-        delete clusters_file;
-        LogInfo << "Closed final output file: " << current_clusters_filename << std::endl;
-    }
+    // Create metadata tree to store clustering parameters
+    LogInfo << "Writing clustering metadata..." << std::endl;
+    clusters_file->cd();
+    TTree* metadata_tree = new TTree("clustering_metadata", "Clustering parameters used");
     
-    // Print summary
-    LogInfo << "\nClustering complete! Generated " << produced_files.size() << " output file(s):" << std::endl;
-    for (const auto& f : produced_files) {
-        LogInfo << "  - " << f << std::endl;
-    }
+    // Store clustering parameters as branches
+    int meta_tick_limit = ticks_limit;
+    int meta_channel_limit = channel_limit;
+    int meta_min_tps = min_tps_to_cluster;
+    int meta_adc_cut_ind = adc_integral_cut_ind;
+    int meta_adc_cut_col = adc_integral_cut_col;
+    int meta_tot_cut = tot_cut;
+    
+    metadata_tree->Branch("tick_limit", &meta_tick_limit, "tick_limit/I");
+    metadata_tree->Branch("channel_limit", &meta_channel_limit, "channel_limit/I");
+    metadata_tree->Branch("min_tps_to_cluster", &meta_min_tps, "min_tps_to_cluster/I");
+    metadata_tree->Branch("adc_integral_cut_induction", &meta_adc_cut_ind, "adc_integral_cut_induction/I");
+    metadata_tree->Branch("adc_integral_cut_collection", &meta_adc_cut_col, "adc_integral_cut_collection/I");
+    metadata_tree->Branch("tot_cut", &meta_tot_cut, "tot_cut/I");
+    
+    // Fill the tree with one entry
+    metadata_tree->Fill();
+    metadata_tree->Write("", TObject::kOverwrite);
+    
+    LogInfo << "Metadata tree created with clustering parameters:" << std::endl;
+    LogInfo << "  tick_limit: " << meta_tick_limit << std::endl;
+    LogInfo << "  channel_limit: " << meta_channel_limit << std::endl;
+    LogInfo << "  min_tps_to_cluster: " << meta_min_tps << std::endl;
+    LogInfo << "  adc_integral_cut_induction: " << meta_adc_cut_ind << std::endl;
+    LogInfo << "  adc_integral_cut_collection: " << meta_adc_cut_col << std::endl;
+    LogInfo << "  tot_cut: " << meta_tot_cut << std::endl;
+
+    // Close the file ONCE at the end
+    clusters_file->Close();
+    delete clusters_file;
+    
+    LogInfo << "\nOutput file is: " << clusters_filename << std::endl;
     return 0;
 }
