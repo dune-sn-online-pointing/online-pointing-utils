@@ -14,82 +14,10 @@ void read_tps(const std::string& in_filename,
     TDirectory* tpsDir = inFile.GetDirectory("tps"); 
     if (!tpsDir) { LogError << "Directory 'tps' not found in: " << in_filename << std::endl; return; }
 
-    // Read neutrinos
-    if (auto* nuTree = dynamic_cast<TTree*>(tpsDir->Get("neutrinos"))) {
-        int event=0; std::string* interaction=nullptr; 
-        float x=0,y=0,z=0,Px=0,Py=0,Pz=0; 
-        int en=0; int truth_id=0; 
-        nuTree->SetBranchAddress("event", &event); 
-        nuTree->SetBranchAddress("interaction", &interaction); 
-        nuTree->SetBranchAddress("x", &x); 
-        nuTree->SetBranchAddress("y", &y);
-        nuTree->SetBranchAddress("z", &z); 
-        nuTree->SetBranchAddress("Px", &Px); 
-        nuTree->SetBranchAddress("Py", &Py); 
-        nuTree->SetBranchAddress("Pz", &Pz); 
-        nuTree->SetBranchAddress("en", &en); 
-        nuTree->SetBranchAddress("truth_id", &truth_id);
-        for (Long64_t i=0;i<nuTree->GetEntries();++i){ 
-            nuTree->GetEntry(i); 
-            Neutrino n(event, *interaction, x,y,z,Px,Py,Pz,en,truth_id); 
-            neutrinos_by_event[event].push_back(n);
-        }
-    }
-
-    // Read true particles
-    std::map<std::pair<int,int>, Neutrino*> nuLookup; // (event, truth_id) -> neutrino ptr
-    for (auto& kv : neutrinos_by_event) { for (auto& n : kv.second) { nuLookup[{kv.first, n.GetTruthId()}] = &n; } }
-
-    if (auto* tTree = dynamic_cast<TTree*>(tpsDir->Get("true_particles"))) {
-        int event = 0;
-        float x = 0, y = 0, z = 0, Px = 0, Py = 0, Pz = 0, en = 0;
-        std::string* gen = nullptr;
-        int pdg = 0;
-        std::string* proc = nullptr;
-        int track_id = 0;
-        int truth_id = 0;
-        double tstart = 0, tend = 0;
-        std::vector<int>* channels = nullptr;
-        int nu_truth_id = -1;
-        tTree->SetBranchAddress("event", &event); 
-        tTree->SetBranchAddress("x", &x); 
-        tTree->SetBranchAddress("y", &y); 
-        tTree->SetBranchAddress("z", &z);
-        tTree->SetBranchAddress("Px", &Px);
-        tTree->SetBranchAddress("Py", &Py);
-        tTree->SetBranchAddress("Pz", &Pz);
-        tTree->SetBranchAddress("en", &en);
-        tTree->SetBranchAddress("generator_name", &gen);
-        tTree->SetBranchAddress("pdg", &pdg);
-        tTree->SetBranchAddress("process", &proc);
-        tTree->SetBranchAddress("track_id", &track_id);
-        tTree->SetBranchAddress("truth_id", &truth_id);
-        tTree->SetBranchAddress("time_start", &tstart);
-        tTree->SetBranchAddress("time_end", &tend);
-        tTree->SetBranchAddress("channels", &channels);
-        tTree->SetBranchAddress("neutrino_truth_id", &nu_truth_id);
-
-        for (Long64_t i=0;i<tTree->GetEntries();++i){ 
-            tTree->GetEntry(i); 
-            TrueParticle tp(event,x,y,z,Px,Py,Pz,en,*gen,pdg,*proc,track_id,truth_id); 
-            tp.SetTimeStart(tstart);
-            tp.SetTimeEnd(tend);
-            if (channels){ for (int ch : *channels) tp.AddChannel(ch); } 
-            auto it = nuLookup.find({event, nu_truth_id}); 
-            if (it != nuLookup.end()) tp.SetNeutrino(it->second);
-            true_particles_by_event[event].push_back(tp);
-        }
-    }
-
-    // Build lookup for true particles
-    std::map<std::pair<int,int>, TrueParticle*> truthLookup; // (event, truth_id)
-    for (auto& kv : true_particles_by_event) 
-        for (auto& tp : kv.second) 
-            truthLookup[{kv.first, tp.GetTruthId()}] = &tp;
-
-    // Read TPs
+    // Read TPs tree with embedded truth
     if (auto* tpTree = dynamic_cast<TTree*>(tpsDir->Get("tps"))) {
         
+        // TP basic variables
         int event=0; 
         UShort_t version=0; 
         UInt_t detid=0, channel=0; 
@@ -97,11 +25,22 @@ void read_tps(const std::string& in_filename,
         UInt_t adc_integral=0; 
         UShort_t adc_peak=0, det=0; 
         Int_t det_channel=0; 
-        std::string* view=nullptr, *gen_name=nullptr, *process=nullptr;
-        Int_t truth_id=-1, track_id=-1, pdg=0, nu_truth_id=-1; 
-        Float_t nu_energy=-1.0f;
-        Double_t simide_energy=0.0;  // SimIDE energy for this TP
+        std::string* view=nullptr;
+        Double_t simide_energy=0.0;
         
+        // Truth variables
+        std::string* gen_name=nullptr;
+        Int_t particle_pdg=0;
+        std::string* particle_process=nullptr;
+        Float_t particle_energy=0.0f;
+        Float_t particle_x=0.0f, particle_y=0.0f, particle_z=0.0f;
+        Float_t particle_px=0.0f, particle_py=0.0f, particle_pz=0.0f;
+        std::string* neutrino_interaction=nullptr;
+        Float_t neutrino_x=0.0f, neutrino_y=0.0f, neutrino_z=0.0f;
+        Float_t neutrino_px=0.0f, neutrino_py=0.0f, neutrino_pz=0.0f;
+        Float_t neutrino_energy=0.0f;
+        
+        // Set branch addresses for TP basics
         tpTree->SetBranchAddress("event", &event); 
         tpTree->SetBranchAddress("version", &version); 
         tpTree->SetBranchAddress("detid", &detid); 
@@ -114,16 +53,29 @@ void read_tps(const std::string& in_filename,
         tpTree->SetBranchAddress("detector", &det);
         tpTree->SetBranchAddress("detector_channel", &det_channel);
         tpTree->SetBranchAddress("view", &view);
-        tpTree->SetBranchAddress("truth_id", &truth_id);
-        tpTree->SetBranchAddress("track_id", &track_id);
-        tpTree->SetBranchAddress("pdg", &pdg);
-        tpTree->SetBranchAddress("generator_name", &gen_name);
-        tpTree->SetBranchAddress("process", &process);
-        tpTree->SetBranchAddress("neutrino_truth_id", &nu_truth_id);
-        tpTree->SetBranchAddress("neutrino_energy", &nu_energy);
         if (tpTree->GetBranch("simide_energy")) {
             tpTree->SetBranchAddress("simide_energy", &simide_energy);
         }
+        
+        // Set branch addresses for truth
+        tpTree->SetBranchAddress("generator_name", &gen_name);
+        if (tpTree->GetBranch("particle_pdg")) tpTree->SetBranchAddress("particle_pdg", &particle_pdg);
+        if (tpTree->GetBranch("particle_process")) tpTree->SetBranchAddress("particle_process", &particle_process);
+        if (tpTree->GetBranch("particle_energy")) tpTree->SetBranchAddress("particle_energy", &particle_energy);
+        if (tpTree->GetBranch("particle_x")) tpTree->SetBranchAddress("particle_x", &particle_x);
+        if (tpTree->GetBranch("particle_y")) tpTree->SetBranchAddress("particle_y", &particle_y);
+        if (tpTree->GetBranch("particle_z")) tpTree->SetBranchAddress("particle_z", &particle_z);
+        if (tpTree->GetBranch("particle_px")) tpTree->SetBranchAddress("particle_px", &particle_px);
+        if (tpTree->GetBranch("particle_py")) tpTree->SetBranchAddress("particle_py", &particle_py);
+        if (tpTree->GetBranch("particle_pz")) tpTree->SetBranchAddress("particle_pz", &particle_pz);
+        if (tpTree->GetBranch("neutrino_interaction")) tpTree->SetBranchAddress("neutrino_interaction", &neutrino_interaction);
+        if (tpTree->GetBranch("neutrino_x")) tpTree->SetBranchAddress("neutrino_x", &neutrino_x);
+        if (tpTree->GetBranch("neutrino_y")) tpTree->SetBranchAddress("neutrino_y", &neutrino_y);
+        if (tpTree->GetBranch("neutrino_z")) tpTree->SetBranchAddress("neutrino_z", &neutrino_z);
+        if (tpTree->GetBranch("neutrino_px")) tpTree->SetBranchAddress("neutrino_px", &neutrino_px);
+        if (tpTree->GetBranch("neutrino_py")) tpTree->SetBranchAddress("neutrino_py", &neutrino_py);
+        if (tpTree->GetBranch("neutrino_pz")) tpTree->SetBranchAddress("neutrino_pz", &neutrino_pz);
+        if (tpTree->GetBranch("neutrino_energy")) tpTree->SetBranchAddress("neutrino_energy", &neutrino_energy);
 
         for (Long64_t i=0;i<tpTree->GetEntries();++i){ 
 
@@ -132,14 +84,28 @@ void read_tps(const std::string& in_filename,
             TriggerPrimitive tp(version, 0, detid, channel, s_over, tstart, s_to_peak, adc_integral, adc_peak); 
             tp.SetEvent(event); 
             tp.SetDetector(det);
-            tp.SetDetectorChannel(det_channel); // SetView already in constructor
-            tp.SetSimideEnergy(simide_energy);  // Set the SimIDE energy read from file
+            tp.SetDetectorChannel(det_channel);
+            tp.SetSimideEnergy(simide_energy);
             
-            auto it = truthLookup.find({event, truth_id}); 
-            if (it != truthLookup.end()) tp.SetTrueParticle(it->second); 
+            // Set embedded truth
+            if (gen_name) tp.SetGeneratorName(*gen_name);
+            tp.SetParticlePDG(particle_pdg);
+            if (particle_process) tp.SetParticleProcess(*particle_process);
+            tp.SetParticleEnergy(particle_energy);
+            tp.SetParticlePosition(particle_x, particle_y, particle_z);
+            tp.SetParticleMomentum(particle_px, particle_py, particle_pz);
+            if (neutrino_interaction) {
+                tp.SetNeutrinoInfo(*neutrino_interaction, neutrino_x, neutrino_y, neutrino_z,
+                                  neutrino_px, neutrino_py, neutrino_pz, neutrino_energy);
+            }
+            
             tps_by_event[event].push_back(tp);
         }
     }
+
+    // Note: true_particles_by_event and neutrinos_by_event are no longer populated
+    // Truth information is now embedded directly in TPs
+    // These maps are kept as function parameters for backward compatibility but will be empty
 
     inFile.Close();
 }
@@ -582,15 +548,15 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
             int marley_count = 0;
             const auto& cl_tps = Cluster.get_tps();
             for (auto* tp : cl_tps) {
-                auto* tpTruth = tp->GetTrueParticle();
-                if (tpTruth != nullptr) {
-                    std::string gen_name = tpTruth->GetGeneratorName();
-                    if (gen_name != "UNKNOWN") {
-                        cluster_truth_count++;
-                    }
-                    if (gen_name == "marley") {
-                        marley_count++;
-                    }
+                std::string gen_name = tp->GetGeneratorName();
+                if (gen_name != "UNKNOWN") {
+                    cluster_truth_count++;
+                }
+                // Case-insensitive check for MARLEY
+                std::string gen_lower = gen_name;
+                std::transform(gen_lower.begin(), gen_lower.end(), gen_lower.begin(), ::tolower);
+                if (gen_lower.find("marley") != std::string::npos) {
+                    marley_count++;
                 }
             }
             generator_tp_fraction = cl_tps.empty() ? 0.f : static_cast<float>(cluster_truth_count) / static_cast<float>(cl_tps.size());

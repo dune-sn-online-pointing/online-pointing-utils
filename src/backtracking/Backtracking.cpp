@@ -507,6 +507,16 @@ void read_tpstream(std::string filename,
 
     if (verboseMode) LogInfo << " Matched MC particles to mctruths: "  << float(matched_MCparticles_counter)/true_particles.size()*100. << " %" << std::endl;
     
+    // Update embedded generator names in TPs after MC truth association
+    for (auto& tp : tps) {
+        const TrueParticle* true_particle = tp.GetTrueParticle();
+        if (true_particle != nullptr) {
+            // Update the generator name with the corrected value from MC truth
+            tp.SetGeneratorName(true_particle->GetGeneratorName());
+        }
+    }
+    if (verboseMode) LogInfo << " Updated embedded generator names in TPs" << std::endl;
+    
     // sort the TPs by time
     // C++ 17 has the parameter std::execution::par that handles parallelization, can try that out TODO
     std::clock_t start_sorting = std::clock();
@@ -1063,14 +1073,41 @@ void write_tps(
     TDirectory* tpsDir = outFile.mkdir("tps");
     tpsDir->cd();
 
-    // TPs tree
-    TTree tpsTree("tps", "Trigger Primitives with truth links");
-    int evt = 0; UShort_t version=0; UInt_t detid=0; UInt_t channel=0; UInt_t adc_integral=0; UShort_t adc_peak=0; UShort_t det=0; Int_t det_channel=0; ULong64_t tstart=0; ULong64_t s_over=0; ULong64_t s_to_peak=0;
-    std::string view; std::string gen_name; std::string process;
-    Int_t tp_truth_id=-1; Int_t tp_track_id=-1; Int_t tp_pdg=0; Int_t nu_truth_id=-1;
-    Float_t nu_energy = -1.0f;
-    Float_t time_offset_correction = 0.0f; // TPC ticks correction applied to truth time windows
-    Double_t simide_energy = 0.0; // SimIDE energy accumulated to this TP (in MeV)
+    // TPs tree with embedded truth
+    TTree tpsTree("tps", "Trigger Primitives with embedded truth");
+    
+    // TP basic variables
+    int evt = 0; 
+    UShort_t version=0; 
+    UInt_t detid=0; 
+    UInt_t channel=0; 
+    UInt_t adc_integral=0; 
+    UShort_t adc_peak=0; 
+    UShort_t det=0; 
+    Int_t det_channel=0; 
+    ULong64_t tstart=0; 
+    ULong64_t s_over=0; 
+    ULong64_t s_to_peak=0;
+    std::string view;
+    Double_t simide_energy = 0.0;
+    
+    // Truth variables (always stored: generator_name from MC truth)
+    std::string gen_name;
+    
+    // MARLEY-specific particle truth (only meaningful when gen_name contains "marley")
+    Int_t particle_pdg = 0;
+    std::string particle_process;
+    Float_t particle_energy = 0.0f;
+    Float_t particle_x = 0.0f, particle_y = 0.0f, particle_z = 0.0f;
+    Float_t particle_px = 0.0f, particle_py = 0.0f, particle_pz = 0.0f;
+    
+    // Neutrino info (only for MARLEY with neutrino association)
+    std::string neutrino_interaction;
+    Float_t neutrino_x = 0.0f, neutrino_y = 0.0f, neutrino_z = 0.0f;
+    Float_t neutrino_px = 0.0f, neutrino_py = 0.0f, neutrino_pz = 0.0f;
+    Float_t neutrino_energy = 0.0f;
+    
+    // TP basic branches
     tpsTree.Branch("event", &evt, "event/I");
     tpsTree.Branch("version", &version, "version/s");
     tpsTree.Branch("detid", &detid, "detid/i");
@@ -1083,90 +1120,88 @@ void write_tps(
     tpsTree.Branch("detector", &det, "detector/s");
     tpsTree.Branch("detector_channel", &det_channel, "detector_channel/I");
     tpsTree.Branch("view", &view);
-    tpsTree.Branch("truth_id", &tp_truth_id, "truth_id/I");
-    tpsTree.Branch("track_id", &tp_track_id, "track_id/I");
-    tpsTree.Branch("pdg", &tp_pdg, "pdg/I");
-    tpsTree.Branch("generator_name", &gen_name);
-    tpsTree.Branch("process", &process);
-    tpsTree.Branch("neutrino_truth_id", &nu_truth_id, "neutrino_truth_id/I");
-    tpsTree.Branch("neutrino_energy", &nu_energy, "neutrino_energy/F");
-    tpsTree.Branch("time_offset_correction", &time_offset_correction, "time_offset_correction/F");
     tpsTree.Branch("simide_energy", &simide_energy, "simide_energy/D");
+    
+    // Truth branches (always: generator_name from MC truth)
+    tpsTree.Branch("generator_name", &gen_name);
+    
+    // MARLEY-specific particle truth branches
+    tpsTree.Branch("particle_pdg", &particle_pdg, "particle_pdg/I");
+    tpsTree.Branch("particle_process", &particle_process);
+    tpsTree.Branch("particle_energy", &particle_energy, "particle_energy/F");
+    tpsTree.Branch("particle_x", &particle_x, "particle_x/F");
+    tpsTree.Branch("particle_y", &particle_y, "particle_y/F");
+    tpsTree.Branch("particle_z", &particle_z, "particle_z/F");
+    tpsTree.Branch("particle_px", &particle_px, "particle_px/F");
+    tpsTree.Branch("particle_py", &particle_py, "particle_py/F");
+    tpsTree.Branch("particle_pz", &particle_pz, "particle_pz/F");
+    
+    // Neutrino branches
+    tpsTree.Branch("neutrino_interaction", &neutrino_interaction);
+    tpsTree.Branch("neutrino_x", &neutrino_x, "neutrino_x/F");
+    tpsTree.Branch("neutrino_y", &neutrino_y, "neutrino_y/F");
+    tpsTree.Branch("neutrino_z", &neutrino_z, "neutrino_z/F");
+    tpsTree.Branch("neutrino_px", &neutrino_px, "neutrino_px/F");
+    tpsTree.Branch("neutrino_py", &neutrino_py, "neutrino_py/F");
+    tpsTree.Branch("neutrino_pz", &neutrino_pz, "neutrino_pz/F");
+    tpsTree.Branch("neutrino_energy", &neutrino_energy, "neutrino_energy/F");
 
-    // True particles tree
-    TTree trueTree("true_particles", "True particles per event");
-    int tevt=0; float x=0,y=0,z=0,Px=0,Py=0,Pz=0, en=0; std::string tgen; int pdg=0; std::string tproc; int track_id=0; int truth_id=0; double tstart_d=0, tend_d=0; std::vector<int>* channels = nullptr; int nu_link_truth_id=-1;
-    trueTree.Branch("event", &tevt, "event/I");
-    trueTree.Branch("x", &x, "x/F"); trueTree.Branch("y", &y, "y/F"); trueTree.Branch("z", &z, "z/F");
-    trueTree.Branch("Px", &Px, "Px/F"); trueTree.Branch("Py", &Py, "Py/F"); trueTree.Branch("Pz", &Pz, "Pz/F");
-    trueTree.Branch("en", &en, "en/F");
-    trueTree.Branch("generator_name", &tgen);
-    trueTree.Branch("pdg", &pdg, "pdg/I");
-    trueTree.Branch("process", &tproc);
-    trueTree.Branch("track_id", &track_id, "track_id/I");
-    trueTree.Branch("truth_id", &truth_id, "truth_id/I");
-    trueTree.Branch("time_start", &tstart_d, "time_start/D");
-    trueTree.Branch("time_end", &tend_d, "time_end/D");
-    trueTree.Branch("channels", &channels);
-    trueTree.Branch("neutrino_truth_id", &nu_link_truth_id, "neutrino_truth_id/I");
+    // Metadata tree
+    TTree metaTree("metadata", "File metadata");
+    int n_events = tps_by_event.size();
+    int n_tps_total = 0;
+    for (const auto& v : tps_by_event) n_tps_total += v.size();
+    metaTree.Branch("n_events", &n_events, "n_events/I");
+    metaTree.Branch("n_tps_total", &n_tps_total, "n_tps_total/I");
+    metaTree.Fill();
 
-    // Neutrinos tree
-    TTree nuTree("neutrinos", "Neutrinos per event");
-    int nevt=0; std::string interaction; float nx=0,ny=0,nz=0,nPx=0,nPy=0,nPz=0; int nen=0; int ntruth_id=0;
-    nuTree.Branch("event", &nevt, "event/I");
-    nuTree.Branch("interaction", &interaction);
-    nuTree.Branch("x", &nx, "x/F"); nuTree.Branch("y", &ny, "y/F"); nuTree.Branch("z", &nz, "z/F");
-    nuTree.Branch("Px", &nPx, "Px/F"); nuTree.Branch("Py", &nPy, "Py/F"); nuTree.Branch("Pz", &nPz, "Pz/F");
-    nuTree.Branch("en", &nen, "en/I");
-    nuTree.Branch("truth_id", &ntruth_id, "truth_id/I");
-
-    // Fill truth first for easy linking
-    for (size_t ev = 0; ev < true_particles_by_event.size(); ++ev) {
-        const auto& v = true_particles_by_event[ev];
-        for (const auto& p : v) {
-            tevt = p.GetEvent(); x=p.GetX(); y=p.GetY(); z=p.GetZ(); Px=p.GetPx(); Py=p.GetPy(); Pz=p.GetPz(); en=p.GetEnergy(); tgen=p.GetGeneratorName(); pdg=p.GetPdg(); tproc=p.GetProcess(); track_id=p.GetTrackId(); truth_id=p.GetTruthId(); tstart_d=p.GetTimeStart(); tend_d=p.GetTimeEnd();
-            std::vector<int> chs(p.GetChannels().begin(), p.GetChannels().end()); channels = &chs; // local; will be copied by ROOT
-            nu_link_truth_id = (p.GetNeutrino() ? p.GetNeutrino()->GetTruthId() : -1);
-            trueTree.Fill();
-        }
-    }
-
-    for (size_t ev = 0; ev < neutrinos_by_event.size(); ++ev) {
-        const auto& v = neutrinos_by_event[ev];
-        for (const auto& n : v) {
-            nevt = n.GetEvent(); interaction = n.GetInteraction(); nx=n.GetX(); ny=n.GetY(); nz=n.GetZ(); nPx=n.GetPx(); nPy=n.GetPy(); nPz=n.GetPz(); nen=n.GetEnergy(); ntruth_id=n.GetTruthId();
-            nuTree.Fill();
-        }
-    }
-
-    // Now TPs with truth links
+    // Fill TPs with embedded truth
     for (size_t ev = 0; ev < tps_by_event.size(); ++ev) {
         const auto& v = tps_by_event[ev];
         for (const auto& tp : v) {
-            evt = tp.GetEvent(); version = TriggerPrimitive::s_trigger_primitive_version; detid = 0; channel = tp.GetChannel(); s_over = tp.GetSamplesOverThreshold(); tstart = tp.GetTimeStart(); s_to_peak = tp.GetSamplesToPeak(); adc_integral = tp.GetAdcIntegral(); adc_peak = tp.GetAdcPeak(); det = tp.GetDetector(); det_channel = tp.GetDetectorChannel(); view = tp.GetView();
-            simide_energy = tp.GetSimideEnergy(); // Get accumulated SimIDE energy from TP
+            // Basic TP info
+            evt = tp.GetEvent(); 
+            version = TriggerPrimitive::s_trigger_primitive_version; 
+            detid = 0; 
+            channel = tp.GetChannel(); 
+            s_over = tp.GetSamplesOverThreshold(); 
+            tstart = tp.GetTimeStart(); 
+            s_to_peak = tp.GetSamplesToPeak(); 
+            adc_integral = tp.GetAdcIntegral(); 
+            adc_peak = tp.GetAdcPeak(); 
+            det = tp.GetDetector(); 
+            det_channel = tp.GetDetectorChannel(); 
+            view = tp.GetView();
+            simide_energy = tp.GetSimideEnergy();
             
-            // Set time offset correction for this event
-            // auto offset_it = g_event_time_offsets.find(evt);
-            // time_offset_correction = (offset_it != g_event_time_offsets.end()) ? (Float_t)offset_it->second : 0.0f;
+            // Truth info (embedded in TP)
+            gen_name = tp.GetGeneratorName();
+            particle_pdg = tp.GetParticlePDG();
+            particle_process = tp.GetParticleProcess();
+            particle_energy = tp.GetParticleEnergy();
+            particle_x = tp.GetParticleX();
+            particle_y = tp.GetParticleY();
+            particle_z = tp.GetParticleZ();
+            particle_px = tp.GetParticlePx();
+            particle_py = tp.GetParticlePy();
+            particle_pz = tp.GetParticlePz();
+            neutrino_interaction = tp.GetNeutrinoInteraction();
+            neutrino_x = tp.GetNeutrinoX();
+            neutrino_y = tp.GetNeutrinoY();
+            neutrino_z = tp.GetNeutrinoZ();
+            neutrino_px = tp.GetNeutrinoPx();
+            neutrino_py = tp.GetNeutrinoPy();
+            neutrino_pz = tp.GetNeutrinoPz();
+            neutrino_energy = tp.GetNeutrinoEnergy();
             
-            const auto* tpp = tp.GetTrueParticle();
-            if (tpp != nullptr) {
-                tp_truth_id = tpp->GetTruthId(); tp_track_id = tpp->GetTrackId(); tp_pdg = tpp->GetPdg(); gen_name = tpp->GetGeneratorName(); process = tpp->GetProcess();
-                nu_truth_id = (tpp->GetNeutrino() ? tpp->GetNeutrino()->GetTruthId() : -1);
-                nu_energy = (tpp->GetNeutrino() ? (Float_t)tpp->GetNeutrino()->GetEnergy() : -1.0f);
-            }
-            else { tp_truth_id = -1; tp_track_id = -1; tp_pdg = 0; gen_name = "UNKNOWN"; process = ""; nu_truth_id = -1; nu_energy = -1.0f; }
             tpsTree.Fill();
         }
     }
 
     tpsDir->cd();
-    tpsTree.Write(); trueTree.Write(); nuTree.Write();
+    tpsTree.Write(); 
+    metaTree.Write();
     outFile.Close();
-    
-    // Clear the global offset map after writing
-    // g_event_time_offsets.clear();
     
     // Report absolute output path for consistency
     std::error_code _ec_abs;

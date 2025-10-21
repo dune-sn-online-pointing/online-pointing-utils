@@ -46,8 +46,33 @@ void Cluster::update_cluster_info() {
     
     // Count TPs by generator to determine dominant truth
     std::map<std::string, int> generator_counts;
-    std::map<const TrueParticle*, int> particle_counts;
-    std::map<const Neutrino*, int> neutrino_counts;
+    
+    // Use a composite key to identify unique particles: (generator, PDG, x, y, z)
+    struct ParticleKey {
+        std::string generator;
+        int pdg;
+        float x, y, z;
+        
+        bool operator<(const ParticleKey& other) const {
+            if (generator != other.generator) return generator < other.generator;
+            if (pdg != other.pdg) return pdg < other.pdg;
+            if (std::abs(x - other.x) > 0.1) return x < other.x;
+            if (std::abs(y - other.y) > 0.1) return y < other.y;
+            return z < other.z;
+        }
+    };
+    
+    std::map<ParticleKey, int> particle_counts;
+    
+    // Struct to store neutrino info associated with each particle key
+    struct NeutrinoInfo {
+        std::string interaction;
+        float energy;
+        float x, y, z;
+        float px, py, pz;
+    };
+    std::map<ParticleKey, NeutrinoInfo> neutrino_info_map;
+    
     int tps_with_truth = 0;
     
     // Get ADC to energy conversion factors
@@ -60,49 +85,77 @@ void Cluster::update_cluster_info() {
         double adc_to_mev = (tp->GetView() == "X") ? ADC_TO_MEV_COLLECTION : ADC_TO_MEV_INDUCTION;
         total_energy_ += static_cast<float>(tp->GetAdcIntegral() / adc_to_mev);
         
-        // Get truth information from TP
-        const TrueParticle* true_particle = tp->GetTrueParticle();
-        if (true_particle != nullptr) {
+        // Get truth information from TP embedded data
+        std::string gen_name = tp->GetGeneratorName();
+        if (gen_name != "UNKNOWN") {
             tps_with_truth++;
             
-            // Count particles
-            particle_counts[true_particle]++;
-            
             // Count generators
-            std::string gen_name = true_particle->GetGeneratorName();
             generator_counts[gen_name]++;
             
-            // Count neutrinos
-            const Neutrino* neutrino = true_particle->GetNeutrino();
-            if (neutrino != nullptr) {
-                neutrino_counts[neutrino]++;
+            // Create particle key
+            ParticleKey key{gen_name, tp->GetParticlePDG(), 
+                           tp->GetParticleX(), tp->GetParticleY(), tp->GetParticleZ()};
+            
+            // Count particles
+            particle_counts[key]++;
+            
+            // Store neutrino info if available
+            if (tp->GetNeutrinoEnergy() > 0) {
+                neutrino_info_map[key] = {tp->GetNeutrinoInteraction(), tp->GetNeutrinoEnergy(),
+                                         tp->GetNeutrinoX(), tp->GetNeutrinoY(), tp->GetNeutrinoZ(),
+                                         tp->GetNeutrinoPx(), tp->GetNeutrinoPy(), tp->GetNeutrinoPz()};
             }
         }
     }
     
     // Set generator fractions
     if (tps_.size() > 0) {
-        supernova_tp_fraction_ = (generator_counts.count("marley") > 0) ? 
-            (float)generator_counts["marley"] / tps_.size() : 0.0f;
+        // Count MARLEY TPs (case-insensitive)
+        int marley_count = 0;
+        for (const auto& kv : generator_counts) {
+            std::string gen_lower = kv.first;
+            std::transform(gen_lower.begin(), gen_lower.end(), gen_lower.begin(), ::tolower);
+            if (gen_lower.find("marley") != std::string::npos) {
+                marley_count += kv.second;
+            }
+        }
+        supernova_tp_fraction_ = (float)marley_count / tps_.size();
         generator_tp_fraction_ = (tps_with_truth > 0) ? 
             (float)tps_with_truth / tps_.size() : 0.0f;
     }
     
     // Find dominant particle (most TPs matched to it)
-    const TrueParticle* dominant_particle = nullptr;
+    ParticleKey dominant_key{"UNKNOWN", 0, 0, 0, 0};
     int max_particle_count = 0;
     for (const auto& kv : particle_counts) {
         if (kv.second > max_particle_count) {
             max_particle_count = kv.second;
-            dominant_particle = kv.first;
+            dominant_key = kv.first;
         }
     }
     
     // Set truth information from dominant particle
-    if (dominant_particle != nullptr) {
-        true_pos_ = {dominant_particle->GetX(), dominant_particle->GetY(), dominant_particle->GetZ()};
-        true_dir_ = {dominant_particle->GetPx(), dominant_particle->GetPy(), dominant_particle->GetPz()};
-        true_momentum_ = {dominant_particle->GetPx(), dominant_particle->GetPy(), dominant_particle->GetPz()};
+    if (dominant_key.generator != "UNKNOWN" && max_particle_count > 0) {
+        true_pos_ = {dominant_key.x, dominant_key.y, dominant_key.z};
+        
+        // Get momentum from any TP with this dominant particle
+        for (const auto& tp : tps_) {
+            if (tp->GetGeneratorName() == dominant_key.generator &&
+                tp->GetParticlePDG() == dominant_key.pdg &&
+                std::abs(tp->GetParticleX() - dominant_key.x) < 0.1 &&
+                std::abs(tp->GetParticleY() - dominant_key.y) < 0.1 &&
+                std::abs(tp->GetParticleZ() - dominant_key.z) < 0.1) {
+                true_momentum_ = {tp->GetParticlePx(), tp->GetParticlePy(), tp->GetParticlePz()};
+                float p_mag = std::sqrt(true_momentum_[0]*true_momentum_[0] + 
+                                       true_momentum_[1]*true_momentum_[1] + 
+                                       true_momentum_[2]*true_momentum_[2]);
+                if (p_mag > 0) {
+                    true_dir_ = {true_momentum_[0]/p_mag, true_momentum_[1]/p_mag, true_momentum_[2]/p_mag};
+                }
+                break;
+            }
+        }
         
         // Calculate actual deposited energy from TPs belonging to dominant particle
         // Use ADC-based energy to avoid including rest mass from SimIDE
@@ -114,7 +167,11 @@ void Cluster::update_cluster_info() {
         double adc_to_mev = (cluster_view == "X") ? ADC_TO_MEV_COLLECTION : ADC_TO_MEV_INDUCTION;
         
         for (const auto& tp : tps_) {
-            if (tp->GetTrueParticle() == dominant_particle) {
+            if (tp->GetGeneratorName() == dominant_key.generator &&
+                tp->GetParticlePDG() == dominant_key.pdg &&
+                std::abs(tp->GetParticleX() - dominant_key.x) < 0.1 &&
+                std::abs(tp->GetParticleY() - dominant_key.y) < 0.1 &&
+                std::abs(tp->GetParticleZ() - dominant_key.z) < 0.1) {
                 double tp_energy = tp->GetAdcIntegral() / adc_to_mev;
                 deposited_energy += tp_energy;
                 dominant_tp_count++;
@@ -124,8 +181,8 @@ void Cluster::update_cluster_info() {
                             << " | Plane: " << tp->GetView()
                             << " | Channel: " << tp->GetChannel()
                             << " | Time Start: " << tp->GetTimeStart()
-                            << " | Generator: " << tp->GetTrueParticle()->GetGeneratorName()
-                            << " | PDG: " << tp->GetTrueParticle()->GetPdg() << std::endl;
+                            << " | Generator: " << tp->GetGeneratorName()
+                            << " | PDG: " << tp->GetParticlePDG() << std::endl;
                 }
             }
         }
@@ -137,14 +194,14 @@ void Cluster::update_cluster_info() {
             LogInfo << "  (Conversion factor: " << adc_to_mev << " ADC/MeV for " << cluster_view << " plane)" << std::endl;
         }
         
-        true_label_ = dominant_particle->GetGeneratorName();
-        true_pdg_ = dominant_particle->GetPdg();
+        true_label_ = dominant_key.generator;
+        true_pdg_ = dominant_key.pdg;
         
-        // Set neutrino information
-        const Neutrino* dominant_neutrino = dominant_particle->GetNeutrino();
-        if (dominant_neutrino != nullptr) {
-            true_neutrino_energy_ = dominant_neutrino->GetEnergy();
-            true_interaction_ = dominant_neutrino->GetInteraction();
+        // Set neutrino information from the stored map
+        if (neutrino_info_map.count(dominant_key) > 0) {
+            const auto& nu_info = neutrino_info_map[dominant_key];
+            true_neutrino_energy_ = nu_info.energy;
+            true_interaction_ = nu_info.interaction;
         } else {
             true_neutrino_energy_ = -1.0f;
             true_interaction_ = "UNKNOWN";
@@ -152,10 +209,9 @@ void Cluster::update_cluster_info() {
 
         if (debugMode){
             LogInfo << "Information about dominant particle extracted." << std::endl;
-            LogInfo << "  Dominant particle: " << dominant_particle->GetGeneratorName() 
-                    << " (PDG: " << dominant_particle->GetPdg() << ")" << std::endl;
-            LogInfo << "  Particle initial energy: " << dominant_particle->GetEnergy() << " MeV" << std::endl;
-            LogInfo << "  Deposited energy (SimIDE): " << deposited_energy << " MeV" << std::endl;
+            LogInfo << "  Dominant particle: " << dominant_key.generator
+                    << " (PDG: " << dominant_key.pdg << ")" << std::endl;
+            LogInfo << "  Deposited energy: " << deposited_energy << " MeV" << std::endl;
             LogInfo << "  TPs from dominant particle: " << dominant_tp_count << " / " << tps_.size() << std::endl;
             LogInfo << "  True Position: (" << true_pos_[0] << ", " << true_pos_[1] << ", " << true_pos_[2] << ")" << std::endl;
             LogInfo << "  True Momentum: (" << true_momentum_[0] << ", " << true_momentum_[1] << ", " << true_momentum_[2] << ")" << std::endl;

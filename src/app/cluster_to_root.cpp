@@ -250,7 +250,7 @@ int main(int argc, char* argv[]) {
 
                 int matched_in_view = 0;
                 for (auto* tp : these_tps_per_view) {
-                    if (tp->GetTrueParticle() != nullptr) {
+                    if (tp->GetGeneratorName() != "UNKNOWN") {
                         matched_in_view++;
                     }
                 }
@@ -260,9 +260,9 @@ int main(int argc, char* argv[]) {
                 // LogInfo << "Of these, the ones for which the true particle contains truth: " << std::endl;
                 int truth_count = 0;
                 for (auto* tp : these_tps_per_view) {
-                    if (tp->GetTrueParticle() != nullptr && tp->GetTrueParticle()->GetGeneratorName() != "UNKNOWN") {
+                    if (tp->GetGeneratorName() != "UNKNOWN") {
                         truth_count++;
-                        // std::cout << "; Generator: " << tp->GetTrueParticle()->GetGeneratorName() ;
+                        // std::cout << "; Generator: " << tp->GetGeneratorName() ;
                     }
                 }
                 int gen_tp_fraction = these_tps_per_view.empty() ? 0 : static_cast<int>(truth_count * 100.0f / these_tps_per_view.size());

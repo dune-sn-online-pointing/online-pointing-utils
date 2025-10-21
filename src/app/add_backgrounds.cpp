@@ -172,18 +172,12 @@ int main(int argc, char* argv[]) {
         if (std::filesystem::exists(output_filename) && !overrideMode) {
             file_count--;
             if (verboseMode) LogInfo << "Output file already exists, skipping (use --override to overwrite)" << std::endl;
-            continue;
         }
     // Prepare merged data structures
         std::vector<std::vector<TriggerPrimitive>> merged_tps_vec;
         std::vector<std::vector<TrueParticle>> merged_true_vec;
         std::vector<std::vector<Neutrino>> merged_nu_vec;
-    // Track, per event, how many TrueParticles are from the signal (before appending background)
-    std::vector<size_t> signal_true_sizes;
-        // Persistent storage for background truth data (must live until write_tps is called)
-        // Use a list instead of vector to avoid pointer invalidation on reallocation
-        std::list<std::vector<TrueParticle>> persistent_bkg_true;
-        // Track signal TP counts for each event (for re-linking later)
+        // Track signal TP counts for each event (for diagnostics)
         std::vector<int> signal_tp_counts;
         // Process each event in the signal file
         for (const auto& kv : signal_tps_by_event) {
@@ -208,11 +202,9 @@ int main(int argc, char* argv[]) {
             // Start with signal TPs
             std::vector<TriggerPrimitive> merged_tps = signal_tps;
             
-            // Vectors to hold merged truth info for this event
+            // Vectors to hold merged truth info for this event (kept for backward compatibility)
             std::vector<TrueParticle> merged_true;
             std::vector<Neutrino> merged_nu;
-            // Track how many true particles come from the SIGNAL before appending background
-            size_t signal_true_size_for_event = 0;
             
             // Get next background event (cycling through files as needed)
             if (!cached_bkg_event_ids.empty()) {
@@ -225,7 +217,6 @@ int main(int argc, char* argv[]) {
                 
                 int bkg_event_id = cached_bkg_event_ids[bkg_event_idx];
                 const auto& bkg_tps = cached_bkg_tps.at(bkg_event_id);
-                const auto& bkg_true_by_event = cached_bkg_true;
                 
                 if (verboseMode) {
                     LogInfo << "Signal event " << event_id << ": merging with background "
@@ -234,27 +225,15 @@ int main(int argc, char* argv[]) {
                             << bkg_tps.size() << " TPs)" << std::endl;
                 }
                 
-                // Deep copy background truth data to persistent storage
-                std::vector<TrueParticle> bkg_true_copy;
-                if (bkg_true_by_event.count(bkg_event_id) > 0) {
-                    bkg_true_copy = bkg_true_by_event.at(bkg_event_id);
-                    // Update event numbers for all background truth particles (CRITICAL BUG FIX)
-                    for (auto& true_particle : bkg_true_copy) {
-                        true_particle.SetEvent(event_id);
-                    }
-                }
-                persistent_bkg_true.push_back(bkg_true_copy);
-                std::vector<TrueParticle>& persistent_bkg = persistent_bkg_true.back();
-                
                 int bkg_added = 0;
                 int bkg_truth_linked = 0;
                 int bkg_unknown_filtered = 0;
                 
-                // Add background TPs, updating their truth pointers to the persistent copied data
+                // Add background TPs, copying embedded truth directly
                 for (const auto& bkg_tp : bkg_tps) {
                     // Filter out UNKNOWN background TPs (noise already present in signal files)
-                    const TrueParticle* orig_ptr = bkg_tp.GetTrueParticle();
-                    if (orig_ptr == nullptr) {
+                    std::string gen_name = bkg_tp.GetGeneratorName();
+                    if (gen_name == "UNKNOWN") {
                         bkg_unknown_filtered++;
                         continue;  // Skip UNKNOWN TPs from background
                     }
@@ -264,32 +243,9 @@ int main(int argc, char* argv[]) {
                     // Update the event number to match the signal event (CRITICAL BUG FIX)
                     tp.SetEvent(event_id);
                     
-                    // Keep SimIDE energy for background TPs so clusters can use deposited energy
-                    // instead of falling back to particle's total initial energy
-                    // tp.SetSimideEnergy(0.0);  // REMOVED - this was causing high energy for Rn222 clusters
+                    // Truth is already embedded in the TP - no pointer relinking needed
+                    bkg_truth_linked++;  // Count as linked since truth is embedded
                     
-                    // Update truth pointer to point to our persistent copy
-                    if (orig_ptr != nullptr && !persistent_bkg.empty()) {
-                        int truth_id = orig_ptr->GetTruthId();
-                        int track_id = orig_ptr->GetTrackId();
-                        bool found = false;
-                        for (auto& copied_true : persistent_bkg) {
-                            if (copied_true.GetTruthId() == truth_id && copied_true.GetTrackId() == track_id) {
-                                tp.SetTrueParticle(&copied_true);
-                                if (tp.GetTrueParticle() != nullptr) {
-                                    bkg_truth_linked++;
-                                } else if (debugMode) {
-                                    LogWarning << "SetTrueParticle failed - pointer is still null!" << std::endl;
-                                }
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found && debugMode) {
-                            LogWarning << "Could not find matching TrueParticle for bkg TP (truth_id=" 
-                                      << truth_id << ", track_id=" << track_id << ")" << std::endl;
-                        }
-                    }
                     merged_tps.push_back(tp);
                     bkg_added++;
                 }
@@ -305,13 +261,10 @@ int main(int argc, char* argv[]) {
                             << merged_tps.size() << " total TPs" << std::endl;
                 }
                 
-                // Merge truth information from signal and copied background
+                // Merge truth information from signal (kept for backward compatibility with write function)
                 if (signal_true_by_event.count(event_id) > 0) {
                     merged_true = signal_true_by_event.at(event_id);
                 }
-                // Record size of signal truth before appending background
-                signal_true_size_for_event = merged_true.size();
-                merged_true.insert(merged_true.end(), persistent_bkg.begin(), persistent_bkg.end());
                 if (signal_nu_by_event.count(event_id) > 0) {
                     merged_nu = signal_nu_by_event.at(event_id);
                 }
@@ -339,92 +292,47 @@ int main(int argc, char* argv[]) {
             
             merged_tps_vec.push_back(merged_tps);
             merged_true_vec.push_back(merged_true);
-            // Save the signal truth size for this event (used during re-linking)
-            // Note: This aligns with the same ev_idx as merged_*_vec entries
-            // We will create this vector before the event loop if not already defined
-            signal_true_sizes.push_back(signal_true_size_for_event);
             merged_nu_vec.push_back(merged_nu);
             signal_tp_counts.push_back(signal_tps.size());
-            // Store per-event signal truth size (will create vector before loop)
-            // Placeholder comment (actual vector declared outside this loop)
         }
         
-        // CRITICAL: Update TP pointers to point to TrueParticles in merged_true_vec
-        // This must be done AFTER all events are added to merged_true_vec
-        // IMPORTANT: Avoid cross-linking. Signal TPs must only match signal truth;
-        // background TPs must only match background truth.
-        int relinked_count = 0;
-        for (size_t ev_idx = 0; ev_idx < merged_tps_vec.size(); ev_idx++) {
-            auto& event_tps = merged_tps_vec[ev_idx];
-            auto& event_true = merged_true_vec[ev_idx];
-            int signal_tp_count = signal_tp_counts[ev_idx];
-            // Determine split between signal and background truth for this event
-            // We rely on a side-band vector that mirrors event order
-            // If not available, default to 0 (no signal truth)
-            size_t signal_true_size = (ev_idx < signal_true_sizes.size()) ? signal_true_sizes[ev_idx] : 0;
+        // NOTE: With embedded truth, TP pointers no longer need relinking
+        // Truth information is copied directly with each TP and travels with it
+        // The old relinking logic is removed as truth is now self-contained in each TP
+        
+        // Diagnostics: count MARLEY-labeled signal TPs vs background TPs
+        if (verboseMode) {
+            auto is_marley = [](const std::string& s){
+                std::string t = s; std::transform(t.begin(), t.end(), t.begin(), ::tolower);
+                return t.find("marley") != std::string::npos; };
             
-            // Re-link TPs to TrueParticles in merged_true_vec with partitioned matching
-            for (size_t tp_idx = 0; tp_idx < event_tps.size(); tp_idx++) {
-                auto& tp = event_tps[tp_idx];
-                const auto* old_ptr = tp.GetTrueParticle();
-                if (old_ptr == nullptr) continue;
-                // Decide the matching window: signal TP -> [0, signal_true_size), background TP -> [signal_true_size, end)
-                if ((int)tp_idx < signal_tp_count) {
-                    // Signal TP: only match within signal truth range
-                    for (size_t it = 0; it < signal_true_size && it < event_true.size(); ++it) {
-                        auto& true_particle = event_true[it];
-                        if (true_particle.GetTruthId() == old_ptr->GetTruthId() &&
-                            true_particle.GetTrackId() == old_ptr->GetTrackId()) {
-                            tp.SetTrueParticle(&true_particle);
-                            break;
-                        }
-                    }
-                } else {
-                    // Background TP: only match within background truth range
-                    for (size_t it = signal_true_size; it < event_true.size(); ++it) {
-                        auto& true_particle = event_true[it];
-                        if (true_particle.GetTruthId() == old_ptr->GetTruthId() &&
-                            true_particle.GetTrackId() == old_ptr->GetTrackId()) {
-                            tp.SetTrueParticle(&true_particle);
-                            relinked_count++;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Diagnostics: count MARLEY-labeled signal TPs and background-labeled background TPs
-            if (verboseMode && ev_idx < 3) {
-                auto is_marley = [](const std::string& s){
-                    std::string t = s; std::transform(t.begin(), t.end(), t.begin(), ::tolower);
-                    return t.find("marley") != std::string::npos; };
+            for (size_t ev_idx = 0; ev_idx < std::min<size_t>(3, merged_tps_vec.size()); ev_idx++) {
+                auto& event_tps = merged_tps_vec[ev_idx];
+                int signal_tp_count = signal_tp_counts[ev_idx];
+                
                 int sig_marley = 0, sig_total = signal_tp_count;
                 int bkg_marley = 0, bkg_total = (int)event_tps.size() - signal_tp_count;
+                
                 for (int i = 0; i < signal_tp_count && i < (int)event_tps.size(); ++i) {
-                    const auto* tp_true = event_tps[i].GetTrueParticle();
-                    if (tp_true && is_marley(tp_true->GetGeneratorName())) sig_marley++;
+                    if (is_marley(event_tps[i].GetGeneratorName())) sig_marley++;
                 }
                 for (size_t i = signal_tp_count; i < event_tps.size(); ++i) {
-                    const auto* tp_true = event_tps[i].GetTrueParticle();
-                    if (tp_true && is_marley(tp_true->GetGeneratorName())) bkg_marley++;
+                    if (is_marley(event_tps[i].GetGeneratorName())) bkg_marley++;
                 }
-                LogInfo << "Post-relink diagnostics ev_idx=" << ev_idx
+                
+                LogInfo << "Diagnostics ev_idx=" << ev_idx
                         << ": signalTPs MARLEY=" << sig_marley << "/" << sig_total
                         << ", bkgTPs MARLEY=" << bkg_marley << "/" << bkg_total << std::endl;
             }
         }
-        if (verboseMode) LogInfo << "Re-linked " << relinked_count << " background TP pointers to merged_true_vec" << std::endl;
         
-        // Debug: Verify pointers right before write
+        // Debug: Verify generator names right before write
         if (verboseMode && !merged_tps_vec.empty() && !merged_tps_vec[0].empty()) {
             int bkg_tps_checked = 0;
             for (const auto& tp : merged_tps_vec[0]) {
                 if (bkg_tps_checked >= signal_tps_by_event[0].size()) { // Skip signal TPs
-                    const auto* true_ptr = tp.GetTrueParticle();
-                    if (true_ptr != nullptr) {
-                        LogInfo << "  PRE-WRITE: TP has generator: " << true_ptr->GetGeneratorName() << std::endl;
-                        break;
-                    }
+                    LogInfo << "  PRE-WRITE: TP has generator: " << tp.GetGeneratorName() << std::endl;
+                    break;
                 }
                 bkg_tps_checked++;
             }
