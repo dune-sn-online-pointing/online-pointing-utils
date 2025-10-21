@@ -6,6 +6,7 @@
 #include "GenericToolbox.Utils.h"
 
 #include <nlohmann/json.hpp>
+#include <regex>
 
 #include "utils.h"
 #include "verbosity.h"

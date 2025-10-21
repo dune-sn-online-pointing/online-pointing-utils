@@ -1,6 +1,4 @@
 #include "Clustering.h"
-#include "TGraphErrors.h"
-#include <regex>
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -637,7 +635,7 @@ int main(int argc, char* argv[]){
     if (verboseMode) {
       LogInfo << "\n=== Cluster Categorization Summary ===" << std::endl;
       LogInfo << "Pure Marley clusters: " << h_adc_pure_marley->GetEntries() << std::endl;
-      LogInfo << "Pure Noise/UNKNOWN clusters: " << h_adc_pure_noise->GetEntries() << std::endl;
+      LogInfo << "Pure Noise clusters: " << h_adc_pure_noise->GetEntries() << std::endl;
       LogInfo << "Marley+Noise (hybrid) clusters: " << h_adc_hybrid->GetEntries() << std::endl;
       LogInfo << "Pure Background clusters: " << h_adc_background->GetEntries() << std::endl;
       LogInfo << "Marley+Background (mixed) clusters: " << h_adc_mixed_signal_bkg->GetEntries() << std::endl;
@@ -807,7 +805,7 @@ int main(int argc, char* argv[]){
     
     // Display minimum cluster charges per plane
     if (!min_cluster_charge.empty()) {
-      float ypos = 0.40;
+      float ypos = 0.25;
       auto min_charge_txt = new TText(0.5, ypos, "Minimum Cluster Charge:");
       min_charge_txt->SetTextAlign(22); min_charge_txt->SetTextSize(0.03); min_charge_txt->SetNDC(); min_charge_txt->SetTextFont(62); min_charge_txt->Draw();
       ypos -= 0.04;
@@ -1568,6 +1566,7 @@ int main(int argc, char* argv[]){
       max_val = std::max(max_val, h_adc_mixed_signal_bkg->GetMaximum());
       
       h_adc_pure_marley->SetMaximum(max_val * 1.2);
+      h_adc_pure_marley->SetMinimum(0.5);  // Set minimum for log scale to see low bins
       h_adc_pure_marley->SetTitle("Total ADC Integral by Cluster Family;Total ADC Integral;Clusters");
       h_adc_pure_marley->Draw("HIST");
       h_adc_pure_noise->Draw("HIST SAME");
@@ -1577,7 +1576,7 @@ int main(int argc, char* argv[]){
 
       TLegend* leg = new TLegend(0.55,0.60,0.88,0.88);
       leg->AddEntry(h_adc_pure_marley, Form("Pure Marley (%.0f)", h_adc_pure_marley->GetEntries()), "l");
-      leg->AddEntry(h_adc_pure_noise, Form("Pure Noise/UNKNOWN (%.0f)", h_adc_pure_noise->GetEntries()), "l");
+      leg->AddEntry(h_adc_pure_noise, Form("Pure Noise (%.0f)", h_adc_pure_noise->GetEntries()), "l");
       leg->AddEntry(h_adc_hybrid, Form("Marley+Noise (%.0f)", h_adc_hybrid->GetEntries()), "l");
       leg->AddEntry(h_adc_background, Form("Pure Background (%.0f)", h_adc_background->GetEntries()), "l");
       leg->AddEntry(h_adc_mixed_signal_bkg, Form("Marley+Background (%.0f)", h_adc_mixed_signal_bkg->GetEntries()), "l");
@@ -1652,6 +1651,7 @@ int main(int argc, char* argv[]){
       max_val_e = std::max(max_val_e, h_energy_mixed_signal_bkg->GetMaximum());
       
       h_energy_pure_marley->SetMaximum(max_val_e * 1.2);
+      h_energy_pure_marley->SetMinimum(0.5);  // Set minimum for log scale to see low bins
       h_energy_pure_marley->SetTitle("Total Energy by Cluster Family;Total Energy [MeV];Clusters");
       h_energy_pure_marley->Draw("HIST");
       h_energy_pure_noise->Draw("HIST SAME");
@@ -1681,7 +1681,7 @@ int main(int argc, char* argv[]){
 
       TLegend* leg_e = new TLegend(0.55,0.60,0.88,0.88);
       leg_e->AddEntry(h_energy_pure_marley, Form("Pure Marley (%.0f)", h_energy_pure_marley->GetEntries()), "l");
-      leg_e->AddEntry(h_energy_pure_noise, Form("Pure Noise/UNKNOWN (%.0f)", h_energy_pure_noise->GetEntries()), "l");
+      leg_e->AddEntry(h_energy_pure_noise, Form("Pure Noise (%.0f)", h_energy_pure_noise->GetEntries()), "l");
       leg_e->AddEntry(h_energy_hybrid, Form("Marley+Noise (%.0f)", h_energy_hybrid->GetEntries()), "l");
       leg_e->AddEntry(h_energy_background, Form("Pure Background (%.0f)", h_energy_background->GetEntries()), "l");
       leg_e->AddEntry(h_energy_mixed_signal_bkg, Form("Marley+Background (%.0f)", h_energy_mixed_signal_bkg->GetEntries()), "l");

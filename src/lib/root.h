@@ -24,6 +24,7 @@
 #include <TButton.h>
 #include <TApplication.h>
 #include <TVector3.h>
+#include <TGraphErrors.h>
 
 #endif // ROOT_H
 

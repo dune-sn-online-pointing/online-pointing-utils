@@ -1,0 +1,15 @@
+{
+  "signal_type": "bg",
+  "inputFolder": "/eos/user/e/evilla/dune/sn-tps/lateral_bkgs/",
+  "signal_folder": "/eos/user/e/evilla/dune/sn-tps/lateral_bkgs/",
+  "bkg_folder": "/eos/user/e/evilla/dune/sn-tps/lateral_bkgs/",
+
+  "outputFolder": "/eos/user/e/evilla/dune/sn-tps/lateral_bkgs/",
+  
+  "around_vertex_only": false,
+  "vertex_radius": 100,
+  
+  "max_files": 2,
+  
+  "root_verbosity": "kWarning"
+}
