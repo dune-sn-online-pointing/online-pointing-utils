@@ -1,6 +1,6 @@
 {
   "thisIsAComment": "Code will try first input file from cmd line, then inputFile, then inputFolder + inputList, then inputListFile.",
-  "inputFile": "/home/virgolaema/dune/online-pointing-utils/data/prod_es//es_valid_tick5_ch2_min2_tot1_clusters.root",
+  "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
 
   "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
   

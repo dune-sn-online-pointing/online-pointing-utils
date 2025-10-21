@@ -8,7 +8,7 @@
   "outputFolder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
   "outputFilename": "bg_myprod",
   
-  "max_files": -1,
+  "max_files": 2,
   
   "tick_limit": 3,
   "channel_limit": 2,

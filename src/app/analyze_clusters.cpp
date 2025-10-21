@@ -202,8 +202,10 @@ int main(int argc, char* argv[]){
   std::string outFolder;
   if (clp.isOptionTriggered("outFolder"))
     outFolder = clp.getOptionVal<std::string>("outFolder");
-  else if (j.contains("output_folder"))
-    outFolder = j.value("output_folder", std::string(""));
+  else if (j.contains("outputFolder"))
+    outFolder = j.value("outputFolder", std::string(""));
+
+  LogInfo << "Output folder: " << (outFolder.empty() ? "data" : outFolder) << std::endl;
 
   std::vector<std::string> produced;
 
@@ -218,8 +220,105 @@ int main(int argc, char* argv[]){
   std::vector<double> vec_total_cluster_charge_U_for_simide;
   std::vector<double> vec_total_cluster_charge_V_for_simide;
 
+  // Histograms for ADC and energy by cluster family (global, accumulated across all files)
+  TH1F* h_adc_pure_marley = new TH1F("h_adc_pure_marley", "Total ADC Integral: Pure Marley;Total ADC Integral;Clusters", 50, 0, 200000);
+  TH1F* h_adc_pure_noise = new TH1F("h_adc_pure_noise", "Total ADC Integral: Pure Noise;Total ADC Integral;Clusters", 50, 0, 200000);
+  TH1F* h_adc_hybrid = new TH1F("h_adc_hybrid", "Total ADC Integral: Hybrid (Marley+Noise);Total ADC Integral;Clusters", 50, 0, 200000);
+  TH1F* h_adc_background = new TH1F("h_adc_background", "Total ADC Integral: Pure Background;Total ADC Integral;Clusters", 50, 0, 200000);
+  TH1F* h_adc_mixed_signal_bkg = new TH1F("h_adc_mixed_signal_bkg", "Total ADC Integral: Mixed Marley+Background;Total ADC Integral;Clusters", 50, 0, 200000);
+  h_adc_pure_marley->SetDirectory(nullptr);
+  h_adc_pure_noise->SetDirectory(nullptr);
+  h_adc_hybrid->SetDirectory(nullptr);
+  h_adc_background->SetDirectory(nullptr);
+  h_adc_mixed_signal_bkg->SetDirectory(nullptr);
+
+  int bin_energy = 140, max_energy = 70;
+  TH1F* h_energy_pure_marley = new TH1F("h_energy_pure_marley", "Total Energy: Pure Marley;Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
+  TH1F* h_energy_pure_noise = new TH1F("h_energy_pure_noise", "Total Energy: Pure Noise;Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
+  TH1F* h_energy_hybrid = new TH1F("h_energy_hybrid", "Total Energy: Hybrid (Marley+Noise);Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
+  TH1F* h_energy_background = new TH1F("h_energy_background", "Total Energy: Pure Background;Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
+  TH1F* h_energy_mixed_signal_bkg = new TH1F("h_energy_mixed_signal_bkg", "Total Energy: Mixed Marley+Background;Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
+  h_energy_pure_marley->SetDirectory(nullptr);
+  h_energy_pure_noise->SetDirectory(nullptr);
+  h_energy_hybrid->SetDirectory(nullptr);
+  h_energy_background->SetDirectory(nullptr);
+  h_energy_mixed_signal_bkg->SetDirectory(nullptr);
+
+  // Additional global histograms for interesting quantities
+  TH1F* h_true_particle_energy = new TH1F("h_true_part_e", "True particle energy;Energy [MeV];Clusters", 100, 0, 60000);
+  h_true_particle_energy->SetDirectory(nullptr);
+  TH1F* h_true_neutrino_energy = new TH1F("h_true_nu_e", "True neutrino energy;Energy [MeV];Clusters", 50, 0, 100);
+  h_true_neutrino_energy->SetDirectory(nullptr);
+  TH1F* h_min_distance = new TH1F("h_min_dist", "Min distance from true position;Distance [cm];Clusters", 50, 0, 50);
+  h_min_distance->SetDirectory(nullptr);
+  TH2F* h2_particle_vs_cluster_energy = new TH2F("h2_part_clust_e", "Particle energy vs cluster energy;True particle energy [MeV];Cluster total energy [MeV]", 100, 0, 70, 100, 0, 10000);
+  h2_particle_vs_cluster_energy->SetDirectory(nullptr);
+  TH2F* h2_neutrino_vs_cluster_energy = new TH2F("h2_nu_clust_e", "Neutrino energy vs cluster energy;True neutrino energy [MeV];Cluster total energy [MeV]", 50, 0, 100, 100, 0, 10000);
+  h2_neutrino_vs_cluster_energy->SetDirectory(nullptr);
+  TH2F* h2_total_particle_energy_vs_total_charge = new TH2F("h2_tot_part_e_vs_charge", "Total visible energy vs total cluster charge per event (All Planes);Total visible particle energy [MeV];Total cluster charge [ADC]", 100, 0, 70, 100, 0, 18000);
+  h2_total_particle_energy_vs_total_charge->SetDirectory(nullptr);
+
+  // Global accumulators (fill across all files, plot after loop)
+  std::map<std::string, long long> label_counts_all;
+  std::map<std::string, TH1F*> n_tps_plane_h;
+  std::map<std::string, TH1F*> total_charge_plane_h;
+  std::map<std::string, TH1F*> total_energy_plane_h;
+  std::map<std::string, TH1F*> max_tp_charge_plane_h;
+  std::map<std::string, TH1F*> total_length_plane_h;
+  std::map<std::string, TH2F*> ntps_vs_total_charge_plane_h;
+  std::map<std::string, double> min_cluster_charge;
+  
+  // MARLEY event accumulators
+  std::vector<double> marley_enu;
+  std::vector<double> marley_ncl;
+  std::map<int, double> marley_total_energy_per_event;
+  std::map<int, double> event_neutrino_energy;
+  std::map<int, int> sn_clusters_per_event;
+  
+  // Per-event particle energy accumulators (per plane and global)
+  std::map<int, double> event_total_particle_energy;      // X plane
+  std::map<int, double> event_total_particle_energy_U;    // U plane
+  std::map<int, double> event_total_particle_energy_V;    // V plane
+  std::map<int, double> event_total_particle_energy_global; // Global across all planes
+  
+  // Per-event cluster charge accumulators
+  std::map<int, double> event_total_cluster_charge;   // X plane
+  std::map<int, double> event_total_cluster_charge_U; // U plane
+  std::map<int, double> event_total_cluster_charge_V; // V plane
+  
+  // Track unique particles per event (per plane)
+  std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles;        // X plane
+  std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles_U;      // U plane
+  std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles_V;      // V plane
+  std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles_global; // Global
+  
+  // Vectors for calibration graphs
+  std::vector<double> vec_total_particle_energy;
+  std::vector<double> vec_total_cluster_charge;
+  std::vector<double> vec_total_particle_energy_U;
+  std::vector<double> vec_total_cluster_charge_U;
+  std::vector<double> vec_total_particle_energy_V;
+  std::vector<double> vec_total_cluster_charge_V;
+  
+  // Marley TP fraction categorization counters
+  int only_marley_clusters = 0;
+  int partial_marley_clusters = 0;
+  int no_marley_clusters = 0;
+
+  // Generate combined PDF path from first input file
+  std::string combined_pdf;
+  if (!inputs.empty()) {
+    std::string base = inputs[0].substr(inputs[0].find_last_of("/\\")+1);
+    size_t dotpos = base.find_last_of('.');
+    if (dotpos != std::string::npos) base = base.substr(0, dotpos);
+    combined_pdf = outFolder.empty() ? base + "_report.pdf" : outFolder + "/" + base + "_report.pdf";
+  } else {
+    combined_pdf = "cluster_analysis_combined.pdf";
+  }
+
   int file_count = 0;
   for (const auto& clusters_file : inputs){
+
     file_count++;
     if (max_files > 0 && file_count > max_files) {
       LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
@@ -260,72 +359,6 @@ int main(int argc, char* argv[]){
     }
     LogThrowIf(planes.empty(), "No clusters trees found in file: " << clusters_file);
 
-    // Output PDF path
-    std::string base = clusters_file.substr(clusters_file.find_last_of("/\\")+1);
-    auto dot = base.find_last_of('.');
-    if (dot!=std::string::npos) base = base.substr(0, dot);
-    std::string outDir = outFolder.empty()? clusters_file.substr(0, clusters_file.find_last_of("/\\")) : outFolder;
-    if (outDir.empty()) outDir = ".";
-    std::string pdf = outDir + "/" + base + "_report.pdf";
-
-    // Accumulators across planes
-    std::map<std::string, long long> label_counts_all;
-    std::map<std::string, std::vector<long long>> label_counts_by_plane; // plane -> counts by label not needed, we keep total per label and per plane n_tps
-    std::map<std::string, TH1F*> n_tps_plane_h;
-    std::map<std::string, TH1F*> total_charge_plane_h;
-    std::map<std::string, TH1F*> total_energy_plane_h;
-    std::map<std::string, TH1F*> max_tp_charge_plane_h;
-    std::map<std::string, TH1F*> total_length_plane_h;
-    std::map<std::string, TH2F*> ntps_vs_total_charge_plane_h;
-    
-    // Additional histograms for interesting quantities
-    TH1F* h_true_particle_energy = new TH1F("h_true_part_e", "True particle energy;Energy [MeV];Clusters", 100, 0, 60000);
-    h_true_particle_energy->SetDirectory(nullptr);
-    TH1F* h_true_neutrino_energy = new TH1F("h_true_nu_e", "True neutrino energy;Energy [MeV];Clusters", 50, 0, 100);
-    h_true_neutrino_energy->SetDirectory(nullptr);
-    TH1F* h_min_distance = new TH1F("h_min_dist", "Min distance from true position;Distance [cm];Clusters", 50, 0, 50);
-    h_min_distance->SetDirectory(nullptr);
-    TH2F* h2_particle_vs_cluster_energy = new TH2F("h2_part_clust_e", "Particle energy vs cluster energy;True particle energy [MeV];Cluster total energy [MeV]", 100, 0, 70, 100, 0, 10000);
-    h2_particle_vs_cluster_energy->SetDirectory(nullptr);
-    TH2F* h2_neutrino_vs_cluster_energy = new TH2F("h2_nu_clust_e", "Neutrino energy vs cluster energy;True neutrino energy [MeV];Cluster total energy [MeV]", 50, 0, 100, 100, 0, 10000);
-    h2_neutrino_vs_cluster_energy->SetDirectory(nullptr);
-    TH2F* h2_total_particle_energy_vs_total_charge = new TH2F("h2_tot_part_e_vs_charge", "Total visible energy vs total cluster charge per event (All Planes);Total visible particle energy [MeV];Total cluster charge [ADC]", 100, 0, 70, 100, 0, 18000);
-    h2_total_particle_energy_vs_total_charge->SetDirectory(nullptr);
-    
-    std::vector<double> marley_enu;
-    std::vector<double> marley_ncl; // per event MARLEY Cluster count vs Eν
-    std::map<int, double> marley_total_energy_per_event; // sum of total_energy for MARLEY clusters per event
-    std::map<int, double> event_neutrino_energy; // neutrino energy per event
-    std::map<int,int> sn_clusters_per_event; // sum across planes
-    std::map<int, double> event_total_particle_energy; // sum of unique particle energies per event (Collection plane X)
-    std::map<int, double> event_total_particle_energy_U; // sum of unique particle energies per event (U plane)
-    std::map<int, double> event_total_particle_energy_V; // sum of unique particle energies per event (V plane)
-    std::map<int, double> event_total_cluster_charge; // sum of all cluster charges per event (Collection plane X)
-    std::map<int, double> event_total_cluster_charge_U; // sum of all cluster charges per event (U plane)
-    std::map<int, double> event_total_cluster_charge_V; // sum of all cluster charges per event (V plane)
-    // Track unique particles per event using a set of (energy, position) pairs - per plane
-    std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles; // event -> set of (energy, x, y, z) for X plane
-    std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles_U; // event -> set of (energy, x, y, z) for U plane
-    std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles_V; // event -> set of (energy, x, y, z) for V plane
-    std::map<int, std::set<std::tuple<float, float, float, float>>> event_unique_particles_global; // event -> set of (energy, x, y, z) GLOBAL across all planes for per-event total
-    std::map<int, double> event_total_particle_energy_global; // sum of unique particle energies per event (GLOBAL across all planes, no double counting)
-    // Vectors for the calibration graph (Collection plane X)
-    std::vector<double> vec_total_particle_energy;
-    std::vector<double> vec_total_cluster_charge;
-  // Vectors for the calibration graph (U plane)
-  std::vector<double> vec_total_particle_energy_U;
-  std::vector<double> vec_total_cluster_charge_U;
-  // Vectors for the calibration graph (V plane)
-  std::vector<double> vec_total_particle_energy_V;
-  std::vector<double> vec_total_cluster_charge_V;
-  // Track minimum cluster charges per plane
-  std::map<std::string, double> min_cluster_charge;
-
-    // Marley TP fraction categorization counters (across all planes)
-    int only_marley_clusters = 0;     // marley_tp_fraction = 1.0
-    int partial_marley_clusters = 0;  // 0 < marley_tp_fraction < 1.0
-    int no_marley_clusters = 0;       // marley_tp_fraction = 0.0
-
     // Charge to energy conversion factors (ADC/MeV)
     const double ADC_TO_MEV_COLLECTION = ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");
     const double ADC_TO_MEV_INDUCTION = ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
@@ -333,32 +366,7 @@ int main(int argc, char* argv[]){
     const double ADC_TO_MEV_U = ADC_TO_MEV_INDUCTION;
     const double ADC_TO_MEV_V = ADC_TO_MEV_INDUCTION;
 
-    // Histograms for total ADC integral by cluster family
-    // Increase the range to 200000 to capture marley+background clusters
-    TH1F* h_adc_pure_marley = new TH1F("h_adc_pure_marley", "Total ADC Integral: Pure Marley;Total ADC Integral;Clusters", 50, 0, 200000);
-    TH1F* h_adc_pure_noise = new TH1F("h_adc_pure_noise", "Total ADC Integral: Pure Noise;Total ADC Integral;Clusters", 50, 0, 200000);
-    TH1F* h_adc_hybrid = new TH1F("h_adc_hybrid", "Total ADC Integral: Hybrid (Marley+Noise);Total ADC Integral;Clusters", 50, 0, 200000);
-    TH1F* h_adc_background = new TH1F("h_adc_background", "Total ADC Integral: Pure Background;Total ADC Integral;Clusters", 50, 0, 200000);
-    TH1F* h_adc_mixed_signal_bkg = new TH1F("h_adc_mixed_signal_bkg", "Total ADC Integral: Mixed Marley+Background;Total ADC Integral;Clusters", 50, 0, 200000);
-    h_adc_pure_marley->SetDirectory(nullptr);
-    h_adc_pure_noise->SetDirectory(nullptr);
-    h_adc_hybrid->SetDirectory(nullptr);
-    h_adc_background->SetDirectory(nullptr);
-    h_adc_mixed_signal_bkg->SetDirectory(nullptr);
-
-    // Histograms for total energy (converted from ADC) by cluster family
-    int bin_energy = 140, max_energy = 70; // 0.5 MeV bins up to 70 MeV
-    TH1F* h_energy_pure_marley = new TH1F("h_energy_pure_marley", "Total Energy: Pure Marley;Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
-    TH1F* h_energy_pure_noise = new TH1F("h_energy_pure_noise", "Total Energy: Pure Noise;Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
-    TH1F* h_energy_hybrid = new TH1F("h_energy_hybrid", "Total Energy: Hybrid (Marley+Noise);Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
-    TH1F* h_energy_background = new TH1F("h_energy_background", "Total Energy: Pure Background;Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
-    TH1F* h_energy_mixed_signal_bkg = new TH1F("h_energy_mixed_signal_bkg", "Total Energy: Mixed Marley+Background;Total Energy [MeV];Clusters", bin_energy, 0, max_energy);
-    h_energy_pure_marley->SetDirectory(nullptr);
-    h_energy_pure_noise->SetDirectory(nullptr);
-    h_energy_hybrid->SetDirectory(nullptr);
-    h_energy_background->SetDirectory(nullptr);
-    h_energy_mixed_signal_bkg->SetDirectory(nullptr);
-
+    // Helper to ensure per-plane histograms exist
     auto ensureHist = [&](std::map<std::string, TH1F*>& m, const std::string& key, const char* title, int nbins=100, double xmin=0, double xmax=100){
       if (m.count(key)==0){
         m[key] = new TH1F((key+"_h").c_str(), title, nbins, xmin, xmax);
@@ -741,26 +749,58 @@ int main(int argc, char* argv[]){
               << " - " << *std::max_element(vec_total_cluster_charge.begin(), vec_total_cluster_charge.end()) << " ADC" << std::endl;
     }
 
-    // Start PDF with title page
-    int pageNum = 1;
-    int totalPages = use_simide_energy ? 20 : 17; // Updated: +3 pages if SimIDE energy plots are included
-    
-    TCanvas* c = new TCanvas("c_ac_title","Title",800,600); c->cd();
-    c->SetFillColor(kWhite);
-    auto t = new TText(0.5,0.85, "Cluster Analysis Report");
-    t->SetTextAlign(22); t->SetTextSize(0.06); t->SetNDC(); t->Draw();
-    
-    // Split path and filename on separate lines
-    std::string path_part = clusters_file.substr(0, clusters_file.find_last_of("/\\")+1);
-    std::string file_part = clusters_file.substr(clusters_file.find_last_of("/\\")+1);
-    auto ptxt = new TText(0.5,0.65, Form("Path: %s", path_part.c_str()));
+    // Close the file - data accumulation complete for this file
+    f->Close();
+    delete f;
+  } // End of file loop
+
+  // ============================================================================
+  // GENERATE PLOTS FROM ACCUMULATED DATA (after processing all files)
+  // ============================================================================
+  LogInfo << "Generating combined analysis report from " << file_count << " file(s)..." << std::endl;
+
+  // Start PDF with title page
+  int pageNum = 1;
+  int totalPages = use_simide_energy ? 23 : 20; // Updated: +3 for SimIDE, +3 for per-view energy histograms
+  
+  std::string pdf = combined_pdf;
+  
+  TCanvas* c = new TCanvas("c_ac_title","Title",800,600); c->cd();
+  c->SetFillColor(kWhite);
+  auto t = new TText(0.5,0.85, "Cluster Analysis Report");
+  t->SetTextAlign(22); t->SetTextSize(0.06); t->SetNDC(); t->Draw();
+  
+  // Show directory and list of all input files
+  if (!inputs.empty()) {
+    std::string first_file = inputs[0];
+    std::string path_part = first_file.substr(0, first_file.find_last_of("/\\")+1);
+    auto ptxt = new TText(0.5,0.70, Form("Directory: %s", path_part.c_str()));
     ptxt->SetTextAlign(22); ptxt->SetTextSize(0.025); ptxt->SetNDC(); ptxt->Draw();
-    auto ftxt = new TText(0.5,0.60, Form("File: %s", file_part.c_str()));
-    ftxt->SetTextAlign(22); ftxt->SetTextSize(0.025); ftxt->SetNDC(); ftxt->Draw();
     
-    // Extract clustering parameters from filename (e.g., tick5_ch2_min2_tot1)
-    std::string params_str = "";
-    size_t pos = file_part.find("tick");
+    float ypos = 0.62;
+    auto ftxt = new TText(0.5, ypos, Form("Combined analysis of %d file(s):", (int)inputs.size()));
+    ftxt->SetTextAlign(22); ftxt->SetTextSize(0.025); ftxt->SetNDC(); ftxt->Draw();
+    ypos -= 0.035;
+    
+    // List input files (limit to first 15 to avoid overflow)
+    int max_files_to_show = 15;
+    for (int i = 0; i < std::min((int)inputs.size(), max_files_to_show); i++) {
+      std::string file_part = inputs[i].substr(inputs[i].find_last_of("/\\")+1);
+      auto entry_txt = new TText(0.5, ypos, Form("  %s", file_part.c_str()));
+      entry_txt->SetTextAlign(22); entry_txt->SetTextSize(0.018); entry_txt->SetNDC(); entry_txt->Draw();
+      ypos -= 0.024;
+    }
+    if ((int)inputs.size() > max_files_to_show) {
+      auto more_txt = new TText(0.5, ypos, Form("  ... and %d more files", (int)inputs.size() - max_files_to_show));
+      more_txt->SetTextAlign(22); more_txt->SetTextSize(0.018); more_txt->SetNDC(); more_txt->Draw();
+      ypos -= 0.024;
+    }
+  }
+  
+  // Extract clustering parameters from first filename
+  std::string file_part = inputs.empty() ? "" : inputs[0].substr(inputs[0].find_last_of("/\\")+1);
+  std::string params_str = "";
+  size_t pos = file_part.find("tick");
     if (pos != std::string::npos) {
       size_t end_pos = file_part.find("_clusters");
       if (end_pos != std::string::npos) {
@@ -1697,43 +1737,39 @@ int main(int argc, char* argv[]){
       delete c_energy;
     }
 
-    // Close PDF and file
-    {
-      TCanvas* cend = new TCanvas("c_ac_end","End",10,10);
-      cend->SaveAs((pdf+")").c_str());
-      delete cend;
-    }
-    f->Close();
-    delete f;
-    // cleanup hists
-    for (auto& kv : n_tps_plane_h) delete kv.second; n_tps_plane_h.clear();
-    for (auto& kv : total_charge_plane_h) delete kv.second; total_charge_plane_h.clear();
-    for (auto& kv : total_energy_plane_h) delete kv.second; total_energy_plane_h.clear();
-    for (auto& kv : max_tp_charge_plane_h) delete kv.second; max_tp_charge_plane_h.clear();
-    for (auto& kv : total_length_plane_h) delete kv.second; total_length_plane_h.clear();
-    for (auto& kv : ntps_vs_total_charge_plane_h) delete kv.second; ntps_vs_total_charge_plane_h.clear();
-    delete h_true_particle_energy;
-    delete h_true_neutrino_energy;
-    delete h_min_distance;
-    delete h2_particle_vs_cluster_energy;
-    delete h2_neutrino_vs_cluster_energy;
-    delete h2_total_particle_energy_vs_total_charge;
-
-    delete h_adc_pure_marley;
-    delete h_adc_pure_noise;
-    delete h_adc_hybrid;
-    delete h_adc_background;
-    delete h_adc_mixed_signal_bkg;
-
-    delete h_energy_pure_marley;
-    delete h_energy_pure_noise;
-    delete h_energy_hybrid;
-    delete h_energy_background;
-    delete h_energy_mixed_signal_bkg;
-
-    // record produced
-    produced.push_back(std::filesystem::absolute(pdf).string());
+  // Close PDF
+  {
+    TCanvas* cend = new TCanvas("c_ac_end","End",10,10);
+    cend->SaveAs((pdf+")").c_str());
+    delete cend;
   }
+  
+  // Cleanup histograms after PDF is generated
+  for (auto& kv : n_tps_plane_h) delete kv.second;
+  for (auto& kv : total_charge_plane_h) delete kv.second;
+  for (auto& kv : total_energy_plane_h) delete kv.second;
+  for (auto& kv : max_tp_charge_plane_h) delete kv.second;
+  for (auto& kv : total_length_plane_h) delete kv.second;
+  for (auto& kv : ntps_vs_total_charge_plane_h) delete kv.second;
+  delete h_true_particle_energy;
+  delete h_true_neutrino_energy;
+  delete h_min_distance;
+  delete h2_particle_vs_cluster_energy;
+  delete h2_neutrino_vs_cluster_energy;
+  delete h2_total_particle_energy_vs_total_charge;
+  delete h_adc_pure_marley;
+  delete h_adc_pure_noise;
+  delete h_adc_hybrid;
+  delete h_adc_background;
+  delete h_adc_mixed_signal_bkg;
+  delete h_energy_pure_marley;
+  delete h_energy_pure_noise;
+  delete h_energy_hybrid;
+  delete h_energy_background;
+  delete h_energy_mixed_signal_bkg;
+
+  // Record produced file
+  produced.push_back(std::filesystem::absolute(pdf).string());
 
   if (!produced.empty()){
     LogInfo << "\nSummary of produced files (" << produced.size() << "):" << std::endl;

@@ -54,6 +54,7 @@ class Cluster {
 
         // methods 
         bool isCleanCluster();
+        void printClusterInfo() const;
 
     private:
         // std::vector<std::vector<double>> tps_;

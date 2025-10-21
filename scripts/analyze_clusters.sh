@@ -16,6 +16,7 @@ print_help() {
     echo "  -i|--input-file <file>      Input file with list of input ROOT files. Overrides json."
     echo "  --output-folder <dir>       Output folder (default: data/). Overrides json."
     echo "  -v|--verbose                Enable verbose mode"
+    echo "  -d|--debug                  Enable debug mode"
     echo "  -h, --help                  Print this help message"
     echo "*******************************************************************************"
     exit 0
@@ -33,7 +34,8 @@ while [[ $# -gt 0 ]]; do
         --output-folder)    output_folder="$2"; shift 2;;
         --no-compile)       noCompile=true; shift ;;
         --clean-compile)    cleanCompile=true; shift ;;
-        -v|--verbose)       verbose=true; shift ;;
+        -d|--debug)          debug=true; shift ;;
+        -v|--verbose)        verbose=true; shift ;;
         -h|--help)          print_help ;;
         *)                  shift ;;
     esac
@@ -69,6 +71,9 @@ if [ ! -z ${output_folder+x} ]; then
 fi
 if [ "$verbose" = true ]; then
     command_to_run="$command_to_run -v"
+fi
+if [ "$debug" = true ]; then
+    command_to_run="$command_to_run -d"
 fi
 
 echo "Running command: ${command_to_run}"

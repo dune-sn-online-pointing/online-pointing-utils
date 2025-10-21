@@ -61,8 +61,9 @@ int main(int argc, char* argv[]) {
     int ticks_limit = j.value("tick_limit", 3);
     int channel_limit = j.value("channel_limit", 1);
     int min_tps_to_cluster = j.value("min_tps_to_cluster", 1);
-    int adc_integral_cut_ind = j.value("adc_integral_cut_induction", 0);
-    int adc_integral_cut_col = j.value("adc_integral_cut_collection", 0);
+    int energy_cut = j.value("energy_cut", 0);
+    int adc_integral_cut_col = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");
+    int adc_integral_cut_ind = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
     int tot_cut = j.value("tot_cut", 0);
     int max_files = j.value("max_files", -1); // -1 means no limit
 
@@ -71,8 +72,9 @@ int main(int argc, char* argv[]) {
     LogInfo << " - Tick limit: " << ticks_limit << std::endl;
     LogInfo << " - Channel limit: " << channel_limit << std::endl;
     LogInfo << " - Minimum TPs to form a cluster: " << min_tps_to_cluster << std::endl;
-    LogInfo << " - ADC integral cut (induction): " << adc_integral_cut_ind << std::endl;
-    LogInfo << " - ADC integral cut (collection): " << adc_integral_cut_col << std::endl;
+    LogInfo << " - Energy cut: " << energy_cut << std::endl;
+    LogInfo << "    - ADC integral cut (induction): " << adc_integral_cut_ind << std::endl;
+    LogInfo << "    - ADC integral cut (collection): " << adc_integral_cut_col << std::endl;
     LogInfo << " - ToT cut: " << tot_cut << std::endl;
     if (max_files > 0) {
         LogInfo << " - Max files to process: " << max_files << std::endl;
@@ -94,8 +96,7 @@ int main(int argc, char* argv[]) {
         + "_ch" + std::to_string(channel_limit)
         + "_min" + std::to_string(min_tps_to_cluster)
         + "_tot" + std::to_string(tot_cut)
-        + "_ecutI" + std::to_string(adc_integral_cut_ind)
-        + "_ecutC" + std::to_string(adc_integral_cut_col)
+        + "_e" + std::to_string(adc_integral_cut_ind)
         + "_clusters.root";    
 
     // Ensure output directory exists
@@ -153,8 +154,7 @@ int main(int argc, char* argv[]) {
             + "_ch" + std::to_string(channel_limit)
             + "_min" + std::to_string(min_tps_to_cluster)
             + "_tot" + std::to_string(tot_cut)
-            + "_ecutI" + std::to_string(adc_integral_cut_ind)
-            + "_ecutC" + std::to_string(adc_integral_cut_col)
+            + "_e" + std::to_string(adc_integral_cut_ind)
             + "_clusters_" + std::to_string(output_file_number) + ".root";
         
         // Delete if exists
@@ -243,7 +243,7 @@ int main(int argc, char* argv[]) {
                                                 min_tps_to_cluster, 
                                                 adc_cut.at(iView)));
             
-            // Identify the main cluster (most energetic) in each view for this event
+            // Identify the main marley cluster (most energetic) in each view for this event
             for (size_t iView=0; iView<APA::views.size(); ++iView) {
                 auto& clusters = clusters_per_view.at(iView);
                 if (clusters.empty()) continue;
@@ -252,6 +252,7 @@ int main(int argc, char* argv[]) {
                 Cluster* main_cluster = nullptr;
                 float max_energy = -1.0f;
                 for (auto& cluster : clusters) {
+                    if (cluster.get_true_label() != "marley") continue; // only consider marley clusters
                     float energy = cluster.get_true_particle_energy();
                     if (energy > max_energy) {
                         max_energy = energy;

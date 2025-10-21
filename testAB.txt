@@ -1,0 +1,636 @@
+
+init.sh script started
+ Repository home is /home/virgolaema/dune/online-pointing-utils
+ Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
+ WARNING: python environment not found, not activating.
+init.sh finished
+
+ Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j json/add_backgrounds/es_valid.json
+Settings file found, full path is: /home/virgolaema/dune/online-pointing-utils/json/add_backgrounds/es_valid.json 
+
+Compiling the code with the following command:
+/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils
+Starting script ./scripts/add_backgrounds.sh
+Environment is already initialized, not running init.sh again.
+If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
+ Got home path as argument
+  Compiling the code, these steps need to be run from build/
+-- Detected GCC version: 11.4.0
+-- [32m[INFO]:[m Looking for ROOT install...
+-- [32m[INFO]:[m [ROOT]: ROOT found.
+-- [32m[INFO]:[m [ROOT]: ROOT cmake use file /usr/local/cmake/ROOTUseFile.cmake
+-- [32m[INFO]:[m [ROOT]: ROOT include directory: /usr/local/include
+-- [32m[INFO]:[m [ROOT]: ROOT C++ Flags:  -std=c++17 -pipe -fsigned-char -pthread
+-- ROOT compiled with C++17
+-- [32m[INFO]:[m nlohmann JSON header found: /usr/local/include/nlohmann/json.hpp
+-- [32m[INFO]:[m Adding submodules to the project...
+-- [32m[INFO]:[m Looking for simple-cpp-cmd-line-parser submodule...
+-- [1;33m[WARN]:[m Checking submodule: simple-cpp-cmd-line-parser
+-- [32m[INFO]:[m Git submodule simple-cpp-cmd-line-parser is present
+-- [32m[INFO]:[m Looking for simple-cpp-logger submodule...
+-- [1;33m[WARN]:[m Checking submodule: simple-cpp-logger
+-- [32m[INFO]:[m Git submodule simple-cpp-logger is present
+-- [32m[INFO]:[m Looking for cpp-generic-toolbox submodule...
+-- [1;33m[WARN]:[m Checking submodule: cpp-generic-toolbox
+-- [32m[INFO]:[m Git submodule cpp-generic-toolbox is present
+-- [32m[INFO]:[m Configuring ana library...
+-- [32m[INFO]:[m Creating plot_avg_times app...
+-- [32m[INFO]:[m Creating make_clusters app...
+-- [32m[INFO]:[m Creating backtrack_tpstream app...
+-- [32m[INFO]:[m Creating analyze_clusters app...
+-- [32m[INFO]:[m Creating analyze_tps app...
+-- [32m[INFO]:[m Creating extract_calibration app...
+-- [32m[INFO]:[m Creating display app...
+-- [32m[INFO]:[m Creating add_backgrounds app...
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/virgolaema/dune/online-pointing-utils/build
+Consolidate compiler generated dependencies of target globalLib
+[ 11%] Built target globalLib
+Consolidate compiler generated dependencies of target backtrackingLibs
+Consolidate compiler generated dependencies of target anaLib
+[ 16%] Built target backtrackingLibs
+[ 25%] Built target anaLib
+Consolidate compiler generated dependencies of target objectsLibs
+[ 36%] Built target objectsLibs
+Consolidate compiler generated dependencies of target clustersLibs
+[ 50%] Built target clustersLibs
+Consolidate compiler generated dependencies of target analyze_clusters
+Consolidate compiler generated dependencies of target plot_avg_times
+Consolidate compiler generated dependencies of target planesMatchingLibs
+Consolidate compiler generated dependencies of target make_clusters
+Consolidate compiler generated dependencies of target backtrack_tpstream
+Consolidate compiler generated dependencies of target analyze_tps
+[ 55%] Built target backtrack_tpstream
+[ 66%] Built target analyze_tps
+[ 69%] Built target make_clusters
+[ 77%] Built target planesMatchingLibs
+[ 77%] Built target analyze_clusters
+[ 83%] Built target plot_avg_times
+Consolidate compiler generated dependencies of target extract_calibration
+Consolidate compiler generated dependencies of target add_backgrounds
+Consolidate compiler generated dependencies of target display
+[ 86%] Building CXX object src/app/CMakeFiles/add_backgrounds.dir/add_backgrounds.cpp.o
+[ 91%] Built target extract_calibration
+[ 97%] Built target display
+[100%] Linking CXX executable add_backgrounds
+[100%] Built target add_backgrounds
+  Compilation finished successfully!
+
+Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/add_backgrounds -j /home/virgolaema/dune/online-pointing-utils/json/add_backgrounds/es_valid.json -v -o
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: > add_backgrounds app - Merge signal TPs with random background events, writing *_tps_bg.root files.
+
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: Usage: 
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: ──────────── Main options ────────────
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: verboseMode {-v,--verbose}: Run in verbose mode (trigger)
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: debugMode {-d,--debug}: Run in debug mode (more detailed than verbose) (trigger)
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: override {-o,--override}: Override existing output files (trigger)
+
+
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: Configuration:
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m:  - Signal type: es
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m:  - Signal folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m:  - Background folder: /home/virgolaema/dune/online-pointing-utils/data/bkgs/
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m:  - Add backgrounds around vertex only: NO
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m:  - Max files to process: 20
+21/10/2025 16:14:02 [32m[utils.cpp][0m: JSON inputFolder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: Found 100 signal files
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: Found 1 background files
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: Loaded background file: /home/virgolaema/dune/online-pointing-utils/data/bkgs/BG_96_tps.root (10 events)
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155625Z_gen_000001_supernova_g4_detsim_ana_2025-10-03T_031735Z_tps.root
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155625Z_gen_000001_supernova_g4_detsim_ana_2025-10-03T_031735Z_bg_tps.root
+21/10/2025 16:14:02 [32m[add_backgrounds.cpp][0m: Signal event 1: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:03 [32m[add_backgrounds.cpp][0m: Signal event 1: 156 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1612 total TPs
+21/10/2025 16:14:03 [32m[add_backgrounds.cpp][0m: Signal event 2: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:03 [32m[add_backgrounds.cpp][0m: Signal event 2: 156 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1612 total TPs
+21/10/2025 16:14:03 [32m[add_backgrounds.cpp][0m: Signal event 3: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:03 [32m[add_backgrounds.cpp][0m: Signal event 3: 273 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1729 total TPs
+21/10/2025 16:14:03 [32m[add_backgrounds.cpp][0m: Signal event 4: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:03 [32m[add_backgrounds.cpp][0m: Signal event 4: 198 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1654 total TPs
+21/10/2025 16:14:03 [32m[add_backgrounds.cpp][0m: Signal event 5: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:03 [32m[add_backgrounds.cpp][0m: Signal event 5: 154 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1610 total TPs
+21/10/2025 16:14:03 [32m[add_backgrounds.cpp][0m: Signal event 6: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:04 [32m[add_backgrounds.cpp][0m: Signal event 6: 198 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1654 total TPs
+21/10/2025 16:14:04 [32m[add_backgrounds.cpp][0m: Signal event 7: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:04 [32m[add_backgrounds.cpp][0m: Signal event 7: 172 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1628 total TPs
+21/10/2025 16:14:04 [32m[add_backgrounds.cpp][0m: Signal event 8: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:04 [32m[add_backgrounds.cpp][0m: Signal event 8: 184 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1640 total TPs
+21/10/2025 16:14:04 [32m[add_backgrounds.cpp][0m: Signal event 9: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:04 [32m[add_backgrounds.cpp][0m: Signal event 9: 164 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1620 total TPs
+21/10/2025 16:14:04 [32m[add_backgrounds.cpp][0m: Signal event 10: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:05 [32m[add_backgrounds.cpp][0m: Signal event 10: 190 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1646 total TPs
+21/10/2025 16:14:06 [32m[add_backgrounds.cpp][0m: Re-linked 13364 background TP pointers to merged_true_vec
+21/10/2025 16:14:06 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155625Z_gen_000001_supernova_g4_detsim_ana_2025-10-03T_031735Z_bg_tps.root
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155633Z_gen_000003_supernova_g4_detsim_ana_2025-10-03T_044351Z_tps.root
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155633Z_gen_000003_supernova_g4_detsim_ana_2025-10-03T_044351Z_bg_tps.root
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Signal event 101: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Signal event 101: 172 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1628 total TPs
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Signal event 102: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Signal event 102: 173 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1629 total TPs
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Signal event 103: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Signal event 103: 148 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1604 total TPs
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Signal event 104: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Signal event 104: 230 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1686 total TPs
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Signal event 105: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Signal event 105: 142 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1598 total TPs
+21/10/2025 16:14:07 [32m[add_backgrounds.cpp][0m: Signal event 106: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:08 [32m[add_backgrounds.cpp][0m: Signal event 106: 130 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1586 total TPs
+21/10/2025 16:14:08 [32m[add_backgrounds.cpp][0m: Signal event 107: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:08 [32m[add_backgrounds.cpp][0m: Signal event 107: 167 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1623 total TPs
+21/10/2025 16:14:08 [32m[add_backgrounds.cpp][0m: Signal event 108: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:08 [32m[add_backgrounds.cpp][0m: Signal event 108: 145 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1601 total TPs
+21/10/2025 16:14:08 [32m[add_backgrounds.cpp][0m: Signal event 109: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:08 [32m[add_backgrounds.cpp][0m: Signal event 109: 153 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1609 total TPs
+21/10/2025 16:14:08 [32m[add_backgrounds.cpp][0m: Signal event 110: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:08 [32m[add_backgrounds.cpp][0m: Signal event 110: 153 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1609 total TPs
+21/10/2025 16:14:10 [32m[add_backgrounds.cpp][0m: Re-linked 13369 background TP pointers to merged_true_vec
+21/10/2025 16:14:10 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:10 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155633Z_gen_000003_supernova_g4_detsim_ana_2025-10-03T_044351Z_bg_tps.root
+21/10/2025 16:14:10 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:10 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155638Z_gen_000004_supernova_g4_detsim_ana_2025-10-03T_044709Z_tps.root
+21/10/2025 16:14:10 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155638Z_gen_000004_supernova_g4_detsim_ana_2025-10-03T_044709Z_bg_tps.root
+21/10/2025 16:14:10 [32m[add_backgrounds.cpp][0m: Signal event 151: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 151: 224 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1680 total TPs
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 152: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 152: 155 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1611 total TPs
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 153: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 153: 162 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1618 total TPs
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 154: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 154: 171 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1627 total TPs
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 155: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 155: 164 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1620 total TPs
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 156: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 156: 198 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1654 total TPs
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 157: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 157: 169 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1625 total TPs
+21/10/2025 16:14:11 [32m[add_backgrounds.cpp][0m: Signal event 158: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:12 [32m[add_backgrounds.cpp][0m: Signal event 158: 136 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1592 total TPs
+21/10/2025 16:14:12 [32m[add_backgrounds.cpp][0m: Signal event 159: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:12 [32m[add_backgrounds.cpp][0m: Signal event 159: 146 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1602 total TPs
+21/10/2025 16:14:12 [32m[add_backgrounds.cpp][0m: Signal event 160: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:12 [32m[add_backgrounds.cpp][0m: Signal event 160: 200 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1656 total TPs
+21/10/2025 16:14:13 [32m[add_backgrounds.cpp][0m: Re-linked 13301 background TP pointers to merged_true_vec
+21/10/2025 16:14:13 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:13 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155638Z_gen_000004_supernova_g4_detsim_ana_2025-10-03T_044709Z_bg_tps.root
+21/10/2025 16:14:13 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:13 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155640Z_gen_000006_supernova_g4_detsim_ana_2025-10-03T_023913Z_tps.root
+21/10/2025 16:14:13 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155640Z_gen_000006_supernova_g4_detsim_ana_2025-10-03T_023913Z_bg_tps.root
+21/10/2025 16:14:13 [32m[add_backgrounds.cpp][0m: Signal event 251: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 251: 165 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1621 total TPs
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 252: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 252: 140 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1596 total TPs
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 253: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 253: 146 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1602 total TPs
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 254: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 254: 148 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1604 total TPs
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 255: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 255: 154 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1610 total TPs
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 256: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 256: 156 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1612 total TPs
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 257: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 257: 211 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1667 total TPs
+21/10/2025 16:14:14 [32m[add_backgrounds.cpp][0m: Signal event 258: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:15 [32m[add_backgrounds.cpp][0m: Signal event 258: 164 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1620 total TPs
+21/10/2025 16:14:15 [32m[add_backgrounds.cpp][0m: Signal event 259: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:15 [32m[add_backgrounds.cpp][0m: Signal event 259: 207 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1663 total TPs
+21/10/2025 16:14:15 [32m[add_backgrounds.cpp][0m: Signal event 260: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:15 [32m[add_backgrounds.cpp][0m: Signal event 260: 141 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1597 total TPs
+21/10/2025 16:14:17 [32m[add_backgrounds.cpp][0m: Re-linked 13396 background TP pointers to merged_true_vec
+21/10/2025 16:14:17 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:17 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155640Z_gen_000006_supernova_g4_detsim_ana_2025-10-03T_023913Z_bg_tps.root
+21/10/2025 16:14:17 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:17 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155641Z_gen_000007_supernova_g4_detsim_ana_2025-10-03T_024606Z_tps.root
+21/10/2025 16:14:17 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155641Z_gen_000007_supernova_g4_detsim_ana_2025-10-03T_024606Z_bg_tps.root
+21/10/2025 16:14:17 [32m[add_backgrounds.cpp][0m: Signal event 301: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:17 [32m[add_backgrounds.cpp][0m: Signal event 301: 198 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1654 total TPs
+21/10/2025 16:14:17 [32m[add_backgrounds.cpp][0m: Signal event 302: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:17 [32m[add_backgrounds.cpp][0m: Signal event 302: 169 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1625 total TPs
+21/10/2025 16:14:17 [32m[add_backgrounds.cpp][0m: Signal event 303: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 303: 141 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1597 total TPs
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 304: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 304: 149 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1605 total TPs
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 305: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 305: 164 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1620 total TPs
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 306: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 306: 198 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1654 total TPs
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 307: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 307: 165 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1621 total TPs
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 308: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 308: 219 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1675 total TPs
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 309: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 309: 195 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1651 total TPs
+21/10/2025 16:14:18 [32m[add_backgrounds.cpp][0m: Signal event 310: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:19 [32m[add_backgrounds.cpp][0m: Signal event 310: 164 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1620 total TPs
+21/10/2025 16:14:20 [32m[add_backgrounds.cpp][0m: Re-linked 13362 background TP pointers to merged_true_vec
+21/10/2025 16:14:20 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155641Z_gen_000007_supernova_g4_detsim_ana_2025-10-03T_024606Z_bg_tps.root
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155642Z_gen_000008_supernova_g4_detsim_ana_2025-10-03T_045225Z_tps.root
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155642Z_gen_000008_supernova_g4_detsim_ana_2025-10-03T_045225Z_bg_tps.root
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: Signal event 351: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: Signal event 351: 145 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1601 total TPs
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: Signal event 352: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: Signal event 352: 182 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1638 total TPs
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: Signal event 353: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: Signal event 353: 160 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1616 total TPs
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: Signal event 354: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: Signal event 354: 194 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1650 total TPs
+21/10/2025 16:14:21 [32m[add_backgrounds.cpp][0m: Signal event 355: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:22 [32m[add_backgrounds.cpp][0m: Signal event 355: 160 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1616 total TPs
+21/10/2025 16:14:22 [32m[add_backgrounds.cpp][0m: Signal event 356: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:22 [32m[add_backgrounds.cpp][0m: Signal event 356: 221 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1677 total TPs
+21/10/2025 16:14:22 [32m[add_backgrounds.cpp][0m: Signal event 357: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:22 [32m[add_backgrounds.cpp][0m: Signal event 357: 165 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1621 total TPs
+21/10/2025 16:14:22 [32m[add_backgrounds.cpp][0m: Signal event 358: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:22 [32m[add_backgrounds.cpp][0m: Signal event 358: 153 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1609 total TPs
+21/10/2025 16:14:22 [32m[add_backgrounds.cpp][0m: Signal event 359: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:22 [32m[add_backgrounds.cpp][0m: Signal event 359: 144 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1600 total TPs
+21/10/2025 16:14:22 [32m[add_backgrounds.cpp][0m: Signal event 360: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:22 [32m[add_backgrounds.cpp][0m: Signal event 360: 127 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1583 total TPs
+21/10/2025 16:14:24 [32m[add_backgrounds.cpp][0m: Re-linked 13349 background TP pointers to merged_true_vec
+21/10/2025 16:14:24 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155642Z_gen_000008_supernova_g4_detsim_ana_2025-10-03T_045225Z_bg_tps.root
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155645Z_gen_000009_supernova_g4_detsim_ana_2025-10-03T_044403Z_tps.root
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155645Z_gen_000009_supernova_g4_detsim_ana_2025-10-03T_044403Z_bg_tps.root
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Signal event 401: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Signal event 401: 166 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1622 total TPs
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Signal event 402: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Signal event 402: 180 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1636 total TPs
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Signal event 403: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Signal event 403: 139 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1595 total TPs
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Signal event 404: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Signal event 404: 187 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1643 total TPs
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Signal event 405: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Signal event 405: 149 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1605 total TPs
+21/10/2025 16:14:25 [32m[add_backgrounds.cpp][0m: Signal event 406: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:26 [32m[add_backgrounds.cpp][0m: Signal event 406: 146 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1602 total TPs
+21/10/2025 16:14:26 [32m[add_backgrounds.cpp][0m: Signal event 407: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:26 [32m[add_backgrounds.cpp][0m: Signal event 407: 225 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1681 total TPs
+21/10/2025 16:14:26 [32m[add_backgrounds.cpp][0m: Signal event 408: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:26 [32m[add_backgrounds.cpp][0m: Signal event 408: 197 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1653 total TPs
+21/10/2025 16:14:26 [32m[add_backgrounds.cpp][0m: Signal event 409: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:26 [32m[add_backgrounds.cpp][0m: Signal event 409: 184 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1640 total TPs
+21/10/2025 16:14:26 [32m[add_backgrounds.cpp][0m: Signal event 410: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:26 [32m[add_backgrounds.cpp][0m: Signal event 410: 137 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1593 total TPs
+21/10/2025 16:14:28 [32m[add_backgrounds.cpp][0m: Re-linked 13323 background TP pointers to merged_true_vec
+21/10/2025 16:14:28 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:28 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155645Z_gen_000009_supernova_g4_detsim_ana_2025-10-03T_044403Z_bg_tps.root
+21/10/2025 16:14:28 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:28 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155645Z_gen_000010_supernova_g4_detsim_ana_2025-10-03T_023502Z_tps.root
+21/10/2025 16:14:28 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155645Z_gen_000010_supernova_g4_detsim_ana_2025-10-03T_023502Z_bg_tps.root
+21/10/2025 16:14:28 [32m[add_backgrounds.cpp][0m: Signal event 451: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:28 [32m[add_backgrounds.cpp][0m: Signal event 451: 145 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1601 total TPs
+21/10/2025 16:14:28 [32m[add_backgrounds.cpp][0m: Signal event 452: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 452: 134 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1590 total TPs
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 453: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 453: 153 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1609 total TPs
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 454: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 454: 145 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1601 total TPs
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 455: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 455: 155 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1611 total TPs
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 456: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 456: 149 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1605 total TPs
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 457: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 457: 144 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1600 total TPs
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 458: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 458: 193 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1649 total TPs
+21/10/2025 16:14:29 [32m[add_backgrounds.cpp][0m: Signal event 459: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:30 [32m[add_backgrounds.cpp][0m: Signal event 459: 139 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1595 total TPs
+21/10/2025 16:14:30 [32m[add_backgrounds.cpp][0m: Signal event 460: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:30 [32m[add_backgrounds.cpp][0m: Signal event 460: 135 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1591 total TPs
+21/10/2025 16:14:31 [32m[add_backgrounds.cpp][0m: Re-linked 13343 background TP pointers to merged_true_vec
+21/10/2025 16:14:31 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:32 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155645Z_gen_000010_supernova_g4_detsim_ana_2025-10-03T_023502Z_bg_tps.root
+21/10/2025 16:14:32 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:32 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155648Z_gen_000011_supernova_g4_detsim_ana_2025-10-03T_031824Z_tps.root
+21/10/2025 16:14:32 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155648Z_gen_000011_supernova_g4_detsim_ana_2025-10-03T_031824Z_bg_tps.root
+21/10/2025 16:14:32 [32m[add_backgrounds.cpp][0m: Signal event 501: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:32 [32m[add_backgrounds.cpp][0m: Signal event 501: 198 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1654 total TPs
+21/10/2025 16:14:32 [32m[add_backgrounds.cpp][0m: Signal event 502: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:32 [32m[add_backgrounds.cpp][0m: Signal event 502: 153 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1609 total TPs
+21/10/2025 16:14:32 [32m[add_backgrounds.cpp][0m: Signal event 503: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:32 [32m[add_backgrounds.cpp][0m: Signal event 503: 168 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1624 total TPs
+21/10/2025 16:14:32 [32m[add_backgrounds.cpp][0m: Signal event 504: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:33 [32m[add_backgrounds.cpp][0m: Signal event 504: 154 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1610 total TPs
+21/10/2025 16:14:33 [32m[add_backgrounds.cpp][0m: Signal event 505: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:33 [32m[add_backgrounds.cpp][0m: Signal event 505: 160 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1616 total TPs
+21/10/2025 16:14:33 [32m[add_backgrounds.cpp][0m: Signal event 506: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:33 [32m[add_backgrounds.cpp][0m: Signal event 506: 161 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1617 total TPs
+21/10/2025 16:14:33 [32m[add_backgrounds.cpp][0m: Signal event 507: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:33 [32m[add_backgrounds.cpp][0m: Signal event 507: 141 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1597 total TPs
+21/10/2025 16:14:33 [32m[add_backgrounds.cpp][0m: Signal event 508: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:33 [32m[add_backgrounds.cpp][0m: Signal event 508: 164 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1620 total TPs
+21/10/2025 16:14:33 [32m[add_backgrounds.cpp][0m: Signal event 509: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:33 [32m[add_backgrounds.cpp][0m: Signal event 509: 154 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1610 total TPs
+21/10/2025 16:14:33 [32m[add_backgrounds.cpp][0m: Signal event 510: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:34 [32m[add_backgrounds.cpp][0m: Signal event 510: 126 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1582 total TPs
+21/10/2025 16:14:35 [32m[add_backgrounds.cpp][0m: Re-linked 13382 background TP pointers to merged_true_vec
+21/10/2025 16:14:35 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155648Z_gen_000011_supernova_g4_detsim_ana_2025-10-03T_031824Z_bg_tps.root
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155648Z_gen_000012_supernova_g4_detsim_ana_2025-10-03T_023924Z_tps.root
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155648Z_gen_000012_supernova_g4_detsim_ana_2025-10-03T_023924Z_bg_tps.root
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 551: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 551: 167 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1623 total TPs
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 552: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 552: 154 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1610 total TPs
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 553: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 553: 195 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1651 total TPs
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 554: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 554: 178 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1634 total TPs
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 555: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 555: 159 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1615 total TPs
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 556: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 556: 177 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1633 total TPs
+21/10/2025 16:14:36 [32m[add_backgrounds.cpp][0m: Signal event 557: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:37 [32m[add_backgrounds.cpp][0m: Signal event 557: 133 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1589 total TPs
+21/10/2025 16:14:37 [32m[add_backgrounds.cpp][0m: Signal event 558: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:37 [32m[add_backgrounds.cpp][0m: Signal event 558: 138 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1594 total TPs
+21/10/2025 16:14:37 [32m[add_backgrounds.cpp][0m: Signal event 559: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:37 [32m[add_backgrounds.cpp][0m: Signal event 559: 156 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1612 total TPs
+21/10/2025 16:14:37 [32m[add_backgrounds.cpp][0m: Signal event 560: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:37 [32m[add_backgrounds.cpp][0m: Signal event 560: 239 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1695 total TPs
+21/10/2025 16:14:39 [32m[add_backgrounds.cpp][0m: Re-linked 13334 background TP pointers to merged_true_vec
+21/10/2025 16:14:39 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:39 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155648Z_gen_000012_supernova_g4_detsim_ana_2025-10-03T_023924Z_bg_tps.root
+21/10/2025 16:14:39 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:39 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155649Z_gen_000013_supernova_g4_detsim_ana_2025-10-03T_044343Z_tps.root
+21/10/2025 16:14:39 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155649Z_gen_000013_supernova_g4_detsim_ana_2025-10-03T_044343Z_bg_tps.root
+21/10/2025 16:14:39 [32m[add_backgrounds.cpp][0m: Signal event 601: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:40 [32m[add_backgrounds.cpp][0m: Signal event 601: 144 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1600 total TPs
+21/10/2025 16:14:40 [32m[add_backgrounds.cpp][0m: Signal event 602: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:40 [32m[add_backgrounds.cpp][0m: Signal event 602: 149 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1605 total TPs
+21/10/2025 16:14:40 [32m[add_backgrounds.cpp][0m: Signal event 603: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:40 [32m[add_backgrounds.cpp][0m: Signal event 603: 212 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1668 total TPs
+21/10/2025 16:14:40 [32m[add_backgrounds.cpp][0m: Signal event 604: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:40 [32m[add_backgrounds.cpp][0m: Signal event 604: 194 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1650 total TPs
+21/10/2025 16:14:40 [32m[add_backgrounds.cpp][0m: Signal event 605: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:40 [32m[add_backgrounds.cpp][0m: Signal event 605: 134 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1590 total TPs
+21/10/2025 16:14:40 [32m[add_backgrounds.cpp][0m: Signal event 606: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:40 [32m[add_backgrounds.cpp][0m: Signal event 606: 134 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1590 total TPs
+21/10/2025 16:14:40 [32m[add_backgrounds.cpp][0m: Signal event 607: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:41 [32m[add_backgrounds.cpp][0m: Signal event 607: 161 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1617 total TPs
+21/10/2025 16:14:41 [32m[add_backgrounds.cpp][0m: Signal event 608: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:41 [32m[add_backgrounds.cpp][0m: Signal event 608: 196 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1652 total TPs
+21/10/2025 16:14:41 [32m[add_backgrounds.cpp][0m: Signal event 609: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:41 [32m[add_backgrounds.cpp][0m: Signal event 609: 188 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1644 total TPs
+21/10/2025 16:14:41 [32m[add_backgrounds.cpp][0m: Signal event 610: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:41 [32m[add_backgrounds.cpp][0m: Signal event 610: 129 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1585 total TPs
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Re-linked 13350 background TP pointers to merged_true_vec
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155649Z_gen_000013_supernova_g4_detsim_ana_2025-10-03T_044343Z_bg_tps.root
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155653Z_gen_000014_supernova_g4_detsim_ana_2025-10-03T_050537Z_tps.root
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155653Z_gen_000014_supernova_g4_detsim_ana_2025-10-03T_050537Z_bg_tps.root
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 651: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 651: 164 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1620 total TPs
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 652: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 652: 151 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1607 total TPs
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 653: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 653: 162 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1618 total TPs
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 654: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 654: 199 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1655 total TPs
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 655: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 655: 158 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1614 total TPs
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 656: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 656: 152 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1608 total TPs
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 657: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 657: 135 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1591 total TPs
+21/10/2025 16:14:43 [32m[add_backgrounds.cpp][0m: Signal event 658: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:44 [32m[add_backgrounds.cpp][0m: Signal event 658: 180 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1636 total TPs
+21/10/2025 16:14:44 [32m[add_backgrounds.cpp][0m: Signal event 659: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:44 [32m[add_backgrounds.cpp][0m: Signal event 659: 168 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1624 total TPs
+21/10/2025 16:14:44 [32m[add_backgrounds.cpp][0m: Signal event 660: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:44 [32m[add_backgrounds.cpp][0m: Signal event 660: 132 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1588 total TPs
+21/10/2025 16:14:46 [32m[add_backgrounds.cpp][0m: Re-linked 13345 background TP pointers to merged_true_vec
+21/10/2025 16:14:46 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:46 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155653Z_gen_000014_supernova_g4_detsim_ana_2025-10-03T_050537Z_bg_tps.root
+21/10/2025 16:14:46 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:46 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155654Z_gen_000015_supernova_g4_detsim_ana_2025-10-03T_031952Z_tps.root
+21/10/2025 16:14:46 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155654Z_gen_000015_supernova_g4_detsim_ana_2025-10-03T_031952Z_bg_tps.root
+21/10/2025 16:14:46 [32m[add_backgrounds.cpp][0m: Signal event 701: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:46 [32m[add_backgrounds.cpp][0m: Signal event 701: 143 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1599 total TPs
+21/10/2025 16:14:46 [32m[add_backgrounds.cpp][0m: Signal event 702: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:47 [32m[add_backgrounds.cpp][0m: Signal event 702: 225 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1681 total TPs
+21/10/2025 16:14:47 [32m[add_backgrounds.cpp][0m: Signal event 703: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:47 [32m[add_backgrounds.cpp][0m: Signal event 703: 179 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1635 total TPs
+21/10/2025 16:14:47 [32m[add_backgrounds.cpp][0m: Signal event 704: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:47 [32m[add_backgrounds.cpp][0m: Signal event 704: 163 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1619 total TPs
+21/10/2025 16:14:47 [32m[add_backgrounds.cpp][0m: Signal event 705: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:47 [32m[add_backgrounds.cpp][0m: Signal event 705: 159 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1615 total TPs
+21/10/2025 16:14:47 [32m[add_backgrounds.cpp][0m: Signal event 706: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:47 [32m[add_backgrounds.cpp][0m: Signal event 706: 138 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1594 total TPs
+21/10/2025 16:14:47 [32m[add_backgrounds.cpp][0m: Signal event 707: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:47 [32m[add_backgrounds.cpp][0m: Signal event 707: 175 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1631 total TPs
+21/10/2025 16:14:47 [32m[add_backgrounds.cpp][0m: Signal event 708: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:48 [32m[add_backgrounds.cpp][0m: Signal event 708: 135 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1591 total TPs
+21/10/2025 16:14:48 [32m[add_backgrounds.cpp][0m: Signal event 709: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:48 [32m[add_backgrounds.cpp][0m: Signal event 709: 160 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1616 total TPs
+21/10/2025 16:14:48 [32m[add_backgrounds.cpp][0m: Signal event 710: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:48 [32m[add_backgrounds.cpp][0m: Signal event 710: 144 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1600 total TPs
+21/10/2025 16:14:50 [32m[add_backgrounds.cpp][0m: Re-linked 13332 background TP pointers to merged_true_vec
+21/10/2025 16:14:50 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:50 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155654Z_gen_000015_supernova_g4_detsim_ana_2025-10-03T_031952Z_bg_tps.root
+21/10/2025 16:14:50 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:50 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155656Z_gen_000017_supernova_g4_detsim_ana_2025-10-03T_050354Z_tps.root
+21/10/2025 16:14:50 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155656Z_gen_000017_supernova_g4_detsim_ana_2025-10-03T_050354Z_bg_tps.root
+21/10/2025 16:14:50 [32m[add_backgrounds.cpp][0m: Signal event 801: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:50 [32m[add_backgrounds.cpp][0m: Signal event 801: 159 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1615 total TPs
+21/10/2025 16:14:50 [32m[add_backgrounds.cpp][0m: Signal event 802: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:50 [32m[add_backgrounds.cpp][0m: Signal event 802: 221 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1677 total TPs
+21/10/2025 16:14:50 [32m[add_backgrounds.cpp][0m: Signal event 803: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 803: 211 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1667 total TPs
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 804: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 804: 119 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1575 total TPs
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 805: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 805: 144 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1600 total TPs
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 806: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 806: 163 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1619 total TPs
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 807: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 807: 149 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1605 total TPs
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 808: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 808: 138 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1594 total TPs
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 809: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 809: 151 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1607 total TPs
+21/10/2025 16:14:51 [32m[add_backgrounds.cpp][0m: Signal event 810: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:52 [32m[add_backgrounds.cpp][0m: Signal event 810: 123 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1579 total TPs
+21/10/2025 16:14:53 [32m[add_backgrounds.cpp][0m: Re-linked 13380 background TP pointers to merged_true_vec
+21/10/2025 16:14:53 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155656Z_gen_000017_supernova_g4_detsim_ana_2025-10-03T_050354Z_bg_tps.root
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155659Z_gen_000018_supernova_g4_detsim_ana_2025-10-03T_045147Z_tps.root
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155659Z_gen_000018_supernova_g4_detsim_ana_2025-10-03T_045147Z_bg_tps.root
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: Signal event 851: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: Signal event 851: 143 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1599 total TPs
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: Signal event 852: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: Signal event 852: 149 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1605 total TPs
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: Signal event 853: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: Signal event 853: 138 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1594 total TPs
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: Signal event 854: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: Signal event 854: 157 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1613 total TPs
+21/10/2025 16:14:54 [32m[add_backgrounds.cpp][0m: Signal event 855: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:55 [32m[add_backgrounds.cpp][0m: Signal event 855: 163 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1619 total TPs
+21/10/2025 16:14:55 [32m[add_backgrounds.cpp][0m: Signal event 856: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:55 [32m[add_backgrounds.cpp][0m: Signal event 856: 202 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1658 total TPs
+21/10/2025 16:14:55 [32m[add_backgrounds.cpp][0m: Signal event 857: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:55 [32m[add_backgrounds.cpp][0m: Signal event 857: 160 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1616 total TPs
+21/10/2025 16:14:55 [32m[add_backgrounds.cpp][0m: Signal event 858: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:55 [32m[add_backgrounds.cpp][0m: Signal event 858: 159 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1615 total TPs
+21/10/2025 16:14:55 [32m[add_backgrounds.cpp][0m: Signal event 859: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:55 [32m[add_backgrounds.cpp][0m: Signal event 859: 166 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1622 total TPs
+21/10/2025 16:14:55 [32m[add_backgrounds.cpp][0m: Signal event 860: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:56 [32m[add_backgrounds.cpp][0m: Signal event 860: 133 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1589 total TPs
+21/10/2025 16:14:57 [32m[add_backgrounds.cpp][0m: Re-linked 13366 background TP pointers to merged_true_vec
+21/10/2025 16:14:57 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:14:58 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155659Z_gen_000018_supernova_g4_detsim_ana_2025-10-03T_045147Z_bg_tps.root
+21/10/2025 16:14:58 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:14:58 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155700Z_gen_000019_supernova_g4_detsim_ana_2025-10-03T_023428Z_tps.root
+21/10/2025 16:14:58 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155700Z_gen_000019_supernova_g4_detsim_ana_2025-10-03T_023428Z_bg_tps.root
+21/10/2025 16:14:58 [32m[add_backgrounds.cpp][0m: Signal event 901: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:58 [32m[add_backgrounds.cpp][0m: Signal event 901: 168 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1624 total TPs
+21/10/2025 16:14:58 [32m[add_backgrounds.cpp][0m: Signal event 902: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:59 [32m[add_backgrounds.cpp][0m: Signal event 902: 147 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1603 total TPs
+21/10/2025 16:14:59 [32m[add_backgrounds.cpp][0m: Signal event 903: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:59 [32m[add_backgrounds.cpp][0m: Signal event 903: 197 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1653 total TPs
+21/10/2025 16:14:59 [32m[add_backgrounds.cpp][0m: Signal event 904: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:59 [32m[add_backgrounds.cpp][0m: Signal event 904: 141 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1597 total TPs
+21/10/2025 16:14:59 [32m[add_backgrounds.cpp][0m: Signal event 905: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:59 [32m[add_backgrounds.cpp][0m: Signal event 905: 187 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1643 total TPs
+21/10/2025 16:14:59 [32m[add_backgrounds.cpp][0m: Signal event 906: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:14:59 [32m[add_backgrounds.cpp][0m: Signal event 906: 140 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1596 total TPs
+21/10/2025 16:14:59 [32m[add_backgrounds.cpp][0m: Signal event 907: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:00 [32m[add_backgrounds.cpp][0m: Signal event 907: 158 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1614 total TPs
+21/10/2025 16:15:00 [32m[add_backgrounds.cpp][0m: Signal event 908: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:00 [32m[add_backgrounds.cpp][0m: Signal event 908: 149 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1605 total TPs
+21/10/2025 16:15:00 [32m[add_backgrounds.cpp][0m: Signal event 909: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:00 [32m[add_backgrounds.cpp][0m: Signal event 909: 166 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1622 total TPs
+21/10/2025 16:15:00 [32m[add_backgrounds.cpp][0m: Signal event 910: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:00 [32m[add_backgrounds.cpp][0m: Signal event 910: 148 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1604 total TPs
+21/10/2025 16:15:02 [32m[add_backgrounds.cpp][0m: Re-linked 13318 background TP pointers to merged_true_vec
+21/10/2025 16:15:02 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:15:02 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155700Z_gen_000019_supernova_g4_detsim_ana_2025-10-03T_023428Z_bg_tps.root
+21/10/2025 16:15:02 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:15:02 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155701Z_gen_000020_supernova_g4_detsim_ana_2025-10-03T_024956Z_tps.root
+21/10/2025 16:15:02 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155701Z_gen_000020_supernova_g4_detsim_ana_2025-10-03T_024956Z_bg_tps.root
+21/10/2025 16:15:02 [32m[add_backgrounds.cpp][0m: Signal event 951: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:02 [32m[add_backgrounds.cpp][0m: Signal event 951: 187 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1643 total TPs
+21/10/2025 16:15:02 [32m[add_backgrounds.cpp][0m: Signal event 952: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:03 [32m[add_backgrounds.cpp][0m: Signal event 952: 160 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1616 total TPs
+21/10/2025 16:15:03 [32m[add_backgrounds.cpp][0m: Signal event 953: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:03 [32m[add_backgrounds.cpp][0m: Signal event 953: 152 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1608 total TPs
+21/10/2025 16:15:03 [32m[add_backgrounds.cpp][0m: Signal event 954: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:03 [32m[add_backgrounds.cpp][0m: Signal event 954: 170 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1626 total TPs
+21/10/2025 16:15:03 [32m[add_backgrounds.cpp][0m: Signal event 955: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:03 [32m[add_backgrounds.cpp][0m: Signal event 955: 131 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1587 total TPs
+21/10/2025 16:15:03 [32m[add_backgrounds.cpp][0m: Signal event 956: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:03 [32m[add_backgrounds.cpp][0m: Signal event 956: 177 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1633 total TPs
+21/10/2025 16:15:03 [32m[add_backgrounds.cpp][0m: Signal event 957: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:03 [32m[add_backgrounds.cpp][0m: Signal event 957: 216 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1672 total TPs
+21/10/2025 16:15:03 [32m[add_backgrounds.cpp][0m: Signal event 958: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:04 [32m[add_backgrounds.cpp][0m: Signal event 958: 174 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1630 total TPs
+21/10/2025 16:15:04 [32m[add_backgrounds.cpp][0m: Signal event 959: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:04 [32m[add_backgrounds.cpp][0m: Signal event 959: 170 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1626 total TPs
+21/10/2025 16:15:04 [32m[add_backgrounds.cpp][0m: Signal event 960: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:04 [32m[add_backgrounds.cpp][0m: Signal event 960: 124 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1580 total TPs
+21/10/2025 16:15:06 [32m[add_backgrounds.cpp][0m: Re-linked 13349 background TP pointers to merged_true_vec
+21/10/2025 16:15:06 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:15:06 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155701Z_gen_000020_supernova_g4_detsim_ana_2025-10-03T_024956Z_bg_tps.root
+21/10/2025 16:15:06 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:15:06 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155702Z_gen_000021_supernova_g4_detsim_ana_2025-10-03T_050406Z_tps.root
+21/10/2025 16:15:06 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155702Z_gen_000021_supernova_g4_detsim_ana_2025-10-03T_050406Z_bg_tps.root
+21/10/2025 16:15:06 [32m[add_backgrounds.cpp][0m: Signal event 1001: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:06 [32m[add_backgrounds.cpp][0m: Signal event 1001: 169 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1625 total TPs
+21/10/2025 16:15:06 [32m[add_backgrounds.cpp][0m: Signal event 1002: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:07 [32m[add_backgrounds.cpp][0m: Signal event 1002: 153 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1609 total TPs
+21/10/2025 16:15:07 [32m[add_backgrounds.cpp][0m: Signal event 1003: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:07 [32m[add_backgrounds.cpp][0m: Signal event 1003: 186 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1642 total TPs
+21/10/2025 16:15:07 [32m[add_backgrounds.cpp][0m: Signal event 1004: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:07 [32m[add_backgrounds.cpp][0m: Signal event 1004: 138 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1594 total TPs
+21/10/2025 16:15:07 [32m[add_backgrounds.cpp][0m: Signal event 1005: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:07 [32m[add_backgrounds.cpp][0m: Signal event 1005: 144 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1600 total TPs
+21/10/2025 16:15:07 [32m[add_backgrounds.cpp][0m: Signal event 1006: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:07 [32m[add_backgrounds.cpp][0m: Signal event 1006: 153 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1609 total TPs
+21/10/2025 16:15:07 [32m[add_backgrounds.cpp][0m: Signal event 1007: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:07 [32m[add_backgrounds.cpp][0m: Signal event 1007: 195 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1651 total TPs
+21/10/2025 16:15:08 [32m[add_backgrounds.cpp][0m: Signal event 1008: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:08 [32m[add_backgrounds.cpp][0m: Signal event 1008: 202 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1658 total TPs
+21/10/2025 16:15:08 [32m[add_backgrounds.cpp][0m: Signal event 1009: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:08 [32m[add_backgrounds.cpp][0m: Signal event 1009: 142 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1598 total TPs
+21/10/2025 16:15:08 [32m[add_backgrounds.cpp][0m: Signal event 1010: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:08 [32m[add_backgrounds.cpp][0m: Signal event 1010: 181 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1637 total TPs
+21/10/2025 16:15:10 [32m[add_backgrounds.cpp][0m: Re-linked 13316 background TP pointers to merged_true_vec
+21/10/2025 16:15:10 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155702Z_gen_000021_supernova_g4_detsim_ana_2025-10-03T_050406Z_bg_tps.root
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155705Z_gen_000022_supernova_g4_detsim_ana_2025-10-03T_044523Z_tps.root
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155705Z_gen_000022_supernova_g4_detsim_ana_2025-10-03T_044523Z_bg_tps.root
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Signal event 1051: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Signal event 1051: 147 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1603 total TPs
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Signal event 1052: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Signal event 1052: 163 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1619 total TPs
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Signal event 1053: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Signal event 1053: 132 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1588 total TPs
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Signal event 1054: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Signal event 1054: 149 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1605 total TPs
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Signal event 1055: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:11 [32m[add_backgrounds.cpp][0m: Signal event 1055: 158 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1614 total TPs
+21/10/2025 16:15:12 [32m[add_backgrounds.cpp][0m: Signal event 1056: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:12 [32m[add_backgrounds.cpp][0m: Signal event 1056: 230 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1686 total TPs
+21/10/2025 16:15:12 [32m[add_backgrounds.cpp][0m: Signal event 1057: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:12 [32m[add_backgrounds.cpp][0m: Signal event 1057: 136 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1592 total TPs
+21/10/2025 16:15:12 [32m[add_backgrounds.cpp][0m: Signal event 1058: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:12 [32m[add_backgrounds.cpp][0m: Signal event 1058: 135 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1591 total TPs
+21/10/2025 16:15:12 [32m[add_backgrounds.cpp][0m: Signal event 1059: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:12 [32m[add_backgrounds.cpp][0m: Signal event 1059: 150 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1606 total TPs
+21/10/2025 16:15:12 [32m[add_backgrounds.cpp][0m: Signal event 1060: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:12 [32m[add_backgrounds.cpp][0m: Signal event 1060: 197 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1653 total TPs
+21/10/2025 16:15:14 [32m[add_backgrounds.cpp][0m: Re-linked 13374 background TP pointers to merged_true_vec
+21/10/2025 16:15:14 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155705Z_gen_000022_supernova_g4_detsim_ana_2025-10-03T_044523Z_bg_tps.root
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Processing signal file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155708Z_gen_000024_supernova_g4_detsim_ana_2025-10-03T_050330Z_tps.root
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155708Z_gen_000024_supernova_g4_detsim_ana_2025-10-03T_050330Z_bg_tps.root
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1151: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1151: 154 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1610 total TPs
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1152: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:14 [32m[add_backgrounds.cpp][0m: Signal event 1152: 139 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1595 total TPs
+21/10/2025 16:15:14 [32m[add_backgrounds.cpp][0m: Signal event 1153: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:14 [32m[add_backgrounds.cpp][0m: Signal event 1153: 172 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1628 total TPs
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1154: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1154: 161 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1617 total TPs
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1155: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1155: 135 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1591 total TPs
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1156: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1156: 178 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1634 total TPs
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1157: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1157: 143 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1599 total TPs
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1158: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1158: 142 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1598 total TPs
+21/10/2025 16:15:15 [32m[add_backgrounds.cpp][0m: Signal event 1159: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:16 [32m[add_backgrounds.cpp][0m: Signal event 1159: 197 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1653 total TPs
+21/10/2025 16:15:16 [32m[add_backgrounds.cpp][0m: Signal event 1160: merging with background BG_96_tps.root event 1 (index 0, 1655 TPs)
+21/10/2025 16:15:16 [32m[add_backgrounds.cpp][0m: Signal event 1160: 137 signal TPs + 1456 background TPs (truth linked: 1456, filtered UNKNOWN: 199) = 1593 total TPs
+21/10/2025 16:15:17 [32m[add_backgrounds.cpp][0m: Re-linked 13360 background TP pointers to merged_true_vec
+21/10/2025 16:15:17 [32m[add_backgrounds.cpp][0m:   PRE-WRITE: TP has generator: CavernwallGammasAtLAr1x2x2lowBgAPA
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m: Wrote: /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155708Z_gen_000024_supernova_g4_detsim_ana_2025-10-03T_050330Z_bg_tps.root
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m: Reached max_files limit (20), stopping.
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m: Processed 20 files successfully.
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m: Output files are in the same directories as input files with '_bkg' suffix.
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m: Note: In the output files, background TPs have their original generator labels,
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m:       allowing you to distinguish signal (MARLEY) from background (e.g., radiological).
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m: 
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m: Output files (20):
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155625Z_gen_000001_supernova_g4_detsim_ana_2025-10-03T_031735Z_bg_tps.root
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155633Z_gen_000003_supernova_g4_detsim_ana_2025-10-03T_044351Z_bg_tps.root
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155638Z_gen_000004_supernova_g4_detsim_ana_2025-10-03T_044709Z_bg_tps.root
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155640Z_gen_000006_supernova_g4_detsim_ana_2025-10-03T_023913Z_bg_tps.root
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155641Z_gen_000007_supernova_g4_detsim_ana_2025-10-03T_024606Z_bg_tps.root
+21/10/2025 16:15:18 [32m[add_backgrounds.cpp][0m:  ... (15 more files)

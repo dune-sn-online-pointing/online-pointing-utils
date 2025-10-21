@@ -4,7 +4,17 @@ export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source $SCRIPTS_DIR/init.sh
 
 print_help(){
-  echo "Usage: $0 -j <json> [--no-compile] [--clean-compile] [--output-folder <dir>] [-v|--verbose]"; exit 0;
+  echo "Usage: $0 -j <json> [--no-compile] [--clean-compile] [--output-folder <dir>] [-v|--verbose]"; 
+  echo "Options:";
+  echo "  -j|--json <file>          JSON settings file with pattern (e.g. json/make_clusters/example.json)"
+  echo "  --no-compile              Do not recompile the code"
+  echo "  --clean-compile           Clean and recompile the code"
+  echo "  --output-folder <dir>     Output folder (overrides the one in JSON file)"
+  echo "  -o|--override [true|false] Force reprocessing even if output already exists (useful for debugging)"
+  echo "  -v|--verbose              Enable verbose output"
+  echo "  -d|--debug                Enable debug mode"
+  echo "  -h|--help                 Print this help message."
+  exit 0;
 }
 
 settingsFile="json/cluster/example.json"
@@ -29,6 +39,7 @@ while [[ $# -gt 0 ]]; do
       fi
       ;;
     -v|--verbose) verbose=true; shift;;
+    -d|--debug) debug=true; shift;;
     -h|--help) print_help;;
     *) shift;;
   esac
@@ -43,6 +54,9 @@ if [[ -n $output_folder ]]; then
 fi
 if [ "$verbose" = true ]; then
   cmd+=" -v"
+fi
+if [ "$debug" = true ]; then
+  cmd+=" -d"
 fi
 echo "Running: $cmd"
 exec $cmd

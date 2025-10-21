@@ -2,9 +2,6 @@
   "thisIsAComment": "Code will try first input file from cmd line, then inputFile, then inputFolder + inputList, then inputListFile.",
   "inputFile": "",
   "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
-  "inputList": [
-    "es_valid_tick3_ch2_min2_tot1_clusters.root"
-  ],
   "inputListFile": "",
 
   "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",

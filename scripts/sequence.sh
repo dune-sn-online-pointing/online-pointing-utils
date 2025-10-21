@@ -179,7 +179,7 @@ if [ "$run_analyze_tps" = true ]; then
 fi
 
 add_backgrounds_command="./scripts/add_backgrounds.sh -j $JSON_DIR/add_backgrounds/${dataset}.json --no-compile --override $override"
-if [ "$run_add_backgrounds" = true ]; then
+if [ "$run_add_backgrounds" = true ] && [ "$clean_clusters" = false ]; then
         echo "Running add backgrounds step..."
         $add_backgrounds_command
         if [ $? -ne 0 ]; then

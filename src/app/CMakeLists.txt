@@ -22,12 +22,12 @@ install( TARGETS backtrack_tpstream DESTINATION bin )
 
 cmessage( STATUS "Creating analyze_clusters app..." )
 add_executable( analyze_clusters ${CMAKE_CURRENT_SOURCE_DIR}/analyze_clusters.cpp )
-target_link_libraries( analyze_clusters clustersLibs globalLib )
+target_link_libraries( analyze_clusters clustersLibs anaLib globalLib )
 install( TARGETS analyze_clusters DESTINATION bin )
 
 cmessage( STATUS "Creating analyze_tps app..." )
 add_executable( analyze_tps ${CMAKE_CURRENT_SOURCE_DIR}/analyze_tps.cpp )
-target_link_libraries( analyze_tps clustersLibs globalLib )
+target_link_libraries( analyze_tps clustersLibs anaLib globalLib )
 install( TARGETS analyze_tps DESTINATION bin )
 
 cmessage( STATUS "Creating extract_calibration app..." )

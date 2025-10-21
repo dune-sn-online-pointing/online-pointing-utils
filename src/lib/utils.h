@@ -61,6 +61,7 @@ namespace PDG{
     static const int kaon_minus = -321;
     static const int kaon_zero = 310;
     static const int kaon_zero_bar = -310;
+    static const int alpha = 1000020040;
 }
 
 // Geometry parameters - accessed via ParametersManager

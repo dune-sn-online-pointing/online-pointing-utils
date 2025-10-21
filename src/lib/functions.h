@@ -19,5 +19,8 @@ extern const std::map<std::string, ELogLevel> rootVerbLevelMap;
 
 ELogLevel stringToRootLevel(const std::string& level);
 
+std::map<std::string, int> extractClusteringParams(const std::string& filename);
+
+std::string formatClusteringConditions(const std::map<std::string, int>& params);
 
 #endif // FUNCTIONS_H
