@@ -5,14 +5,14 @@ export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source $SCRIPTS_DIR/init.sh
 
 print_help(){
-  echo "Usage: $0 -j <json> [--no-compile] [--clean-compile] [--output-folder <dir>]"; 
+  echo "Usage: $0 -j <json> [--no-compile] [--clean-compile] [-o <dir>]"; 
   echo "Options:";
   echo "  -j|--json <json>            Json file containing settings."
   echo "  --no-compile                Do not recompile the code"
   echo "  --clean-compile             Clean and recompile the code"
   echo "  -i|--input-file <file>      Input file with list of input ROOT files. Overrides json."
-  echo "  --output-folder <dir>       Output folder (default: data/). Overrides json."
-  echo "  -o|--override               Force reprocessing even if output already exists (default: false)"
+  echo "  -o|--output-folder <dir>    Output folder (default: from json). Overrides json."
+  echo "  -f|--override               Force reprocessing even if output already exists (default: false)"
   echo "  -v|--verbose                Enable verbose mode"
   echo "  -h|--help                   Print this help message."
   exit 0;
@@ -29,19 +29,36 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     -j|--json) settingsFile="$2"; shift 2;;
     -i|--input-file) inputFile="$2"; shift 2;;
-    --output-folder) output_folder="$2"; shift 2;;
+    -o|--output-folder) output_folder="$2"; shift 2;;
     --no-compile) noCompile=true; shift;;
-    --clean-compile) cleanCompile=true; shift;;
-    -o|--override)
+    --clean-compile) cleanCompile=true; shift;;        
+    -f|--override)
       if [[ $2 == "true" || $2 == "false" ]]; then
-        override=$2
+      override=$2
+      shift 2
+      else
+      override=true
+      shift
+      fi
+      ;;
+    -v|--verbose) 
+      if [[ $2 == "true" || $2 == "false" ]]; then
+        verbose=$2
         shift 2
       else
-        override=true
+        verbose=true
         shift
       fi
       ;;
-    -v|--verbose) verbose=true; shift;;
+    -d|--debug) 
+      if [[ $2 == "true" || $2 == "false" ]]; then
+        debug=$2
+        shift 2
+      else
+        debug=true
+        shift
+      fi
+      ;;
     -h|--help) print_help;;
     *) shift;;
   esac

@@ -32,10 +32,12 @@ int main(int argc, char* argv[]) {
     nlohmann::json j;
     jf >> j;
 
-    // Determine output folder
+    // Determine output folder: CLI > reports_folder > outputFolder > output_folder
     std::string outFolder;
     if (clp.isOptionTriggered("outFolder")) {
         outFolder = clp.getOptionVal<std::string>("outFolder");
+    } else if (j.contains("reports_folder")) {
+        outFolder = j.value("reports_folder", std::string(""));
     } else if (j.contains("outputFolder")) {
         outFolder = j.value("outputFolder", std::string(""));
     } else if (j.contains("output_folder")) {
@@ -61,7 +63,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Use utility function for file finding
-    if (inputs.empty()) inputs = find_input_files(j, std::vector<std::string>{"_tps.root", "_tps_bktr"});
+    if (inputs.empty()) inputs = find_input_files(j, "tps");
 
     LogInfo << "Number of valid files: " << inputs.size() << std::endl;
     LogThrowIf(inputs.empty(), "No valid input files found.");

@@ -1,0 +1,28 @@
+{
+    "thisIsAComment": "This file contains all steps of sequence.sh",
+    "thisIsAlsoAComment": "tpstream_folder: raw tpstream files (input to backtracking)",
+    "thisIsAlsoAComment2": "sig_folder: pure signal TPs (output of backtracking, input to add_backgrounds)",
+    "thisIsAlsoAComment3": "bg_folder: pure background TPs (input to add_backgrounds)",
+    "thisIsAlsoAComment4": "tps_folder/tps_bg_folder: merged TPs with backgrounds (output of add_backgrounds, input to clustering)",
+
+    "tpstream_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+    "sig_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+    "bg_folder": "/home/virgolaema/dune/online-pointing-utils/data/bkgs/",
+    "tps_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
+    "tps_bg_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
+    "clusters_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+    "clusters_folder_prefix": "es_valid_bg",
+    "reports_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/reports/",
+
+    "max_files": 1000,
+    "skip_files": 0,
+
+    "backtracker_error_margin": 10,
+
+    "tick_limit": 3,
+    "channel_limit": 2,
+    "min_tps_to_cluster": 2,
+    "tot_cut": 1,
+    "energy_cut": 0
+
+}

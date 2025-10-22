@@ -1,29 +1,4 @@
-#include <vector>
-#include <string>
-#include <map>
-#include <set>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <filesystem>
-#include <nlohmann/json.hpp>
-
-#include "CmdLineParser.h"
-#include "Logger.h"
-#include "ParametersManager.h"
-#include "utils.h"
-
-// ROOT
-#include <TFile.h>
-#include <TTree.h>
-#include <TDirectory.h>
-#include <TCanvas.h>
-#include <TH1F.h>
-#include <TH2F.h>
-#include <TGraph.h>
-#include <TLegend.h>
-#include <TText.h>
-#include <TStyle.h>
+#include "global.h"
 
 LoggerInit([]{ Logger::getUserHeader() << "[" << FILENAME << "]"; });
 
@@ -51,7 +26,7 @@ int main(int argc, char* argv[]){
   auto resolvePath = [](const std::string& p)->std::string{ std::error_code ec; auto abs=std::filesystem::absolute(p, ec); return ec? p : abs.string(); };
 
   // Use utility function for file finding (assume _tps_bktr files for calibration)
-  std::vector<std::string> inputs = find_input_files(j, "_tps_bktr");
+  std::vector<std::string> inputs = find_input_files(j, "tps");
   
   // Override with CLI input if provided
   if (clp.isOptionTriggered("inputFile")) {

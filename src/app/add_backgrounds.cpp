@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
     clp.addTriggerOption("verboseMode", {"-v", "--verbose"}, "Run in verbose mode");
     clp.addTriggerOption("debugMode", {"-d", "--debug"}, "Run in debug mode (more detailed than verbose)");
-    clp.addTriggerOption("override", {"-o", "--override"}, "Override existing output files");
+    clp.addTriggerOption("override", {"-f", "--override"}, "Override existing output files");
     clp.addDummyOption();
     
     LogInfo << clp.getDescription().str() << std::endl;
@@ -53,8 +53,8 @@ int main(int argc, char* argv[]) {
     clp.parseCmdLine(argc, argv);
     LogThrowIf( clp.isNoOptionTriggered(), "No option was provided." );
 
-    bool verboseMode = clp.isOptionTriggered("verboseMode");
-    bool debugMode = clp.isOptionTriggered("debugMode");
+    verboseMode = clp.isOptionTriggered("verboseMode");
+    debugMode = clp.isOptionTriggered("debugMode");
     bool overrideMode = clp.isOptionTriggered("override");
     if (debugMode) verboseMode = true;
     
@@ -72,17 +72,27 @@ int main(int argc, char* argv[]) {
     bool around_vertex_only = j.value("around_vertex_only", false);
     double vertex_radius = j.value("vertex_radius", 100.0); // cm, used if around_vertex_only=true
     int max_files = j.value("max_files", -1); // -1 means no limit
-    std::string bkg_folder = j.value("bkg_folder", std::string(""));
-    LogThrowIf(bkg_folder.empty(), "bkg_folder is not specified in JSON config.");
     
-    // Read input_folder from JSON
-    std::string input_folder = j.value("inputFolder", std::string(""));
-    LogThrowIf(input_folder.empty(), "input_folder is not specified in JSON config.");
+    // sig_folder: pure signal TPs (input)
+    std::string sig_folder = j.value("sig_folder", std::string(""));
+    LogThrowIf(sig_folder.empty(), "sig_folder is not specified in JSON config.");
+    
+    // bg_folder: pure background TPs (input)
+    std::string bg_folder = j.value("bg_folder", std::string(""));
+    LogThrowIf(bg_folder.empty(), "bg_folder is not specified in JSON config.");
+    
+    // tps_bg_folder or tps_folder: merged TPs output
+    std::string output_folder = j.value("tps_bg_folder", std::string(""));
+    if (output_folder.empty()) {
+        output_folder = j.value("tps_folder", std::string(""));
+    }
+    LogThrowIf(output_folder.empty(), "tps_bg_folder (or tps_folder) is not specified in JSON config.");
 
     LogInfo << "Configuration:" << std::endl;
     LogInfo << " - Signal type: " << signal_type << std::endl;
-    LogInfo << " - Signal folder: " << input_folder << std::endl;
-    LogInfo << " - Background folder: " << bkg_folder << std::endl;
+    LogInfo << " - Signal folder (pure signal TPs): " << sig_folder << std::endl;
+    LogInfo << " - Background folder (pure bg TPs): " << bg_folder << std::endl;
+    LogInfo << " - Output folder (merged TPs): " << output_folder << std::endl;
     LogInfo << " - Add backgrounds around vertex only: " << (around_vertex_only ? "YES" : "NO") << std::endl;
     if (around_vertex_only) {
         LogInfo << " - Vertex radius: " << vertex_radius << " cm" << std::endl;
@@ -93,19 +103,20 @@ int main(int argc, char* argv[]) {
         LogInfo << " - Max files to process: unlimited" << std::endl;
     }
 
-    // Find signal files using utility function
-    std::vector<std::string> signal_files = find_input_files(j, "_tps.root");
+    // Find signal files in sig_folder (looking for *_tps.root)
+    std::vector<std::string> signal_files = find_input_files(j, "sig");
     LogInfo << "Found " << signal_files.size() << " signal files" << std::endl;
-    LogThrowIf(signal_files.empty(), "No signal files found.");
+    LogThrowIf(signal_files.empty(), "No signal files found in sig_folder.");
 
-    // Find background files using helper function (looking for BG_*_tps.root pattern)
-    std::vector<std::string> bkg_files = find_files_in_folder(bkg_folder, "BG_", "_tps.root");
+    // Find background files in bg_folder (looking for *_tps.root)
+    std::vector<std::string> bkg_files = find_input_files(j, "bg");
     LogInfo << "Found " << bkg_files.size() << " background files" << std::endl;
-    LogThrowIf(bkg_files.empty(), "No background files found.");
+    LogThrowIf(bkg_files.empty(), "No background files found in bg_folder.");
+
 
     // Background cycling state (persists across all signal files)
     size_t bkg_file_idx = 0;
-    size_t bkg_event_idx = 1; // TEMP, should be 0
+    size_t bkg_event_idx = 0; 
     
     // Cache for current background file to avoid repeated reads
     std::map<int, std::vector<TriggerPrimitive>> cached_bkg_tps;
@@ -152,8 +163,6 @@ int main(int argc, char* argv[]) {
         read_tps(signal_file, signal_tps_by_event, signal_true_by_event, signal_nu_by_event);
         // Prepare output file name
         std::filesystem::path signal_path(signal_file);
-        std::string outputFolder = j.value("outputFolder", "") ;
-        LogThrowIf(outputFolder.empty(), "outputFolder is not specified in JSON config.");
         
         // Get base filename without _tps.root suffix
         std::string base_name = signal_path.stem().string();
@@ -161,7 +170,7 @@ int main(int argc, char* argv[]) {
             base_name = base_name.substr(0, base_name.size() - 4);
         }
         
-        std::string output_filename = outputFolder + "/" + base_name;
+        std::string output_filename = output_folder + "/" + base_name;
         if (around_vertex_only) {
             output_filename += "_bg_vtx" + std::to_string((int)vertex_radius) + "_tps.root";
         } else {
@@ -172,6 +181,7 @@ int main(int argc, char* argv[]) {
         if (std::filesystem::exists(output_filename) && !overrideMode) {
             file_count--;
             if (verboseMode) LogInfo << "Output file already exists, skipping (use --override to overwrite)" << std::endl;
+            continue;
         }
     // Prepare merged data structures
         std::vector<std::vector<TriggerPrimitive>> merged_tps_vec;
@@ -270,7 +280,7 @@ int main(int argc, char* argv[]) {
                 }
                 
                 // Move to next event (and potentially next file)
-                // bkg_event_idx++; // TEMP
+                bkg_event_idx++; // TEMP
                 
             } else {
                 // No background TPs available, just use signal truth
@@ -300,50 +310,23 @@ int main(int argc, char* argv[]) {
         // Truth information is copied directly with each TP and travels with it
         // The old relinking logic is removed as truth is now self-contained in each TP
         
-        // Diagnostics: count MARLEY-labeled signal TPs vs background TPs
-        if (verboseMode) {
-            auto is_marley = [](const std::string& s){
-                std::string t = s; std::transform(t.begin(), t.end(), t.begin(), ::tolower);
-                return t.find("marley") != std::string::npos; };
-            
-            for (size_t ev_idx = 0; ev_idx < std::min<size_t>(3, merged_tps_vec.size()); ev_idx++) {
-                auto& event_tps = merged_tps_vec[ev_idx];
-                int signal_tp_count = signal_tp_counts[ev_idx];
-                
-                int sig_marley = 0, sig_total = signal_tp_count;
-                int bkg_marley = 0, bkg_total = (int)event_tps.size() - signal_tp_count;
-                
-                for (int i = 0; i < signal_tp_count && i < (int)event_tps.size(); ++i) {
-                    if (is_marley(event_tps[i].GetGeneratorName())) sig_marley++;
-                }
-                for (size_t i = signal_tp_count; i < event_tps.size(); ++i) {
-                    if (is_marley(event_tps[i].GetGeneratorName())) bkg_marley++;
-                }
-                
-                LogInfo << "Diagnostics ev_idx=" << ev_idx
-                        << ": signalTPs MARLEY=" << sig_marley << "/" << sig_total
-                        << ", bkgTPs MARLEY=" << bkg_marley << "/" << bkg_total << std::endl;
-            }
-        }
-        
-        // Debug: Verify generator names right before write
-        if (verboseMode && !merged_tps_vec.empty() && !merged_tps_vec[0].empty()) {
-            int bkg_tps_checked = 0;
-            for (const auto& tp : merged_tps_vec[0]) {
-                if (bkg_tps_checked >= signal_tps_by_event[0].size()) { // Skip signal TPs
-                    LogInfo << "  PRE-WRITE: TP has generator: " << tp.GetGeneratorName() << std::endl;
-                    break;
-                }
-                bkg_tps_checked++;
-            }
-        }
+        // Diagnostics: count MARLEY-labeled TPs (signal) vs other generators (background)
+        // Note: After sorting by time, signal and background TPs are mixed  
+        // DISABLED FOR NOW - causing crashes
+        // if (verboseMode) {
+        //     ...
+        // }
         
         // Write output file with merged TPs
         // Background truth pointers remain valid since all background data is pre-loaded
-        write_tps(output_filename, merged_tps_vec, merged_true_vec, merged_nu_vec);
-        output_files.push_back(output_filename);
-        
-        if (verboseMode) LogInfo << "Wrote: " << output_filename << std::endl;
+        try {
+            write_tps(output_filename, merged_tps_vec, merged_true_vec, merged_nu_vec);
+            output_files.push_back(output_filename);
+            if (verboseMode) LogInfo << "Wrote: " << output_filename << std::endl;
+        } catch (const std::exception& e) {
+            LogError << "Error writing output file " << output_filename << ": " << e.what() << std::endl;
+            LogError << "Skipping this file and continuing..." << std::endl;
+        }
     }
     
     LogInfo << "\n\nProcessed " << file_count << " files successfully." << std::endl;

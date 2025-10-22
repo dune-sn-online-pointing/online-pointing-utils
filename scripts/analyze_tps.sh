@@ -8,13 +8,14 @@ current_dir=$(pwd)
 
 print_help() {
     echo "*******************************************************************************"
-    echo "Usage: $0 -j <json_settings.json>"
+    echo "Usage: $0 -j <json_settings.json> [-i <input>] [-o <output>]"
     echo "Options:"
-    echo "  --json-settings <json>      Json file to used as input. Relative path inside json/"
+    echo "  -j|--json-settings <json>   Json file to used as input. Relative path inside json/"
+    echo "  -i|--input-file <file>      Input file with list of input ROOT files. Overrides json."
+    echo "  -o|--output-folder <dir>    Output folder (default: from json). Overrides json."
     echo "  --no-compile                Do not recompile the code. Default is to recompile the code"
     echo "  --clean-compile             Clean and recompile the code. Default is to recompile the code without cleaning"
-    echo "  -i|--input-file <file>      Input file with list of input ROOT files. Overrides json."
-    echo "  --output-folder <dir>       Output folder (default: data/). Overrides json."
+    echo "  -f|--override               Force reprocessing even if output already exists"
     echo "  -v|--verbose                Enable verbose mode"
     echo "  -h, --help                  Print this help message"
     echo "*******************************************************************************"
@@ -25,19 +26,46 @@ settingsFile=""
 cleanCompile=false
 noCompile=false
 verbose=false
+override=false
 
 # Parse
 while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -j|--json-settings) settingsFile="$2"; shift 2 ;;
-        -i|--input-file) inputFile="$2"; shift 2;;
-        --output-folder) output_folder="$2"; shift 2;;
-        --no-compile)       noCompile=true; shift ;;
-        --clean-compile)    cleanCompile=true; shift ;;
-        -v|--verbose)       verbose=true; shift ;;
-        -h|--help)          print_help ;;
-        *)                  shift ;;
-    esac
+  case "$1" in
+    -j|--json) settingsFile="$2"; shift 2;;
+    -i|--input-file) inputFile="$2"; shift 2;;
+    -o|--output-folder) output_folder="$2"; shift 2;;
+    --no-compile) noCompile=true; shift;;
+    --clean-compile) cleanCompile=true; shift;;        
+    -f|--override)
+      if [[ $2 == "true" || $2 == "false" ]]; then
+      override=$2
+      shift 2
+      else
+      override=true
+      shift
+      fi
+      ;;
+    -v|--verbose) 
+      if [[ $2 == "true" || $2 == "false" ]]; then
+        verbose=$2
+        shift 2
+      else
+        verbose=true
+        shift
+      fi
+      ;;
+    -d|--debug) 
+      if [[ $2 == "true" || $2 == "false" ]]; then
+        debug=$2
+        shift 2
+      else
+        debug=true
+        shift
+      fi
+      ;;
+    -h|--help) print_help;;
+    *) shift;;
+  esac
 done
 
 if [ -z "$settingsFile" ]

@@ -162,9 +162,8 @@ int main(int argc, char* argv[]){
   // Check if tpstream files should be used for SimIDE energy calculation
   bool use_simide_energy = j.value("use_simide_energy", false);
 
-  // Accept any file containing _clusters and ending in .root
-  std::vector<std::string> inputs = find_input_files(j, "_clusters");
-  // Override with CLI input if provided
+  std::vector<std::string> inputs;
+  // CLI first
   if (clp.isOptionTriggered("inputFile")) {
     std::string input_file = clp.getOptionVal<std::string>("inputFile");
     inputs.clear();
@@ -186,7 +185,7 @@ int main(int argc, char* argv[]){
   }
 
   // Use utility function for file finding (clusters files)
-  if (inputs.empty()) inputs = find_input_files(j, "_clusters");
+  if (inputs.empty()) inputs = find_input_files(j, "clusters");
 
   LogInfo << "Number of valid files: " << inputs.size() << std::endl;
   LogThrowIf(inputs.empty(), "No valid input files found.");
@@ -199,9 +198,12 @@ int main(int argc, char* argv[]){
     LogInfo << "Max files: unlimited" << std::endl;
   }
 
+  // Determine output folder: CLI > reports_folder > outputFolder
   std::string outFolder;
   if (clp.isOptionTriggered("outFolder"))
     outFolder = clp.getOptionVal<std::string>("outFolder");
+  else if (j.contains("reports_folder"))
+    outFolder = j.value("reports_folder", std::string(""));
   else if (j.contains("outputFolder"))
     outFolder = j.value("outputFolder", std::string(""));
 
@@ -307,15 +309,24 @@ int main(int argc, char* argv[]){
 
   // Generate combined PDF path from first input file
   std::string combined_pdf;
+  
+  // Determine combined PDF output path
+  std::string reports_folder = j.value("reports_folder", "data");
+  std::string input_dir_name = "clusters";
   if (!inputs.empty()) {
-    std::string base = inputs[0].substr(inputs[0].find_last_of("/\\")+1);
-    size_t dotpos = base.find_last_of('.');
-    if (dotpos != std::string::npos) base = base.substr(0, dotpos);
-    combined_pdf = outFolder.empty() ? base + "_report.pdf" : outFolder + "/" + base + "_report.pdf";
-  } else {
-    combined_pdf = "cluster_analysis_combined.pdf";
+    std::string first_file = inputs[0];
+    size_t last_slash = first_file.find_last_of("/\\");
+    if (last_slash != std::string::npos && last_slash > 0) {
+      std::string parent_dir = first_file.substr(0, last_slash);
+      size_t parent_last_slash = parent_dir.find_last_of("/\\");
+      if (parent_last_slash != std::string::npos) {
+        input_dir_name = parent_dir.substr(parent_last_slash + 1);
+      } else {
+        input_dir_name = parent_dir;
+      }
+    }
   }
-
+  combined_pdf = reports_folder + "/" + input_dir_name + "_report.pdf";
   int file_count = 0;
   for (const auto& clusters_file : inputs){
 

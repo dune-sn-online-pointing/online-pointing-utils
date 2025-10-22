@@ -6,8 +6,9 @@
   ],
   "inputListFile": "",
 
-  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
-  "outputFilename": "es_valid",
+  "clusters_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+  "clusters_folder_prefix": "es_valid",
+  "skip_files": 0,
   
   "max_files": 100,
   

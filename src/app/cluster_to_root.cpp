@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     i >> j;
     
     // Use utility function for file finding
-    std::vector<std::string> filenames = find_input_files(j, "_tpstream.root");
+    std::vector<std::string> filenames = find_input_files(j, "tpstream");
     
     // Override with CLI input if provided
     if (clp.isOptionTriggered("inputFile")) {

@@ -28,9 +28,8 @@ int main(int argc, char* argv[]) {
     std::string json = clp.getOptionVal<std::string>("json");
     std::ifstream i(json); nlohmann::json j; i >> j;
 
-    // Use utility function for file finding
-    std::vector<std::string> patterns = {"_tps.root"};
-    std::vector<std::string> inputs = find_input_files(j, patterns);
+    // Use utility function for file finding (reads from tps_folder = merged TPs with backgrounds)
+    std::vector<std::string> inputs = find_input_files(j, "tps");
     
     // Override with CLI input if provided
     if (clp.isOptionTriggered("inputFile")) {
@@ -49,16 +48,21 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    LogInfo << "Number of valid files: " << inputs.size() << std::endl;
-    LogThrowIf(inputs.empty(), "No valid input files found.");
+    LogInfo << "Number of valid files (merged TPs): " << inputs.size() << std::endl;
+    LogThrowIf(inputs.empty(), "No valid input files found in tps_folder.");
 
-    std::string outfolder = j.value("outputFolder", std::string("data"));
+    // Get output folder: CLI > clusters_folder > outputFolder > default
+    std::string outfolder;
     if (clp.isOptionTriggered("outFolder")) {
         outfolder = clp.getOptionVal<std::string>("outFolder");
-        LogInfo << "Overriding output folder with CLI option: " << outfolder << std::endl;
+        LogInfo << "Using output folder from CLI: " << outfolder << std::endl;
+    } else if (j.contains("clusters_folder")) {
+        outfolder = j.value("clusters_folder", std::string("data"));
+    } else {
+        outfolder = j.value("outputFolder", std::string("data"));
     }
 
-    int ticks_limit = j.value("tick_limit", 3);
+    int tick_limit = j.value("tick_limit", 3);
     int channel_limit = j.value("channel_limit", 1);
     int min_tps_to_cluster = j.value("min_tps_to_cluster", 1);
     int energy_cut = j.value("energy_cut", 0);
@@ -67,9 +71,24 @@ int main(int argc, char* argv[]) {
     int tot_cut = j.value("tot_cut", 0);
     int max_files = j.value("max_files", -1); // -1 means no limit
 
+    // Get cluster folder prefix
+    std::string cluster_prefix = j.value("clusters_folder_prefix", std::string("clusters"));
+
+    // Build subfolder name with clustering conditions
+    std::string clusters_subfolder = "clusters_" + cluster_prefix
+        + "_tick" + std::to_string(tick_limit)
+        + "_ch" + std::to_string(channel_limit)
+        + "_min" + std::to_string(min_tps_to_cluster)
+        + "_tot" + std::to_string(tot_cut)
+        + "_e" + std::to_string(energy_cut);
+    
+    std::string clusters_folder_path = outfolder + "/" + clusters_subfolder;
+
     LogInfo << "Settings from json file:" << std::endl;
-    LogInfo << " - Output folder: " << outfolder << std::endl;
-    LogInfo << " - Tick limit: " << ticks_limit << std::endl;
+    LogInfo << " - Base output folder: " << outfolder << std::endl;
+    LogInfo << " - Clusters subfolder: " << clusters_subfolder << std::endl;
+    LogInfo << " - Full clusters path: " << clusters_folder_path << std::endl;
+    LogInfo << " - Tick limit: " << tick_limit << std::endl;
     LogInfo << " - Channel limit: " << channel_limit << std::endl;
     LogInfo << " - Minimum TPs to form a cluster: " << min_tps_to_cluster << std::endl;
     LogInfo << " - Energy cut: " << energy_cut << std::endl;
@@ -83,29 +102,10 @@ int main(int argc, char* argv[]) {
         max_files = inputs.size();
     }
 
-    std::string file_prefix;
-    try {
-        file_prefix = j.at("outputFilename").get<std::string>();
-    } catch (...) {
-        std::filesystem::path json_path(json);
-        file_prefix = json_path.stem().string();
-    }
-
-    std::string clusters_filename = outfolder + "/" + file_prefix
-        + "_tick" + std::to_string(ticks_limit)
-        + "_ch" + std::to_string(channel_limit)
-        + "_min" + std::to_string(min_tps_to_cluster)
-        + "_tot" + std::to_string(tot_cut)
-        + "_e" + std::to_string(adc_integral_cut_ind)
-        + "_clusters.root";    
+    // Create clusters subfolder if it doesn't exist
+    std::filesystem::create_directories(clusters_folder_path);    
 
     // Ensure output directory exists
-    std::filesystem::path outfolder_path(outfolder);
-    if (!std::filesystem::exists(outfolder_path)) {
-        LogInfo << "Output folder does not exist, creating: " << outfolder << std::endl;
-        std::filesystem::create_directories(outfolder_path);
-    }
-
     // Variables for numbered output files (one per 10 input files)
     const int FILES_PER_OUTPUT = 10;
     int output_file_number = 0;
@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
         file->cd();
         TTree* metadata_tree = new TTree("clustering_metadata", "Clustering parameters used");
         
-        int meta_tick_limit = ticks_limit;
+        int meta_tick_limit = tick_limit;
         int meta_channel_limit = channel_limit;
         int meta_min_tps = min_tps_to_cluster;
         int meta_adc_cut_ind = adc_integral_cut_ind;
@@ -147,15 +147,8 @@ int main(int argc, char* argv[]) {
             LogInfo << "Closed output file: " << current_clusters_filename << std::endl;
         }
         
-        // Create new filename with progressive number and energy thresholds
-        // Note: we don't use the old clusters_filename variable anymore
-        current_clusters_filename = outfolder + "/" + file_prefix
-            + "_tick" + std::to_string(ticks_limit)
-            + "_ch" + std::to_string(channel_limit)
-            + "_min" + std::to_string(min_tps_to_cluster)
-            + "_tot" + std::to_string(tot_cut)
-            + "_e" + std::to_string(adc_integral_cut_ind)
-            + "_clusters_" + std::to_string(output_file_number) + ".root";
+        // Create new filename with simple pattern: clusters_N.root
+        current_clusters_filename = clusters_folder_path + "/clusters_" + std::to_string(output_file_number) + ".root";
         
         // Delete if exists
         if (std::filesystem::exists(current_clusters_filename)) {
@@ -238,7 +231,7 @@ int main(int argc, char* argv[]) {
             
             for (size_t iView=0;iView<APA::views.size();++iView)
                 clusters_per_view.emplace_back(make_cluster(tps_per_view.at(iView), 
-                                                ticks_limit, 
+                                                tick_limit, 
                                                 channel_limit, 
                                                 min_tps_to_cluster, 
                                                 adc_cut.at(iView)));

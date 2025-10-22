@@ -4,13 +4,14 @@ export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source $SCRIPTS_DIR/init.sh
 
 print_help(){
-  echo "Usage: $0 -j <json> [--no-compile] [--clean-compile] [--output-folder <dir>] [-v|--verbose]"; 
+  echo "Usage: $0 -j <json> [-i <input>] [-o <output>] [--no-compile] [--clean-compile] [-v|--verbose]"; 
   echo "Options:";
   echo "  -j|--json <file>          JSON settings file with pattern (e.g. json/make_clusters/example.json)"
+  echo "  -i|--input-file <file>    Input file or list (overrides JSON)"
+  echo "  -o|--output-folder <dir>  Output folder (overrides the one in JSON file)"
   echo "  --no-compile              Do not recompile the code"
   echo "  --clean-compile           Clean and recompile the code"
-  echo "  --output-folder <dir>     Output folder (overrides the one in JSON file)"
-  echo "  -o|--override [true|false] Force reprocessing even if output already exists (useful for debugging)"
+  echo "  -f|--override [true|false] Force reprocessing even if output already exists (useful for debugging)"
   echo "  -v|--verbose              Enable verbose output"
   echo "  -d|--debug                Enable debug mode"
   echo "  -h|--help                 Print this help message."
@@ -21,15 +22,18 @@ settingsFile="json/cluster/example.json"
 cleanCompile=false
 noCompile=false
 verbose=false
+inputFile=""
+output_folder=""
 # output_folder="data" # no standard
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -j|--json) settingsFile="$2"; shift 2;;
-    --output-folder) output_folder="$2"; shift 2;;
+    -i|--input-file) inputFile="$2"; shift 2;;
+    -o|--output-folder) output_folder="$2"; shift 2;;
     --no-compile) noCompile=true; shift;;
     --clean-compile) cleanCompile=true; shift;;        
-    -o|--override)
+    -f|--override)
       if [[ $2 == "true" || $2 == "false" ]]; then
       override=$2
       shift 2
@@ -38,8 +42,24 @@ while [[ $# -gt 0 ]]; do
       shift
       fi
       ;;
-    -v|--verbose) verbose=true; shift;;
-    -d|--debug) debug=true; shift;;
+    -v|--verbose) 
+      if [[ $2 == "true" || $2 == "false" ]]; then
+        verbose=$2
+        shift 2
+      else
+        verbose=true
+        shift
+      fi
+      ;;
+    -d|--debug) 
+      if [[ $2 == "true" || $2 == "false" ]]; then
+        debug=$2
+        shift 2
+      else
+        debug=true
+        shift
+      fi
+      ;;
     -h|--help) print_help;;
     *) shift;;
   esac

@@ -36,130 +36,141 @@ void bindBranch(TTree *tree, const char* name, void* address) {
     }
 }
 
-std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix) {
-    std::vector<std::string> filenames;
-    filenames.reserve(64);
+// std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix) {
+//     std::vector<std::string> filenames;
+//     filenames.reserve(64);
     
-    // Helper functions
-    auto has_suffix = [&file_suffix](const std::string& path) {
-        std::string basename = path.substr(path.find_last_of("/\\") + 1);
-        if (file_suffix == "_clusters") {
-            // Accept any file containing '_clusters' and ending with '.root'
-            return basename.find("_clusters") != std::string::npos &&
-                   basename.size() >= 5 &&
-                   basename.substr(basename.size() - 5) == ".root";
-        } else {
-            return basename.length() >= file_suffix.length() && 
-                   basename.substr(basename.length() - file_suffix.length()) == file_suffix;
-        }
-    };
+//     // Helper functions
+//     auto has_suffix = [&file_suffix](const std::string& path) {
+//         std::string basename = path.substr(path.find_last_of("/\\") + 1);
+//         if (file_suffix == "_clusters") {
+//             // Accept any file containing '_clusters' and ending with '.root'
+//             return basename.find("_clusters") != std::string::npos &&
+//                    basename.size() >= 5 &&
+//                    basename.substr(basename.size() - 5) == ".root";
+//         } else {
+//             return basename.length() >= file_suffix.length() && 
+//                    basename.substr(basename.length() - file_suffix.length()) == file_suffix;
+//         }
+//     };
     
-    auto file_exists = [](const std::string& path) { 
-        std::ifstream f(path); 
-        return f.good(); 
-    };
+//     auto file_exists = [](const std::string& path) { 
+//         std::ifstream f(path); 
+//         return f.good(); 
+//     };
 
-    // Priority 1: JSON inputFile (single root)
-    try {
-        if (j.contains("inputFile")) {
-            auto single = j.at("inputFile").get<std::string>();
-            if (!single.empty()) {
-                LogInfo << "JSON inputFile: " << single << std::endl;
-                if (!file_exists(single)) {
-                    LogError << "inputFile does not exist: " << single << std::endl;
-                    return filenames; // Return empty vector
-                }
-                if (!has_suffix(single)) {
-                    LogError << "inputFile does not have suffix " << file_suffix << ": " << single << std::endl;
-                    return filenames; // Return empty vector
-                }
-                filenames.push_back(single);
-                std::sort(filenames.begin(), filenames.end());
-                return filenames;
-            }
-        }
-    } catch (...) { /* ignore */ }
+//     // Priority 1: JSON inputFile (single root)
+//     try {
+//         if (j.contains("inputFile")) {
+//             auto single = j.at("inputFile").get<std::string>();
+//             if (!single.empty()) {
+//                 LogInfo << "JSON inputFile: " << single << std::endl;
+//                 if (!file_exists(single)) {
+//                     LogError << "inputFile does not exist: " << single << std::endl;
+//                     return filenames; // Return empty vector
+//                 }
+//                 if (!has_suffix(single)) {
+//                     LogError << "inputFile does not have suffix " << file_suffix << ": " << single << std::endl;
+//                     return filenames; // Return empty vector
+//                 }
+//                 filenames.push_back(single);
+//                 std::sort(filenames.begin(), filenames.end());
+//                 return filenames;
+//             }
+//         }
+//     } catch (...) { /* ignore */ }
 
-    // Priority 2: JSON inputFolder (gather files with suffix)
-    try {
-        if (j.contains("inputFolder")) {
-            auto folder = j.at("inputFolder").get<std::string>();
-            if (!folder.empty()) {
-                LogInfo << "JSON inputFolder: " << folder << std::endl;
-                std::error_code ec;
-                for (auto const& entry : std::filesystem::directory_iterator(folder, ec)) {
-                    if (ec) break;
-                    if (!entry.is_regular_file()) continue;
-                    std::string p = entry.path().string();
-                    if (!has_suffix(p)) continue;
-                    if (!file_exists(p)) continue;
-                    filenames.push_back(p);
-                }
-                std::sort(filenames.begin(), filenames.end());
-                if (!filenames.empty()) return filenames;
-            }
-        }
-    } catch (...) { /* ignore */ }
+//     // Priority 2: JSON inputFolder (gather files with suffix)
+//     try {
+//         if (j.contains("inputFolder")) {
+//             auto folder = j.at("inputFolder").get<std::string>();
+//             if (!folder.empty()) {
+//                 LogInfo << "JSON inputFolder: " << folder << std::endl;
+//                 std::error_code ec;
+//                 for (auto const& entry : std::filesystem::directory_iterator(folder, ec)) {
+//                     if (ec) break;
+//                     if (!entry.is_regular_file()) continue;
+//                     std::string p = entry.path().string();
+//                     if (!has_suffix(p)) continue;
+//                     if (!file_exists(p)) continue;
+//                     filenames.push_back(p);
+//                 }
+//                 std::sort(filenames.begin(), filenames.end());
+//                 if (!filenames.empty()) return filenames;
+//             }
+//         }
+//     } catch (...) { /* ignore */ }
 
-    // Priority 3: JSON inputList (array of files)
-    try {
-        if (j.contains("inputList") && j.at("inputList").is_array()) {
-            LogInfo << "JSON inputList provided." << std::endl;
-            for (const auto& el : j.at("inputList")) {
-                if (!el.is_string()) continue;
-                std::string p = el.get<std::string>();
-                if (p.empty()) continue;
-                if (!file_exists(p)) { 
-                    LogWarning << "Skipping (missing): " << p << std::endl; 
-                    continue; 
-                }
-                if (!has_suffix(p)) { 
-                    LogWarning << "Skipping (not " << file_suffix << "): " << p << std::endl; 
-                    continue; 
-                }
-                filenames.push_back(p);
-            }
-            if (!filenames.empty()) {
-                std::sort(filenames.begin(), filenames.end());
-                return filenames;
-            }
-        }
-    } catch (...) { /* ignore */ }
+//     // Priority 3: JSON inputList (array of files)
+//     try {
+//         if (j.contains("inputList") && j.at("inputList").is_array()) {
+//             LogInfo << "JSON inputList provided." << std::endl;
+//             for (const auto& el : j.at("inputList")) {
+//                 if (!el.is_string()) continue;
+//                 std::string p = el.get<std::string>();
+//                 if (p.empty()) continue;
+//                 if (!file_exists(p)) { 
+//                     LogWarning << "Skipping (missing): " << p << std::endl; 
+//                     continue; 
+//                 }
+//                 if (!has_suffix(p)) { 
+//                     LogWarning << "Skipping (not " << file_suffix << "): " << p << std::endl; 
+//                     continue; 
+//                 }
+//                 filenames.push_back(p);
+//             }
+//             if (!filenames.empty()) {
+//                 std::sort(filenames.begin(), filenames.end());
+//                 return filenames;
+//             }
+//         }
+//     } catch (...) { /* ignore */ }
 
-    // Priority 4: JSON inputListFile (file with list)
-    try {
-        if (j.contains("inputListFile")) {
-            auto list_file = j.at("inputListFile").get<std::string>();
-            if (!list_file.empty()) {
-                LogInfo << "JSON inputListFile: " << list_file << std::endl;
-                std::ifstream infile(list_file);
-                if (!infile.good()) {
-                    LogError << "Cannot open inputListFile: " << list_file << std::endl;
-                    return filenames; // Return empty vector
-                }
-                std::string line;
-                while (std::getline(infile, line)) {
-                    if (line.size() >= 3 && line.substr(0,3) == "###") break;
-                    if (line.empty() || line[0] == '#') continue;
-                    if (!file_exists(line)) { 
-                        LogWarning << "Skipping (missing): " << line << std::endl; 
-                        continue; 
-                    }
-                    if (!has_suffix(line)) { 
-                        LogWarning << "Skipping (not " << file_suffix << "): " << line << std::endl; 
-                        continue; 
-                    }
-                    filenames.push_back(line);
-                }
-                if (!filenames.empty()) {
-                    std::sort(filenames.begin(), filenames.end());
-                }
-            }
-        }
-    } catch (...) { /* ignore */ }
+//     // Priority 4: JSON inputListFile (file with list)
+//     try {
+//         if (j.contains("inputListFile")) {
+//             auto list_file = j.at("inputListFile").get<std::string>();
+//             if (!list_file.empty()) {
+//                 LogInfo << "JSON inputListFile: " << list_file << std::endl;
+//                 std::ifstream infile(list_file);
+//                 if (!infile.good()) {
+//                     LogError << "Cannot open inputListFile: " << list_file << std::endl;
+//                     return filenames; // Return empty vector
+//                 }
+//                 std::string line;
+//                 while (std::getline(infile, line)) {
+//                     if (line.size() >= 3 && line.substr(0,3) == "###") break;
+//                     if (line.empty() || line[0] == '#') continue;
+//                     if (!file_exists(line)) { 
+//                         LogWarning << "Skipping (missing): " << line << std::endl; 
+//                         continue; 
+//                     }
+//                     if (!has_suffix(line)) { 
+//                         LogWarning << "Skipping (not " << file_suffix << "): " << line << std::endl; 
+//                         continue; 
+//                     }
+//                     filenames.push_back(line);
+//                 }
+//                 if (!filenames.empty()) {
+//                     std::sort(filenames.begin(), filenames.end());
+//                 }
+//             }
+//         }
+//     } catch (...) { /* ignore */ }
 
-    return filenames;
-}
+//     // After gathering and sorting files, apply skip_files if specified
+//     if (!filenames.empty() && j.contains("skip_files")) {
+//         try {
+//             int skip_count = j.at("skip_files").get<int>();
+//             if (skip_count > 0 && skip_count < static_cast<int>(filenames.size())) {
+//                 LogInfo << "Skipping first " << skip_count << " files as per skip_files configuration" << std::endl;
+//                 filenames.erase(filenames.begin(), filenames.begin() + skip_count);
+//             }
+//         } catch (...) { /* ignore */ }
+//     }
+
+//     return filenames;
+// }
 
 template <typename T> bool SetBranchWithFallback(TTree* tree,
                            std::initializer_list<const char*> candidateNames,
@@ -318,5 +329,202 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
         }
     } catch (...) { /* ignore */ }
 
+    // After gathering files, apply skip_files if specified
+    if (!filenames.empty() && j.contains("skip_files")) {
+        try {
+            int skip_count = j.at("skip_files").get<int>();
+            if (skip_count > 0 && skip_count < static_cast<int>(filenames.size())) {
+                LogInfo << "Skipping first " << skip_count << " files as per skip_files configuration" << std::endl;
+                filenames.erase(filenames.begin(), filenames.begin() + skip_count);
+            }
+        } catch (...) { /* ignore */ }
+    }
+
     return filenames;
+}
+
+// another version to look for a specific pattern in json
+std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& pattern) {
+    std::vector<std::string> possible_patterns = {"tpstream", "tps", "tps_bg", "clusters", "sig", "bg"};
+    LogInfo << "[find_input_files] Called with pattern: " << pattern << std::endl;
+
+    if (std::find(possible_patterns.begin(), possible_patterns.end(), pattern) == possible_patterns.end()) {
+        LogError << "[find_input_files] Pattern '" << pattern << "' not recognized. Valid patterns are: ";
+        for (const auto& p : possible_patterns) {
+            LogError << p << " ";
+        }
+        LogError << std::endl;
+        return {};
+    }
+
+    // Accept files named *pattern.root or *pattern_*.root
+    // For sig and bg patterns, we look for *_tps.root files (since they contain TPs)
+    auto matches_pattern = [&pattern](const std::string& filename) -> bool {
+        std::string base = std::filesystem::path(filename).filename().string();
+        if (debugMode) LogDebug << "[find_input_files] Checking if '" << base << "' matches pattern '" << pattern << "'" << std::endl;
+        
+        // Special handling for sig and bg: they contain tps files
+        if (pattern == "sig" || pattern == "bg") {
+            // Match files ending with _tps.root
+            if (base.size() > 9 && base.substr(base.size() - 9) == "_tps.root") {
+                if (debugMode) LogDebug << "[find_input_files] '" << base << "' matches '*_tps.root' for pattern '" << pattern << "'" << std::endl;
+                return true;
+            }
+            if (debugMode) LogDebug << "[find_input_files] '" << base << "' does not match '*_tps.root'" << std::endl;
+            return false;
+        }
+        
+        // For other patterns (tpstream, tps, tps_bg, clusters), match the pattern directly
+        if (base.size() >= pattern.size() + 5 && base.substr(base.size() - 5) == ".root") {
+            // Matches *pattern.root
+            if (base.size() >= pattern.size() + 5 &&
+                base.substr(base.size() - pattern.size() - 5, pattern.size()) == pattern) {
+                if (debugMode) LogDebug << "[find_input_files] '" << base << "' matches '*" << pattern << ".root'" << std::endl;
+                return true;
+            }
+            // Matches *pattern_*.root
+            std::string pat_prefix = pattern + "_";
+            if (base.size() > pat_prefix.size() + 5 &&
+                base.substr(base.size() - 5) == ".root" &&
+                base.find(pat_prefix) != std::string::npos) {
+                if (debugMode) LogDebug << "[find_input_files] '" << base << "' matches '*" << pattern << "_*.root'" << std::endl;
+                return true;
+            }
+        }
+        if (debugMode) LogDebug << "[find_input_files] '" << base << "' does not match pattern" << std::endl;
+        return false;
+    };
+        
+    auto file_exists = [](const std::string& filename) -> bool {
+        std::ifstream file(filename);
+        bool exists = file.good();
+        if (debugMode) LogDebug << "[find_input_files] Checking existence of '" << filename << "': " << (exists ? "exists" : "missing") << std::endl;
+        return exists;
+    };
+
+    std::vector<std::string> input_files;
+
+    // Special handling for clusters pattern
+    if (pattern == "clusters") {
+        // Get clustering parameters from JSON (with defaults if missing)
+        std::string cluster_prefix = j.value("clusters_folder_prefix", "");
+        int tick_limit = j.value("tick_limit", 0);
+        int channel_limit = j.value("channel_limit", 0);
+        int min_tps_to_cluster = j.value("min_tps_to_cluster", 0);
+        int tot_cut = j.value("tot_cut", 0);
+        int energy_cut = j.value("energy_cut", 0);
+        std::string outfolder = j.value("clusters_folder", ".");
+
+        // Build subfolder name with clustering conditions
+        std::string clusters_subfolder = "clusters_" + cluster_prefix
+            + "_tick" + std::to_string(tick_limit)
+            + "_ch" + std::to_string(channel_limit)
+            + "_min" + std::to_string(min_tps_to_cluster)
+            + "_tot" + std::to_string(tot_cut)
+            + "_e" + std::to_string(energy_cut);
+
+        std::string clusters_folder_path = outfolder + "/" + clusters_subfolder;
+
+        LogInfo << "[find_input_files] clusters_folder_path: " << clusters_folder_path << std::endl;
+
+        // Scan the clusters_folder_path for matching files
+        std::error_code ec;
+        for (const auto& entry : std::filesystem::directory_iterator(clusters_folder_path, ec)) {
+            if (ec) {
+                LogError << "[find_input_files] Error iterating directory '" << clusters_folder_path << "': " << ec.message() << std::endl;
+                break;
+            }
+            if (!entry.is_regular_file()) continue;
+            std::string filepath = entry.path().string();
+            if (file_exists(filepath) && matches_pattern(filepath)) {
+                input_files.push_back(filepath);
+            }
+        }
+        std::sort(input_files.begin(), input_files.end());
+        return input_files;
+    }
+
+    // Standard pattern handling
+    std::string folder_key      = pattern + "_folder";
+    std::string input_file_key  = pattern + "_input_file";
+    std::string input_list_key  = pattern + "_input_list";
+
+    if (debugMode) LogDebug << "[find_input_files] Keys: folder_key='" << folder_key << "', input_file_key='" << input_file_key << "', input_list_key='" << input_list_key << "'" << std::endl;
+
+    // Priority 1: pattern_input_file (single file)
+    if (j.contains(input_file_key)) {
+        std::string file = j[input_file_key].get<std::string>();
+        LogInfo << "[find_input_files] Found key '" << input_file_key << "' with value: " << file << std::endl;
+        if (!file.empty() && file_exists(file) && matches_pattern(file)) {
+            LogInfo << "[find_input_files] Adding file from '" << input_file_key << "': " << file << std::endl;
+            input_files.push_back(file);
+        } else {
+            LogWarning << "[find_input_files] File '" << file << "' is empty, missing, or does not match pattern" << std::endl;
+        }
+    } else {
+        if (debugMode) LogDebug << "[find_input_files] Key '" << input_file_key << "' not found in JSON" << std::endl;
+    }
+
+    // Priority 2: pattern_folder (scan folder for files with pattern)
+    if (input_files.empty() && j.contains(folder_key)) {
+        std::string folder = j[folder_key].get<std::string>();
+        if (verboseMode) LogInfo << "[find_input_files] Found key '" << folder_key << "' with value: " << folder << std::endl;
+        if (!folder.empty()) {
+            std::error_code ec;
+            if (verboseMode) LogInfo << "[find_input_files] Scanning folder '" << folder << "' for matching files..." << std::endl;
+            for (const auto& entry : std::filesystem::directory_iterator(folder, ec)) {
+                if (ec) {
+                    LogError << "[find_input_files] Error iterating directory '" << folder << "': " << ec.message() << std::endl;
+                    break;
+                }
+                if (!entry.is_regular_file()) {
+                    if (debugMode) LogDebug << "[find_input_files] Skipping non-regular file: " << entry.path().string() << std::endl;
+                    continue;
+                }
+                std::string filepath = entry.path().string();
+                if (debugMode) LogDebug << "[find_input_files] Found file: " << filepath << std::endl;
+                if (file_exists(filepath) && matches_pattern(filepath)) {
+                    if (verboseMode) LogInfo << "[find_input_files] Adding file from folder: " << filepath << std::endl;
+                    input_files.push_back(filepath);
+                } else {
+                    if (debugMode) LogDebug << "[find_input_files] File '" << filepath << "' does not exist or does not match pattern" << std::endl;
+                }
+            }
+        } else {
+            LogWarning << "[find_input_files] Folder value for key '" << folder_key << "' is empty" << std::endl;
+        }
+    } else if (input_files.empty()) {
+        if (debugMode) LogDebug << "[find_input_files] Key '" << folder_key << "' not found in JSON or input_files already found" << std::endl;
+    }
+
+    // Priority 3: pattern_input_list (array of files)
+    if (input_files.empty() && j.contains(input_list_key) && j[input_list_key].is_array()) {
+        if (verboseMode) LogInfo << "[find_input_files] Found key '" << input_list_key << "' with array value" << std::endl;
+        for (const auto& el : j[input_list_key]) {
+            if (!el.is_string()) {
+                if (debugMode) LogDebug << "[find_input_files] Skipping non-string entry in '" << input_list_key << "'" << std::endl;
+                continue;
+            }
+            std::string file = el.get<std::string>();
+            if (debugMode) LogDebug << "[find_input_files] Checking file from list: " << file << std::endl;
+            if (!file.empty() && file_exists(file) && matches_pattern(file)) {
+                if (verboseMode) LogInfo << "[find_input_files] Adding file from list: " << file << std::endl;
+                input_files.push_back(file);
+            } else {
+                LogWarning << "[find_input_files] File '" << file << "' is empty, missing, or does not match pattern" << std::endl;
+            }
+        }
+    } else if (input_files.empty()) {
+        if (debugMode) LogDebug << "[find_input_files] Key '" << input_list_key << "' not found in JSON or input_files already found" << std::endl;
+    }
+
+    if (verboseMode) LogInfo << "[find_input_files] Sorting " << input_files.size() << " input files" << std::endl;
+    std::sort(input_files.begin(), input_files.end());
+
+    if (verboseMode) LogInfo << "[find_input_files] Final input files:" << std::endl;
+    for (const auto& f : input_files) {
+        if (verboseMode) LogInfo << "  " << f << std::endl;
+    }
+
+    return input_files;
 }

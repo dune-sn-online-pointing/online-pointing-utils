@@ -11,10 +11,11 @@
   ],
 
   "max_files": 20,
+  "skip_files": 0,
   
   "inputListFile": "/path/list_of_files.txt",
 
-  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+  "tps_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
   
   "backtracker_error_margin": 10
 

@@ -7,9 +7,9 @@
 #include "root.h"
 
 // File utility functions
-std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix = "_tpstream.root");
+// std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix = "_tpstream.root");
 std::vector<std::string> find_input_files(const nlohmann::json& j, const std::vector<std::string>& file_suffixes);
-
+std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& pattern);
 
 std::string toLower(std::string s);
 

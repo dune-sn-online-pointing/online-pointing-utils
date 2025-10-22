@@ -77,9 +77,8 @@ int main(int argc, char* argv[]) {
     }
 
     // If no CLI, use utility function for JSON-based file finding
-    if (filenames.empty()) {
-        filenames = find_input_files(j, "_tpstream.root");
-    }
+    if (filenames.empty()) filenames = find_input_files(j, "tpstream");
+
 
     LogInfo << "Number of valid files: " << filenames.size() << std::endl;
     LogThrowIf(filenames.empty(), "No valid input files.");
@@ -93,12 +92,13 @@ int main(int argc, char* argv[]) {
         max_files = filenames.size();
     }
 
-    // Output folder: CLI outFolder > JSON outputFolder > "data"
+    // Output folder: CLI outFolder > JSON sig_folder > JSON outputFolder > "data"
     std::string outfolder;
     if (clp.isOptionTriggered("outFolder")) outfolder = clp.getOptionVal<std::string>("outFolder");
+    else if (j.contains("sig_folder")) { try { outfolder = j.at("sig_folder").get<std::string>(); } catch (...) { /* ignore */ }}
     else if (j.contains("outputFolder")) { try { outfolder = j.at("outputFolder").get<std::string>(); } catch (...) { /* ignore */ }}
     if (outfolder.empty()) outfolder = std::string("data");
-    LogInfo << "Output folder: " << outfolder << std::endl;
+    LogInfo << "Output folder (pure signal TPs): " << outfolder << std::endl;
 
     std::vector<std::string> output_files;
 

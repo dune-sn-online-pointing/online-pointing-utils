@@ -7,46 +7,69 @@ export SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/init.sh"
 
 print_help() {
-    echo "Usage: $0 -j <json_config> [-v|--verbose] [-o|--override] [--no-compile] [--clean-compile]"
+    echo "Usage: $0 -j <json_config> [-i <input>] [-o <output>] [-v|--verbose] [-f|--override] [--no-compile] [--clean-compile]"
     echo ""
     echo "Options:"
     echo "  -j, --json            <JSON configuration file> (required). Local path json/<>/<>.json is accepted."
+    echo "  -i, --input-file      Input file or list (overrides JSON)"
+    echo "  -o, --output-folder   Output folder (overrides JSON)"
     echo "  -v, --verbose         Enable verbose output"
-    echo "  -o, --override        Override existing output files"
+    echo "  -f, --override        Override existing output files"
     echo "      --no-compile      Skip compilation step"
     echo "      --clean-compile   Force a clean compilation"
     echo "  -h, --help            Show this help message"
     echo ""
     echo "Description:"
     echo "  Merges signal TPs with random background events to create realistic datasets."
-    echo "  Outputs *_tps_bkg.root files in the same directory as input files."
+    echo "  Outputs *_tps_bkg.root files in the specified output folder."
 }
 
 # Parse all command line arguments
 settingsFile=""
+inputFile=""
+output_folder=""
 verbose=false
 override=false
 noCompile=""
 cleanCompile=""
 
 while [[ $# -gt 0 ]]; do
-    case $1 in
-        -j|--json) settingsFile="$2"; shift 2 ;;
-        -v|--verbose) verbose=true; shift ;;
-        -o|--override) 
-            if [[ $2 == "true" || $2 == "false" ]]; then
-                override=$2
-                shift 2
-            else
-                override=true
-                shift
-            fi
-            ;;
-        --no-compile) noCompile="--no-compile"; shift ;;
-        --clean-compile) cleanCompile="--clean-compile"; shift ;;
-        -h|--help) print_help; exit 0 ;;
-        *) echo "Unknown option: $1"; exit 1 ;;
-    esac
+  case "$1" in
+    -j|--json) settingsFile="$2"; shift 2;;
+    -i|--input-file) inputFile="$2"; shift 2;;
+    -f|--output-folder) output_folder="$2"; shift 2;;
+    --no-compile) noCompile=true; shift;;
+    --clean-compile) cleanCompile=true; shift;;        
+    -f|--override)
+      if [[ $2 == "true" || $2 == "false" ]]; then
+      override=$2
+      shift 2
+      else
+      override=true
+      shift
+      fi
+      ;;
+    -v|--verbose) 
+      if [[ $2 == "true" || $2 == "false" ]]; then
+        verbose=$2
+        shift 2
+      else
+        verbose=true
+        shift
+      fi
+      ;;
+    -d|--debug) 
+      if [[ $2 == "true" || $2 == "false" ]]; then
+        debug=$2
+        shift 2
+      else
+        debug=true
+        shift
+      fi
+      ;;
+    -h|--help) print_help;;
+    *) shift;;
+  esac
 done
 
 ################################################
@@ -65,7 +88,7 @@ echo -e "Settings file found, full path is: $settingsFile \n"
 ################################################
 # Compile the code if requested
 # pass through any compile flags provided on the command line
-compile_command="$SCRIPTS_DIR/compile.sh -p $HOME_DIR $noCompile $cleanCompile"
+compile_command="$SCRIPTS_DIR/compile.sh -p $HOME_DIR --no-compile $noCompile --clean-compile $cleanCompile"
 echo "Compiling the code with the following command:"
 echo $compile_command
 . $compile_command || exit
@@ -77,10 +100,14 @@ command_to_run="$BUILD_DIR/src/app/add_backgrounds -j $settingsFile"
 if [ "$verbose" = true ]; then
     command_to_run="$command_to_run -v"
 fi
-
-if [ "$override" = true ]; then
-    command_to_run="$command_to_run -o"
+if [ "$debug" = true ]; then
+    command_to_run="$command_to_run -d"
 fi
+if [ "$override" = true ]; then
+    command_to_run="$command_to_run -f"
+fi
+
+
 
 # Run the command
 echo "Running: $command_to_run"
