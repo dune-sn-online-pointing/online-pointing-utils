@@ -312,6 +312,8 @@ int main(int argc, char* argv[]){
   
   // Determine combined PDF output path
   std::string reports_folder = j.value("reports_folder", "data");
+  // create reports folder if it does not exist
+  std::filesystem::create_directories(reports_folder);
   std::string input_dir_name = "clusters";
   if (!inputs.empty()) {
     std::string first_file = inputs[0];
@@ -879,7 +881,7 @@ int main(int argc, char* argv[]){
     
     // Add timestamp
     TDatime now;
-    auto date_txt = new TText(0.5, 0.15, Form("Generated on: %s", now.AsString()));
+    auto date_txt = new TText(0.2, 0.15, Form("Generated on: %s", now.AsString()));
     date_txt->SetTextAlign(22); date_txt->SetTextSize(0.02); date_txt->SetNDC(); date_txt->Draw();
     
     c->SaveAs((pdf+"(").c_str());

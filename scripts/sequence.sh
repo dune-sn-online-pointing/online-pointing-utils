@@ -149,7 +149,7 @@ if [ ! -z "$settingsFile" ]; then
 else
         backtrack_json="$JSON_DIR/backtrack/${sample}.json"
 fi
-backtrack_command="./scripts/backtrack.sh -j $backtrack_json $commong_options"
+backtrack_command="./scripts/backtrack.sh -j $backtrack_json $common_options"
 if [ "$run_backtrack" = true ]; then
         echo "Running backtrack step with command:"
         echo $backtrack_command

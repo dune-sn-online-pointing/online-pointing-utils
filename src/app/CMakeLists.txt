@@ -45,6 +45,11 @@ add_executable( add_backgrounds ${CMAKE_CURRENT_SOURCE_DIR}/add_backgrounds.cpp 
 target_link_libraries( add_backgrounds backtrackingLibs clustersLibs globalLib )
 install( TARGETS add_backgrounds DESTINATION bin )
 
+cmessage( STATUS "Creating extract_energy_cut_stats app..." )
+add_executable( extract_energy_cut_stats ${CMAKE_CURRENT_SOURCE_DIR}/extract_energy_cut_stats.cpp )
+target_link_libraries( extract_energy_cut_stats clustersLibs )
+install( TARGETS extract_energy_cut_stats DESTINATION bin )
+
 # Temporarily 
 # cmessage( STATUS "Creating create_volume_clusters app..." )
 # add_executable( create_volume_clusters ${CMAKE_CURRENT_SOURCE_DIR}/create_volume_clusters.cpp )

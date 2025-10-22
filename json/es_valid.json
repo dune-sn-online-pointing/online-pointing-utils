@@ -14,7 +14,7 @@
     "clusters_folder_prefix": "es_valid_bg",
     "reports_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/reports/",
 
-    "max_files": 1000,
+    "max_files": 100,
     "skip_files": 0,
 
     "backtracker_error_margin": 10,

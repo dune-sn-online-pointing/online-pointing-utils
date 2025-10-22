@@ -65,28 +65,24 @@ int main(int argc, char* argv[]) {
     int tick_limit = j.value("tick_limit", 3);
     int channel_limit = j.value("channel_limit", 1);
     int min_tps_to_cluster = j.value("min_tps_to_cluster", 1);
-    int energy_cut = j.value("energy_cut", 0);
-    int adc_integral_cut_col = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");
-    int adc_integral_cut_ind = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
+    float energy_cut = 0.0f;
+    if (j.contains("energy_cut")) {
+        try {
+            energy_cut = j.at("energy_cut").get<float>();
+        } catch (const std::exception&) {
+            // Fallback: try reading as double and cast to float
+            energy_cut = static_cast<float>(j.at("energy_cut").get<double>());
+        }
+    }
+    float adc_integral_cut_col = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");
+    float adc_integral_cut_ind = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
     int tot_cut = j.value("tot_cut", 0);
     int max_files = j.value("max_files", -1); // -1 means no limit
 
-    // Get cluster folder prefix
-    std::string cluster_prefix = j.value("clusters_folder_prefix", std::string("clusters"));
-
-    // Build subfolder name with clustering conditions
-    std::string clusters_subfolder = "clusters_" + cluster_prefix
-        + "_tick" + std::to_string(tick_limit)
-        + "_ch" + std::to_string(channel_limit)
-        + "_min" + std::to_string(min_tps_to_cluster)
-        + "_tot" + std::to_string(tot_cut)
-        + "_e" + std::to_string(energy_cut);
-    
-    std::string clusters_folder_path = outfolder + "/" + clusters_subfolder;
+    std::string clusters_folder_path = getClustersFolder(j);
 
     LogInfo << "Settings from json file:" << std::endl;
     LogInfo << " - Base output folder: " << outfolder << std::endl;
-    LogInfo << " - Clusters subfolder: " << clusters_subfolder << std::endl;
     LogInfo << " - Full clusters path: " << clusters_folder_path << std::endl;
     LogInfo << " - Tick limit: " << tick_limit << std::endl;
     LogInfo << " - Channel limit: " << channel_limit << std::endl;

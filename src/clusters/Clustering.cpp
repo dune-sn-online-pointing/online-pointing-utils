@@ -258,6 +258,7 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
                 if (debugMode) LogInfo << "Cluster created with " << clusters.back().get_tps().size() << " TPs" << std::endl;
             }
             else {
+                if (verboseMode) LogInfo << "Candidate Cluster rejected due to adc_integral cut: " << adc_integral << " <= " << adc_integral_cut << std::endl;
             }
         }
     }

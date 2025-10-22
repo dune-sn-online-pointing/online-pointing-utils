@@ -8,10 +8,10 @@
     "tpstream_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/",
     "sig_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/",
     "bg_folder": "/home/virgolaema/dune/online-pointing-utils/data/bkgs/",
-    "tps_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/bkgs/",
-    "tps_bg_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/bkgs/",
+    "tps_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/",
+    "NOTUSEDtps_bg_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/bkgs/",
     "clusters_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/",
-    "clusters_folder_prefix": "cc_valid_bg",
+    "clusters_folder_prefix": "cc_valid",
     "reports_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports/",
 
     "max_files": 100,

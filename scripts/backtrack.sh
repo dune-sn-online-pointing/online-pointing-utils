@@ -98,5 +98,8 @@ fi
 if [ "$verbose" = true ]; then
   backtrack_cmd="$backtrack_cmd -v"
 fi
+if [ "$debug" = true ]; then
+  backtrack_cmd="$backtrack_cmd -d"
+fi
 echo "Running: $backtrack_cmd"
 exec $backtrack_cmd

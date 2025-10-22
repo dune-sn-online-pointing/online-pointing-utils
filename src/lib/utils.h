@@ -22,6 +22,7 @@ int toTDCticks(int tpcTicks);
 
 void bindBranch(TTree* tree, const char* name, void* address);
 
+std::string getClustersFolder(const nlohmann::json& j);
 
 template <typename T> bool SetBranchWithFallback(TTree* , std::initializer_list<const char*>, T*, const std::string& );
 

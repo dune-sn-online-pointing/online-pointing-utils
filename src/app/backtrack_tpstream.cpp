@@ -30,6 +30,7 @@ int main(int argc, char* argv[]) {
     bool overrideMode = clp.isOptionTriggered("overrideMode");
 
     std::string json = clp.getOptionVal<std::string>("json");
+    LogInfo << "Loading JSON config: " << json << std::endl;
     std::ifstream i(json);
     LogThrowIf(!i.good(), "Failed to open JSON config: " << json);
     nlohmann::json j; i >> j;
@@ -86,6 +87,7 @@ int main(int argc, char* argv[]) {
     // Check if we should limit the number of files to process
     int max_files = j.value("max_files", -1);
     if (max_files > 0) {
+        if (max_files > filenames.size()) max_files = filenames.size();
         LogInfo << "Max files: " << max_files << std::endl;
     } else {
         LogInfo << "Max files: unlimited" << std::endl;

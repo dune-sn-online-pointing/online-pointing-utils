@@ -36,6 +36,52 @@ void bindBranch(TTree *tree, const char* name, void* address) {
     }
 }
 
+
+std::string getClustersFolder(const nlohmann::json& j) {
+    // Get cluster folder prefix
+    std::string cluster_prefix = j.value("clusters_folder_prefix", std::string("clusters"));
+
+    // Extract clustering parameters from JSON, with defaults if missing
+    int tick_limit = j.value("tick_limit", 0);
+    int channel_limit = j.value("channel_limit", 0);
+    int min_tps_to_cluster = j.value("min_tps_to_cluster", 0);
+    int tot_cut = j.value("tot_cut", 0);
+    float energy_cut = 0.0f;
+    if (j.contains("energy_cut")) {
+        try {
+            energy_cut = j.at("energy_cut").get<float>();
+        } catch (const std::exception&) {
+            // Fallback: try reading as double and cast to float
+            energy_cut = static_cast<float>(j.at("energy_cut").get<double>());
+        }
+    }
+    std::string outfolder = j.value("clusters_folder", ".");
+
+    // Build subfolder name with clustering conditions
+    auto sanitize = [](const std::string& s) {
+        std::string out = s;
+        // keep at most one digit after the decimal point
+        auto pos = out.find('.');
+        if (pos != std::string::npos) {
+            size_t keep = std::min(out.size(), pos + 2); // dot + 1 digit
+            out = out.substr(0, keep);
+        }
+        // make filesystem-friendly (replace '.' with 'p')
+        std::replace(out.begin(), out.end(), '.', 'p');
+        return out;
+    };
+
+    std::string clusters_subfolder = "clusters_" + cluster_prefix
+        + "_tick" + sanitize(std::to_string(tick_limit))
+        + "_ch" + sanitize(std::to_string(channel_limit))
+        + "_min" + sanitize(std::to_string(min_tps_to_cluster))
+        + "_tot" + sanitize(std::to_string(tot_cut))
+        + "_e" + sanitize(std::to_string(energy_cut));
+    
+    std::string clusters_folder_path = outfolder + "/" + clusters_subfolder;
+    return clusters_folder_path;
+}
+
 // std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix) {
 //     std::vector<std::string> filenames;
 //     filenames.reserve(64);
@@ -406,24 +452,8 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
 
     // Special handling for clusters pattern
     if (pattern == "clusters") {
-        // Get clustering parameters from JSON (with defaults if missing)
-        std::string cluster_prefix = j.value("clusters_folder_prefix", "");
-        int tick_limit = j.value("tick_limit", 0);
-        int channel_limit = j.value("channel_limit", 0);
-        int min_tps_to_cluster = j.value("min_tps_to_cluster", 0);
-        int tot_cut = j.value("tot_cut", 0);
-        int energy_cut = j.value("energy_cut", 0);
-        std::string outfolder = j.value("clusters_folder", ".");
-
-        // Build subfolder name with clustering conditions
-        std::string clusters_subfolder = "clusters_" + cluster_prefix
-            + "_tick" + std::to_string(tick_limit)
-            + "_ch" + std::to_string(channel_limit)
-            + "_min" + std::to_string(min_tps_to_cluster)
-            + "_tot" + std::to_string(tot_cut)
-            + "_e" + std::to_string(energy_cut);
-
-        std::string clusters_folder_path = outfolder + "/" + clusters_subfolder;
+        
+        std::string clusters_folder_path = getClustersFolder(j);
 
         LogInfo << "[find_input_files] clusters_folder_path: " << clusters_folder_path << std::endl;
 
