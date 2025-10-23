@@ -169,7 +169,7 @@ void save_results(const std::vector<ClusterStats>& cc_results,
 
 int main(int argc, char** argv) {
     // Energy cuts to analyze
-    std::vector<double> energy_cuts = {0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0};
+    std::vector<double> energy_cuts = {0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0};
     
     // Base paths
     std::string cc_base = "/home/virgolaema/dune/online-pointing-utils/data/prod_cc";
