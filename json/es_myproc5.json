@@ -1,0 +1,28 @@
+{
+    "thisIsAComment": "This file contains all steps of sequence.sh",
+    "thisIsAlsoAComment": "tpstream_folder: raw tpstream files (input to backtracking)",
+    "thisIsAlsoAComment2": "sig_folder: pure signal TPs (output of backtracking, input to add_backgrounds)",
+    "thisIsAlsoAComment3": "bg_folder: pure background TPs (input to add_backgrounds)",
+    "thisIsAlsoAComment4": "tps_folder/tps_bg_folder: merged TPs with backgrounds (output of add_backgrounds, input to clustering)",
+
+    "tpstream_folder": "/eos/user/e/evilla/dune/sn-tps/production_es/",
+    "sig_folder": "/eos/user/e/evilla/dune/sn-tps/production_es/",
+    "bg_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
+    "tps_folder": "/eos/user/e/evilla/dune/sn-tps/production_es/bkgs/",
+    "tps_bg_folder": "/eos/user/e/evilla/dune/sn-tps/production_es/bkgs/",
+    "clusters_folder": "/eos/user/e/evilla/dune/sn-tps/production_es/",
+    "clusters_folder_prefix": "es_valid_bg",
+    "reports_folder": "/eos/user/e/evilla/dune/sn-tps/production_es/reports/",
+
+    "max_files": 1000,
+    "skip_files": 4000,
+
+    "backtracker_error_margin": 10,
+
+    "tick_limit": 3,
+    "channel_limit": 2,
+    "min_tps_to_cluster": 2,
+    "tot_cut": 3,
+    "energy_cut": 2.0
+
+}

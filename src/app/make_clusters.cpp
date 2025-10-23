@@ -78,6 +78,21 @@ int main(int argc, char* argv[]) {
     float adc_integral_cut_ind = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
     int tot_cut = j.value("tot_cut", 0);
     int max_files = j.value("max_files", -1); // -1 means no limit
+    int skip_files = j.value("skip_files", 0);
+    // Align skip_files to the nearest multiple of 10 so output-file boundaries remain consistent
+    {
+        const int FILES_PER_OUTPUT_FOR_SKIP = 10;
+        if (skip_files > 0) {
+            int original_skip = skip_files;
+            int nearest = ((skip_files + FILES_PER_OUTPUT_FOR_SKIP / 2) / FILES_PER_OUTPUT_FOR_SKIP) * FILES_PER_OUTPUT_FOR_SKIP;
+            if (nearest < 0) nearest = 0;
+            if (nearest > static_cast<int>(inputs.size())) nearest = static_cast<int>(inputs.size());
+            skip_files = nearest;
+            LogInfo << "Adjusted skip_files from " << original_skip << " to nearest multiple of "
+                    << FILES_PER_OUTPUT_FOR_SKIP << ": " << skip_files << std::endl;
+        }
+    }
+    LogInfo << "Number of files to skip at start: " << skip_files << std::endl;
 
     std::string clusters_folder_path = getClustersFolder(j);
 
@@ -104,7 +119,8 @@ int main(int argc, char* argv[]) {
     // Ensure output directory exists
     // Variables for numbered output files (one per 10 input files)
     const int FILES_PER_OUTPUT = 10;
-    int output_file_number = 0;
+    // Initialize output_file_number based on skipped files to avoid conflicts
+    int output_file_number = skip_files / FILES_PER_OUTPUT;
     TFile* clusters_file = nullptr;
     std::string current_clusters_filename;
     std::vector<std::string> produced_files;
@@ -170,29 +186,34 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    int file_count = 0;
+    int done_files = 0, count_files = 0;
 
     for (const auto& tps_file : inputs) {
+        if (count_files < skip_files) {
+            count_files++;
+            LogInfo << "Skipping file " << count_files << ": " << tps_file << std::endl;
+            continue;
+        }
 
         // Check if we've reached max_files limit
-        if (file_count >= max_files) {
+        if (done_files >= max_files) {
             LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
             break;
         }
         
         if (verboseMode) LogInfo << "Input TPs file: " << tps_file << std::endl;
 
-        file_count++;
+        done_files++;
         
         // Create new output file every FILES_PER_OUTPUT input files
-        if (file_count > 1 && (file_count - 1) % FILES_PER_OUTPUT == 0) {
+        if (done_files > 1 && (done_files - 1) % FILES_PER_OUTPUT == 0) {
             if (!create_new_output_file()) {
                 return 1;
             }
         }
         
-        int progress = (file_count * 100) / max_files;
-        GenericToolbox::displayProgressBar(file_count, max_files, "Making clusters...");
+        int progress = (done_files * 100) / max_files;
+        GenericToolbox::displayProgressBar(done_files, max_files, "Making clusters...");
 
         std::map<int, std::vector<TriggerPrimitive>> tps_by_event;
         std::map<int, std::vector<TrueParticle>> true_by_event;

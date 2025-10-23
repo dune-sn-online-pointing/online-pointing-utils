@@ -370,7 +370,11 @@ int main(int argc, char* argv[]){
         if (t) planes.push_back({p, t});
       }
     }
-    LogThrowIf(planes.empty(), "No clusters trees found in file: " << clusters_file);
+    if(planes.empty()){
+      LogError << "No clusters trees found in file: " << clusters_file << std::endl;
+      f->Close(); delete f;
+      continue;
+    }
 
     // Charge to energy conversion factors (ADC/MeV)
     const double ADC_TO_MEV_COLLECTION = ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");

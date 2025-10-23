@@ -72,6 +72,9 @@ int main(int argc, char* argv[]) {
     bool around_vertex_only = j.value("around_vertex_only", false);
     double vertex_radius = j.value("vertex_radius", 100.0); // cm, used if around_vertex_only=true
     int max_files = j.value("max_files", -1); // -1 means no limit
+
+    int skip_files = j.value("skip_files", 0); // number of files to skip at start
+    LogInfo << "Number of files to skip at start: " << skip_files << std::endl;
     
     // sig_folder: pure signal TPs (input)
     std::string sig_folder = j.value("sig_folder", std::string(""));
@@ -142,18 +145,25 @@ int main(int argc, char* argv[]) {
     load_bkg_file(bkg_file_idx);
 
     // Process signal files
-    int file_count = 0;
+    int done_files = 0, count_files = 0;
     std::vector<std::string> output_files;
     
     for (const auto& signal_file : signal_files) {
+
+        if (count_files < skip_files) {
+            count_files++;
+            LogInfo << "Skipping file " << count_files << ": " << signal_file << std::endl;
+            continue;
+        }
+
         // Check if we've reached max_files limit
-        if (max_files > 0 && file_count >= max_files) {
+        if (max_files > 0 && done_files >= max_files) {
             LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
             break;
         }
-        file_count++;
+        done_files++;
         if (!verboseMode) {
-            GenericToolbox::displayProgressBar(file_count, std::min((int)signal_files.size(), max_files > 0 ? max_files : (int)signal_files.size()), "Adding backgrounds...");
+            GenericToolbox::displayProgressBar(done_files, std::min((int)signal_files.size(), max_files > 0 ? max_files : (int)signal_files.size()), "Adding backgrounds...");
         }
         if (verboseMode) LogInfo << "\nProcessing signal file: " << signal_file << std::endl;
         // Read signal TPs
@@ -179,7 +189,7 @@ int main(int argc, char* argv[]) {
         if (verboseMode) LogInfo << "Output file: " << output_filename << std::endl;
         // Check if output file already exists
         if (std::filesystem::exists(output_filename) && !overrideMode) {
-            file_count--;
+            done_files--;
             if (verboseMode) LogInfo << "Output file already exists, skipping (use --override to overwrite)" << std::endl;
             continue;
         }
@@ -329,7 +339,7 @@ int main(int argc, char* argv[]) {
         }
     }
     
-    LogInfo << "\n\nProcessed " << file_count << " files successfully." << std::endl;
+    LogInfo << "\n\nProcessed " << done_files << " files successfully." << std::endl;
     LogInfo << "Output files are in the same directories as input files with '_bkg' suffix." << std::endl;
     LogInfo << "\nNote: In the output files, background TPs have their original generator labels," << std::endl;
     LogInfo << "      allowing you to distinguish signal (MARLEY) from background (e.g., radiological)." << std::endl;

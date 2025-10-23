@@ -94,6 +94,9 @@ int main(int argc, char* argv[]) {
         max_files = filenames.size();
     }
 
+    int skip_files = j.value("skip_files", 0);
+    LogInfo << "Number of files to skip at start: " << skip_files << std::endl;
+
     // Output folder: CLI outFolder > JSON sig_folder > JSON outputFolder > "data"
     std::string outfolder;
     if (clp.isOptionTriggered("outFolder")) outfolder = clp.getOptionVal<std::string>("outFolder");
@@ -119,17 +122,23 @@ int main(int argc, char* argv[]) {
     }
     LogInfo << "Channel tolerance (channels): " << channel_tolerance << std::endl;
 
-    int count_files = 0;
+    int count_files = 0, done_files = 0;
 
     for (auto& filename : filenames) {
 
-        count_files++;
-        if (count_files > max_files) {
+        if (count_files < skip_files) {
+            count_files++;
+            LogInfo << "Skipping file " << count_files << ": " << filename << std::endl;
+            continue;
+        }
+
+        done_files++;
+        if (done_files > max_files) {
             LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
             break;
         }
 
-        GenericToolbox::displayProgressBar(count_files, max_files, "Processing files...");
+        GenericToolbox::displayProgressBar(done_files, max_files, "Processing files...");
 
         // Compute expected output path early to allow skip-if-exists behavior
         std::string input_basename = filename.substr(filename.find_last_of("/\\") + 1);
@@ -150,7 +159,7 @@ int main(int argc, char* argv[]) {
         if (!overrideMode && file_exists(out_abs)) {
             LogInfo << "Output already exists, skipping: " << out_abs 
                     << " (use --override to force reprocessing)" << std::endl;
-            count_files--;
+            done_files--;
             output_files.push_back(out_abs);
             continue;
         }

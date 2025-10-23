@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
     LogThrowIf(inputs.empty(), "No valid input files found.");
 
     // Get ToT cut from configuration
-    int tot_cut = j.value("tot_cut", 1); // default to 5
+    int tot_cut = 0; //j.value("tot_cut", 0); // disabled by default, could enable back if needed 
     bool verboseMode = clp.isOptionTriggered("verboseMode");
     bool debugMode = j.value("debug_mode", false);
     // Convert string to ROOT verbosity constant
