@@ -2,7 +2,7 @@
 # Script to run clustering and analysis for different energy cuts
 
 # Energy cut values to test (in MeV)
-ENERGY_CUTS=("0" "0.5" "1.0" "1.5" "2.0" "2.5" "3.0" "3.5" "4.0" "4.5" "5.0")
+ENERGY_CUTS=("0" "0.5" "1.0" "1.5" "2.0" "2.5" "3.0")
 
 # CC simulations
 echo "Running CC simulations..."
@@ -26,7 +26,7 @@ for ecut in "${ENERGY_CUTS[@]}"; do
     "tick_limit": 3,
     "channel_limit": 2,
     "min_tps_to_cluster": 2,
-    "tot_cut": 2,
+    "tot_cut": 3,
     "energy_cut": $ecut
 }
 EOF
@@ -57,7 +57,7 @@ for ecut in "${ENERGY_CUTS[@]}"; do
     "tick_limit": 3,
     "channel_limit": 2,
     "min_tps_to_cluster": 2,
-    "tot_cut": 2,
+    "tot_cut": 3,
     "energy_cut": $ecut
 }
 EOF
