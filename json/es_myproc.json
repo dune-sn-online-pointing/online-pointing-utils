@@ -14,8 +14,8 @@
     "clusters_folder_prefix": "es_valid_bg",
     "reports_folder": "/eos/user/e/evilla/dune/sn-tps/production_es/reports/",
 
-    "max_files": 1000,
-    "skip_files": 1000,
+    "max_files": -1,
+    "skip_files": 0,
 
     "backtracker_error_margin": 10,
 

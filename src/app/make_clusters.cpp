@@ -8,6 +8,7 @@ int main(int argc, char* argv[]) {
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
     clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
+    clp.addOption("override", {"-f", "--override"}, "Override existing output files (default: false)", false);
     clp.addOption("outFolder", {"--output-folder"}, "Output folder path (default: data)");
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
     clp.addTriggerOption("debugMode", {"-d"}, "Run in debug mode (more detailed than verbose)");
@@ -27,6 +28,9 @@ int main(int argc, char* argv[]) {
 
     std::string json = clp.getOptionVal<std::string>("json");
     std::ifstream i(json); nlohmann::json j; i >> j;
+
+    bool overrideExistingFiles = false;
+    if (clp.isOptionTriggered("override")) { overrideExistingFiles = true; }
 
     // Use utility function for file finding (reads from tps_folder = merged TPs with backgrounds)
     std::vector<std::string> inputs = find_input_files(j, "tps");
@@ -152,7 +156,7 @@ int main(int argc, char* argv[]) {
     auto create_new_output_file = [&]() -> bool {
         // Close previous file if open
         if (clusters_file) {
-            LogInfo << "Writing clustering metadata..." << std::endl;
+            // LogInfo << "Writing clustering metadata..." << std::endl;
             create_metadata_tree(clusters_file);
             clusters_file->Close();
             delete clusters_file;
@@ -162,8 +166,17 @@ int main(int argc, char* argv[]) {
         // Create new filename with simple pattern: clusters_N.root
         current_clusters_filename = clusters_folder_path + "/clusters_" + std::to_string(output_file_number) + ".root";
         
-        // Delete if exists
-        if (std::filesystem::exists(current_clusters_filename)) {
+        // Check if file exists and skip if override is false
+        if (std::filesystem::exists(current_clusters_filename) && !overrideExistingFiles) {
+            LogInfo << "Output file " << current_clusters_filename << " already exists. Skipping this batch of " 
+                    << FILES_PER_OUTPUT << " input files." << std::endl;
+            output_file_number++;
+            clusters_file = nullptr;
+            return false;
+        }
+        
+        // Delete if exists and override is true
+        if (std::filesystem::exists(current_clusters_filename) && overrideExistingFiles) {
             LogInfo << "Output file " << current_clusters_filename << " already exists, deleting it." << std::endl;
             std::filesystem::remove(current_clusters_filename);
         }
@@ -182,11 +195,14 @@ int main(int argc, char* argv[]) {
     };
 
     // Create first output file
-    if (!create_new_output_file()) {
+    bool file_opened = create_new_output_file();
+    if (!file_opened && !std::filesystem::exists(current_clusters_filename)) {
+        // Only error out if file creation failed, not if file exists and we're skipping
         return 1;
     }
 
     int done_files = 0, count_files = 0;
+    int skipped_in_current_batch = 0;
 
     for (const auto& tps_file : inputs) {
         if (count_files < skip_files) {
@@ -201,16 +217,28 @@ int main(int argc, char* argv[]) {
             break;
         }
         
-        if (verboseMode) LogInfo << "Input TPs file: " << tps_file << std::endl;
-
-        done_files++;
-        
         // Create new output file every FILES_PER_OUTPUT input files
-        if (done_files > 1 && (done_files - 1) % FILES_PER_OUTPUT == 0) {
-            if (!create_new_output_file()) {
+        if (done_files > 0 && done_files % FILES_PER_OUTPUT == 0) {
+            file_opened = create_new_output_file();
+            skipped_in_current_batch = 0;
+            if (!file_opened && !std::filesystem::exists(current_clusters_filename)) {
+                // Fatal error: couldn't create file
                 return 1;
             }
         }
+        
+        // If no file is open (because we're skipping this batch), skip this input file
+        if (!file_opened) {
+            skipped_in_current_batch++;
+            done_files++;
+            if (verboseMode) LogInfo << "Skipping input file " << done_files << " (batch exists): " << tps_file << std::endl;
+            // Once we've skipped FILES_PER_OUTPUT files, the next iteration will try to open a new output file
+            continue;
+        }
+        
+        if (verboseMode) LogInfo << "Input TPs file: " << tps_file << std::endl;
+
+        done_files++;
         
         int progress = (done_files * 100) / max_files;
         GenericToolbox::displayProgressBar(done_files, max_files, "Making clusters...");
