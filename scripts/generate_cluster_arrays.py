@@ -20,7 +20,6 @@ import argparse
 import uproot
 import numpy as np
 import re
-from tqdm import tqdm
 
 
 def load_display_parameters(repo_root=None):
@@ -453,6 +452,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
             'marley_tp_fraction', 'is_main_cluster',
             'true_pos_x', 'true_pos_y', 'true_pos_z',
             'true_dir_x', 'true_dir_y', 'true_dir_z',
+            'true_mom_x', 'true_mom_y', 'true_mom_z',  # Particle momentum [GeV/c]
             'true_neutrino_energy', 'true_particle_energy',
             'true_interaction'  # Interaction type: "ES" or "CC"
         ]
@@ -494,6 +494,13 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                     data['true_dir_z'][i]
                 ], dtype=np.float32)
                 
+                # True momentum (3D) [GeV/c]
+                true_mom = np.array([
+                    data['true_mom_x'][i],
+                    data['true_mom_y'][i],
+                    data['true_mom_z'][i]
+                ], dtype=np.float32)
+                
                 # Energy information
                 true_nu_energy = float(data['true_neutrino_energy'][i])
                 true_particle_energy = float(data['true_particle_energy'][i])
@@ -514,7 +521,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                 )
                 
                 # Prepare metadata as compact array
-                # Format: [is_marley, is_main_track, pos(3), dir(3), 
+                # Format: [is_marley, is_main_track, pos(3), dir(3), mom(3),
                 #          nu_energy, particle_energy, plane_id, is_es_interaction]
                 # All stored as float32 for efficiency (0.0/1.0 for booleans)
                 plane_id = {'U': 0, 'V': 1, 'X': 2}.get(plane_letter, 0)
@@ -523,6 +530,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                     int(is_main_track),
                     true_pos[0], true_pos[1], true_pos[2],
                     true_dir[0], true_dir[1], true_dir[2],
+                    true_mom[0], true_mom[1], true_mom[2],
                     np.float32(true_nu_energy),
                     np.float32(true_particle_energy),
                     plane_id,
@@ -698,10 +706,8 @@ if __name__ == '__main__':
     # Generate arrays
     total_generated = 0
     
-    # Use progress bar if not verbose
-    file_iterator = cluster_files if args.verbose else tqdm(cluster_files, desc="Processing files", unit="file")
-    
-    for cluster_file in file_iterator:
+    # Process all files
+    for cluster_file in cluster_files:
         if args.verbose:
             print(f"Processing file: {cluster_file}")
         n = generate_images(cluster_file, output_dir, args.draw_mode, repo_root, args.batch_size, args.verbose)

@@ -16,9 +16,9 @@ clusters_planeX_batch0001.npz    # Batch 1: clusters 1000-1999
 ## File Sizes (per batch of 1000 clusters)
 
 - **Image data**: 8,192,000 bytes (1000×128×16 float32 array)
-- **Metadata data**: 48,000 bytes (1000×12 float32 values)
+- **Metadata data**: 60,000 bytes (1000×15 float32 values)
 - **NPZ overhead**: ~3,200 bytes (numpy container format)
-- **Total**: ~8.24 MB per batch
+- **Total**: ~8.26 MB per batch
 - **Overhead**: Only 0.04% for NPZ container!
 
 ## NPZ File Contents
@@ -28,12 +28,12 @@ Each `.npz` file contains two named arrays:
 ```python
 data = np.load('clusters_planeU_batch0000.npz')
 images = data['images']      # N×128×16 float32 array (N ≤ 1000)
-metadata = data['metadata']  # N×12 float32 array
+metadata = data['metadata']  # N×15 float32 array
 ```
 
 ## Metadata Format
 
-The metadata is stored as a compact numpy array of 12 float32 values per cluster:
+The metadata is stored as a compact numpy array of 15 float32 values per cluster:
 
 ```python
 metadata = np.array([
@@ -45,10 +45,13 @@ metadata = np.array([
     true_dir_x,           # [5]: True direction X (normalized)
     true_dir_y,           # [6]: True direction Y (normalized)
     true_dir_z,           # [7]: True direction Z (normalized)
-    true_nu_energy,       # [8]: True neutrino energy [MeV]
-    true_particle_energy, # [9]: True particle energy [MeV]
-    plane_id,             # [10]: Plane ID (0=U, 1=V, 2=X)
-    is_es_interaction     # [11]: 1.0 if ES interaction, 0.0 if CC
+    true_mom_x,           # [8]: True momentum X [GeV/c]
+    true_mom_y,           # [9]: True momentum Y [GeV/c]
+    true_mom_z,           # [10]: True momentum Z [GeV/c]
+    true_nu_energy,       # [11]: True neutrino energy [MeV]
+    true_particle_energy, # [12]: True particle energy [MeV]
+    plane_id,             # [13]: Plane ID (0=U, 1=V, 2=X)
+    is_es_interaction     # [14]: 1.0 if ES interaction, 0.0 if CC
 ], dtype=np.float32)
 ```
 
@@ -64,7 +67,7 @@ data = np.load('clusters_planeU_batch0000.npz')
 
 # Extract images and metadata
 images = data['images']    # Shape: (N, 128, 16) where N ≤ 1000
-metadata = data['metadata']  # Shape: (N, 12)
+metadata = data['metadata']  # Shape: (N, 15)
 
 # Process each cluster in the batch
 for i in range(len(images)):
@@ -75,11 +78,12 @@ for i in range(len(images)):
     is_marley = bool(meta[0])
     is_main_track = bool(meta[1])
     true_pos = meta[2:5]  # [x, y, z]
-    true_dir = meta[5:8]  # [dx, dy, dz]
-    true_nu_energy = meta[8]
-    true_particle_energy = meta[9]
-    plane_id = int(meta[10])
-    is_es_interaction = bool(meta[11])
+    true_dir = meta[5:8]  # [dx, dy, dz] normalized
+    true_mom = meta[8:11]  # [px, py, pz] in GeV/c
+    true_nu_energy = meta[11]
+    true_particle_energy = meta[12]
+    plane_id = int(meta[13])
+    is_es_interaction = bool(meta[14])
     
     plane_map = {0: 'U', 1: 'V', 2: 'X'}
     plane_name = plane_map[plane_id]
@@ -132,6 +136,13 @@ print(f"Interaction: {meta_dict['interaction_type']}")  # "CC" or "ES"
 - True particle direction (normalized vector)
 - Dimensionless
 - Format: [dx, dy, dz]
+- **Note**: This is the direction of the particle creating the cluster (electron, positron, etc.), not the neutrino
+
+### true_mom (3D momentum)
+- True particle momentum vector
+- Units: GeV/c
+- Format: [px, py, pz]
+- **Note**: Particle momentum magnitude and direction; direction is `true_mom / |true_mom|`
 
 ### true_nu_energy (float)
 - True neutrino energy
@@ -172,10 +183,11 @@ is_marley = metadata[:, 0].astype(bool)
 is_main_track = metadata[:, 1].astype(bool)
 true_positions = metadata[:, 2:5]
 true_directions = metadata[:, 5:8]
-true_nu_energies = metadata[:, 8]
-true_particle_energies = metadata[:, 9]
-plane_ids = metadata[:, 10].astype(int)
-is_es = metadata[:, 11].astype(bool)
+true_momenta = metadata[:, 8:11]
+true_nu_energies = metadata[:, 11]
+true_particle_energies = metadata[:, 12]
+plane_ids = metadata[:, 13].astype(int)
+is_es = metadata[:, 14].astype(bool)
 
 # Filter specific types
 marley_images = images[is_marley]
@@ -185,6 +197,10 @@ cc_images = images[~is_es]     # CC interactions
 # Combine filters
 marley_es = images[is_marley & is_es]
 marley_cc = images[is_marley & ~is_es]
+
+# Calculate momentum magnitude for energy cuts
+mom_mag = np.sqrt(np.sum(true_momenta**2, axis=1))
+high_momentum = images[mom_mag > 0.1]  # > 100 MeV/c
 ```
 
 ## Using the Helper Script

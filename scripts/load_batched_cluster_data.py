@@ -18,7 +18,7 @@ def load_batch(npz_file: str) -> Tuple[np.ndarray, np.ndarray]:
     Returns:
         (images, metadata)
         - images: N×128×16 float32 array with raw ADC values
-        - metadata: N×12 float32 array (raw metadata for each cluster)
+        - metadata: N×15 float32 array (raw metadata for each cluster)
     """
     data = np.load(npz_file)
     images = data['images']
@@ -32,7 +32,7 @@ def decode_metadata(metadata: np.ndarray) -> List[Dict]:
     Decode metadata array into list of dictionaries
     
     Args:
-        metadata: N×12 float32 array
+        metadata: N×15 float32 array
         
     Returns:
         List of metadata dictionaries (one per cluster)
@@ -41,9 +41,9 @@ def decode_metadata(metadata: np.ndarray) -> List[Dict]:
     
     decoded = []
     for meta in metadata:
-        is_es = bool(meta[11])
+        is_es = bool(meta[14])
         # Determine interaction type: ES (1.0), CC (0.0 and known), or UNKNOWN
-        if meta[11] > 0.5:
+        if meta[14] > 0.5:
             interaction_type = 'ES'
         else:
             # Could be CC or UNKNOWN - we treat both as 0.0
@@ -54,10 +54,11 @@ def decode_metadata(metadata: np.ndarray) -> List[Dict]:
             'is_main_track': bool(meta[1]),
             'true_pos': meta[2:5],  # [x, y, z] in cm
             'true_dir': meta[5:8],  # [dx, dy, dz] normalized
-            'true_nu_energy': float(meta[8]),  # MeV
-            'true_particle_energy': float(meta[9]),  # MeV
-            'plane': plane_map[int(meta[10])],
-            'plane_id': int(meta[10]),
+            'true_mom': meta[8:11],  # [px, py, pz] in GeV/c
+            'true_nu_energy': float(meta[11]),  # MeV
+            'true_particle_energy': float(meta[12]),  # MeV
+            'plane': plane_map[int(meta[13])],
+            'plane_id': int(meta[13]),
             'is_es_interaction': is_es,
             'interaction_type': interaction_type
         })
@@ -80,7 +81,7 @@ def load_dataset(data_dir: str, plane: Optional[str] = None,
     Returns:
         (images, metadata)
         - images: N×128×16 float32 array
-        - metadata: N×12 float32 array (raw metadata)
+        - metadata: N×15 float32 array (raw metadata)
     """
     data_dir = Path(data_dir)
     
@@ -154,7 +155,7 @@ def get_dataset_info(data_dir: str) -> Dict:
         total_clusters += n_clusters
         
         for meta in metadata:
-            plane_id = int(meta[10])
+            plane_id = int(meta[13])
             plane = {0: 'U', 1: 'V', 2: 'X'}[plane_id]
             plane_counts[plane] += 1
             
@@ -162,7 +163,7 @@ def get_dataset_info(data_dir: str) -> Dict:
                 marley_count += 1
             if bool(meta[1]):
                 main_track_count += 1
-            if bool(meta[11]):
+            if bool(meta[14]):
                 es_count += 1
             else:
                 cc_count += 1
