@@ -206,8 +206,6 @@ void drawCurrent(){
   else if (it.plane == "V") threshold_adc = GET_PARAM_DOUBLE("display.threshold_adc_v");
   else if (it.plane == "X") threshold_adc = GET_PARAM_DOUBLE("display.threshold_adc_x");
 
-  double pentagon_offset = GET_PARAM_DOUBLE("display.pentagon_offset");
-
   if (ViewerState::noTPs) {
     // Blob mode: don't fill histogram, just set it up as background
     // Boxes will be drawn on top
@@ -234,7 +232,7 @@ void drawCurrent(){
       if (drawMode == PENTAGON) {
         fillHistogramPentagon(
           frame, ch_contiguous, ts, peak_time, tot,
-          peak_adc, adc_integral, threshold_adc, pentagon_offset
+          peak_adc, adc_integral, threshold_adc
         );
       } else if (drawMode == TRIANGLE) {
         fillHistogramTriangle(

@@ -21,14 +21,15 @@ PentagonParams calculatePentagonParams(
   double adc_peak, 
   double adc_integral, 
   double frac,
-  double offset
+  double threshold_adc
 ) {
     PentagonParams result;
     result.valid = false;
     
-    // Target area is the adc_integral + offset (threshold compensation)
-    double target_area = adc_integral + offset;
-    double threshold = offset / (time_end - time_start); // approximate threshold
+    // Target area is the adc_integral
+    double target_area = adc_integral;
+    // Use the threshold for the plane (60 for X, 70 for U/V) as the plateau baseline
+    double threshold = threshold_adc;
     
     // Scan for best pentagon vertices that match the target area
     // Try different intermediate points (t1 between start-peak, t2 between peak-end)
@@ -137,13 +138,13 @@ PentagonParams calculatePentagonParams(
     // Adjust frac upward
     double new_frac = 1.0 - 0.5 * (1.0 - frac);
     return calculatePentagonParams(time_start, time_peak, time_end, adc_peak, 
-                                   adc_integral, new_frac, offset);
+                                   adc_integral, new_frac, threshold_adc);
   }
   else if (intermediate_height > ch) {
     // Adjust frac downward
     double new_frac = 0.5 * frac;
     return calculatePentagonParams(time_start, time_peak, time_end, adc_peak, 
-                                   adc_integral, new_frac, offset);
+                                   adc_integral, new_frac, threshold_adc);
   }
   
   // Valid result
@@ -204,8 +205,7 @@ void fillHistogramPentagon(
   int samples_over_threshold,
   int adc_peak,
   double adc_integral,
-  double threshold_adc,
-  double offset
+  double threshold_adc
 ) {
   if (!frame) return;
   
@@ -220,7 +220,7 @@ void fillHistogramPentagon(
   // Calculate pentagon parameters
   PentagonParams params = calculatePentagonParams(
     time_start, time_peak, time_end,
-    adc_peak, adc_integral, 0.5, offset
+    adc_peak, adc_integral, 0.5, threshold_adc
   );
   
   if (!params.valid) {

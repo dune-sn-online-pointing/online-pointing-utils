@@ -27,7 +27,7 @@ struct PentagonParams {
  * @param adc_peak Peak ADC value
  * @param adc_integral Total ADC integral
  * @param frac Fraction for positioning intermediate vertices (0-1)
- * @param offset Offset to add to adc_integral (default 120)
+ * @param threshold_adc Threshold ADC for the plane (60 for X, 70 for U/V) - the plateau baseline
  * @return PentagonParams with calculated intermediate positions and heights
  */
 PentagonParams calculatePentagonParams(
@@ -37,7 +37,7 @@ PentagonParams calculatePentagonParams(
   double adc_peak, 
   double adc_integral, 
   double frac,
-  double offset = 120.0
+  double threshold_adc
 );
 
 /**
@@ -70,7 +70,6 @@ void fillHistogramTriangle(
  * @param adc_peak Peak ADC value
  * @param adc_integral Total ADC integral
  * @param threshold_adc Threshold ADC value (60 for X, 70 for U/V)
- * @param offset Offset to add to adc_integral (default 120)
  */
 void fillHistogramPentagon(
   TH2F* frame,
@@ -80,8 +79,7 @@ void fillHistogramPentagon(
   int samples_over_threshold,
   int adc_peak,
   double adc_integral,
-  double threshold_adc,
-  double offset = 120.0
+  double threshold_adc
 );
 
 /**
