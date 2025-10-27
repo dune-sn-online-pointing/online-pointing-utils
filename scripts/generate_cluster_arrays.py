@@ -20,6 +20,7 @@ import argparse
 import uproot
 import numpy as np
 import re
+from tqdm import tqdm
 
 
 def load_display_parameters(repo_root=None):
@@ -369,12 +370,13 @@ def draw_cluster_to_array(channels, times, adc_integrals, adc_peaks, sot_values,
     # The pixel values represent actual ADC intensities and have physical meaning
     return img
 
-def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=None, batch_size=1000):
+def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=None, batch_size=1000, verbose=False):
     """
     Generate images for all clusters in a ROOT file
     
     Args:
         batch_size: Number of clusters to save per file (default: 1000)
+        verbose: Enable verbose output (default: False)
     """
     
     cluster_file = Path(cluster_file)
@@ -391,9 +393,10 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
         'X': display_params['threshold_adc_x']
     }
     
-    print(f"Processing: {cluster_file.name}")
-    print(f"  Thresholds: U={threshold_map['U']}, V={threshold_map['V']}, X={threshold_map['X']}")
-    print(f"  Batch size: {batch_size} clusters per file")
+    if verbose:
+        print(f"Processing: {cluster_file.name}")
+        print(f"  Thresholds: U={threshold_map['U']}, V={threshold_map['V']}, X={threshold_map['X']}")
+        print(f"  Batch size: {batch_size} clusters per file")
     
     # Open ROOT file
     try:
@@ -415,9 +418,10 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
     if not tree_names:
         print(f"  No cluster trees found")
         return 0
-    
-    print(f"  Found {len(tree_names)} planes with clusters")
-    
+
+    if verbose:
+        print(f"  Found {len(tree_names)} planes with clusters")
+
     n_generated = 0
     plane_map = {'U': 0, 'V': 1, 'X': 2}  # Plane names to numbers
     
@@ -432,11 +436,13 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
         if n_entries == 0:
             continue
         
-        print(f"  Processing plane {plane_letter}: {n_entries} clusters...")
+        if verbose:
+            print(f"  Processing plane {plane_letter}: {n_entries} clusters...")
         
         # Get threshold for this plane
         plane_threshold = threshold_map.get(plane_letter, 60.0)
-        print(f"    Using threshold = {plane_threshold} ADC for plane {plane_letter}")
+        if verbose:
+            print(f"    Using threshold = {plane_threshold} ADC for plane {plane_letter}")
         
         # Load all data at once for efficiency
         branches = [
@@ -539,8 +545,9 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                     batch_num += 1
                 
                 # Progress indicator
-                if (n_generated % 100) == 0 or (i + 1) == n_entries:
-                    print(f"    Generated {n_generated} arrays total...", end='\r')
+                if verbose:
+                    if (n_generated % 100) == 0 or (i + 1) == n_entries:
+                        print(f"    Generated {n_generated} arrays total...", end='\r')
                     
             except Exception as e:
                 print(f"\n  Warning: Failed to generate array for cluster {i} on plane {plane_letter}: {e}")
@@ -552,9 +559,11 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
             np.savez(output_file, 
                     images=np.array(batch_images, dtype=np.float32),
                     metadata=np.array(batch_metadata, dtype=np.float32))
-            print(f"\n    Saved final batch with {len(batch_images)} clusters")
-    
-    print(f"\n  Successfully generated {n_generated} numpy arrays total")
+            if verbose:
+                print(f"\n    Saved final batch with {len(batch_images)} clusters")
+
+    if verbose:
+        print(f"\n  Successfully generated {n_generated} numpy arrays total")
     return n_generated
 
 if __name__ == '__main__':
@@ -567,8 +576,9 @@ if __name__ == '__main__':
                        help='Drawing mode (kept for compatibility, not used)')
     parser.add_argument('--root-dir', help='Repository root directory')
     parser.add_argument('--json', '-j', help='JSON config file (auto-detects clusters folder)')
-    parser.add_argument('--skip-files', type=int, default=0, help='Skip first N cluster files')
-    parser.add_argument('--max-files', type=int, help='Process at most N cluster files')
+    parser.add_argument('--skip-files', type=int, help='Skip first N cluster files (overrides JSON)')
+    parser.add_argument('--max-files', type=int, help='Process at most N cluster files (overrides JSON)')
+    parser.add_argument('-f', '--override', action='store_true', help='Force reprocessing even if output batch files already exist')
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
     
     args = parser.parse_args()
@@ -580,6 +590,10 @@ if __name__ == '__main__':
         if not json_path.exists():
             print(f"Error: JSON file not found: {json_path}")
             sys.exit(1)
+        
+        # Load JSON configuration
+        with open(json_path, 'r') as f:
+            json_config = json.load(f)
         
         clusters_folder = get_clusters_folder(json_path)
         images_folder = get_images_folder(json_path)
@@ -594,14 +608,54 @@ if __name__ == '__main__':
         # Sort for consistent ordering
         cluster_files = sorted(cluster_files)
         
-        # Apply skip and max filters
-        if args.skip_files > 0:
-            cluster_files = cluster_files[args.skip_files:]
-            print(f"Skipping first {args.skip_files} files")
+        # Read skip_files and max_files from JSON if not provided via CLI
+        skip_files = args.skip_files if args.skip_files is not None else json_config.get('skip_files', 0)
+        max_files = args.max_files if args.max_files is not None else json_config.get('max_files', None)
         
-        if args.max_files is not None:
-            cluster_files = cluster_files[:args.max_files]
-            print(f"Processing at most {args.max_files} files")
+        # Apply skip and max filters
+        if skip_files > 0:
+            cluster_files = cluster_files[skip_files:]
+            print(f"Skipping first {skip_files} files (from {'CLI' if args.skip_files is not None else 'JSON'})")
+        
+        if max_files is not None:
+            cluster_files = cluster_files[:max_files]
+            print(f"Processing at most {max_files} files (from {'CLI' if args.max_files is not None else 'JSON'})")
+        
+        # Check for existing batch files and skip if not overriding
+        if not args.override:
+            output_path = Path(output_dir)
+            existing_batches = {}
+            
+            # Check existing batch files for each plane
+            for plane in ['U', 'V', 'X']:
+                plane_batches = sorted(output_path.glob(f"clusters_plane{plane}_batch*.npz"))
+                if plane_batches:
+                    # Get the highest batch number
+                    batch_nums = []
+                    for batch_file in plane_batches:
+                        match = re.match(r'clusters_plane[UVX]_batch(\d+)\.npz', batch_file.name)
+                        if match:
+                            batch_nums.append(int(match.group(1)))
+                    if batch_nums:
+                        max_batch = max(batch_nums)
+                        existing_batches[plane] = max_batch + 1  # Number of existing batches
+            
+            if existing_batches:
+                # Calculate how many files to skip based on existing batches
+                # Assuming each file produces roughly the same number of clusters per plane
+                # We'll skip files that would produce batches we already have
+                max_existing_batches = max(existing_batches.values())
+                files_to_skip = max_existing_batches  # Heuristic: 1 batch per file
+                
+                if files_to_skip > 0 and files_to_skip < len(cluster_files):
+                    print(f"\nFound existing batch files (up to batch {max_existing_batches - 1})")
+                    print(f"Skipping first {files_to_skip} input file(s) to avoid regenerating existing batches")
+                    print(f"Use --override/-f to force reprocessing all files\n")
+                    cluster_files = cluster_files[files_to_skip:]
+                elif files_to_skip >= len(cluster_files):
+                    print(f"\nAll output batch files already exist (found {max_existing_batches} batches)")
+                    print(f"Nothing to process. Use --override/-f to force reprocessing\n")
+                    sys.exit(0)
         
         cluster_files = [str(f) for f in cluster_files]
         
@@ -626,20 +680,31 @@ if __name__ == '__main__':
         cluster_files = args.cluster_files
         output_dir = args.output_dir
         
-        # Apply skip and max filters
-        if args.skip_files > 0:
-            cluster_files = cluster_files[args.skip_files:]
+        # Apply skip and max filters from CLI
+        skip_files = args.skip_files if args.skip_files is not None else 0
+        max_files = args.max_files
         
-        if args.max_files is not None:
-            cluster_files = cluster_files[:args.max_files]
+        if skip_files > 0:
+            cluster_files = cluster_files[skip_files:]
+            print(f"Skipping first {skip_files} files")
+        
+        if max_files is not None:
+            cluster_files = cluster_files[:max_files]
+            print(f"Processing at most {max_files} files")
     
     # Set repo root (optional)
     repo_root = Path(args.root_dir) if args.root_dir else None
     
     # Generate arrays
     total_generated = 0
-    for cluster_file in cluster_files:
-        n = generate_images(cluster_file, output_dir, args.draw_mode, repo_root, args.batch_size)
+    
+    # Use progress bar if not verbose
+    file_iterator = cluster_files if args.verbose else tqdm(cluster_files, desc="Processing files", unit="file")
+    
+    for cluster_file in file_iterator:
+        if args.verbose:
+            print(f"Processing file: {cluster_file}")
+        n = generate_images(cluster_file, output_dir, args.draw_mode, repo_root, args.batch_size, args.verbose)
         total_generated += n
     
     print(f"\nTotal numpy arrays generated: {total_generated}")

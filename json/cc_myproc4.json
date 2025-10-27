@@ -14,8 +14,8 @@
     "clusters_folder_prefix": "cc_valid_bg",
     "reports_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/reports/",
 
-    "max_files": 1000,
-    "skip_files": 3000,
+    "max_files": -1,
+    "skip_files": 4000,
 
     "backtracker_error_margin": 10,
 

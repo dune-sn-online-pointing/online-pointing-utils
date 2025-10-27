@@ -4,23 +4,26 @@ export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source $SCRIPTS_DIR/init.sh
 
 print_help() {
-    echo "Usage: $0 -j <json> [-o <output>] [-d|--draw-mode <mode>] [-v|--verbose]"
+    echo "Usage: $0 -j <json> [-o <output>] [-d|--draw-mode <mode>] [-f|--override] [-v|--verbose]"
     echo "Options:"
     echo "  -j|--json <file>            JSON settings file (required)"
     echo "  -o|--output-dir <dir>       Output directory (overrides JSON clusters_folder)"
     echo "  -d|--draw-mode <mode>       Drawing mode: pentagon (default), triangle, or rectangle"
+    echo "  -f|--override               Force reprocessing even if output batch files already exist"
     echo "  -v|--verbose                Enable verbose output"
     echo "  -h|--help                   Print this help message"
     echo ""
     echo "Example:"
     echo "  $0 -j json/es_valid.json"
     echo "  $0 -j json/es_valid.json -d triangle -v"
+    echo "  $0 -j json/es_valid.json -f  # Force reprocess all files"
     exit 0
 }
 
 settingsFile=""
 output_dir=""
 draw_mode="pentagon"
+override=false
 verbose=false
 
 while [[ $# -gt 0 ]]; do
@@ -28,6 +31,15 @@ while [[ $# -gt 0 ]]; do
         -j|--json) settingsFile="$2"; shift 2;;
         -o|--output-dir) output_dir="$2"; shift 2;;
         -d|--draw-mode) draw_mode="$2"; shift 2;;
+        -f|--override)
+            if [[ $2 == "true" || $2 == "false" ]]; then
+                override=$2
+                shift 2
+            else
+                override=true
+                shift
+            fi
+            ;;
         -v|--verbose)
             if [[ $2 == "true" || $2 == "false" ]]; then
                 verbose=$2
@@ -60,6 +72,10 @@ cmd="python3 ${SCRIPTS_DIR}/generate_cluster_arrays.py --json $settingsFile --dr
 
 if [[ -n "$output_dir" ]]; then
     cmd+=" --output-dir $output_dir"
+fi
+
+if [ "$override" = true ]; then
+    cmd+=" --override"
 fi
 
 if [ "$verbose" = true ]; then
