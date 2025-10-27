@@ -18,7 +18,7 @@ def load_batch(npz_file: str) -> Tuple[np.ndarray, np.ndarray]:
     Returns:
         (images, metadata)
         - images: N×128×16 float32 array with raw ADC values
-        - metadata: N×11 float32 array (raw metadata for each cluster)
+        - metadata: N×12 float32 array (raw metadata for each cluster)
     """
     data = np.load(npz_file)
     images = data['images']
@@ -32,7 +32,7 @@ def decode_metadata(metadata: np.ndarray) -> List[Dict]:
     Decode metadata array into list of dictionaries
     
     Args:
-        metadata: N×11 float32 array
+        metadata: N×12 float32 array
         
     Returns:
         List of metadata dictionaries (one per cluster)
@@ -41,6 +41,14 @@ def decode_metadata(metadata: np.ndarray) -> List[Dict]:
     
     decoded = []
     for meta in metadata:
+        is_es = bool(meta[11])
+        # Determine interaction type: ES (1.0), CC (0.0 and known), or UNKNOWN
+        if meta[11] > 0.5:
+            interaction_type = 'ES'
+        else:
+            # Could be CC or UNKNOWN - we treat both as 0.0
+            interaction_type = 'CC/UNKNOWN'
+        
         decoded.append({
             'is_marley': bool(meta[0]),
             'is_main_track': bool(meta[1]),
@@ -49,7 +57,9 @@ def decode_metadata(metadata: np.ndarray) -> List[Dict]:
             'true_nu_energy': float(meta[8]),  # MeV
             'true_particle_energy': float(meta[9]),  # MeV
             'plane': plane_map[int(meta[10])],
-            'plane_id': int(meta[10])
+            'plane_id': int(meta[10]),
+            'is_es_interaction': is_es,
+            'interaction_type': interaction_type
         })
     
     return decoded
@@ -70,7 +80,7 @@ def load_dataset(data_dir: str, plane: Optional[str] = None,
     Returns:
         (images, metadata)
         - images: N×128×16 float32 array
-        - metadata: N×11 float32 array (raw metadata)
+        - metadata: N×12 float32 array (raw metadata)
     """
     data_dir = Path(data_dir)
     
@@ -130,6 +140,8 @@ def get_dataset_info(data_dir: str) -> Dict:
     plane_counts = {'U': 0, 'V': 0, 'X': 0}
     marley_count = 0
     main_track_count = 0
+    es_count = 0
+    cc_count = 0
     total_size = 0
     total_clusters = 0
     
@@ -150,6 +162,10 @@ def get_dataset_info(data_dir: str) -> Dict:
                 marley_count += 1
             if bool(meta[1]):
                 main_track_count += 1
+            if bool(meta[11]):
+                es_count += 1
+            else:
+                cc_count += 1
         
         data.close()
     
@@ -159,6 +175,8 @@ def get_dataset_info(data_dir: str) -> Dict:
         'plane_counts': plane_counts,
         'marley_count': marley_count,
         'main_track_count': main_track_count,
+        'es_count': es_count,
+        'cc_count': cc_count,
         'total_size_mb': total_size / 1024 / 1024,
         'avg_batch_size_mb': total_size / len(files) / 1024 / 1024,
         'avg_clusters_per_batch': total_clusters / len(files),
@@ -229,6 +247,11 @@ if __name__ == '__main__':
         for plane, count in info['plane_counts'].items():
             pct = 100 * count / info['total_clusters'] if info['total_clusters'] > 0 else 0
             print(f"    {plane}: {count} ({pct:.1f}%)")
+        
+        print(f"\n  Interaction types:")
+        print(f"    ES: {info['es_count']} ({100*info['es_count']/info['total_clusters']:.1f}%)")
+        print(f"    CC/UNKNOWN: {info['cc_count']} ({100*info['cc_count']/info['total_clusters']:.1f}%)")
+        print(f"    (Note: 0.0 = CC or UNKNOWN interaction type)")
         
         print(f"\n  Marley clusters: {info['marley_count']} ({100*info['marley_count']/info['total_clusters']:.1f}%)")
         print(f"  Main track clusters: {info['main_track_count']} ({100*info['main_track_count']/info['total_clusters']:.1f}%)")
