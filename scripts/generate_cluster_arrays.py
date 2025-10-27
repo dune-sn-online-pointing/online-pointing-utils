@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """
-Batch cluster image generator
-Generates 16x128 numpy arrays matching display.cpp visualization
+Batch cluster array generator for neural network input
+
+Generates 16x128 numpy arrays from cluster ROOT files:
 - X axis: Channel (detector channels)
 - Y axis: Time (detector ticks)
-- Pixels colored using pentagon ADC interpolation logic
+- Pixel values: Raw ADC intensity (physical units, NOT normalized)
+- Pentagon interpolation for ADC values over time
+
+IMPORTANT: Arrays contain actual ADC counts with physical meaning!
+Use these raw values for training to preserve energy information.
 """
 
 import sys
@@ -83,13 +88,18 @@ def get_clusters_folder(json_config):
 def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_integral, offset=0.5):
     """
     Calculate pentagon parameters (matching Display.cpp logic)
-    Returns: (time_int_rise, time_int_fall, h_int_rise, h_int_fall, valid)
+    Pentagon has a threshold baseline (plateau) at the bottom
+    Returns: (time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, valid)
     """
     if time_end <= time_start:
-        return (0, 0, 0, 0, False)
+        return (0, 0, 0, 0, 0, False)
     
     # Total duration
     T = time_end - time_start
+    
+    # Calculate threshold (baseline/plateau height)
+    # This is the "plateau" you mentioned - pentagon sits on this baseline
+    threshold = offset / T if T > 0 else 0.0
     
     # Peak position relative to start (fraction)
     t_peak_rel = (time_peak - time_start) / T if T > 0 else 0.5
@@ -104,25 +114,27 @@ def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_int
     time_int_fall = time_start + t2 * T
     
     # Calculate heights at intermediate points
-    # Area under pentagon must equal adc_integral
-    # Pentagon area = sum of trapezoids
+    # Pentagon vertices: (time_start, threshold), (time_int_rise, h_int_rise), 
+    #                    (time_peak, adc_peak), (time_int_fall, h_int_fall), (time_end, threshold)
+    # These rise from the threshold baseline
+    h_int_rise = threshold + 0.6 * (adc_peak - threshold)
+    h_int_fall = threshold + 0.6 * (adc_peak - threshold)
     
-    # Use simplified model: intermediate heights are fractions of peak
-    # This is an approximation - the real calculation is more complex
-    h_int_rise = adc_peak * 0.6  # Intermediate height on rise
-    h_int_fall = adc_peak * 0.6  # Intermediate height on fall
-    
-    return (time_int_rise, time_int_fall, h_int_rise, h_int_fall, True)
+    return (time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, True)
 
 
 def draw_cluster_to_array(channels, times, adc_integrals, sot_values, stopeak_values, img_width=16, img_height=128):
     """
-    Draw cluster to numpy array matching display.cpp style
+    Draw cluster to numpy array with actual ADC values (NOT normalized)
+    
     - X axis: Channel (consecutive, no artificial spacing)
     - Y axis: Time (consecutive ticks)
-    - Pentagon interpolation for ADC values
+    - Pixel values: Raw ADC intensity (physical units, NOT normalized to [0,1])
+    - Pentagon interpolation for ADC values over time
     - Padding added around cluster if smaller than image size
     - Image size: 16 (channels) x 128 (time ticks) to match typical cluster topology
+    
+    IMPORTANT: Pixel values represent actual ADC counts and have physical meaning!
     """
     if len(channels) == 0:
         return np.zeros((img_height, img_width), dtype=np.float32)
@@ -177,19 +189,22 @@ def draw_cluster_to_array(channels, times, adc_integrals, sot_values, stopeak_va
                 continue
             
             # Calculate ADC intensity at this time using pentagon interpolation
+            # Pentagon includes a baseline threshold (the "plateau")
             params = calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_integral, offset=0.5)
-            if not params[4]:
+            if not params[5]:  # Check valid flag (now at index 5)
                 continue
             
-            time_int_rise, time_int_fall, h_int_rise, h_int_fall, _ = params
-            intensity = 0.0
+            time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, _ = params
+            intensity = threshold  # Start from threshold baseline
             
             if t < time_int_rise:
+                # Rising from threshold to h_int_rise
                 span = time_int_rise - time_start
                 if span > 0:
                     frac = (t - time_start) / span
-                    intensity = frac * h_int_rise
+                    intensity = threshold + frac * (h_int_rise - threshold)
             elif t < time_peak:
+                # Rising from h_int_rise to peak
                 span = time_peak - time_int_rise
                 if span > 0:
                     frac = (t - time_int_rise) / span
@@ -199,6 +214,7 @@ def draw_cluster_to_array(channels, times, adc_integrals, sot_values, stopeak_va
             elif t == time_peak:
                 intensity = adc_peak
             elif t <= time_int_fall:
+                # Falling from peak to h_int_fall
                 span = time_int_fall - time_peak
                 if span > 0:
                     frac = (t - time_peak) / span
@@ -206,18 +222,16 @@ def draw_cluster_to_array(channels, times, adc_integrals, sot_values, stopeak_va
                 else:
                     intensity = h_int_fall
             else:
+                # Falling from h_int_fall back to threshold
                 span = time_end - time_int_fall
                 if span > 0:
                     frac = (t - time_int_fall) / span
-                    intensity = h_int_fall - frac * h_int_fall
+                    intensity = h_int_fall - frac * (h_int_fall - threshold)
             
             img[y, x] = max(img[y, x], intensity)
     
-    # Normalize to [0, 1] using log scale like display.cpp uses viridis colormap
-    if img.max() > 0:
-        img_log = np.log10(np.maximum(img, 1))
-        img = (img_log - img_log.min()) / (img_log.max() - img_log.min() + 1e-10)
-    
+    # Keep raw ADC values - DO NOT normalize!
+    # The pixel values represent actual ADC intensities and have physical meaning
     return img
 
 def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=None):
@@ -288,15 +302,16 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                 if len(channels) == 0:
                     continue
                 
-                # Generate 16x128 numpy array using display.cpp style pentagon logic
-                # X=channel (16 pixels), Y=time (128 pixels), pentagon ADC interpolation
+                # Generate 16x128 numpy array with RAW ADC values (not normalized)
+                # X=channel (16 pixels), Y=time (128 pixels)
+                # Pixel values = actual ADC intensity with physical meaning
                 img_array = draw_cluster_to_array(
                     channels, times, adc_integrals, 
                     sot_values, stopeak_values,
                     img_width=16, img_height=128
                 )
                 
-                # Save as .npy file
+                # Save as .npy file (values are RAW ADC counts)
                 output_file = output_dir / f"cluster_plane{plane_letter}_{i:04d}.npy"
                 np.save(output_file, img_array)
                 
@@ -322,6 +337,7 @@ if __name__ == '__main__':
                        help='Drawing mode (kept for compatibility, not used)')
     parser.add_argument('--root-dir', help='Repository root directory')
     parser.add_argument('--json', '-j', help='JSON config file (auto-detects clusters folder)')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
     
     args = parser.parse_args()
     
@@ -334,7 +350,7 @@ if __name__ == '__main__':
             sys.exit(1)
         
         clusters_folder = get_clusters_folder(json_path)
-        output_dir = clusters_folder
+        output_dir = args.output_dir if args.output_dir else clusters_folder
         
         # Find cluster files in the computed folder
         cluster_files = list(Path(clusters_folder).glob("clusters_*.root"))
@@ -343,6 +359,12 @@ if __name__ == '__main__':
             sys.exit(1)
         
         cluster_files = [str(f) for f in cluster_files]
+        
+        if args.verbose:
+            print(f"Using JSON config: {json_path}")
+            print(f"Computed clusters folder: {clusters_folder}")
+            print(f"Output directory: {output_dir}")
+            print(f"Found {len(cluster_files)} cluster file(s)")
         
         print(f"Using JSON config: {json_path}")
         print(f"Computed clusters folder: {clusters_folder}")

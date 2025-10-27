@@ -245,21 +245,22 @@ fi
 
 # Generate cluster images (16x128 numpy arrays)
 if [ "$run_generate_images" = true ]; then
-        # Determine cluster folder from make_clusters json
+        # Use the same JSON file as other steps
         if [ ! -z "$settingsFile" ]; then
-                clusters_json="$settingsFile"
+                images_json="$settingsFile"
         else
-                clusters_json="$JSON_DIR/make_clusters/${sample}${bg_suffix}.json"
+                images_json="$JSON_DIR/${sample}${bg_suffix}.json"
         fi
         
-        # Extract output directory from json
-        cluster_folder=$(python3 -c "import json; f=open('${clusters_json}'); d=json.load(f); print(d.get('output_directory', ''))")
-        
-        if [ -z "$cluster_folder" ] || [ ! -d "$cluster_folder" ]; then
-                echo "Warning: Could not determine cluster folder from ${clusters_json}"
+        if [ ! -f "$images_json" ]; then
+                echo "Warning: JSON file not found: ${images_json}"
                 echo "Skipping image generation step."
         else
-                generate_images_command="$SCRIPTS_DIR/generate_cluster_images.sh $cluster_folder"
+                generate_images_command="$SCRIPTS_DIR/generate_cluster_images.sh -j $images_json"
+                if [ "$verbose" = true ]; then
+                        generate_images_command+=" -v"
+                fi
+                
                 echo "Running generate cluster images step with command:"
                 echo $generate_images_command
                 $generate_images_command
