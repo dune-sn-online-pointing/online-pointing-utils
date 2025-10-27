@@ -7,6 +7,8 @@ Generates 32x32 pixel images from cluster ROOT files for neural network training
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent / 'lib'))
 import json
 import argparse
 from pathlib import Path

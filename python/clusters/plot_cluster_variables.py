@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent / 'lib'))
 import json
 import argparse
 import matplotlib.pylab as pylab

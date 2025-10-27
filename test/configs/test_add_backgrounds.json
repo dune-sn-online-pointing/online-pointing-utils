@@ -1,0 +1,10 @@
+{
+  "signal_type": "es",
+  "sig_folder": "/home/virgolaema/dune/online-pointing-utils/test/test_output/",
+  "sig_input_file": "/home/virgolaema/dune/online-pointing-utils/test/test_output/test_es_file_tps.root",
+  "bg_folder": "/home/virgolaema/dune/online-pointing-utils/test/",
+  "tps_bg_folder": "/home/virgolaema/dune/online-pointing-utils/test/test_output/",
+  "around_vertex_only": false,
+  "vertex_radius": 100,
+  "max_files": 1
+}

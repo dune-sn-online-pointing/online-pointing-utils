@@ -1,0 +1,7 @@
+{
+  "clusters_folder": "/home/virgolaema/dune/online-pointing-utils/clusters_clusters_tick3_ch2_min2_tot3_e0p0/",
+  "clusters_input_file": "/home/virgolaema/dune/online-pointing-utils/clusters_clusters_tick3_ch2_min2_tot3_e0p0/clusters_0.root",
+  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/test/test_output/",
+  "max_files": 1,
+  "generate_combined_pdf": true
+}

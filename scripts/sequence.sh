@@ -5,7 +5,7 @@ source ${SCRIPTS_DIR}/init.sh
 
 
 print_help(){
-    echo "Usage: $0 -s <sample> [-bt] [-ab] [-mc] [-ac] [--no-compile] [--clean-compile]"; 
+    echo "Usage: $0 -s <sample> [-bt] [-ab] [-mc] [-ac] [-gi] [--no-compile] [--clean-compile]"; 
     echo "Options:";
     echo "  --no-compile                Do not recompile the code"
     echo "  --clean-compile             Clean and recompile the code"
@@ -16,6 +16,7 @@ print_help(){
     echo "  --clean           Run cluster without backgrounds"
     echo "  -mc               Run make clusters step"
     echo "  -ac               Run analyze step"
+    echo "  -gi               Generate cluster images (16x128 numpy arrays for NN)"
     echo "  --all                  Run all steps (default if no flags provided)"
     echo "  -f|--override    Force reprocessing even if output already exists (useful for debugging)"
     echo "  -d|--debug       Enable debug mode."
@@ -30,6 +31,7 @@ run_backtrack=false
 run_add_backgrounds=false
 run_make_clusters=false
 run_analyze=false
+run_generate_images=false
 noCompile=false
 cleanCompile=false
 clean_clusters=false
@@ -53,6 +55,7 @@ while [[ $# -gt 0 ]]; do
                 --clean) clean_clusters=true; bg_suffix=""; shift ;;
                 -mc) run_make_clusters=true; shift ;;
                 -ac) run_analyze=true; shift ;;
+                -gi) run_generate_images=true; shift ;;
                 -f|--override) override=true; shift ;;
                 -d|--debug)
                         if [[ $2 == "true" || $2 == "false" ]]; then
@@ -84,6 +87,7 @@ if [ "$all_steps" = "true" ]; then
         run_add_backgrounds=true
         run_make_clusters=true
         run_analyze=true
+        run_generate_images=true
 fi
 
 echo "**************************"
@@ -93,6 +97,7 @@ echo -e "Run analyze_tps:\t$run_analyze_tps"
 echo -e "Run add backgrounds:\t$run_add_backgrounds"
 echo -e "Run make clusters:\t$run_make_clusters"
 echo -e "Run analyze:\t\t$run_analyze"
+echo -e "Run generate images:\t$run_generate_images"
 echo -e "Clean clusters (no backgrounds):\t$clean_clusters"
 echo -e "No compile:\t\t$noCompile"
 echo -e "Clean compile:\t\t$cleanCompile"
@@ -234,6 +239,36 @@ if [ "$run_analyze" = true ]; then
                 exit 1
         fi
         echo ""
+fi
+
+####################
+
+# Generate cluster images (16x128 numpy arrays)
+if [ "$run_generate_images" = true ]; then
+        # Determine cluster folder from make_clusters json
+        if [ ! -z "$settingsFile" ]; then
+                clusters_json="$settingsFile"
+        else
+                clusters_json="$JSON_DIR/make_clusters/${sample}${bg_suffix}.json"
+        fi
+        
+        # Extract output directory from json
+        cluster_folder=$(python3 -c "import json; f=open('${clusters_json}'); d=json.load(f); print(d.get('output_directory', ''))")
+        
+        if [ -z "$cluster_folder" ] || [ ! -d "$cluster_folder" ]; then
+                echo "Warning: Could not determine cluster folder from ${clusters_json}"
+                echo "Skipping image generation step."
+        else
+                generate_images_command="$SCRIPTS_DIR/generate_cluster_images.sh $cluster_folder"
+                echo "Running generate cluster images step with command:"
+                echo $generate_images_command
+                $generate_images_command
+                if [ $? -ne 0 ]; then
+                        echo "Error: Generate images step failed."
+                        exit 1
+                fi
+                echo ""
+        fi
 fi
 
 ################################################

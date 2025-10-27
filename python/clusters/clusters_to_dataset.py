@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 import sys
 import json
 import argparse
+from pathlib import Path
 
-sys.path.append('../python/') 
+sys.path.append(str(Path(__file__).parent.parent / 'lib'))
 from image_creator import *
 from utils import *
 from cluster import *

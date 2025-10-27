@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent / 'lib'))
 
 from image_creator import *
 from utils import *

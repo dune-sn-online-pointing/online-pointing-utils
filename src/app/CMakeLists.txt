@@ -50,6 +50,11 @@ add_executable( extract_energy_cut_stats ${CMAKE_CURRENT_SOURCE_DIR}/extract_ene
 target_link_libraries( extract_energy_cut_stats clustersLibs )
 install( TARGETS extract_energy_cut_stats DESTINATION bin )
 
+cmessage( STATUS "Creating split_by_apa app..." )
+add_executable( split_by_apa ${CMAKE_CURRENT_SOURCE_DIR}/split_by_apa.cpp )
+target_link_libraries( split_by_apa ${ROOT_LIBRARIES} )
+install( TARGETS split_by_apa DESTINATION bin )
+
 # Temporarily 
 # cmessage( STATUS "Creating create_volume_clusters app..." )
 # add_executable( create_volume_clusters ${CMAKE_CURRENT_SOURCE_DIR}/create_volume_clusters.cpp )

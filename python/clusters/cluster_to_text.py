@@ -18,6 +18,8 @@ import warnings
 import gc
 
 import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent / 'lib'))
 sys.path.append('../python/') 
 # from utils import save_tps_array, create_channel_map_array
 # from hdf5_converter import convert_tpstream_to_numpy 

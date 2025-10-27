@@ -1,0 +1,11 @@
+{
+  "tps_folder": "/home/virgolaema/dune/online-pointing-utils/test/test_output/",
+  "tps_input_file": "/home/virgolaema/dune/online-pointing-utils/test/test_output/test_es_file_tps_bg.root",
+  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/test/test_output/",
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 3,
+  "energy_cut": 0,
+  "max_files": 1
+}

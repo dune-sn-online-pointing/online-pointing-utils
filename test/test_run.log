@@ -1,0 +1,11 @@
+========================================
+  Online Pointing Utils - Test Suite
+========================================
+
+Cleaning previous test outputs...
+Setting up test configurations...
+
+Running application tests...
+----------------------------
+Testing backtrack_tpstream... [0;31m✗ FAIL[0m
+  See /home/virgolaema/dune/online-pointing-utils/test/test_output/backtrack_tpstream.log for details
