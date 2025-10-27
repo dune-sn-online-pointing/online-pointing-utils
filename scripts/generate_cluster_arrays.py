@@ -19,6 +19,51 @@ from pathlib import Path
 import argparse
 import uproot
 import numpy as np
+import re
+
+
+def load_display_parameters(repo_root=None):
+    """
+    Load display parameters from parameters/display.dat
+    Returns dict with threshold_adc_x, threshold_adc_u, threshold_adc_v
+    """
+    if repo_root is None:
+        repo_root = Path(__file__).parent.parent
+    else:
+        repo_root = Path(repo_root)
+    
+    display_dat = repo_root / "parameters" / "display.dat"
+    
+    if not display_dat.exists():
+        # Return defaults if file not found
+        return {
+            'threshold_adc_x': 60.0,
+            'threshold_adc_u': 70.0,
+            'threshold_adc_v': 70.0
+        }
+    
+    params = {}
+    with open(display_dat, 'r') as f:
+        for line in f:
+            line = line.strip()
+            # Parse lines like: < display.threshold_adc_x = 60 >
+            match = re.match(r'<\s*display\.(\w+)\s*=\s*([^>]+?)\s*>', line)
+            if match:
+                key = match.group(1)
+                value_str = match.group(2).strip().strip('"')
+                # Try to convert to float, fallback to string
+                try:
+                    value = float(value_str)
+                except ValueError:
+                    value = value_str
+                params[key] = value
+    
+    # Ensure we have all required parameters with defaults
+    params.setdefault('threshold_adc_x', 60.0)
+    params.setdefault('threshold_adc_u', 70.0)
+    params.setdefault('threshold_adc_v', 70.0)
+    
+    return params
 
 
 def get_clusters_folder(json_config):
@@ -53,13 +98,17 @@ def get_clusters_folder(json_config):
         Sanitize numeric value for filesystem.
         Keeps at most 1 digit after decimal, replaces '.' with 'p'
         Matches C++ logic: std::to_string() then sanitize
-        """
-        s = str(value)
         
-        # For integers or .0 floats, remove decimal point entirely
-        if isinstance(value, int) or (isinstance(value, float) and value == int(value)):
-            s = str(int(value))
-            return s
+        IMPORTANT: C++ std::to_string always includes decimals for floats,
+        so we must match that behavior. E.g., 2.0 -> "2p0" not "2"
+        """
+        # Convert to string (for floats, Python shows minimal representation)
+        # but we need to match C++ which always shows decimal for float types
+        if isinstance(value, float):
+            # Format with at least 1 decimal place to match C++ std::to_string behavior
+            s = f"{value:.6f}"  # C++ typically gives 6 decimals
+        else:
+            s = str(value)
         
         # Keep at most one digit after decimal point
         if '.' in s:
@@ -85,11 +134,82 @@ def get_clusters_folder(json_config):
     return clusters_folder_path
 
 
-def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_integral, offset=0.5):
+def get_images_folder(json_config):
+    """
+    Compose images folder name from JSON configuration.
+    Mirrors get_clusters_folder but for images output.
+    
+    Args:
+        json_config: Dict with clustering parameters or path to JSON file
+        
+    Returns:
+        str: Full path to images folder
+    """
+    # Load JSON if path provided
+    if isinstance(json_config, (str, Path)):
+        with open(json_config, 'r') as f:
+            j = json.load(f)
+    else:
+        j = json_config
+    
+    # Extract parameters with defaults matching C++ code
+    cluster_prefix = j.get("clusters_folder_prefix", "clusters")
+    tick_limit = j.get("tick_limit", 0)
+    channel_limit = j.get("channel_limit", 0)
+    min_tps_to_cluster = j.get("min_tps_to_cluster", 0)
+    tot_cut = j.get("tot_cut", 0)
+    energy_cut = float(j.get("energy_cut", 0.0))
+    outfolder = j.get("clusters_folder", ".").rstrip('/')
+    
+    def sanitize(value):
+        """
+        Sanitize numeric value for filesystem.
+        Keeps at most 1 digit after decimal, replaces '.' with 'p'
+        Matches C++ logic: std::to_string() then sanitize
+        
+        IMPORTANT: C++ std::to_string always includes decimals for floats,
+        so we must match that behavior. E.g., 2.0 -> "2p0" not "2"
+        """
+        # Convert to string (for floats, Python shows minimal representation)
+        # but we need to match C++ which always shows decimal for float types
+        if isinstance(value, float):
+            # Format with at least 1 decimal place to match C++ std::to_string behavior
+            s = f"{value:.6f}"  # C++ typically gives 6 decimals
+        else:
+            s = str(value)
+        
+        # Keep at most one digit after decimal point
+        if '.' in s:
+            parts = s.split('.')
+            if len(parts[1]) > 1:
+                s = f"{parts[0]}.{parts[1][0]}"
+        
+        # Replace '.' with 'p' for filesystem safety
+        s = s.replace('.', 'p')
+        return s
+    
+    # Build subfolder name matching C++ format
+    images_subfolder = (
+        f"images_{cluster_prefix}"
+        f"_tick{sanitize(tick_limit)}"
+        f"_ch{sanitize(channel_limit)}"
+        f"_min{sanitize(min_tps_to_cluster)}"
+        f"_tot{sanitize(tot_cut)}"
+        f"_e{sanitize(energy_cut)}"
+    )
+    
+    images_folder_path = f"{outfolder}/{images_subfolder}"
+    return images_folder_path
+
+
+def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_integral, threshold_adc):
     """
     Calculate pentagon parameters (matching Display.cpp logic)
     Pentagon has a threshold baseline (plateau) at the bottom
     Returns: (time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, valid)
+    
+    Args:
+        threshold_adc: The ADC threshold for the plane (60 for X, 70 for U/V) - this is the plateau height
     """
     if time_end <= time_start:
         return (0, 0, 0, 0, 0, False)
@@ -97,23 +217,25 @@ def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_int
     # Total duration
     T = time_end - time_start
     
-    # Calculate threshold (baseline/plateau height)
-    # This is the "plateau" you mentioned - pentagon sits on this baseline
-    threshold = offset / T if T > 0 else 0.0
+    # The threshold/plateau is the ADC threshold for the plane
+    # X plane (collection): 60 ADC
+    # U/V planes (induction): 70 ADC
+    threshold = threshold_adc
     
     # Peak position relative to start (fraction)
     t_peak_rel = (time_peak - time_start) / T if T > 0 else 0.5
     t_peak_rel = max(0.0, min(1.0, t_peak_rel))
     
     # Intermediate point positions (fraction of total duration)
-    t1 = offset * t_peak_rel  # Rising intermediate point
-    t2 = t_peak_rel + offset * (1.0 - t_peak_rel)  # Falling intermediate point
+    frac = 0.5  # Fixed fraction for intermediate vertices
+    t1 = frac * t_peak_rel  # Rising intermediate point
+    t2 = t_peak_rel + frac * (1.0 - t_peak_rel)  # Falling intermediate point
     
-    # Convert back to absolute times
-    time_int_rise = time_start + t1 * T
-    time_int_fall = time_start + t2 * T
+    # Convert back to absolute times - INTEGERS for time (x-axis)
+    time_int_rise = int(round(time_start + t1 * T))
+    time_int_fall = int(round(time_start + t2 * T))
     
-    # Calculate heights at intermediate points
+    # Calculate heights at intermediate points - keep as float (ADC values)
     # Pentagon vertices: (time_start, threshold), (time_int_rise, h_int_rise), 
     #                    (time_peak, adc_peak), (time_int_fall, h_int_fall), (time_end, threshold)
     # These rise from the threshold baseline
@@ -123,7 +245,8 @@ def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_int
     return (time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, True)
 
 
-def draw_cluster_to_array(channels, times, adc_integrals, sot_values, stopeak_values, img_width=16, img_height=128):
+def draw_cluster_to_array(channels, times, adc_integrals, adc_peaks, sot_values, stopeak_values,
+                          plane_threshold, img_width=16, img_height=128):
     """
     Draw cluster to numpy array with actual ADC values (NOT normalized)
     
@@ -135,6 +258,10 @@ def draw_cluster_to_array(channels, times, adc_integrals, sot_values, stopeak_va
     - Image size: 16 (channels) x 128 (time ticks) to match typical cluster topology
     
     IMPORTANT: Pixel values represent actual ADC counts and have physical meaning!
+    
+    Args:
+        adc_peaks: Actual ADC peak values from detector data (NOT estimated)
+        plane_threshold: The ADC threshold for this plane (60 for X, 70 for U/V) - the plateau baseline
     """
     if len(channels) == 0:
         return np.zeros((img_height, img_width), dtype=np.float32)
@@ -142,6 +269,7 @@ def draw_cluster_to_array(channels, times, adc_integrals, sot_values, stopeak_va
     channels = np.array(channels, dtype=np.int32)
     times = np.array(times, dtype=np.float64)
     adc_integrals = np.array(adc_integrals, dtype=np.float64)
+    adc_peaks = np.array(adc_peaks, dtype=np.float64)  # Use actual peaks from data
     sot_values = np.array(sot_values, dtype=np.int32) if len(sot_values) > 0 else np.ones(len(times), dtype=np.int32) * 10
     stopeak_values = np.array(stopeak_values, dtype=np.int32) if len(stopeak_values) > 0 else (sot_values // 2)
     
@@ -176,7 +304,7 @@ def draw_cluster_to_array(channels, times, adc_integrals, sot_values, stopeak_va
         time_end = time_start + sot
         stopeak = stopeak_values[i]
         time_peak = time_start + stopeak
-        adc_peak = adc_integrals[i] / max(sot, 1) * 2  # Approximate peak from integral
+        adc_peak = adc_peaks[i]  # Use actual peak from detector data!
         adc_integral = adc_integrals[i]
         
         # Fill pentagon with padding offsets
@@ -190,19 +318,26 @@ def draw_cluster_to_array(channels, times, adc_integrals, sot_values, stopeak_va
             
             # Calculate ADC intensity at this time using pentagon interpolation
             # Pentagon includes a baseline threshold (the "plateau")
-            params = calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_integral, offset=0.5)
+            # Use plane-specific threshold: X=60, U=70, V=70 ADC
+            params = calculate_pentagon_params(time_start, time_peak, time_end, 
+                                               adc_peak, adc_integral, plane_threshold)
             if not params[5]:  # Check valid flag (now at index 5)
                 continue
             
             time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, _ = params
-            intensity = threshold  # Start from threshold baseline
+            intensity = threshold  # Default to threshold baseline
             
-            if t < time_int_rise:
+            # CRITICAL: First and last samples should be at threshold (the baseline)
+            if t == time_start or t == time_end:
+                intensity = threshold
+            elif t < time_int_rise:
                 # Rising from threshold to h_int_rise
                 span = time_int_rise - time_start
                 if span > 0:
                     frac = (t - time_start) / span
                     intensity = threshold + frac * (h_int_rise - threshold)
+                else:
+                    intensity = threshold
             elif t < time_peak:
                 # Rising from h_int_rise to peak
                 span = time_peak - time_int_rise
@@ -234,14 +369,31 @@ def draw_cluster_to_array(channels, times, adc_integrals, sot_values, stopeak_va
     # The pixel values represent actual ADC intensities and have physical meaning
     return img
 
-def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=None):
-    """Generate images for all clusters in a ROOT file"""
+def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=None, batch_size=1000):
+    """
+    Generate images for all clusters in a ROOT file
+    
+    Args:
+        batch_size: Number of clusters to save per file (default: 1000)
+    """
     
     cluster_file = Path(cluster_file)
     output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True)
     
+    # Load display parameters from parameters/display.dat
+    display_params = load_display_parameters(repo_root)
+    
+    # Thresholds per plane (U, V, X/Collection)
+    threshold_map = {
+        'U': display_params['threshold_adc_u'],
+        'V': display_params['threshold_adc_v'],
+        'X': display_params['threshold_adc_x']
+    }
+    
     print(f"Processing: {cluster_file.name}")
+    print(f"  Thresholds: U={threshold_map['U']}, V={threshold_map['V']}, X={threshold_map['X']}")
+    print(f"  Batch size: {batch_size} clusters per file")
     
     # Open ROOT file
     try:
@@ -282,13 +434,27 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
         
         print(f"  Processing plane {plane_letter}: {n_entries} clusters...")
         
+        # Get threshold for this plane
+        plane_threshold = threshold_map.get(plane_letter, 60.0)
+        print(f"    Using threshold = {plane_threshold} ADC for plane {plane_letter}")
+        
         # Load all data at once for efficiency
         branches = [
             'tp_detector_channel', 'tp_time_start', 'tp_adc_integral',
             'tp_samples_over_threshold', 'tp_samples_to_peak',
-            'marley_tp_fraction', 'total_charge', 'true_label'
+            'tp_adc_peak',  # Use actual ADC peak from data!
+            # Cluster-level metadata
+            'marley_tp_fraction', 'is_main_cluster',
+            'true_pos_x', 'true_pos_y', 'true_pos_z',
+            'true_dir_x', 'true_dir_y', 'true_dir_z',
+            'true_neutrino_energy', 'true_particle_energy'
         ]
         data = tree.arrays(branches, library='np')
+        
+        # Batch processing: collect clusters into batches before saving
+        batch_images = []
+        batch_metadata = []
+        batch_num = 0
         
         for i in range(n_entries):
             try:
@@ -296,26 +462,74 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                 channels = data['tp_detector_channel'][i]
                 times = data['tp_time_start'][i] / 32  # Convert to TPC ticks
                 adc_integrals = data['tp_adc_integral'][i]
+                adc_peaks = data['tp_adc_peak'][i]  # Use actual peak values from data
                 sot_values = data['tp_samples_over_threshold'][i]
                 stopeak_values = data['tp_samples_to_peak'][i]
                 
                 if len(channels) == 0:
                     continue
                 
+                # Extract cluster metadata
+                is_marley = data['marley_tp_fraction'][i] > 0.5  # Marley if >50% of TPs are from Marley
+                is_main_track = bool(data['is_main_cluster'][i])
+                
+                # True position (3D)
+                true_pos = np.array([
+                    data['true_pos_x'][i],
+                    data['true_pos_y'][i],
+                    data['true_pos_z'][i]
+                ], dtype=np.float32)
+                
+                # True direction (3D, normalized)
+                true_dir = np.array([
+                    data['true_dir_x'][i],
+                    data['true_dir_y'][i],
+                    data['true_dir_z'][i]
+                ], dtype=np.float32)
+                
+                # Energy information
+                true_nu_energy = float(data['true_neutrino_energy'][i])
+                true_particle_energy = float(data['true_particle_energy'][i])
+                
                 # Generate 16x128 numpy array with RAW ADC values (not normalized)
                 # X=channel (16 pixels), Y=time (128 pixels)
                 # Pixel values = actual ADC intensity with physical meaning
+                # Use plane-specific threshold (60 for X, 70 for U/V)
                 img_array = draw_cluster_to_array(
-                    channels, times, adc_integrals, 
+                    channels, times, adc_integrals, adc_peaks,
                     sot_values, stopeak_values,
+                    plane_threshold=plane_threshold,
                     img_width=16, img_height=128
                 )
                 
-                # Save as .npy file (values are RAW ADC counts)
-                output_file = output_dir / f"cluster_plane{plane_letter}_{i:04d}.npy"
-                np.save(output_file, img_array)
+                # Prepare metadata as compact array
+                # Format: [is_marley(bool), is_main_track(bool), pos(3xfloat32), dir(3xfloat32), 
+                #          nu_energy(float32), particle_energy(float32), plane_id(uint8)]
+                plane_id = {'U': 0, 'V': 1, 'X': 2}.get(plane_letter, 0)
+                metadata_array = np.array([
+                    int(is_marley),
+                    int(is_main_track),
+                    true_pos[0], true_pos[1], true_pos[2],
+                    true_dir[0], true_dir[1], true_dir[2],
+                    np.float32(true_nu_energy),
+                    np.float32(true_particle_energy),
+                    plane_id
+                ], dtype=np.float32)
                 
+                # Add to batch
+                batch_images.append(img_array)
+                batch_metadata.append(metadata_array)
                 n_generated += 1
+                
+                # Save batch when it reaches batch_size
+                if len(batch_images) >= batch_size:
+                    output_file = output_dir / f"clusters_plane{plane_letter}_batch{batch_num:04d}.npz"
+                    np.savez(output_file, 
+                            images=np.array(batch_images, dtype=np.float32),
+                            metadata=np.array(batch_metadata, dtype=np.float32))
+                    batch_images = []
+                    batch_metadata = []
+                    batch_num += 1
                 
                 # Progress indicator
                 if (n_generated % 100) == 0 or (i + 1) == n_entries:
@@ -324,6 +538,14 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
             except Exception as e:
                 print(f"\n  Warning: Failed to generate array for cluster {i} on plane {plane_letter}: {e}")
                 continue
+        
+        # Save remaining clusters in final batch
+        if len(batch_images) > 0:
+            output_file = output_dir / f"clusters_plane{plane_letter}_batch{batch_num:04d}.npz"
+            np.savez(output_file, 
+                    images=np.array(batch_images, dtype=np.float32),
+                    metadata=np.array(batch_metadata, dtype=np.float32))
+            print(f"\n    Saved final batch with {len(batch_images)} clusters")
     
     print(f"\n  Successfully generated {n_generated} numpy arrays total")
     return n_generated
@@ -332,25 +554,29 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Batch generate cluster numpy arrays (16x128) for NN input')
     parser.add_argument('cluster_files', nargs='*', help='Cluster ROOT files (or use --json)')
     parser.add_argument('--output-dir', help='Output directory for numpy arrays')
+    parser.add_argument('--batch-size', type=int, default=1000, help='Number of clusters per output file (default: 1000)')
     parser.add_argument('--draw-mode', default='pentagon', 
                        choices=['pentagon', 'triangle', 'rectangle'],
                        help='Drawing mode (kept for compatibility, not used)')
     parser.add_argument('--root-dir', help='Repository root directory')
     parser.add_argument('--json', '-j', help='JSON config file (auto-detects clusters folder)')
+    parser.add_argument('--skip-files', type=int, default=0, help='Skip first N cluster files')
+    parser.add_argument('--max-files', type=int, help='Process at most N cluster files')
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
     
     args = parser.parse_args()
     
     # Determine output directory
     if args.json:
-        # Use JSON to determine clusters folder
+        # Use JSON to determine clusters folder and images folder
         json_path = Path(args.json)
         if not json_path.exists():
             print(f"Error: JSON file not found: {json_path}")
             sys.exit(1)
         
         clusters_folder = get_clusters_folder(json_path)
-        output_dir = args.output_dir if args.output_dir else clusters_folder
+        images_folder = get_images_folder(json_path)
+        output_dir = args.output_dir if args.output_dir else images_folder
         
         # Find cluster files in the computed folder
         cluster_files = list(Path(clusters_folder).glob("clusters_*.root"))
@@ -358,17 +584,25 @@ if __name__ == '__main__':
             print(f"Error: No clusters_*.root files found in {clusters_folder}")
             sys.exit(1)
         
-        cluster_files = [str(f) for f in cluster_files]
+        # Sort for consistent ordering
+        cluster_files = sorted(cluster_files)
         
-        if args.verbose:
-            print(f"Using JSON config: {json_path}")
-            print(f"Computed clusters folder: {clusters_folder}")
-            print(f"Output directory: {output_dir}")
-            print(f"Found {len(cluster_files)} cluster file(s)")
+        # Apply skip and max filters
+        if args.skip_files > 0:
+            cluster_files = cluster_files[args.skip_files:]
+            print(f"Skipping first {args.skip_files} files")
+        
+        if args.max_files is not None:
+            cluster_files = cluster_files[:args.max_files]
+            print(f"Processing at most {args.max_files} files")
+        
+        cluster_files = [str(f) for f in cluster_files]
         
         print(f"Using JSON config: {json_path}")
         print(f"Computed clusters folder: {clusters_folder}")
-        print(f"Found {len(cluster_files)} cluster file(s)")
+        print(f"Computed images folder: {images_folder}")
+        print(f"Output directory: {output_dir}")
+        print(f"Processing {len(cluster_files)} cluster file(s)")
         
     else:
         # Use command-line arguments
@@ -384,6 +618,13 @@ if __name__ == '__main__':
         
         cluster_files = args.cluster_files
         output_dir = args.output_dir
+        
+        # Apply skip and max filters
+        if args.skip_files > 0:
+            cluster_files = cluster_files[args.skip_files:]
+        
+        if args.max_files is not None:
+            cluster_files = cluster_files[:args.max_files]
     
     # Set repo root (optional)
     repo_root = Path(args.root_dir) if args.root_dir else None
@@ -391,9 +632,10 @@ if __name__ == '__main__':
     # Generate arrays
     total_generated = 0
     for cluster_file in cluster_files:
-        n = generate_images(cluster_file, output_dir, args.draw_mode, repo_root)
+        n = generate_images(cluster_file, output_dir, args.draw_mode, repo_root, args.batch_size)
         total_generated += n
     
     print(f"\nTotal numpy arrays generated: {total_generated}")
+    print(f"Batch size: {args.batch_size} clusters per file")
     print(f"Arrays saved to: {output_dir}")
 
