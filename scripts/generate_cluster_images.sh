@@ -68,7 +68,7 @@ if [[ ! -f "$settingsFile" ]]; then
 fi
 
 # Build command
-cmd="python3 ${SCRIPTS_DIR}/generate_cluster_arrays.py --json $settingsFile --draw-mode $draw_mode"
+cmd="python3 ${SCRIPTS_DIR}/../python/generate_cluster_arrays.py --json $settingsFile --draw-mode $draw_mode"
 
 if [[ -n "$output_dir" ]]; then
     cmd+=" --output-dir $output_dir"

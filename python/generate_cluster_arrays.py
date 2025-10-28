@@ -463,13 +463,7 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                     data['true_pos_z'][i]
                 ], dtype=np.float32)
                 
-                true_dir = np.array([
-                    data['true_dir_x'][i],
-                    data['true_dir_y'][i],
-                    data['true_dir_z'][i]
-                ], dtype=np.float32)
-                
-                true_mom = np.array([
+                true_particle_mom = np.array([
                     data['true_mom_x'][i],
                     data['true_mom_y'][i],
                     data['true_mom_z'][i]
@@ -493,13 +487,12 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                 metadata_array = np.array([
                     int(is_marley),
                     int(is_main_track),
+                    is_es_interaction,
                     true_pos[0], true_pos[1], true_pos[2],
-                    true_dir[0], true_dir[1], true_dir[2],
-                    true_mom[0], true_mom[1], true_mom[2],
+                    true_particle_mom[0], true_particle_mom[1], true_particle_mom[2],
                     np.float32(true_nu_energy),
                     np.float32(true_particle_energy),
-                    plane_number,
-                    is_es_interaction
+                    plane_number
                 ], dtype=np.float32)
                 
                 images.append(img_array)
@@ -609,7 +602,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
             # Cluster-level metadata
             'marley_tp_fraction', 'is_main_cluster',
             'true_pos_x', 'true_pos_y', 'true_pos_z',
-            'true_dir_x', 'true_dir_y', 'true_dir_z',
+            'true_dir_x', 'true_dir_y', 'true_dir_z',  # Particle direction (normalized)
             'true_mom_x', 'true_mom_y', 'true_mom_z',  # Particle momentum [GeV/c]
             'true_neutrino_energy', 'true_particle_energy',
             'true_interaction'  # Interaction type: "ES" or "CC"
@@ -646,15 +639,15 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                     data['true_pos_z'][i]
                 ], dtype=np.float32)
                 
-                # True direction (3D, normalized)
+                # Particle direction (3D, normalized)
                 true_dir = np.array([
                     data['true_dir_x'][i],
                     data['true_dir_y'][i],
                     data['true_dir_z'][i]
                 ], dtype=np.float32)
                 
-                # True momentum (3D) [GeV/c]
-                true_mom = np.array([
+                # Particle momentum (3D) [GeV/c]
+                true_particle_mom = np.array([
                     data['true_mom_x'][i],
                     data['true_mom_y'][i],
                     data['true_mom_z'][i]
@@ -680,20 +673,19 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                 )
                 
                 # Prepare metadata as compact array
-                # Format: [is_marley, is_main_track, pos(3), dir(3), mom(3),
-                #          nu_energy, particle_energy, plane_id, is_es_interaction]
+                # Format: [is_marley, is_main_track, is_es_interaction, pos(3), 
+                #          particle_mom(3), nu_energy, particle_energy, plane_id]
                 # All stored as float32 for efficiency (0.0/1.0 for booleans)
                 plane_id = {'U': 0, 'V': 1, 'X': 2}.get(plane_letter, 0)
                 metadata_array = np.array([
                     int(is_marley),
                     int(is_main_track),
+                    is_es_interaction,
                     true_pos[0], true_pos[1], true_pos[2],
-                    true_dir[0], true_dir[1], true_dir[2],
-                    true_mom[0], true_mom[1], true_mom[2],
+                    true_particle_mom[0], true_particle_mom[1], true_particle_mom[2],
                     np.float32(true_nu_energy),
                     np.float32(true_particle_energy),
-                    plane_id,
-                    is_es_interaction
+                    plane_id
                 ], dtype=np.float32)
                 
                 # Add to batch
