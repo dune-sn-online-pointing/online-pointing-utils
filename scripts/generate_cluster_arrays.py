@@ -369,18 +369,176 @@ def draw_cluster_to_array(channels, times, adc_integrals, adc_peaks, sot_values,
     # The pixel values represent actual ADC intensities and have physical meaning
     return img
 
-def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=None, batch_size=1000, verbose=False):
+def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
+    """
+    Extract all clusters from a single ROOT file, organized by plane.
+    
+    Returns:
+        dict: {plane_letter: {'images': [...], 'metadata': [...]}}
+    """
+    cluster_file = Path(cluster_file)
+    
+    # Load display parameters
+    display_params = load_display_parameters(repo_root)
+    threshold_map = {
+        'U': display_params['threshold_adc_u'],
+        'V': display_params['threshold_adc_v'],
+        'X': display_params['threshold_adc_x']
+    }
+    
+    result = {}
+    
+    # Open ROOT file
+    try:
+        file = uproot.open(cluster_file)
+    except Exception as e:
+        if verbose:
+            print(f"  Error opening file: {e}")
+        return result
+    
+    # Access clusters directory
+    try:
+        clusters_dir = file['clusters']
+    except KeyError:
+        if verbose:
+            print(f"  No 'clusters' directory found")
+        return result
+    
+    # Find cluster trees
+    tree_names = [k for k in clusters_dir.keys() if 'clusters_tree_' in k]
+    if not tree_names:
+        if verbose:
+            print(f"  No cluster trees found")
+        return result
+    
+    plane_map = {'U': 0, 'V': 1, 'X': 2}
+    
+    for tree_name in tree_names:
+        # Extract plane letter (handle ROOT versioning like 'clusters_tree_U;1')
+        plane_letter = tree_name.split('_')[-1].split(';')[0]  # Get 'U' from 'U;1'
+        plane_number = plane_map.get(plane_letter, 0)
+        plane_threshold = threshold_map.get(plane_letter, 60.0)
+        
+        tree = clusters_dir[tree_name]
+        n_entries = tree.num_entries
+        
+        if n_entries == 0:
+            continue
+        
+        # Load all data
+        branches = [
+            'tp_detector_channel', 'tp_time_start', 'tp_adc_integral',
+            'tp_samples_over_threshold', 'tp_samples_to_peak', 'tp_adc_peak',
+            'marley_tp_fraction', 'is_main_cluster',
+            'true_pos_x', 'true_pos_y', 'true_pos_z',
+            'true_dir_x', 'true_dir_y', 'true_dir_z',
+            'true_mom_x', 'true_mom_y', 'true_mom_z',
+            'true_neutrino_energy', 'true_particle_energy', 'true_interaction'
+        ]
+        data = tree.arrays(branches, library='np')
+        
+        images = []
+        metadata = []
+        
+        for i in range(n_entries):
+            try:
+                # Get TP arrays
+                channels = data['tp_detector_channel'][i]
+                times = data['tp_time_start'][i] / 32
+                adc_integrals = data['tp_adc_integral'][i]
+                adc_peaks = data['tp_adc_peak'][i]
+                sot_values = data['tp_samples_over_threshold'][i]
+                stopeak_values = data['tp_samples_to_peak'][i]
+                
+                if len(channels) == 0:
+                    continue
+                
+                # Extract metadata
+                is_marley = data['marley_tp_fraction'][i] > 0.5
+                is_main_track = bool(data['is_main_cluster'][i])
+                
+                true_pos = np.array([
+                    data['true_pos_x'][i],
+                    data['true_pos_y'][i],
+                    data['true_pos_z'][i]
+                ], dtype=np.float32)
+                
+                true_dir = np.array([
+                    data['true_dir_x'][i],
+                    data['true_dir_y'][i],
+                    data['true_dir_z'][i]
+                ], dtype=np.float32)
+                
+                true_mom = np.array([
+                    data['true_mom_x'][i],
+                    data['true_mom_y'][i],
+                    data['true_mom_z'][i]
+                ], dtype=np.float32)
+                
+                true_nu_energy = float(data['true_neutrino_energy'][i])
+                true_particle_energy = float(data['true_particle_energy'][i])
+                
+                interaction_str = str(data['true_interaction'][i])
+                is_es_interaction = 1.0 if interaction_str == "ES" else 0.0
+                
+                # Generate image
+                img_array = draw_cluster_to_array(
+                    channels, times, adc_integrals, adc_peaks,
+                    sot_values, stopeak_values,
+                    plane_threshold=plane_threshold,
+                    img_width=16, img_height=128
+                )
+                
+                # Prepare metadata
+                metadata_array = np.array([
+                    int(is_marley),
+                    int(is_main_track),
+                    true_pos[0], true_pos[1], true_pos[2],
+                    true_dir[0], true_dir[1], true_dir[2],
+                    true_mom[0], true_mom[1], true_mom[2],
+                    np.float32(true_nu_energy),
+                    np.float32(true_particle_energy),
+                    plane_number,
+                    is_es_interaction
+                ], dtype=np.float32)
+                
+                images.append(img_array)
+                metadata.append(metadata_array)
+                
+            except Exception as e:
+                if verbose:
+                    print(f"  Warning: Failed cluster {i} on plane {plane_letter}: {e}")
+                continue
+        
+        if len(images) > 0:
+            result[plane_letter] = {
+                'images': images,
+                'metadata': metadata
+            }
+            if verbose:
+                print(f"    Plane {plane_letter}: {len(images)} clusters")
+    
+    return result
+
+def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=None, batch_size=1000, verbose=False, start_batch_nums=None):
     """
     Generate images for all clusters in a ROOT file
     
     Args:
         batch_size: Number of clusters to save per file (default: 1000)
         verbose: Enable verbose output (default: False)
+        start_batch_nums: Dict mapping plane letter to starting batch number (for resuming)
+        
+    Returns:
+        dict: Statistics about generated arrays per plane {plane: count}
     """
     
     cluster_file = Path(cluster_file)
     output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True)
+    
+    if start_batch_nums is None:
+        start_batch_nums = {}
     
     # Load display parameters from parameters/display.dat
     display_params = load_display_parameters(repo_root)
@@ -421,7 +579,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
     if verbose:
         print(f"  Found {len(tree_names)} planes with clusters")
 
-    n_generated = 0
+    plane_stats = {}  # Track generated clusters per plane
     plane_map = {'U': 0, 'V': 1, 'X': 2}  # Plane names to numbers
     
     for tree_name in tree_names:
@@ -461,7 +619,8 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
         # Batch processing: collect clusters into batches before saving
         batch_images = []
         batch_metadata = []
-        batch_num = 0
+        batch_num = start_batch_nums.get(plane_letter, 0)  # Start from existing batches
+        n_generated_plane = 0  # Track for this plane
         
         for i in range(n_entries):
             try:
@@ -540,7 +699,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                 # Add to batch
                 batch_images.append(img_array)
                 batch_metadata.append(metadata_array)
-                n_generated += 1
+                n_generated_plane += 1
                 
                 # Save batch when it reaches batch_size
                 if len(batch_images) >= batch_size:
@@ -554,8 +713,8 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                 
                 # Progress indicator
                 if verbose:
-                    if (n_generated % 100) == 0 or (i + 1) == n_entries:
-                        print(f"    Generated {n_generated} arrays total...", end='\r')
+                    if (n_generated_plane % 100) == 0 or (i + 1) == n_entries:
+                        print(f"    Generated {n_generated_plane} arrays total...", end='\r')
                     
             except Exception as e:
                 print(f"\n  Warning: Failed to generate array for cluster {i} on plane {plane_letter}: {e}")
@@ -569,16 +728,19 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                     metadata=np.array(batch_metadata, dtype=np.float32))
             if verbose:
                 print(f"\n    Saved final batch with {len(batch_images)} clusters")
+        
+        plane_stats[plane_letter] = n_generated_plane
 
     if verbose:
-        print(f"\n  Successfully generated {n_generated} numpy arrays total")
-    return n_generated
+        total_generated = sum(plane_stats.values())
+        print(f"\n  Successfully generated {total_generated} numpy arrays total")
+    return plane_stats
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Batch generate cluster numpy arrays (16x128) for NN input')
     parser.add_argument('cluster_files', nargs='*', help='Cluster ROOT files (or use --json)')
     parser.add_argument('--output-dir', help='Output directory for numpy arrays')
-    parser.add_argument('--batch-size', type=int, default=1000, help='Number of clusters per output file (default: 1000)')
+    parser.add_argument('--batch-size', type=int, default=10, help='Number of input files per output batch (default: 10)')
     parser.add_argument('--draw-mode', default='pentagon', 
                        choices=['pentagon', 'triangle', 'rectangle'],
                        help='Drawing mode (kept for compatibility, not used)')
@@ -629,42 +791,6 @@ if __name__ == '__main__':
             cluster_files = cluster_files[:max_files]
             print(f"Processing at most {max_files} files (from {'CLI' if args.max_files is not None else 'JSON'})")
         
-        # Check for existing batch files and skip if not overriding
-        if not args.override:
-            output_path = Path(output_dir)
-            existing_batches = {}
-            
-            # Check existing batch files for each plane
-            for plane in ['U', 'V', 'X']:
-                plane_batches = sorted(output_path.glob(f"clusters_plane{plane}_batch*.npz"))
-                if plane_batches:
-                    # Get the highest batch number
-                    batch_nums = []
-                    for batch_file in plane_batches:
-                        match = re.match(r'clusters_plane[UVX]_batch(\d+)\.npz', batch_file.name)
-                        if match:
-                            batch_nums.append(int(match.group(1)))
-                    if batch_nums:
-                        max_batch = max(batch_nums)
-                        existing_batches[plane] = max_batch + 1  # Number of existing batches
-            
-            if existing_batches:
-                # Calculate how many files to skip based on existing batches
-                # Assuming each file produces roughly the same number of clusters per plane
-                # We'll skip files that would produce batches we already have
-                max_existing_batches = max(existing_batches.values())
-                files_to_skip = max_existing_batches  # Heuristic: 1 batch per file
-                
-                if files_to_skip > 0 and files_to_skip < len(cluster_files):
-                    print(f"\nFound existing batch files (up to batch {max_existing_batches - 1})")
-                    print(f"Skipping first {files_to_skip} input file(s) to avoid regenerating existing batches")
-                    print(f"Use --override/-f to force reprocessing all files\n")
-                    cluster_files = cluster_files[files_to_skip:]
-                elif files_to_skip >= len(cluster_files):
-                    print(f"\nAll output batch files already exist (found {max_existing_batches} batches)")
-                    print(f"Nothing to process. Use --override/-f to force reprocessing\n")
-                    sys.exit(0)
-        
         cluster_files = [str(f) for f in cluster_files]
         
         print(f"Using JSON config: {json_path}")
@@ -700,20 +826,110 @@ if __name__ == '__main__':
             cluster_files = cluster_files[:max_files]
             print(f"Processing at most {max_files} files")
     
+    # Check for existing batch files (both JSON and CLI modes)
+    start_batch_nums = {}
+    if not args.override:
+        # Check what batches already exist
+        output_path = Path(output_dir)
+        existing_batches = {}
+        
+        for plane in ['U', 'V', 'X']:
+            batch_files = sorted(output_path.glob(f'clusters_plane{plane}_batch*.npz'))
+            if batch_files:
+                # Find the highest batch number and count total clusters
+                max_batch = -1
+                total_clusters = 0
+                for bf in batch_files:
+                    # Extract batch number from filename
+                    batch_num = int(bf.stem.split('batch')[1])
+                    max_batch = max(max_batch, batch_num)
+                    
+                    # Load and count clusters
+                    data = np.load(bf)
+                    total_clusters += len(data['images'])
+                
+                existing_batches[plane] = {
+                    'max_batch': max_batch,
+                    'total_clusters': total_clusters,
+                    'next_batch_num': max_batch + 1
+                }
+        
+        if existing_batches:
+            print(f"\nFound existing batch files:")
+            for plane, info in existing_batches.items():
+                print(f"  Plane {plane}: {info['total_clusters']} clusters in {info['max_batch'] + 1} batch(es)")
+                print(f"            Next batch will be: clusters_plane{plane}_batch{info['next_batch_num']:04d}.npz")
+            
+            # For resuming: we'll start each plane from its next batch number
+            start_batch_nums = {plane: info['next_batch_num'] for plane, info in existing_batches.items()}
+            
+            print(f"\nResuming generation (appending new batches to existing ones)")
+            print(f"Use --override/-f to force reprocessing all files from scratch\n")
+    else:
+        # Override mode: delete existing files and start fresh
+        output_path = Path(output_dir)
+        existing_files = list(output_path.glob('clusters_plane*_batch*.npz'))
+        if existing_files:
+            print(f"\nOverride mode: Deleting {len(existing_files)} existing batch file(s)")
+            for f in existing_files:
+                f.unlink()
+    
     # Set repo root (optional)
     repo_root = Path(args.root_dir) if args.root_dir else None
     
-    # Generate arrays
+    # Generate arrays - now batching by input files instead of by clusters
+    FILES_PER_OUTPUT = args.batch_size
     total_generated = 0
+    plane_totals = {}
     
-    # Process all files
-    for cluster_file in cluster_files:
+    # Process files in batches
+    batch_num_per_plane = {plane: start_batch_nums.get(plane, 0) for plane in ['U', 'V', 'X']}
+    
+    for batch_idx in range(0, len(cluster_files), FILES_PER_OUTPUT):
+        batch_files = cluster_files[batch_idx:batch_idx + FILES_PER_OUTPUT]
+        batch_file_count = len(batch_files)
+        
         if args.verbose:
-            print(f"Processing file: {cluster_file}")
-        n = generate_images(cluster_file, output_dir, args.draw_mode, repo_root, args.batch_size, args.verbose)
-        total_generated += n
+            print(f"\nProcessing batch of {batch_file_count} file(s) (files {batch_idx} to {batch_idx + batch_file_count - 1})")
+        
+        # Accumulate clusters from all files in this batch, separated by plane
+        plane_images = {'U': [], 'V': [], 'X': []}
+        plane_metadata = {'U': [], 'V': [], 'X': []}
+        
+        # Process each file in the batch
+        for cluster_file in batch_files:
+            if args.verbose:
+                print(f"  Reading: {cluster_file}")
+            
+            # Extract clusters from this file
+            file_data = extract_clusters_from_file(cluster_file, repo_root, args.verbose)
+            
+            # Add to batch accumulator
+            for plane in ['U', 'V', 'X']:
+                if plane in file_data:
+                    plane_images[plane].extend(file_data[plane]['images'])
+                    plane_metadata[plane].extend(file_data[plane]['metadata'])
+        
+        # Save one output file per plane
+        for plane in ['U', 'V', 'X']:
+            if len(plane_images[plane]) > 0:
+                output_file = Path(output_dir) / f"clusters_plane{plane}_batch{batch_num_per_plane[plane]:04d}.npz"
+                np.savez(output_file,
+                        images=np.array(plane_images[plane], dtype=np.float32),
+                        metadata=np.array(plane_metadata[plane], dtype=np.float32))
+                
+                n_clusters = len(plane_images[plane])
+                plane_totals[plane] = plane_totals.get(plane, 0) + n_clusters
+                total_generated += n_clusters
+                
+                if args.verbose:
+                    print(f"  Saved plane {plane}: {n_clusters} clusters to {output_file.name}")
+                
+                batch_num_per_plane[plane] += 1
     
     print(f"\nTotal numpy arrays generated: {total_generated}")
-    print(f"Batch size: {args.batch_size} clusters per file")
+    if plane_totals:
+        print(f"  Per plane: {dict(plane_totals)}")
+    print(f"Batch size: {FILES_PER_OUTPUT} input files per output file (~{185 * FILES_PER_OUTPUT} clusters per plane)")
     print(f"Arrays saved to: {output_dir}")
 
