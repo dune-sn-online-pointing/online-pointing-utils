@@ -98,7 +98,7 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
     # Load relevant branches
     branches = [
         'event', 'n_tps', 'is_main_cluster',
-        'true_interaction', 'true_neutrino_energy', 'true_particle_energy',
+        'is_es_interaction', 'true_neutrino_energy', 'true_particle_energy',
         'true_mom_x', 'true_mom_y', 'true_mom_z',
         'true_label', 'marley_tp_fraction',
         'tp_detector_channel', 'tp_time_start',
@@ -155,7 +155,7 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
             'samples_to_peak': samples_to_peak,
             'center_channel': center_channel,
             'center_time_tpc': center_time_tpc,
-            'true_interaction': arrays['true_interaction'][i].decode('utf-8') if isinstance(arrays['true_interaction'][i], bytes) else str(arrays['true_interaction'][i]),
+            'is_es_interaction': bool(arrays['is_es_interaction'][i]),
             'true_neutrino_energy': float(arrays['true_neutrino_energy'][i]),
             'true_particle_energy': float(arrays['true_particle_energy'][i]),
             'true_mom_x': float(arrays['true_mom_x'][i]),
@@ -360,19 +360,28 @@ def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
         n_non_marley_clusters = len(volume_clusters) - n_marley_clusters
         
         # Calculate momentum magnitude
-        mom_mag = np.sqrt(
-            main_cluster['true_mom_x']**2 +
-            main_cluster['true_mom_y']**2 +
-            main_cluster['true_mom_z']**2
-        )
+        mom_x = main_cluster['true_mom_x']
+        mom_y = main_cluster['true_mom_y']
+        mom_z = main_cluster['true_mom_z']
+        mom_mag = np.sqrt(mom_x**2 + mom_y**2 + mom_z**2)
+        
+        # If momentum is 0 but we have particle energy, estimate momentum for electrons
+        # For relativistic electrons: p ≈ sqrt(E^2 - m_e^2) ≈ E for E >> 0.511 MeV
+        if mom_mag == 0 and main_cluster['is_marley']:
+            particle_energy_mev = main_cluster['true_particle_energy']
+            if particle_energy_mev > 1.0:  # Only if we have meaningful energy
+                # Electron mass: 0.511 MeV/c^2
+                me_mev = 0.511
+                mom_mag = np.sqrt(max(0, particle_energy_mev**2 - me_mev**2))
         
         # Determine energy and interaction type
         # For marley clusters, use true_particle_energy (actual track energy)
         # For background clusters, neutrino_energy will be -1.0
-        interaction_type = main_cluster['true_interaction']
+        is_es = main_cluster['is_es_interaction']
         if main_cluster['is_marley']:
             # Use particle energy for marley events (electron energy from neutrino interaction)
             event_energy = main_cluster['true_particle_energy']
+            interaction_type = "ES" if is_es else "CC"
         else:
             # Background clusters
             event_energy = -1.0
@@ -384,9 +393,9 @@ def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
             'interaction_type': interaction_type,
             'particle_energy': event_energy,  # Electron/particle energy for marley, -1 for background
             'main_track_momentum': mom_mag,
-            'main_track_momentum_x': main_cluster['true_mom_x'],
-            'main_track_momentum_y': main_cluster['true_mom_y'],
-            'main_track_momentum_z': main_cluster['true_mom_z'],
+            'main_track_momentum_x': mom_x,
+            'main_track_momentum_y': mom_y,
+            'main_track_momentum_z': mom_z,
             'n_clusters_in_volume': len(volume_clusters),
             'n_marley_clusters': n_marley_clusters,
             'n_non_marley_clusters': n_non_marley_clusters,
@@ -401,9 +410,10 @@ def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
         np.savez_compressed(output_file, image=image, metadata=np.array([metadata], dtype=object))
         
         if verbose:
+            interaction_str = "ES" if main_cluster['is_es_interaction'] else "CC" if main_cluster['is_marley'] else "Background"
             print(f"  Created volume {idx}: {len(volume_clusters)} clusters "
                   f"({n_marley_clusters} marley, {n_non_marley_clusters} non-marley), "
-                  f"event {main_cluster['event']}, {main_cluster['true_interaction']}")
+                  f"event {main_cluster['event']}, {interaction_str}")
         
         volumes_created += 1
     
@@ -414,6 +424,8 @@ def main():
     parser = argparse.ArgumentParser(description='Create 1m x 1m volume images for channel tagging')
     parser.add_argument('-j', '--json', required=True, help='JSON configuration file')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+    parser.add_argument('--skip', type=int, default=None, help='Override JSON skip_files: skip first N files')
+    parser.add_argument('--max', type=int, default=None, help='Override JSON max_files: process at most N files')
     
     args = parser.parse_args()
     
@@ -424,7 +436,10 @@ def main():
     clusters_folder = config['clusters_folder']
     output_folder = config['volumes_folder']
     plane = config.get('plane', 'X')  # Default to collection plane
-    max_files = config.get('max_files', None)
+    
+    # CLI overrides JSON settings
+    skip_files = args.skip if args.skip is not None else config.get('skip_files', 0)
+    max_files = args.max if args.max is not None else config.get('max_files', None)
     
     print("="*60)
     print("Volume Image Creation for Channel Tagging")
@@ -433,11 +448,18 @@ def main():
     print(f"Output folder: {output_folder}")
     print(f"Plane: {plane}")
     print(f"Volume size: {VOLUME_SIZE_CM} cm x {VOLUME_SIZE_CM} cm")
+    if skip_files > 0:
+        print(f"Skipping first {skip_files} files")
+    if max_files is not None:
+        print(f"Processing at most {max_files} files")
     print("="*60)
     
     # Find all cluster files
     cluster_files = sorted(Path(clusters_folder).glob('clusters_*.root'))
     
+    # Apply skip and max
+    if skip_files > 0:
+        cluster_files = cluster_files[skip_files:]
     if max_files is not None:
         cluster_files = cluster_files[:max_files]
     

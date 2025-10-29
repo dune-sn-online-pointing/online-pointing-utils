@@ -83,7 +83,7 @@ Cluster join_clusters(Cluster c_u, Cluster c_v, Cluster c_x){
     c.set_true_momentum(c_x.get_true_momentum());
     c.set_true_energy(c_x.get_true_neutrino_energy());
     c.set_true_label(c_x.get_true_label());
-    c.set_true_interaction(c_x.get_true_interaction());
+    c.set_is_es_interaction(c_x.get_is_es_interaction());
     c.set_min_distance_from_true_pos(c_x.get_min_distance_from_true_pos());
     c.set_supernova_tp_fraction(c_x.get_supernova_tp_fraction());
 

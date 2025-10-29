@@ -489,6 +489,10 @@ void read_tpstream(std::string filename,
                 if (debugMode)  LogInfo << " Found a match, generator name: " << mc_true_particle.GetGeneratorName() << std::endl;
                 particle.SetGeneratorName(mc_true_particle.GetGeneratorName());
                 particle.SetProcess(mc_true_particle.GetProcess());
+                // Copy momentum from MC truth (initial momentum)
+                particle.SetPx(mc_true_particle.GetPx());
+                particle.SetPy(mc_true_particle.GetPy());
+                particle.SetPz(mc_true_particle.GetPz());
                 found = true;
                 matched_MCparticles_counter++;
                 // LogInfo << "Found a match for truth ID " << particle.GetTruthId() << std::endl;

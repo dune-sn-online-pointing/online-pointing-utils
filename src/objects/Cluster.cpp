@@ -201,10 +201,10 @@ void Cluster::update_cluster_info() {
         if (neutrino_info_map.count(dominant_key) > 0) {
             const auto& nu_info = neutrino_info_map[dominant_key];
             true_neutrino_energy_ = nu_info.energy;
-            true_interaction_ = nu_info.interaction;
+            is_es_interaction_ = (nu_info.interaction == "ES");
         } else {
             true_neutrino_energy_ = -1.0f;
-            true_interaction_ = "UNKNOWN";
+            is_es_interaction_ = false;
         }
 
         if (debugMode){
@@ -216,7 +216,7 @@ void Cluster::update_cluster_info() {
             LogInfo << "  True Position: (" << true_pos_[0] << ", " << true_pos_[1] << ", " << true_pos_[2] << ")" << std::endl;
             LogInfo << "  True Momentum: (" << true_momentum_[0] << ", " << true_momentum_[1] << ", " << true_momentum_[2] << ")" << std::endl;
             LogInfo << "  True Neutrino Energy: " << true_neutrino_energy_ << std::endl;
-            LogInfo << "  True Interaction: " << true_interaction_ << std::endl;
+            LogInfo << "  True Interaction: " << (is_es_interaction_ ? "ES" : "CC") << std::endl;
         }
     } else {
         // No truth info available
@@ -226,7 +226,7 @@ void Cluster::update_cluster_info() {
         true_particle_energy_ = -1.0f;
         true_label_ = "UNKNOWN";
         true_neutrino_energy_ = -1.0f;
-        true_interaction_ = "UNKNOWN";
+        is_es_interaction_ = false;
         true_pdg_ = 0;
     }
     if (debugMode) {
@@ -264,7 +264,7 @@ void Cluster::printClusterInfo() const {
     LogInfo << "  True Label: " << true_label_ << std::endl;
     LogInfo << "  Supernova TP Fraction: " << supernova_tp_fraction_ << std::endl;
     LogInfo << "  Generator TP Fraction: " << generator_tp_fraction_ << std::endl;
-    LogInfo << "  True Interaction: " << true_interaction_ << std::endl;
+    LogInfo << "  True Interaction: " << (is_es_interaction_ ? "ES" : "CC") << std::endl;
     LogInfo << "  Total Charge: " << total_charge_ << std::endl;
     LogInfo << "  Total Energy: " << total_energy_ << std::endl;
     LogInfo << "  True PDG: " << true_pdg_ << std::endl;

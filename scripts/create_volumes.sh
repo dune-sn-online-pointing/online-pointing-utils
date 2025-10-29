@@ -11,6 +11,8 @@ source "$REPO_ROOT/scripts/init.sh"
 
 # Default values
 VERBOSE_FLAG=""
+SKIP_OVERRIDE=""
+MAX_OVERRIDE=""
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -23,9 +25,17 @@ while [[ $# -gt 0 ]]; do
             VERBOSE_FLAG="-v"
             shift
             ;;
+        --skip)
+            SKIP_OVERRIDE="--skip $2"
+            shift 2
+            ;;
+        --max)
+            MAX_OVERRIDE="--max $2"
+            shift 2
+            ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 -j <json_file> [-v]"
+            echo "Usage: $0 -j <json_file> [-v] [--skip N] [--max N]"
             exit 1
             ;;
     esac
@@ -34,7 +44,7 @@ done
 # Check if JSON file was provided
 if [ -z "$JSON_FILE" ]; then
     echo "Error: JSON file required (-j option)"
-    echo "Usage: $0 -j <json_file> [-v]"
+    echo "Usage: $0 -j <json_file> [-v] [--skip N] [--max N]"
     exit 1
 fi
 
@@ -53,7 +63,7 @@ echo "=================================================="
 echo ""
 
 # Run the Python script
-python3 "$SCRIPT_DIR/create_volumes.py" -j "$JSON_FILE" $VERBOSE_FLAG
+python3 "$SCRIPT_DIR/create_volumes.py" -j "$JSON_FILE" $VERBOSE_FLAG $SKIP_OVERRIDE $MAX_OVERRIDE
 
 EXIT_CODE=$?
 

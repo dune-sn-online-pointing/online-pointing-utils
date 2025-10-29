@@ -409,8 +409,7 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
     float true_particle_energy;
     std::string true_label;
     std::string *true_label_point = nullptr;
-    std::string true_interaction;
-    std::string *true_interaction_point = nullptr;
+    bool is_es_interaction;
     float true_mom_x;
     float true_mom_y;
     float true_mom_z;
@@ -458,7 +457,7 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         clusters_tree->Branch("supernova_tp_fraction", &supernova_tp_fraction, "supernova_tp_fraction/F");
         clusters_tree->Branch("generator_tp_fraction", &generator_tp_fraction, "generator_tp_fraction/F");
         clusters_tree->Branch("marley_tp_fraction", &marley_tp_fraction, "marley_tp_fraction/F");
-        clusters_tree->Branch("true_interaction", &true_interaction);
+        clusters_tree->Branch("is_es_interaction", &is_es_interaction, "is_es_interaction/O");
         clusters_tree->Branch("total_charge", &total_charge, "total_charge/D");
         clusters_tree->Branch("total_energy", &total_energy, "total_energy/D");
         clusters_tree->Branch("conversion_factor", &conversion_factor, "conversion_factor/D");
@@ -479,7 +478,6 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
     else {
         // Existing tree: bind branch addresses to current output variables so Fill() works
         true_label_point = &true_label; // point to stack string for fill
-        true_interaction_point = &true_interaction; // point to stack string for fill
         clusters_tree->SetBranchAddress("event", &event);
         clusters_tree->SetBranchAddress("n_tps", &n_tps);
         clusters_tree->SetBranchAddress("true_pos_x", &true_pos_x);
@@ -497,7 +495,7 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         clusters_tree->SetBranchAddress("min_distance_from_true_pos", &min_distance_from_true_pos);
         clusters_tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
         clusters_tree->SetBranchAddress("generator_tp_fraction", &generator_tp_fraction);
-        clusters_tree->SetBranchAddress("true_interaction", &true_interaction_point);
+        clusters_tree->SetBranchAddress("is_es_interaction", &is_es_interaction);
         clusters_tree->SetBranchAddress("total_charge", &total_charge);
         clusters_tree->SetBranchAddress("total_energy", &total_energy);
         clusters_tree->SetBranchAddress("conversion_factor", &conversion_factor);
@@ -564,8 +562,7 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
             marley_tp_fraction = cl_tps.empty() ? 0.f : static_cast<float>(marley_count) / static_cast<float>(cl_tps.size());
             // std::cout << "Fraction of TPs with non-null generator: " << generator_tp_fraction << std::endl;
         }
-        true_interaction = Cluster.get_true_interaction();
-        true_interaction_point = &true_interaction;
+        is_es_interaction = Cluster.get_is_es_interaction();
         total_charge = Cluster.get_total_charge();
         total_energy = Cluster.get_total_energy();
     // conversion_factor is now set per view above
@@ -605,90 +602,99 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
 std::vector<Cluster> read_clusters(std::string root_filename){
     LogInfo << "Reading clusters from: " << root_filename << std::endl;
     std::vector<Cluster> clusters;
-    TFile *f = new TFile();
-    f = TFile::Open(root_filename.c_str());
-    // print the list of objects in the file
-    f->ls();
-    TTree *clusters_tree = nullptr;
-    // Prefer the new in-file folder structure
-    if (auto* dir = f->GetDirectory("clusters")) {
-        dir->cd();
-        TIter nextKey(dir->GetListOfKeys());
-        while (TKey* key = (TKey*)nextKey()) {
-            if (std::string(key->GetClassName()) == "TTree") {
-                clusters_tree = dynamic_cast<TTree*>(key->ReadObj());
-                if (clusters_tree) break;
-            }
-        }
-    }
-    // Fallback to legacy names if nothing found
-    if (!clusters_tree) {
-        clusters_tree = (TTree*)f->Get("clusters_tree_X");
-    }
-    if (!clusters_tree) {
-        clusters_tree = (TTree*)f->Get("clusters_tree_U");
-    }
-    if (!clusters_tree) {
-        clusters_tree = (TTree*)f->Get("clusters_tree_V");
-    }
-    if (!clusters_tree) {
-        clusters_tree = (TTree*)f->Get("clusters_tree");
-    }
-    if (!clusters_tree) {
-        LogError << "No clusters tree found in file: " << root_filename << std::endl;
-        f->Close();
+    TFile *f = TFile::Open(root_filename.c_str());
+    if (!f || f->IsZombie()) {
+        LogError << "Cannot open file: " << root_filename << std::endl;
         return clusters;
     }
     
-    // std::vector<TriggerPrimitive> matrix;
-    // std::vector<TriggerPrimitive>* matrix_ptr = &matrix;
-
-    int nrows;
-    UInt_t event;
-    float true_dir_x;
-    float true_dir_y;
-    float true_dir_z;
-    float true_mom_x;
-    float true_mom_y;
-    float true_mom_z;
-    float true_energy;
-    std::string true_label;
-    std::string true_interaction;
-    float min_distance_from_true_pos;
-    float supernova_tp_fraction;
-    float generator_tp_fraction;
-    // tree->SetBranchAddress("matrix", &matrix_ptr);
-    // tree->SetBranchAddress("matrix", &matrix);
-    clusters_tree->SetBranchAddress("nrows", &nrows);
-    clusters_tree->SetBranchAddress("event", &event);
-    clusters_tree->SetBranchAddress("true_dir_x", &true_dir_x);
-    clusters_tree->SetBranchAddress("true_dir_y", &true_dir_y);
-    clusters_tree->SetBranchAddress("true_dir_z", &true_dir_z);
-    
-    // Use fallback for branches that might not exist in older files
-    SetBranchWithFallback(clusters_tree, {"true_mom_x"}, &true_mom_x, "true_mom_x");
-    SetBranchWithFallback(clusters_tree, {"true_mom_y"}, &true_mom_y, "true_mom_y");
-    SetBranchWithFallback(clusters_tree, {"true_mom_z"}, &true_mom_z, "true_mom_z");
-    
-    clusters_tree->SetBranchAddress("true_energy", &true_energy);
-    clusters_tree->SetBranchAddress("true_label", &true_label);
-    clusters_tree->SetBranchAddress("min_distance_from_true_pos", &min_distance_from_true_pos);
-    clusters_tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
-    clusters_tree->SetBranchAddress("generator_tp_fraction", &generator_tp_fraction);
-    clusters_tree->SetBranchAddress("true_interaction", &true_interaction);
-    for (int i = 0; i < clusters_tree->GetEntries(); i++) {
-        clusters_tree->GetEntry(i);
-        // Cluster g(matrix);
-        // Cluster.set_true_dir({true_dir_x, true_dir_y, true_dir_z});
-        // Cluster.set_true_energy(true_energy);
-        // Cluster.set_true_label(true_label);
-        // Cluster.set_reco_pos({reco_pos_x, reco_pos_y, reco_pos_z});
-        // Cluster.set_min_distance_from_true_pos(min_distance_from_true_pos);
-        // Cluster.set_supernova_tp_fraction(supernova_tp_fraction);       
-        // Cluster.set_true_interaction(true_interaction);
-        // clusters.push_back(g);
+    // Find clusters directory
+    TDirectory* clusters_dir = dynamic_cast<TDirectory*>(f->Get("clusters"));
+    if (!clusters_dir) {
+        LogWarning << "No 'clusters' directory found, trying file root" << std::endl;
+        clusters_dir = f;
     }
+    
+    // Iterate through all trees in the directory
+    TIter nextKey(clusters_dir->GetListOfKeys());
+    TKey* key;
+    while ((key = (TKey*)nextKey())) {
+        if (std::string(key->GetClassName()) != "TTree") continue;
+        
+        TTree* tree = dynamic_cast<TTree*>(key->ReadObj());
+        if (!tree) continue;
+        
+        if (verboseMode) LogInfo << "  Found tree: " << tree->GetName() << " with " << tree->GetEntries() << " entries" << std::endl;
+        
+        // Set up branch addresses for CURRENT schema (as written by write_clusters)
+        Int_t event = 0;
+        Int_t n_tps = 0;
+        Float_t true_neutrino_energy = 0;
+        Float_t true_particle_energy = 0;
+        Bool_t is_main_cluster = false;
+        std::vector<int>* tp_channel = nullptr;
+        std::vector<int>* tp_time_start = nullptr;
+        std::vector<int>* tp_s_over = nullptr;
+        std::vector<int>* tp_adc_integral = nullptr;
+        
+        if (tree->GetBranch("event")) tree->SetBranchAddress("event", &event);
+        if (tree->GetBranch("n_tps")) tree->SetBranchAddress("n_tps", &n_tps);
+        if (tree->GetBranch("true_neutrino_energy")) tree->SetBranchAddress("true_neutrino_energy", &true_neutrino_energy);
+        if (tree->GetBranch("true_particle_energy")) tree->SetBranchAddress("true_particle_energy", &true_particle_energy);
+        if (tree->GetBranch("is_main_cluster")) tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
+        if (tree->GetBranch("tp_detector_channel")) tree->SetBranchAddress("tp_detector_channel", &tp_channel);
+        if (tree->GetBranch("tp_time_start")) tree->SetBranchAddress("tp_time_start", &tp_time_start);
+        if (tree->GetBranch("tp_samples_over_threshold")) tree->SetBranchAddress("tp_samples_over_threshold", &tp_s_over);
+        if (tree->GetBranch("tp_adc_integral")) tree->SetBranchAddress("tp_adc_integral", &tp_adc_integral);
+        
+        // Read all entries
+        for (Long64_t i = 0; i < tree->GetEntries(); i++) {
+            tree->GetEntry(i);
+            
+            if (!tp_channel || tp_channel->empty()) {
+                if (debugMode) LogDebug << "    Skipping entry " << i << " (no TPs)" << std::endl;
+                continue;
+            }
+            
+            if (verboseMode) LogInfo << "    Entry " << i << ": " << tp_channel->size() << " TPs, event " << event << std::endl;
+            
+            // Create TriggerPrimitives from the vectors
+            std::vector<TriggerPrimitive*> tps;
+            for (size_t j = 0; j < tp_channel->size(); j++) {
+                int channel = (*tp_channel)[j];
+                int time_start = (*tp_time_start)[j];
+                int s_over_threshold = (*tp_s_over)[j];
+                int adc_integral = (*tp_adc_integral)[j];
+                
+                // Create TP (version=0, flag=0, detid=0 are defaults, adc_peak=0, samples_to_peak=0)
+                TriggerPrimitive* tp = new TriggerPrimitive(0, 0, 0, channel, s_over_threshold, time_start, 0, adc_integral, 0);
+                tp->SetEvent(event);
+                
+                // Determine view from tree name
+                std::string tree_name = tree->GetName();
+                if (tree_name.find("_X") != std::string::npos) {
+                    tp->SetView(0); // Collection
+                } else if (tree_name.find("_U") != std::string::npos) {
+                    tp->SetView(1); // Induction U
+                } else if (tree_name.find("_V") != std::string::npos) {
+                    tp->SetView(2); // Induction V
+                }
+                
+                tps.push_back(tp);
+            }
+            
+            if (verboseMode) LogInfo << "    Creating cluster from " << tps.size() << " TPs..." << std::endl;
+            
+            // Create cluster
+            Cluster cluster(tps);
+            cluster.set_is_main_cluster(is_main_cluster);
+            
+            clusters.push_back(cluster);
+        }
+    }
+    
     f->Close();
+    if (verboseMode) LogInfo << "  Read " << clusters.size() << " total clusters from all trees" << std::endl;
     return clusters;
 }
 

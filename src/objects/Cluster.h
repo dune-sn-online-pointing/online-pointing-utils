@@ -28,7 +28,7 @@ class Cluster {
         float get_min_distance_from_true_pos() const { return min_distance_from_true_pos_; }
         float get_supernova_tp_fraction() const { return supernova_tp_fraction_; }
         float get_generator_tp_fraction() const { return generator_tp_fraction_; }
-        std::string get_true_interaction() const { return true_interaction_; }
+        bool get_is_es_interaction() const { return is_es_interaction_; }
         float get_total_charge(); // { return total_charge_; }
         float get_total_energy(); // { return total_energy_; }
         float get_number_of_tps() { return tps_.size(); }
@@ -47,7 +47,7 @@ class Cluster {
         void set_min_distance_from_true_pos(float min_distance) { min_distance_from_true_pos_ = min_distance; }
         void set_supernova_tp_fraction(float fraction) { supernova_tp_fraction_ = fraction; }
         void set_generator_tp_fraction(float fraction) { generator_tp_fraction_ = fraction; }
-        void set_true_interaction(std::string interaction) { true_interaction_ = interaction; }
+        void set_is_es_interaction(bool is_es) { is_es_interaction_ = is_es; }
         void set_true_pdg(int pdg) { true_pdg_ = pdg; }
         void set_is_main_cluster(bool is_main) { is_main_cluster_ = is_main; }
         // void set_total_charge(float charge) { total_charge_ = charge; }
@@ -62,7 +62,7 @@ class Cluster {
         std::vector<float> true_pos_ {0.0f, 0.0f, 0.0f};    
         std::vector<float> true_momentum_ {0.0f, 0.0f, 0.0f};
         std::vector<float> true_dir_ {0.0f, 0.0f, 0.0f};
-        std::string true_interaction_  {"UNKNOWN"}; // ES or CC
+        bool is_es_interaction_ {false}; // true if ES, false if CC or unknown
         float min_distance_from_true_pos_ {0.0f};
         float true_neutrino_energy_ {-1.0f};
         float true_particle_energy_ {-1.0f};
