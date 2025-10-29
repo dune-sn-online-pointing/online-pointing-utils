@@ -350,109 +350,10 @@ void read_tpstream(std::string filename,
     if (verboseMode) LogInfo << " There are " << neutrinos.size() << " neutrinos" << std::endl;
     
     ///////////////////////////////////////////////////////////////////////////////////////////////
-    // Read simides, used to find the channel and time and later associate TPs to MCparticles 
-
-    std::string simidestree_path = "triggerAnaDumpTPs/simides"; 
-    TTree *simidestree = dynamic_cast<TTree*>(file->Get(simidestree_path.c_str()));
-    if (!simidestree) {
-        LogError << "Tree not found: " << simidestree_path << std::endl;
-        return;
-    }   
-
-    // find first and last entry of the event
-    int n_simides_in_event = 0;
-    int first_simide_entry_in_event = -1;
-    int last_simide_entry_in_event = -1;
-
-    UInt_t event_number_simides = 0;
-    simidestree->SetBranchAddress("Event", &event_number_simides);
-
-    get_first_and_last_event(simidestree, &event_number_simides, this_event_number, first_simide_entry_in_event, last_simide_entry_in_event);
-
-    // Int_t event_number_simides;
-    UInt_t ChannelID;
-    UShort_t Timestamp;
-    Int_t trackID;
-    float x_simide;
-
-    simidestree->SetBranchAddress("Event", &event_number_simides);
-
-    if (!SetBranchWithFallback(simidestree, {"ChannelID", "channel"}, &ChannelID, "SimIDEs channel")) {
-        return;
-    }
-
-    if (!SetBranchWithFallback(simidestree, {"Timestamp", "timestamp"}, &Timestamp, "SimIDEs timestamp")) {
-        return;
-    }
-
-    if (!SetBranchWithFallback(simidestree, {"trackID", "origTrackID"}, &trackID, "SimIDEs track ID")) {
-        return;
-    }
-    simidestree->SetBranchAddress("x", &x_simide);
-
-    if (verboseMode) LogInfo << " Reading tree of SimIDEs to find channels and timestamps associated to MC particles" << std::endl;
-    if (verboseMode) LogInfo << " Number of SimIDEs in this event: " << last_simide_entry_in_event - first_simide_entry_in_event + 1 << std::endl;
-
-    // Optimization: build a map for fast lookup of true_particles by (event, trackID)
-    struct EventTrackKey {
-        int event;
-        int trackId;
-        bool operator==(const EventTrackKey& other) const {
-            return event == other.event && trackId == other.trackId;
-        }
-    };
-    struct EventTrackKeyHash {
-        std::size_t operator()(const EventTrackKey& k) const {
-            return std::hash<int>()(k.event) ^ (std::hash<int>()(k.trackId) << 1);
-        }
-    };
-    std::unordered_map<EventTrackKey, TrueParticle*, EventTrackKeyHash> particle_map;
-    for (auto& particle : true_particles) {
-        particle_map[{particle.GetEvent(), std::abs(particle.GetTrackId())}] = &particle;
-    }
-
-    int match_count = 0;
-    for (Long64_t iSimIde = first_simide_entry_in_event; iSimIde <= last_simide_entry_in_event; ++iSimIde) {
-        simidestree->GetEntry(iSimIde);
-        EventTrackKey key{static_cast<int>(event_number_simides), std::abs(trackID)};
-        auto it = particle_map.find(key);
-        if (it != particle_map.end()) {
-            auto* particle = it->second;
-            // Use SimIDE timestamp directly (clock ticks) to match TP time_start units
-            // Store SimIDE times scaled into TPC tick domain (Timestamp * conversion_tdc_to_tpc)
-            // (Later we'll optionally apply an offset correction to align with TP time origin.)
-            // OVERFLOW FIX: Cast to larger type before multiplication to prevent 16-bit overflow
-            uint64_t timestampU64 = (uint64_t)Timestamp;
-            double tConverted = (double)(timestampU64 * conversion_tdc_to_tpc);
-            
-            // DIAGNOSTIC: Check for potential overflow (when raw timestamp > 2048 for 32x conversion)
-            if (Timestamp > 2048) {
-                double wouldOverflow = (double)((uint16_t)(Timestamp * conversion_tdc_to_tpc)); // simulate 16-bit overflow
-                // LogInfo << "[OVERFLOW-FIX] Raw timestamp " << Timestamp << " -> corrected: " << tConverted << " (would have been: " << wouldOverflow << " with overflow)" << std::endl;
-            }
-            
-            particle->SetTimeStart(std::min(particle->GetTimeStart(), tConverted));
-            particle->SetTimeEnd(std::max(particle->GetTimeEnd(), tConverted));
-            particle->AddChannel(ChannelID);
-            match_count++;
-        } else {
-            if (verboseMode) LogWarning << "TrackID " << trackID << " not found in MC particles." << std::endl;
-        }
-    } // end of simides, not used anywhere anymore
-
-    if (verboseMode) LogInfo << " Matched " << std::setprecision(2) << std::fixed << float(match_count)/(last_simide_entry_in_event-first_simide_entry_in_event+1)*100. << " %" << " SimIDEs to true particles" << std::endl;
-
-    int truepart_with_simideInfo = 0;
-    for (auto& particle : true_particles) {
-        if (particle.GetChannels().size() > 0) {
-            truepart_with_simideInfo++;
-        }
-    }
-
-    if (verboseMode) LogInfo << " Number of geant particles with SimIDEs info: " << float(truepart_with_simideInfo)/true_particles.size()*100. << " %" << std::endl;
-    if (verboseMode) LogInfo << " If not 100%, it's ok. Some particles (nuclei) don't produce SimIDEs" << std::endl;
-
-    // NEW: Apply direct TP-SimIDE matching to replace/supplement trueParticle-based matching
+    // Apply direct TP-SimIDE matching
+    // This function reads SimIDEs from the file and matches them directly to TPs
+    // based on time and channel proximity, then links to MCParticles via trackID
+    
     if (verboseMode) LogInfo << " Applying direct TP-SimIDE matching for event " << this_event_number << std::endl;
     const double effective_time_tolerance = (time_tolerance_ticks >= 0.0) ? time_tolerance_ticks : 5000.0;
     match_tps_to_simides_direct(tps, true_particles, file, this_event_number, effective_time_tolerance, channel_tolerance);
@@ -1074,10 +975,8 @@ void write_tps(
         LogError << "Cannot create output file: " << out_filename << std::endl;
         return;
     }
-    TDirectory* tpsDir = outFile.mkdir("tps");
-    tpsDir->cd();
 
-    // TPs tree with embedded truth
+    // TPs tree at root level (not inside a folder)
     TTree tpsTree("tps", "Trigger Primitives with embedded truth");
     
     // TP basic variables
@@ -1150,13 +1049,15 @@ void write_tps(
     tpsTree.Branch("neutrino_pz", &neutrino_pz, "neutrino_pz/F");
     tpsTree.Branch("neutrino_energy", &neutrino_energy, "neutrino_energy/F");
 
-    // Metadata tree
-    TTree metaTree("metadata", "File metadata");
+    // Backtracking metadata tree
+    TTree metaTree("backtracking_metadata", "Backtracking metadata");
     int n_events = tps_by_event.size();
     int n_tps_total = 0;
     for (const auto& v : tps_by_event) n_tps_total += v.size();
+    float bt_error_margin = static_cast<float>(ParametersManager::getInstance().getDouble("timing.backtracker_error_margin"));
     metaTree.Branch("n_events", &n_events, "n_events/I");
     metaTree.Branch("n_tps_total", &n_tps_total, "n_tps_total/I");
+    metaTree.Branch("backtracker_error_margin", &bt_error_margin, "backtracker_error_margin/F");
     metaTree.Fill();
 
     // Fill TPs with embedded truth
@@ -1202,9 +1103,11 @@ void write_tps(
         }
     }
 
-    tpsDir->cd();
-    tpsTree.Write(); 
+    // Write both trees at root level
+    outFile.cd();
+    tpsTree.Write();
     metaTree.Write();
+    
     outFile.Close();
     
     // Report absolute output path for consistency

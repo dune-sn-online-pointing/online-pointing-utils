@@ -92,11 +92,14 @@ int main(int argc, char* argv[]) {
         input_tree = (TTree*)input_file->Get("tps/TriggerPrimitive");
     }
     if (!input_tree) {
-        input_tree = (TTree*)input_file->Get("tps/tps");  // Background files use this naming
+        input_tree = (TTree*)input_file->Get("tps");  // TPs at root level
+    }
+    if (!input_tree) {
+        input_tree = (TTree*)input_file->Get("tps/tps");  // Old format: TPs inside directory
     }
     if (!input_tree) {
         std::cerr << "ERROR: Cannot find TriggerPrimitive tree in input file" << std::endl;
-        std::cerr << "Tried: 'TriggerPrimitive', 'tps/TriggerPrimitive', and 'tps/tps'" << std::endl;
+        std::cerr << "Tried: 'TriggerPrimitive', 'tps/TriggerPrimitive', 'tps', and 'tps/tps'" << std::endl;
         input_file->Close();
         return 1;
     }

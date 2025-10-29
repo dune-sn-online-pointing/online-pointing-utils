@@ -74,10 +74,8 @@ int main(int argc, char* argv[]){
     TFile* f = TFile::Open(inFile.c_str());
     if (!f || f->IsZombie()){ LogError << "Cannot open: " << inFile << std::endl; if(f){f->Close(); delete f;} continue; }
 
-    // Read TPs to compute per-event MARLEY ADC-integral sum; and truth energies
-    TDirectory* tpsDir = f->GetDirectory("tps");
-    LogThrowIf(!tpsDir, "Directory 'tps' not found in: " << inFile);
-    TTree* tpTree = dynamic_cast<TTree*>(tpsDir->Get("tps"));
+    // Read TPs from root level (no longer in directory)
+    TTree* tpTree = dynamic_cast<TTree*>(f->Get("tps"));
     LogThrowIf(!tpTree, "Tree 'tps' not found in: " << inFile);
 
     int evt=0; ULong64_t sot=0; UInt_t adc_int=0; std::string* gen=nullptr;
@@ -86,16 +84,16 @@ int main(int argc, char* argv[]){
     if (tpTree->GetBranch("adc_integral")) tpTree->SetBranchAddress("adc_integral", &adc_int);
     tpTree->SetBranchAddress("generator_name", &gen);
 
-    // true particle energy per event (if available) and neutrino energy
+    // true particle energy per event (if available) and neutrino energy - these are optional trees
     std::map<int, double> evt_true_particle_energy;
-    if (auto* tTruth = dynamic_cast<TTree*>(tpsDir->Get("true_particles"))){
+    if (auto* tTruth = dynamic_cast<TTree*>(f->Get("true_particles"))){
       int tevt=0; float en=0; tTruth->SetBranchAddress("event", &tevt);
       if (tTruth->GetBranch("en")) tTruth->SetBranchAddress("en", &en);
       Long64_t n = tTruth->GetEntries();
       for (Long64_t i=0;i<n;++i){ tTruth->GetEntry(i); evt_true_particle_energy[tevt] = en; }
     }
     std::map<int, double> evt_nu_energy;
-    if (auto* nuTree = dynamic_cast<TTree*>(tpsDir->Get("neutrinos"))){
+    if (auto* nuTree = dynamic_cast<TTree*>(f->Get("neutrinos"))){
       int nevt=0; int nen=0; nuTree->SetBranchAddress("event", &nevt); if (nuTree->GetBranch("en")) nuTree->SetBranchAddress("en", &nen);
       Long64_t n = nuTree->GetEntries(); for (Long64_t i=0;i<n;++i){ nuTree->GetEntry(i); evt_nu_energy[nevt] = (double)nen; }
     }

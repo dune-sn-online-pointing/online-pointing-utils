@@ -140,6 +140,9 @@ int main(int argc, char* argv[]) {
         int meta_adc_cut_ind = adc_integral_cut_ind;
         int meta_adc_cut_col = adc_integral_cut_col;
         int meta_tot_cut = tot_cut;
+        float meta_energy_cut = energy_cut;
+        float meta_adc_to_mev_collection = ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");
+        float meta_adc_to_mev_induction = ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
         
         metadata_tree->Branch("tick_limit", &meta_tick_limit, "tick_limit/I");
         metadata_tree->Branch("channel_limit", &meta_channel_limit, "channel_limit/I");
@@ -147,6 +150,9 @@ int main(int argc, char* argv[]) {
         metadata_tree->Branch("adc_integral_cut_induction", &meta_adc_cut_ind, "adc_integral_cut_induction/I");
         metadata_tree->Branch("adc_integral_cut_collection", &meta_adc_cut_col, "adc_integral_cut_collection/I");
         metadata_tree->Branch("tot_cut", &meta_tot_cut, "tot_cut/I");
+        metadata_tree->Branch("energy_cut", &meta_energy_cut, "energy_cut/F");
+        metadata_tree->Branch("adc_to_mev_collection", &meta_adc_to_mev_collection, "adc_to_mev_collection/F");
+        metadata_tree->Branch("adc_to_mev_induction", &meta_adc_to_mev_induction, "adc_to_mev_induction/F");
         
         metadata_tree->Fill();
         metadata_tree->Write("", TObject::kOverwrite);

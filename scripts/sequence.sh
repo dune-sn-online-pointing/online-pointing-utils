@@ -17,6 +17,9 @@ print_help(){
     echo "  -mc               Run make clusters step"
     echo "  -ac               Run analyze step"
     echo "  -gi               Generate cluster images (16x128 numpy arrays for NN)"
+    echo "  -ai               Run analyze images step"
+    echo "  -gv               Generate volume images"
+    echo "  -av               Run analyze volumes step"
     echo "  --all                  Run all steps (default if no flags provided)"
     echo "  -f|--override    Force reprocessing even if output already exists (useful for debugging)"
     echo "  -d|--debug       Enable debug mode."
@@ -32,6 +35,9 @@ run_add_backgrounds=false
 run_make_clusters=false
 run_analyze=false
 run_generate_images=false
+run_analyze_images=false
+run_generate_volumes=false
+run_analyze_volumes=false
 noCompile=false
 cleanCompile=false
 clean_clusters=false
@@ -56,6 +62,9 @@ while [[ $# -gt 0 ]]; do
                 -mc) run_make_clusters=true; shift ;;
                 -ac) run_analyze=true; shift ;;
                 -gi) run_generate_images=true; shift ;;
+                -ai) run_analyze_images=true; shift ;;
+                -gv) run_generate_volumes=true; shift ;;
+                -av) run_analyze_volumes=true; shift ;;
                 -f|--override) override=true; shift ;;
                 -d|--debug)
                         if [[ $2 == "true" || $2 == "false" ]]; then
@@ -83,11 +92,14 @@ done
 # Ensure --all always sets all run flags, regardless of order, after parsing and before any output
 if [ "$all_steps" = "true" ]; then
         run_backtrack=true
-        # run_analyze_tps=true
+        run_analyze_tps=true
         run_add_backgrounds=true
         run_make_clusters=true
         run_analyze=true
         run_generate_images=true
+        run_analyze_images=true
+        run_generate_volumes=true
+        run_analyze_volumes=true
 fi
 
 echo "**************************"
@@ -98,6 +110,9 @@ echo -e "Run add backgrounds:\t$run_add_backgrounds"
 echo -e "Run make clusters:\t$run_make_clusters"
 echo -e "Run analyze:\t\t$run_analyze"
 echo -e "Run generate images:\t$run_generate_images"
+echo -e "Run analyze images:\t$run_analyze_images"
+echo -e "Run generate volumes:\t$run_generate_volumes"
+echo -e "Run analyze volumes:\t$run_analyze_volumes"
 echo -e "Clean clusters (no backgrounds):\t$clean_clusters"
 echo -e "No compile:\t\t$noCompile"
 echo -e "Clean compile:\t\t$cleanCompile"
@@ -269,6 +284,108 @@ if [ "$run_generate_images" = true ]; then
                         exit 1
                 fi
                 echo ""
+        fi
+fi
+
+####################
+
+# Analyze images
+if [ "$run_analyze_images" = true ]; then
+        if [ ! -z "$settingsFile" ]; then
+                analyze_images_json="$settingsFile"
+        else
+                analyze_images_json="$JSON_DIR/${sample}${bg_suffix}.json"
+        fi
+        
+        if [ ! -f "$analyze_images_json" ]; then
+                echo "Warning: JSON file not found: ${analyze_images_json}"
+                echo "Skipping analyze images step."
+        else
+                # Look for a Python analyze_images script
+                if [ -f "$REPO_HOME/python/ana/analyze_images.py" ]; then
+                        analyze_images_command="python3 $REPO_HOME/python/ana/analyze_images.py --json $analyze_images_json"
+                        if [ "$verbose" = true ]; then
+                                analyze_images_command+=" --verbose"
+                        fi
+                        
+                        echo "Running analyze images step with command:"
+                        echo $analyze_images_command
+                        $analyze_images_command
+                        if [ $? -ne 0 ]; then
+                                echo "Error: Analyze images step failed."
+                                exit 1
+                        fi
+                        echo ""
+                else
+                        echo "Warning: analyze_images.py script not found in python/ana/"
+                        echo "Skipping analyze images step."
+                fi
+        fi
+fi
+
+####################
+
+# Generate volume images
+if [ "$run_generate_volumes" = true ]; then
+        if [ ! -z "$settingsFile" ]; then
+                volumes_json="$settingsFile"
+        else
+                volumes_json="$JSON_DIR/${sample}${bg_suffix}.json"
+        fi
+        
+        if [ ! -f "$volumes_json" ]; then
+                echo "Warning: JSON file not found: ${volumes_json}"
+                echo "Skipping generate volumes step."
+        else
+                generate_volumes_command="$SCRIPTS_DIR/create_volumes.sh -j $volumes_json"
+                if [ "$verbose" = true ]; then
+                        generate_volumes_command+=" -v"
+                fi
+                
+                echo "Running generate volumes step with command:"
+                echo $generate_volumes_command
+                $generate_volumes_command
+                if [ $? -ne 0 ]; then
+                        echo "Error: Generate volumes step failed."
+                        exit 1
+                fi
+                echo ""
+        fi
+fi
+
+####################
+
+# Analyze volumes
+if [ "$run_analyze_volumes" = true ]; then
+        if [ ! -z "$settingsFile" ]; then
+                analyze_volumes_json="$settingsFile"
+        else
+                analyze_volumes_json="$JSON_DIR/${sample}${bg_suffix}.json"
+        fi
+        
+        if [ ! -f "$analyze_volumes_json" ]; then
+                echo "Warning: JSON file not found: ${analyze_volumes_json}"
+                echo "Skipping analyze volumes step."
+        else
+                # Look for a Python analyze_volumes script
+                if [ -f "$REPO_HOME/python/ana/analyze_volumes.py" ]; then
+                        analyze_volumes_command="python3 $REPO_HOME/python/ana/analyze_volumes.py --json $analyze_volumes_json"
+                        if [ "$verbose" = true ]; then
+                                analyze_volumes_command+=" --verbose"
+                        fi
+                        
+                        echo "Running analyze volumes step with command:"
+                        echo $analyze_volumes_command
+                        $analyze_volumes_command
+                        if [ $? -ne 0 ]; then
+                                echo "Error: Analyze volumes step failed."
+                                exit 1
+                        fi
+                        echo ""
+                else
+                        echo "Warning: analyze_volumes.py script not found in python/ana/"
+                        echo "Skipping analyze volumes step."
+                fi
         fi
 fi
 

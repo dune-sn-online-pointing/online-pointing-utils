@@ -11,11 +11,9 @@ void read_tps(const std::string& in_filename,
     
     TFile inFile(in_filename.c_str(), "READ"); 
     if (inFile.IsZombie()) { LogError << "Cannot open: " << in_filename << std::endl; return; }
-    TDirectory* tpsDir = inFile.GetDirectory("tps"); 
-    if (!tpsDir) { LogError << "Directory 'tps' not found in: " << in_filename << std::endl; return; }
 
-    // Read TPs tree with embedded truth
-    if (auto* tpTree = dynamic_cast<TTree*>(tpsDir->Get("tps"))) {
+    // Read TPs tree from root level (no longer in "tps" directory)
+    if (auto* tpTree = dynamic_cast<TTree*>(inFile.Get("tps"))) {
         
         // TP basic variables
         int event=0; 
@@ -413,15 +411,11 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
     float true_mom_x;
     float true_mom_y;
     float true_mom_z;
-    float min_distance_from_true_pos;
     float supernova_tp_fraction;
     float generator_tp_fraction;
     float marley_tp_fraction;
     double total_charge;
     double total_energy;    
-    double conversion_factor_collection = 3600.0;
-    double conversion_factor_induction = 900.0;
-    double conversion_factor;
     int true_pdg;
     bool is_main_cluster;
     
@@ -453,14 +447,12 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         clusters_tree->Branch("true_neutrino_energy", &true_neutrino_energy, "true_neutrino_energy/F");
         clusters_tree->Branch("true_particle_energy", &true_particle_energy, "true_particle_energy/F");
         clusters_tree->Branch("true_label", &true_label);
-        clusters_tree->Branch("min_distance_from_true_pos", &min_distance_from_true_pos, "min_distance_from_true_pos/F");
         clusters_tree->Branch("supernova_tp_fraction", &supernova_tp_fraction, "supernova_tp_fraction/F");
         clusters_tree->Branch("generator_tp_fraction", &generator_tp_fraction, "generator_tp_fraction/F");
         clusters_tree->Branch("marley_tp_fraction", &marley_tp_fraction, "marley_tp_fraction/F");
         clusters_tree->Branch("is_es_interaction", &is_es_interaction, "is_es_interaction/O");
         clusters_tree->Branch("total_charge", &total_charge, "total_charge/D");
         clusters_tree->Branch("total_energy", &total_energy, "total_energy/D");
-        clusters_tree->Branch("conversion_factor", &conversion_factor, "conversion_factor/D");
         clusters_tree->Branch("true_pdg", &true_pdg, "true_pdg/I");
         clusters_tree->Branch("is_main_cluster", &is_main_cluster, "is_main_cluster/O");
 
@@ -492,13 +484,11 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         clusters_tree->SetBranchAddress("true_neutrino_energy", &true_neutrino_energy);
         clusters_tree->SetBranchAddress("true_particle_energy", &true_particle_energy);
         clusters_tree->SetBranchAddress("true_label", &true_label_point);
-        clusters_tree->SetBranchAddress("min_distance_from_true_pos", &min_distance_from_true_pos);
         clusters_tree->SetBranchAddress("supernova_tp_fraction", &supernova_tp_fraction);
         clusters_tree->SetBranchAddress("generator_tp_fraction", &generator_tp_fraction);
         clusters_tree->SetBranchAddress("is_es_interaction", &is_es_interaction);
         clusters_tree->SetBranchAddress("total_charge", &total_charge);
         clusters_tree->SetBranchAddress("total_energy", &total_energy);
-        clusters_tree->SetBranchAddress("conversion_factor", &conversion_factor);
         clusters_tree->SetBranchAddress("true_pdg", &true_pdg);
         clusters_tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
         clusters_tree->SetBranchAddress("tp_detector_channel", &tp_detector_channel);
@@ -516,12 +506,6 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
     
 
     // fill the tree
-    // Set conversion factor based on view
-    if (view == "X" || view == "Collection") {
-        conversion_factor = conversion_factor_collection;
-    } else {
-        conversion_factor = conversion_factor_induction;
-    }
     for (auto& Cluster : clusters) {
         event = Cluster.get_event();
         n_tps = Cluster.get_size();
@@ -538,7 +522,6 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         true_particle_energy = Cluster.get_true_particle_energy();
         true_label = Cluster.get_true_label();
         true_label_point = &true_label;
-        min_distance_from_true_pos = Cluster.get_min_distance_from_true_pos();
         supernova_tp_fraction = Cluster.get_supernova_tp_fraction();
         // Compute fraction of TPs in this Cluster with a non-UNKNOWN generator
         // Also compute marley-specific fraction
@@ -565,7 +548,6 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         is_es_interaction = Cluster.get_is_es_interaction();
         total_charge = Cluster.get_total_charge();
         total_energy = Cluster.get_total_energy();
-    // conversion_factor is now set per view above
         true_pdg = Cluster.get_true_pdg();
         is_main_cluster = Cluster.get_is_main_cluster();
         // TODO create different tree for metadata? Currently in filename

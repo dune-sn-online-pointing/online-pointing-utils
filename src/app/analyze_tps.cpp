@@ -220,30 +220,21 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        // Find the trigger primitives tree
-        TTree* tpTree = nullptr;
-        TTree* neutrinosTree = nullptr;
-        if (auto* dir = file->GetDirectory("tps")) {
-            tpTree = dynamic_cast<TTree*>(dir->Get("tps"));
-            neutrinosTree = dynamic_cast<TTree*>(dir->Get("neutrinos"));
-        }        
+        // Find the trigger primitives tree at root level (no longer in "tps" directory)
+        TTree* tpTree = dynamic_cast<TTree*>(file->Get("tps"));
+        TTree* neutrinosTree = nullptr; // neutrinos tree is optional and may not exist
+        
         if (!tpTree) {
             LogWarning << "No trigger primitives tree found in file: " << input_file << std::endl;
             file->Close();
             delete file;
             continue;
         }
-        if (!neutrinosTree) {
-            LogWarning << "No neutrinos tree found in file: " << input_file << std::endl;
-        }
 
         int nTPs = tpTree->GetEntries();
-        int nNeutrinos = neutrinosTree->GetEntries();
-
         if (verboseMode) LogInfo << "Found TP tree with " << nTPs << " entries" << std::endl;
-        if (verboseMode) LogInfo << "Found Neutrinos tree with " <<  nNeutrinos << " entries" << std::endl;
 
-        // Set up branches to read neutrino information
+        // Set up branches to read neutrino information (if available)
         Int_t nu_event = 0;
         Int_t nu_energy = 0.0;
         Float_t nu_x = 0.0;
@@ -253,27 +244,31 @@ int main(int argc, char* argv[]) {
         Float_t nu_Py = 0.0;
         Float_t nu_Pz = 0.0;
 
-        neutrinosTree->SetBranchAddress("event", &nu_event);
-        neutrinosTree->SetBranchAddress("en", &nu_energy);
-        neutrinosTree->SetBranchAddress("x", &nu_x);
-        neutrinosTree->SetBranchAddress("y", &nu_y);
-        neutrinosTree->SetBranchAddress("z", &nu_z);
-        neutrinosTree->SetBranchAddress("Px", &nu_Px);
-        neutrinosTree->SetBranchAddress("Py", &nu_Py);
-        neutrinosTree->SetBranchAddress("Pz", &nu_Pz);
+        if (neutrinosTree) {
+            int nNeutrinos = neutrinosTree->GetEntries();
+            if (verboseMode) LogInfo << "Found Neutrinos tree with " <<  nNeutrinos << " entries" << std::endl;
+            neutrinosTree->SetBranchAddress("event", &nu_event);
+            neutrinosTree->SetBranchAddress("en", &nu_energy);
+            neutrinosTree->SetBranchAddress("x", &nu_x);
+            neutrinosTree->SetBranchAddress("y", &nu_y);
+            neutrinosTree->SetBranchAddress("z", &nu_z);
+            neutrinosTree->SetBranchAddress("Px", &nu_Px);
+            neutrinosTree->SetBranchAddress("Py", &nu_Py);
+            neutrinosTree->SetBranchAddress("Pz", &nu_Pz);
 
-        // Fill up neutrino info map
-        for (Long64_t i = 0; i < nNeutrinos; ++i) {
-            neutrinosTree->GetEntry(i);
-            NeutrinoInfo& info = event_nu_info[nu_event];
-            info.en = nu_energy;
-            info.x = nu_x; info.y = nu_y; info.z = nu_z;
-            info.hasXYZ = true;
-            // Estimate time offset from z position and speed of light (in cm/ns)
-            info.t = nu_z / 29.9792458; // speed of light in cm/ns
-            info.hasT = true;
-            event_nu_energy[nu_event] = nu_energy;
-            // event_time_offsets[nu_event] = info.t;
+            // Fill up neutrino info map
+            for (Long64_t i = 0; i < nNeutrinos; ++i) {
+                neutrinosTree->GetEntry(i);
+                NeutrinoInfo& info = event_nu_info[nu_event];
+                info.en = nu_energy;
+                info.x = nu_x; info.y = nu_y; info.z = nu_z;
+                info.hasXYZ = true;
+                // Estimate time offset from z position and speed of light (in cm/ns)
+                info.t = nu_z / 29.9792458; // speed of light in cm/ns
+                info.hasT = true;
+                event_nu_energy[nu_event] = nu_energy;
+                // event_time_offsets[nu_event] = info.t;
+            }
         }
 
         // Set up branch addresses for reading TPs
