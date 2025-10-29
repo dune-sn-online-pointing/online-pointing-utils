@@ -13,6 +13,8 @@ int main(int argc, char* argv[]) {
     clp.addOption("outFolder", {"--output-folder"}, "Output folder path (default: data)");
     clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
     clp.addOption("bktrMargin", {"--bktr-margin"}, "Override backtracker_error_margin (int)");
+    clp.addOption("maxFiles", {"--max-files"}, "Maximum number of files to process (overrides JSON max_files)");
+    clp.addOption("skipFiles", {"--skip-files"}, "Number of files to skip at start (overrides JSON skip_files)");
     clp.addDummyOption("Triggers");
     clp.addTriggerOption("verboseMode", {"-v", "--verbose"}, "Run in verbose mode");
     clp.addTriggerOption("debugMode", {"-d", "--debug"}, "Run in debug mode (more detailed than verbose)");
@@ -85,17 +87,27 @@ int main(int argc, char* argv[]) {
     LogThrowIf(filenames.empty(), "No valid input files.");
 
     // Check if we should limit the number of files to process
+    // Priority: CLI --max-files > JSON max_files > unlimited
     int max_files = j.value("max_files", -1);
-    if (max_files > 0) {
+    if (clp.isOptionTriggered("maxFiles")) {
+        max_files = clp.getOptionVal<int>("maxFiles");
+        LogInfo << "Max files (from CLI): " << max_files << std::endl;
+    } else if (max_files > 0) {
         if (max_files > filenames.size()) max_files = filenames.size();
-        LogInfo << "Max files: " << max_files << std::endl;
+        LogInfo << "Max files (from JSON): " << max_files << std::endl;
     } else {
         LogInfo << "Max files: unlimited" << std::endl;
         max_files = filenames.size();
     }
 
+    // Priority: CLI --skip-files > JSON skip_files > 0
     int skip_files = j.value("skip_files", 0);
-    LogInfo << "Number of files to skip at start: " << skip_files << std::endl;
+    if (clp.isOptionTriggered("skipFiles")) {
+        skip_files = clp.getOptionVal<int>("skipFiles");
+        LogInfo << "Number of files to skip at start (from CLI): " << skip_files << std::endl;
+    } else {
+        LogInfo << "Number of files to skip at start (from JSON): " << skip_files << std::endl;
+    }
 
     // Output folder: CLI outFolder > JSON sig_folder > JSON outputFolder > "data"
     std::string outfolder;

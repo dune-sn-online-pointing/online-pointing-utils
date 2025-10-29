@@ -12,8 +12,6 @@ print_help(){
   echo "  --clean-compile             Clean and recompile the code"
   echo "  -i|--input-file <file>      Input file with list of input ROOT files. Overrides json."
   echo "  -o|--output-folder <dir>    Output folder (default: from json). Overrides json."
-  echo "  --max-files <n>             Maximum number of files to process. Overrides json."
-  echo "  --skip-files <n>            Number of files to skip at start. Overrides json."
   echo "  -f|--override               Force reprocessing even if output already exists (default: false)"
   echo "  -v|--verbose                Enable verbose mode"
   echo "  -h|--help                   Print this help message."
@@ -25,8 +23,6 @@ cleanCompile=false
 noCompile=false
 override=false
 verbose=false
-max_files=""
-skip_files=""
 # output_folder="" # a default could be data/
 
 while [[ $# -gt 0 ]]; do
@@ -34,8 +30,6 @@ while [[ $# -gt 0 ]]; do
     -j|--json) settingsFile="$2"; shift 2;;
     -i|--input-file) inputFile="$2"; shift 2;;
     -o|--output-folder) output_folder="$2"; shift 2;;
-    --max-files) max_files="$2"; shift 2;;
-    --skip-files) skip_files="$2"; shift 2;;
     --no-compile) noCompile=true; shift;;
     --clean-compile) cleanCompile=true; shift;;        
     -f|--override)
@@ -97,12 +91,6 @@ if [ ! -z ${inputFile+x} ]; then
 fi
 if [ ! -z ${output_folder+x} ]; then
   backtrack_cmd="$backtrack_cmd --output-folder $output_folder"
-fi
-if [ ! -z "$max_files" ]; then
-  backtrack_cmd="$backtrack_cmd --max-files $max_files"
-fi
-if [ ! -z "$skip_files" ]; then
-  backtrack_cmd="$backtrack_cmd --skip-files $skip_files"
 fi
 if [ "$override" = true ]; then
   backtrack_cmd="$backtrack_cmd --override"

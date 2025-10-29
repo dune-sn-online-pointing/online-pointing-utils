@@ -5,11 +5,13 @@ source ${SCRIPTS_DIR}/init.sh
 
 
 print_help(){
-    echo "Usage: $0 -s <sample> [-bt] [-ab] [-mc] [-ac] [-gi] [--no-compile] [--clean-compile]"; 
+    echo "Usage: $0 -s <sample> [-bt] [-ab] [-mc] [-ac] [-gi] [--no-compile] [--clean-compile]";
     echo "Options:";
     echo "  --no-compile                Do not recompile the code"
     echo "  --clean-compile             Clean and recompile the code"
     echo "  -j|--json-settings <json>   Global json file including all steps. Overrides individual jsons if parsed"
+    echo "  --max-files <n>             Maximum number of files to process (overrides JSON)"
+    echo "  --skip-files <n>            Number of files to skip at start (overrides JSON)"
     echo "  -bt               Run backtrack step"
     echo "  -at               Run analzye_tps"
     echo "  -ab               Run add backgrounds step"
@@ -47,11 +49,15 @@ override=false
 all_steps=false
 debug=false
 verbose=false
+max_files=""
+skip_files=""
 
 while [[ $# -gt 0 ]]; do
         case $1 in
                 -s|--sample) sample="$2"; shift 2 ;;
                 -j|--json-settings) settingsFile="$2"; shift 2 ;;
+                --max-files) max_files="$2"; shift 2 ;;
+                --skip-files) skip_files="$2"; shift 2 ;;
                 --no-compile) noCompile=true; shift ;;
                 --clean-compile) cleanCompile=true; shift ;;
                 -h|--help) print_help ;;
@@ -92,7 +98,7 @@ done
 # Ensure --all always sets all run flags, regardless of order, after parsing and before any output
 if [ "$all_steps" = "true" ]; then
         run_backtrack=true
-        run_analyze_tps=true
+        # run_analyze_tps=true
         run_add_backgrounds=true
         run_make_clusters=true
         run_analyze=true
@@ -163,6 +169,12 @@ echo $compile_command
 cd $HOME_DIR
 
 common_options="--no-compile -f $override -v $verbose -d $debug"
+if [ ! -z "$max_files" ]; then
+        common_options="$common_options --max-files $max_files"
+fi
+if [ ! -z "$skip_files" ]; then
+        common_options="$common_options --skip-files $skip_files"
+fi
 
 if [ ! -z "$settingsFile" ]; then
         backtrack_json="$settingsFile"
