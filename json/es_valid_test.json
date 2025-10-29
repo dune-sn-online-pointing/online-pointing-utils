@@ -11,7 +11,7 @@
     "tps_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
     "tps_bg_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
     "clusters_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
-    "clusters_folder_prefix": "es_valid_bg",
+    "clusters_folder_prefix": "es_valid_test_bg",
     "reports_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/reports/",
 
     "max_files": 2,
@@ -22,7 +22,7 @@
     "tick_limit": 3,
     "channel_limit": 2,
     "min_tps_to_cluster": 2,
-    "tot_cut": 2,
-    "energy_cut": 5
+    "tot_cut": 3,
+    "energy_cut": 2.0
 
 }

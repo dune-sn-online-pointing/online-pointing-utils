@@ -511,12 +511,12 @@ void read_tpstream(std::string filename,
 
     if (verboseMode) LogInfo << " Matched MC particles to mctruths: "  << float(matched_MCparticles_counter)/true_particles.size()*100. << " %" << std::endl;
     
-    // Update embedded generator names in TPs after MC truth association
+    // Update TPs with complete truth info (including momentum) after MC truth association
     for (auto& tp : tps) {
         const TrueParticle* true_particle = tp.GetTrueParticle();
         if (true_particle != nullptr) {
-            // Update the generator name with the corrected value from MC truth
-            tp.SetGeneratorName(true_particle->GetGeneratorName());
+            // Re-call SetTrueParticle to update all fields including momentum that was just copied
+            tp.SetTrueParticle(true_particle);
         }
     }
     if (verboseMode) LogInfo << " Updated embedded generator names in TPs" << std::endl;

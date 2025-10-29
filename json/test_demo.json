@@ -1,0 +1,9 @@
+{
+  "comment": "Demo test for inspection",
+  "tpstream_folder": "",
+  "tpstream_input_file": "/home/virgolaema/dune/online-pointing-utils/data/cleanES60_tpstream.root",
+  "tpstream_input_list": [],
+  "output_folder": "/home/virgolaema/dune/online-pointing-utils/data/test_demo/",
+  "max_files": 1,
+  "backtracker_error_margin": 3
+}
