@@ -38,6 +38,65 @@ THRESHOLD_ADC_U = 70   # Induction plane U
 THRESHOLD_ADC_V = 70   # Induction plane V
 
 
+def get_clusters_folder(json_config):
+    """
+    Compose clusters folder name from JSON configuration.
+    Matches the logic in src/lib/utils.cpp::getClustersFolder()
+    
+    Args:
+        json_config: Dict with clustering parameters or path to JSON file
+        
+    Returns:
+        str: Full path to clusters folder
+    """
+    # Load JSON if path provided
+    if isinstance(json_config, (str, Path)):
+        with open(json_config, 'r') as f:
+            j = json.load(f)
+    else:
+        j = json_config
+    
+    # Extract parameters with defaults matching C++ code
+    cluster_prefix = j.get("clusters_folder_prefix", "clusters")
+    tick_limit = j.get("tick_limit", 0)
+    channel_limit = j.get("channel_limit", 0)
+    min_tps_to_cluster = j.get("min_tps_to_cluster", 0)
+    tot_cut = j.get("tot_cut", 0)
+    energy_cut = float(j.get("energy_cut", 0.0))
+    outfolder = j.get("clusters_folder", ".").rstrip('/')
+    
+    def sanitize(value):
+        """
+        Sanitize numeric value for filesystem.
+        Keeps at most 1 digit after decimal, replaces '.' with 'p'
+        """
+        if isinstance(value, float):
+            s = f"{value:.6f}"
+        else:
+            s = str(value)
+        
+        if '.' in s:
+            parts = s.split('.')
+            if len(parts[1]) > 1:
+                s = f"{parts[0]}.{parts[1][0]}"
+        
+        s = s.replace('.', 'p')
+        return s
+    
+    # Build subfolder name matching C++ format
+    clusters_subfolder = (
+        f"clusters_{cluster_prefix}"
+        f"_tick{sanitize(tick_limit)}"
+        f"_ch{sanitize(channel_limit)}"
+        f"_min{sanitize(min_tps_to_cluster)}"
+        f"_tot{sanitize(tot_cut)}"
+        f"_e{sanitize(energy_cut)}"
+    )
+    
+    clusters_folder_path = f"{outfolder}/{clusters_subfolder}"
+    return clusters_folder_path
+
+
 def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, threshold_adc):
     """
     Calculate pentagon parameters for ADC interpolation.
@@ -439,7 +498,8 @@ def main():
     with open(args.json, 'r') as f:
         config = json.load(f)
     
-    clusters_folder = config['clusters_folder']
+    # Use get_clusters_folder to compute the full path (matching make_clusters logic)
+    clusters_folder = get_clusters_folder(config)
     output_folder = config['volumes_folder']
     plane = config.get('plane', 'X')  # Default to collection plane
     
