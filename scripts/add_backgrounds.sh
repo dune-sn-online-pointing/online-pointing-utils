@@ -7,12 +7,14 @@ export SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/init.sh"
 
 print_help() {
-    echo "Usage: $0 -j <json_config> [-i <input>] [-o <output>] [-v|--verbose] [-f|--override] [--no-compile] [--clean-compile]"
+    echo "Usage: $0 -j <json_config> [-i <input>] [-o <output>] [-s <skip>] [-m <max>] [-v|--verbose] [-f|--override] [--no-compile] [--clean-compile]"
     echo ""
     echo "Options:"
     echo "  -j, --json            <JSON configuration file> (required). Local path json/<>/<>.json is accepted."
     echo "  -i, --input-file      Input file or list (overrides JSON)"
     echo "  -o, --output-folder   Output folder (overrides JSON)"
+    echo "  -s, --skip            Number of files to skip at start (overrides JSON)"
+    echo "  -m, --max             Maximum number of files to process (overrides JSON)"
     echo "  -v, --verbose         Enable verbose output"
     echo "  -f, --override        Override existing output files"
     echo "      --no-compile      Skip compilation step"
@@ -28,6 +30,8 @@ print_help() {
 settingsFile=""
 inputFile=""
 output_folder=""
+skip_files=""
+max_files=""
 verbose=false
 override=false
 noCompile=""
@@ -37,7 +41,9 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     -j|--json) settingsFile="$2"; shift 2;;
     -i|--input-file) inputFile="$2"; shift 2;;
-    -f|--output-folder) output_folder="$2"; shift 2;;
+    -o|--output-folder) output_folder="$2"; shift 2;;
+    -s|--skip) skip_files="$2"; shift 2;;
+    -m|--max) max_files="$2"; shift 2;;
     --no-compile) noCompile=true; shift;;
     --clean-compile) cleanCompile=true; shift;;        
     -f|--override)
@@ -97,6 +103,12 @@ echo $compile_command
 # Construct command
 command_to_run="$BUILD_DIR/src/app/add_backgrounds -j $settingsFile"
 
+if [ ! -z "$skip_files" ]; then
+    command_to_run="$command_to_run -s $skip_files"
+fi
+if [ ! -z "$max_files" ]; then
+    command_to_run="$command_to_run -m $max_files"
+fi
 if [ "$verbose" = true ]; then
     command_to_run="$command_to_run -v"
 fi

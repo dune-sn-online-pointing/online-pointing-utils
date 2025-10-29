@@ -10,10 +10,12 @@
     "bg_folder": "/home/virgolaema/dune/online-pointing-utils/data/bkgs/",
     "tps_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
     "tps_bg_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
-    "clusters_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+    "clusters_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
     "clusters_folder_prefix": "es_valid_test_bg",
     "reports_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/reports/",
+    "volumes_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/volumes_planeX_bg/",
 
+    "signal_type": "es",
     "max_files": 2,
     "skip_files": 0,
 

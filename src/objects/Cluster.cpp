@@ -100,8 +100,10 @@ void Cluster::update_cluster_info() {
             // Count particles
             particle_counts[key]++;
             
-            // Store neutrino info if available
-            if (tp->GetNeutrinoEnergy() > 0) {
+            // Store neutrino info if available (neutrino_energy >= 0 means we have truth)
+            // Changed from > 0 to >= 0 because neutrino_energy = 0 is valid for background
+            // and the key indicator of truth is generator_name != "UNKNOWN"
+            if (tp->GetNeutrinoEnergy() >= 0 || !tp->GetNeutrinoInteraction().empty()) {
                 neutrino_info_map[key] = {tp->GetNeutrinoInteraction(), tp->GetNeutrinoEnergy(),
                                          tp->GetNeutrinoX(), tp->GetNeutrinoY(), tp->GetNeutrinoZ(),
                                          tp->GetNeutrinoPx(), tp->GetNeutrinoPy(), tp->GetNeutrinoPz()};
@@ -135,9 +137,20 @@ void Cluster::update_cluster_info() {
         }
     }
     
+    // Debug: Always log for MARLEY clusters
+    if (supernova_tp_fraction_ > 0) {
+        std::cerr << "MARLEY cluster: marley_fraction=" << supernova_tp_fraction_ 
+                  << " dominant_gen=" << dominant_key.generator 
+                  << " max_count=" << max_particle_count 
+                  << " tps_size=" << tps_.size() << std::endl;
+    }
+    
     // Set truth information from dominant particle
     if (dominant_key.generator != "UNKNOWN" && max_particle_count > 0) {
         true_pos_ = {dominant_key.x, dominant_key.y, dominant_key.z};
+        
+        // Debug: Log attempt to find momentum
+        bool found_momentum = false;
         
         // Get momentum from any TP with this dominant particle
         for (const auto& tp : tps_) {
@@ -147,6 +160,7 @@ void Cluster::update_cluster_info() {
                 std::abs(tp->GetParticleY() - dominant_key.y) < 0.1 &&
                 std::abs(tp->GetParticleZ() - dominant_key.z) < 0.1) {
                 true_momentum_ = {tp->GetParticlePx(), tp->GetParticlePy(), tp->GetParticlePz()};
+                found_momentum = true;
                 float p_mag = std::sqrt(true_momentum_[0]*true_momentum_[0] + 
                                        true_momentum_[1]*true_momentum_[1] + 
                                        true_momentum_[2]*true_momentum_[2]);
@@ -155,6 +169,17 @@ void Cluster::update_cluster_info() {
                 }
                 break;
             }
+        }
+        
+        // Debug: If momentum not found, log first TP's details
+        if (!found_momentum && tps_.size() > 0) {
+            const auto& first_tp = tps_[0];
+            std::cerr << "WARNING: Could not find momentum for cluster! Dominant: gen=" << dominant_key.generator 
+                      << " pdg=" << dominant_key.pdg << " pos=(" << dominant_key.x << "," << dominant_key.y << "," << dominant_key.z << ")"
+                      << " | First TP: gen=" << first_tp->GetGeneratorName()
+                      << " pdg=" << first_tp->GetParticlePDG()
+                      << " pos=(" << first_tp->GetParticleX() << "," << first_tp->GetParticleY() << "," << first_tp->GetParticleZ() << ")"
+                      << " momentum=(" << first_tp->GetParticlePx() << "," << first_tp->GetParticlePy() << "," << first_tp->GetParticlePz() << ")" << std::endl;
         }
         
         // Calculate actual deposited energy from TPs belonging to dominant particle

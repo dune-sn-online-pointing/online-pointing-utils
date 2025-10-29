@@ -87,92 +87,98 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
         print(f"Error opening file {cluster_file}: {e}")
         return []
     
-    # Get the tree for the specified plane
-    tree_name = f'clusters/clusters_tree_{plane}'
-    if tree_name not in f:
-        print(f"Warning: {tree_name} not found in {cluster_file}")
-        return []
+    all_clusters = []
     
-    tree = f[tree_name]
-    
-    # Load relevant branches
-    branches = [
-        'event', 'n_tps', 'is_main_cluster',
-        'is_es_interaction', 'true_neutrino_energy', 'true_particle_energy',
-        'true_mom_x', 'true_mom_y', 'true_mom_z',
-        'true_label', 'marley_tp_fraction',
-        'tp_detector_channel', 'tp_time_start',
-        'tp_adc_integral', 'tp_adc_peak', 
-        'tp_samples_over_threshold', 'tp_samples_to_peak'
-    ]
-    
-    arrays = tree.arrays(branches, library='np')
-    n_entries = len(arrays['event'])
-    
-    clusters = []
-    for i in range(n_entries):
-        # Get TP data
-        channels = arrays['tp_detector_channel'][i]
-        times_tdc = arrays['tp_time_start'][i]
-        adc_integrals = arrays['tp_adc_integral'][i]
-        adc_peaks = arrays['tp_adc_peak'][i]
-        samples_over_threshold = arrays['tp_samples_over_threshold'][i]
-        samples_to_peak = arrays['tp_samples_to_peak'][i]
-        
-        if len(channels) == 0:
+    # Read from both 'clusters' and 'discarded' directories
+    # For volumes, we want ALL clusters regardless of energy cut
+    for directory in ['clusters', 'discarded']:
+        tree_name = f'{directory}/clusters_tree_{plane}'
+        if tree_name not in f:
+            if verbose:
+                print(f"Note: {tree_name} not found in {cluster_file}")
             continue
         
-        # Convert times from TDC to TPC ticks
-        times_tpc = times_tdc / TDC_TO_TPC_CONVERSION
+        tree = f[tree_name]
         
-        # Calculate time_end and time_peak from samples_over_threshold and samples_to_peak
-        # time_end = time_start + samples_over_threshold
-        # time_peak = time_start + samples_to_peak
-        times_end_tpc = times_tpc + samples_over_threshold
-        times_peak_tpc = times_tpc + samples_to_peak
+        # Load relevant branches
+        branches = [
+            'event', 'n_tps', 'is_main_cluster',
+            'is_es_interaction', 'true_neutrino_energy', 'true_particle_energy',
+            'true_mom_x', 'true_mom_y', 'true_mom_z',
+            'true_label', 'marley_tp_fraction',
+            'tp_detector_channel', 'tp_time_start',
+            'tp_adc_integral', 'tp_adc_peak', 
+            'tp_samples_over_threshold', 'tp_samples_to_peak'
+        ]
         
-        # Calculate cluster center in detector units
-        center_channel = np.mean(channels)
-        center_time_tpc = np.mean(times_tpc)
+        arrays = tree.arrays(branches, library='np')
+        n_entries = len(arrays['event'])
         
-        # Check if it's a marley cluster
-        true_label = arrays['true_label'][i]
-        if isinstance(true_label, bytes):
-            true_label = true_label.decode('utf-8')
-        is_marley = 'marley' in true_label.lower()
-        
-        cluster_info = {
-            'event': int(arrays['event'][i]),
-            'n_tps': int(arrays['n_tps'][i]),
-            'is_main_cluster': bool(arrays['is_main_cluster'][i]),
-            'channels': channels,
-            'times_tpc': times_tpc,
-            'times_end_tpc': times_end_tpc,
-            'times_peak_tpc': times_peak_tpc,
-            'adc_integrals': adc_integrals,
-            'adc_peaks': adc_peaks,
-            'samples_over_threshold': samples_over_threshold,
-            'samples_to_peak': samples_to_peak,
-            'center_channel': center_channel,
-            'center_time_tpc': center_time_tpc,
-            'is_es_interaction': bool(arrays['is_es_interaction'][i]),
-            'true_neutrino_energy': float(arrays['true_neutrino_energy'][i]),
-            'true_particle_energy': float(arrays['true_particle_energy'][i]),
-            'true_mom_x': float(arrays['true_mom_x'][i]),
-            'true_mom_y': float(arrays['true_mom_y'][i]),
-            'true_mom_z': float(arrays['true_mom_z'][i]),
-            'is_marley': is_marley,
-            'marley_tp_fraction': float(arrays['marley_tp_fraction'][i])
-        }
-        
-        clusters.append(cluster_info)
+        for i in range(n_entries):
+            # Get TP data
+            channels = arrays['tp_detector_channel'][i]
+            times_tdc = arrays['tp_time_start'][i]
+            adc_integrals = arrays['tp_adc_integral'][i]
+            adc_peaks = arrays['tp_adc_peak'][i]
+            samples_over_threshold = arrays['tp_samples_over_threshold'][i]
+            samples_to_peak = arrays['tp_samples_to_peak'][i]
+            
+            if len(channels) == 0:
+                continue
+            
+            # Convert times from TDC to TPC ticks
+            times_tpc = times_tdc / TDC_TO_TPC_CONVERSION
+            
+            # Calculate time_end and time_peak from samples_over_threshold and samples_to_peak
+            # time_end = time_start + samples_over_threshold
+            # time_peak = time_start + samples_to_peak
+            times_end_tpc = times_tpc + samples_over_threshold
+            times_peak_tpc = times_tpc + samples_to_peak
+            
+            # Calculate cluster center in detector units
+            center_channel = np.mean(channels)
+            center_time_tpc = np.mean(times_tpc)
+            
+            # Check if it's a marley cluster
+            true_label = arrays['true_label'][i]
+            if isinstance(true_label, bytes):
+                true_label = true_label.decode('utf-8')
+            is_marley = 'marley' in true_label.lower()
+            
+            cluster_info = {
+                'event': int(arrays['event'][i]),
+                'n_tps': int(arrays['n_tps'][i]),
+                'is_main_cluster': bool(arrays['is_main_cluster'][i]),
+                'channels': channels,
+                'times_tpc': times_tpc,
+                'times_end_tpc': times_end_tpc,
+                'times_peak_tpc': times_peak_tpc,
+                'adc_integrals': adc_integrals,
+                'adc_peaks': adc_peaks,
+                'samples_over_threshold': samples_over_threshold,
+                'samples_to_peak': samples_to_peak,
+                'center_channel': center_channel,
+                'center_time_tpc': center_time_tpc,
+                'is_es_interaction': bool(arrays['is_es_interaction'][i]),
+                'true_neutrino_energy': float(arrays['true_neutrino_energy'][i]),
+                'true_particle_energy': float(arrays['true_particle_energy'][i]),
+                'true_mom_x': float(arrays['true_mom_x'][i]),
+                'true_mom_y': float(arrays['true_mom_y'][i]),
+                'true_mom_z': float(arrays['true_mom_z'][i]),
+                'is_marley': is_marley,
+                'marley_tp_fraction': float(arrays['marley_tp_fraction'][i])
+            }
+            
+            all_clusters.append(cluster_info)
     
     if verbose:
-        print(f"  Loaded {len(clusters)} clusters from plane {plane}")
-        n_main = sum(1 for c in clusters if c['is_main_cluster'])
+        print(f"  Loaded {len(all_clusters)} clusters from plane {plane} (including discarded)")
+    
+    if verbose and len(all_clusters) > 0:
+        n_main = sum(1 for c in all_clusters if c['is_main_cluster'])
         print(f"  Found {n_main} main track clusters")
     
-    return clusters
+    return all_clusters
 
 
 def get_clusters_in_volume(all_clusters, center_channel, center_time_tpc, volume_size_cm=100.0):
@@ -454,8 +460,8 @@ def main():
         print(f"Processing at most {max_files} files")
     print("="*60)
     
-    # Find all cluster files
-    cluster_files = sorted(Path(clusters_folder).glob('clusters_*.root'))
+    # Find all cluster files (look for *_clusters.root pattern)
+    cluster_files = sorted(Path(clusters_folder).glob('*_clusters.root'))
     
     # Apply skip and max
     if skip_files > 0:

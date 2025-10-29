@@ -37,7 +37,7 @@ run_add_backgrounds=false
 run_make_clusters=false
 run_analyze=false
 run_generate_images=false
-run_analyze_images=false
+# run_analyze_images=false
 run_generate_volumes=false
 run_analyze_volumes=false
 noCompile=false
@@ -68,7 +68,7 @@ while [[ $# -gt 0 ]]; do
                 -mc) run_make_clusters=true; shift ;;
                 -ac) run_analyze=true; shift ;;
                 -gi) run_generate_images=true; shift ;;
-                -ai) run_analyze_images=true; shift ;;
+                # -ai) run_analyze_images=true; shift ;;
                 -gv) run_generate_volumes=true; shift ;;
                 -av) run_analyze_volumes=true; shift ;;
                 -f|--override) override=true; shift ;;
@@ -103,7 +103,7 @@ if [ "$all_steps" = "true" ]; then
         run_make_clusters=true
         run_analyze=true
         run_generate_images=true
-        run_analyze_images=true
+        # run_analyze_images=true
         run_generate_volumes=true
         run_analyze_volumes=true
 fi
@@ -116,7 +116,7 @@ echo -e "Run add backgrounds:\t$run_add_backgrounds"
 echo -e "Run make clusters:\t$run_make_clusters"
 echo -e "Run analyze:\t\t$run_analyze"
 echo -e "Run generate images:\t$run_generate_images"
-echo -e "Run analyze images:\t$run_analyze_images"
+# echo -e "Run analyze images:\t$run_analyze_images"
 echo -e "Run generate volumes:\t$run_generate_volumes"
 echo -e "Run analyze volumes:\t$run_analyze_volumes"
 echo -e "Clean clusters (no backgrounds):\t$clean_clusters"
@@ -302,38 +302,38 @@ fi
 ####################
 
 # Analyze images
-if [ "$run_analyze_images" = true ]; then
-        if [ ! -z "$settingsFile" ]; then
-                analyze_images_json="$settingsFile"
-        else
-                analyze_images_json="$JSON_DIR/${sample}${bg_suffix}.json"
-        fi
+# if [ "$run_analyze_images" = true ]; then
+#         if [ ! -z "$settingsFile" ]; then
+#                 analyze_images_json="$settingsFile"
+#         else
+#                 analyze_images_json="$JSON_DIR/${sample}${bg_suffix}.json"
+#         fi
         
-        if [ ! -f "$analyze_images_json" ]; then
-                echo "Warning: JSON file not found: ${analyze_images_json}"
-                echo "Skipping analyze images step."
-        else
-                # Look for a Python analyze_images script
-                if [ -f "$REPO_HOME/python/ana/analyze_images.py" ]; then
-                        analyze_images_command="python3 $REPO_HOME/python/ana/analyze_images.py --json $analyze_images_json"
-                        if [ "$verbose" = true ]; then
-                                analyze_images_command+=" --verbose"
-                        fi
+#         if [ ! -f "$analyze_images_json" ]; then
+#                 echo "Warning: JSON file not found: ${analyze_images_json}"
+#                 echo "Skipping analyze images step."
+#         else
+#                 # Look for a Python analyze_images script
+#                 if [ -f "$HOME_DIR/python/ana/analyze_images.py" ]; then
+#                         analyze_images_command="python3 $HOME_DIR/python/ana/analyze_images.py --json $analyze_images_json"
+#                         if [ "$verbose" = true ]; then
+#                                 analyze_images_command+=" --verbose"
+#                         fi
                         
-                        echo "Running analyze images step with command:"
-                        echo $analyze_images_command
-                        $analyze_images_command
-                        if [ $? -ne 0 ]; then
-                                echo "Error: Analyze images step failed."
-                                exit 1
-                        fi
-                        echo ""
-                else
-                        echo "Warning: analyze_images.py script not found in python/ana/"
-                        echo "Skipping analyze images step."
-                fi
-        fi
-fi
+#                         echo "Running analyze images step with command:"
+#                         echo $analyze_images_command
+#                         $analyze_images_command
+#                         if [ $? -ne 0 ]; then
+#                                 echo "Error: Analyze images step failed."
+#                                 exit 1
+#                         fi
+#                         echo ""
+#                 else
+#                         echo "Warning: analyze_images.py script not found in python/ana/"
+#                         echo "Skipping analyze images step."
+#                 fi
+#         fi
+# fi
 
 ####################
 
@@ -380,8 +380,8 @@ if [ "$run_analyze_volumes" = true ]; then
                 echo "Skipping analyze volumes step."
         else
                 # Look for a Python analyze_volumes script
-                if [ -f "$REPO_HOME/python/ana/analyze_volumes.py" ]; then
-                        analyze_volumes_command="python3 $REPO_HOME/python/ana/analyze_volumes.py --json $analyze_volumes_json"
+                if [ -f "$HOME_DIR/python/ana/analyze_volumes.py" ]; then
+                        analyze_volumes_command="python3 $HOME_DIR/python/ana/analyze_volumes.py --json $analyze_volumes_json"
                         if [ "$verbose" = true ]; then
                                 analyze_volumes_command+=" --verbose"
                         fi

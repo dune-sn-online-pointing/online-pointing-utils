@@ -8,8 +8,6 @@ int main(int argc, char* argv[]) {
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
     clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
-    clp.addOption("skip_files", {"-s", "--skip"}, "Number of files to skip at start (overrides JSON)", -1);
-    clp.addOption("max_files", {"-m", "--max"}, "Maximum number of files to process (overrides JSON)", -1);
     clp.addOption("override", {"-f", "--override"}, "Override existing output files (default: false)", false);
     clp.addOption("outFolder", {"--output-folder"}, "Output folder path (default: data)");
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
@@ -83,22 +81,21 @@ int main(int argc, char* argv[]) {
     float adc_integral_cut_col = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");
     float adc_integral_cut_ind = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
     int tot_cut = j.value("tot_cut", 0);
-    
-    // Handle skip and max files with CLI override
-    int max_files = j.value("max_files", -1);
+    int max_files = j.value("max_files", -1); // -1 means no limit
     int skip_files = j.value("skip_files", 0);
-    
-    if (clp.isOptionTriggered("skip_files")) {
-        skip_files = clp.getOptionVal<int>("skip_files");
+    // Align skip_files to the nearest multiple of 10 so output-file boundaries remain consistent
+    {
+        const int FILES_PER_OUTPUT_FOR_SKIP = 10;
+        if (skip_files > 0) {
+            int original_skip = skip_files;
+            int nearest = ((skip_files + FILES_PER_OUTPUT_FOR_SKIP / 2) / FILES_PER_OUTPUT_FOR_SKIP) * FILES_PER_OUTPUT_FOR_SKIP;
+            if (nearest < 0) nearest = 0;
+            if (nearest > static_cast<int>(inputs.size())) nearest = static_cast<int>(inputs.size());
+            skip_files = nearest;
+            LogInfo << "Adjusted skip_files from " << original_skip << " to nearest multiple of "
+                    << FILES_PER_OUTPUT_FOR_SKIP << ": " << skip_files << std::endl;
+        }
     }
-    if (clp.isOptionTriggered("max_files")) {
-        max_files = clp.getOptionVal<int>("max_files");
-    }
-    
-    if (max_files <= 0) {
-        max_files = inputs.size();
-    }
-    
     LogInfo << "Number of files to skip at start: " << skip_files << std::endl;
 
     std::string clusters_folder_path = getClustersFolder(j);
@@ -122,6 +119,15 @@ int main(int argc, char* argv[]) {
 
     // Create clusters subfolder if it doesn't exist
     std::filesystem::create_directories(clusters_folder_path);    
+
+    // Ensure output directory exists
+    // Variables for numbered output files (one per 10 input files)
+    const int FILES_PER_OUTPUT = 10;
+    // Initialize output_file_number based on skipped files to avoid conflicts
+    int output_file_number = skip_files / FILES_PER_OUTPUT;
+    TFile* clusters_file = nullptr;
+    std::string current_clusters_filename;
+    std::vector<std::string> produced_files;
 
     // Helper lambda to create metadata tree
     auto create_metadata_tree = [&](TFile* file) {
@@ -149,13 +155,60 @@ int main(int argc, char* argv[]) {
         metadata_tree->Branch("adc_to_mev_induction", &meta_adc_to_mev_induction, "adc_to_mev_induction/F");
         
         metadata_tree->Fill();
-        metadata_tree->Write();
+        metadata_tree->Write("", TObject::kOverwrite);
+    };
+
+    // Helper lambda to create a new output file
+    auto create_new_output_file = [&]() -> bool {
+        // Close previous file if open
+        if (clusters_file) {
+            // LogInfo << "Writing clustering metadata..." << std::endl;
+            create_metadata_tree(clusters_file);
+            clusters_file->Close();
+            delete clusters_file;
+            LogInfo << "Closed output file: " << current_clusters_filename << std::endl;
+        }
         
+        // Create new filename with simple pattern: clusters_N.root
+        current_clusters_filename = clusters_folder_path + "/clusters_" + std::to_string(output_file_number) + ".root";
+        
+        // Check if file exists and skip if override is false
+        if (std::filesystem::exists(current_clusters_filename) && !overrideExistingFiles) {
+            LogInfo << "Output file " << current_clusters_filename << " already exists. Skipping this batch of " 
+                    << FILES_PER_OUTPUT << " input files." << std::endl;
+            output_file_number++;
+            clusters_file = nullptr;
+            return false;
+        }
+        
+        // Delete if exists and override is true
+        if (std::filesystem::exists(current_clusters_filename) && overrideExistingFiles) {
+            LogInfo << "Output file " << current_clusters_filename << " already exists, deleting it." << std::endl;
+            std::filesystem::remove(current_clusters_filename);
+        }
+        
+        // Open new file
+        clusters_file = new TFile(current_clusters_filename.c_str(), "RECREATE");
+        if (!clusters_file || clusters_file->IsZombie()) {
+            LogError << "Cannot create output file: " << current_clusters_filename << std::endl;
+            return false;
+        }
+        
+        LogInfo << "Opened new output file: " << current_clusters_filename << std::endl;
+        produced_files.push_back(current_clusters_filename);
+        output_file_number++;
         return true;
     };
 
-    std::vector<std::string> produced_files;
+    // Create first output file
+    bool file_opened = create_new_output_file();
+    if (!file_opened && !std::filesystem::exists(current_clusters_filename)) {
+        // Only error out if file creation failed, not if file exists and we're skipping
+        return 1;
+    }
+
     int done_files = 0, count_files = 0;
+    int skipped_in_current_batch = 0;
 
     for (const auto& tps_file : inputs) {
         if (count_files < skip_files) {
@@ -170,35 +223,32 @@ int main(int argc, char* argv[]) {
             break;
         }
         
-        // Generate output filename: replace "_tps.root" with "_clusters.root"
-        std::filesystem::path tps_path(tps_file);
-        std::string base_name = tps_path.filename().string();
-        
-        // Replace _tps.root with _clusters.root
-        size_t tps_pos = base_name.find("_tps.root");
-        if (tps_pos == std::string::npos) {
-            LogWarning << "File doesn't match expected *_tps.root pattern: " << tps_file << std::endl;
-            continue;
+        // Create new output file every FILES_PER_OUTPUT input files
+        if (done_files > 0 && done_files % FILES_PER_OUTPUT == 0) {
+            file_opened = create_new_output_file();
+            skipped_in_current_batch = 0;
+            if (!file_opened && !std::filesystem::exists(current_clusters_filename)) {
+                // Fatal error: couldn't create file
+                return 1;
+            }
         }
-        base_name.replace(tps_pos, 9, "_clusters.root");
         
-        std::string current_clusters_filename = clusters_folder_path + "/" + base_name;
-        
-        // Check if output already exists
-        if (std::filesystem::exists(current_clusters_filename) && !overrideExistingFiles) {
-            LogInfo << "Output file already exists (use -f to override): " << current_clusters_filename << std::endl;
+        // If no file is open (because we're skipping this batch), skip this input file
+        if (!file_opened) {
+            skipped_in_current_batch++;
             done_files++;
+            if (verboseMode) LogInfo << "Skipping input file " << done_files << " (batch exists): " << tps_file << std::endl;
+            // Once we've skipped FILES_PER_OUTPUT files, the next iteration will try to open a new output file
             continue;
         }
         
         if (verboseMode) LogInfo << "Input TPs file: " << tps_file << std::endl;
-        if (verboseMode) LogInfo << "Output clusters file: " << current_clusters_filename << std::endl;
 
         done_files++;
         
+        int progress = (done_files * 100) / max_files;
         GenericToolbox::displayProgressBar(done_files, max_files, "Making clusters...");
 
-        // Read TPs
         std::map<int, std::vector<TriggerPrimitive>> tps_by_event;
         std::map<int, std::vector<TrueParticle>> true_by_event;
         std::map<int, std::vector<Neutrino>> nu_by_event;
@@ -216,34 +266,18 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // Create output file
-        TFile* clusters_file = new TFile(current_clusters_filename.c_str(), "RECREATE");
-        if (!clusters_file || clusters_file->IsZombie()) {
-            LogError << "Failed to create output file: " << current_clusters_filename << std::endl;
-            if (clusters_file) delete clusters_file;
-            continue;
-        }
-
-        // Create directories for clusters and discarded clusters
-        clusters_file->mkdir("clusters");
-        clusters_file->mkdir("discarded");
-
-        // Process events
         for (auto& kv : tps_by_event) {
             int event = kv.first;
             auto& tps = kv.second;
-            
             // split by view
             std::vector<std::vector<TriggerPrimitive*>> tps_per_view;
             tps_per_view.reserve(APA::views.size());
             for (size_t iView=0;iView<APA::views.size();++iView){ 
                 std::vector<TriggerPrimitive*> v; 
-                getPrimitivesForView(APA::views.at(iView), tps, v); 
-                tps_per_view.emplace_back(std::move(v)); 
+                getPrimitivesForView(APA::views.at(iView), tps, v); tps_per_view.emplace_back(std::move(v)); 
             }
 
-            std::vector<std::vector<Cluster>> clusters_per_view; 
-            clusters_per_view.reserve(APA::views.size());
+            std::vector<std::vector<Cluster>> clusters_per_view; clusters_per_view.reserve(APA::views.size());
             std::vector<int> adc_cut = {adc_integral_cut_ind, adc_integral_cut_ind, adc_integral_cut_col};
             
             for (size_t iView=0;iView<APA::views.size();++iView)
@@ -276,55 +310,26 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            // Separate clusters into accepted and discarded based on energy_cut
-            for (size_t iView=0;iView<APA::views.size();++iView) {
-                std::vector<Cluster> accepted_clusters;
-                std::vector<Cluster> discarded_clusters;
-                
-                for (auto& cluster : clusters_per_view.at(iView)) {
-                    // Get cluster energy in MeV
-                    float cluster_energy_mev = 0.0f;
-                    if (APA::views.at(iView) == "X") {
-                        cluster_energy_mev = cluster.get_total_charge() / ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");
-                    } else {
-                        cluster_energy_mev = cluster.get_total_charge() / ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
-                    }
-                    
-                    if (cluster_energy_mev >= energy_cut) {
-                        accepted_clusters.push_back(cluster);
-                    } else {
-                        discarded_clusters.push_back(cluster);
-                    }
-                }
-                
-                // Write accepted clusters to clusters/ folder
-                clusters_file->cd("clusters");
-                write_clusters(accepted_clusters, clusters_file, APA::views.at(iView));
-                
-                // Write discarded clusters to discarded/ folder
-                clusters_file->cd("discarded");
-                write_clusters(discarded_clusters, clusters_file, APA::views.at(iView));
-            }
+            for (size_t iView=0;iView<APA::views.size();++iView)
+                write_clusters(clusters_per_view.at(iView), clusters_file, APA::views.at(iView)); 
         }
 
-        // Write metadata and close
+    }
+
+
+    // Close final output file
+    if (clusters_file) {
         LogInfo << "Writing clustering metadata..." << std::endl;
         create_metadata_tree(clusters_file);
         clusters_file->Close();
         delete clusters_file;
-        
-        produced_files.push_back(current_clusters_filename);
-        if (verboseMode) LogInfo << "Closed output file: " << current_clusters_filename << std::endl;
-    }
-
-    // Print summary
-    LogInfo << "\nClustering complete! Generated " << produced_files.size() << " output file(s):" << std::endl;
-    for (size_t i = 0; i < std::min<size_t>(5, produced_files.size()); i++) {
-        LogInfo << "  - " << produced_files[i] << std::endl;
-    }
-    if (produced_files.size() > 5) {
-        LogInfo << "  ... and " << (produced_files.size() - 5) << " more" << std::endl;
+        LogInfo << "Closed final output file: " << current_clusters_filename << std::endl;
     }
     
+    // Print summary
+    LogInfo << "\nClustering complete! Generated " << produced_files.size() << " output file(s):" << std::endl;
+    for (const auto& f : produced_files) {
+        LogInfo << "  - " << f << std::endl;
+    }
     return 0;
 }

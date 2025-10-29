@@ -41,6 +41,8 @@ int main(int argc, char* argv[]) {
     clp.getDescription() << "> add_backgrounds app - Merge signal TPs with random background events, writing *_tps_bg.root files." << std::endl;
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
+    clp.addOption("skip_files", {"-s", "--skip"}, "Number of files to skip at start (overrides JSON)", -1);
+    clp.addOption("max_files", {"-m", "--max"}, "Maximum number of files to process (overrides JSON)", -1);
     clp.addTriggerOption("verboseMode", {"-v", "--verbose"}, "Run in verbose mode");
     clp.addTriggerOption("debugMode", {"-d", "--debug"}, "Run in debug mode (more detailed than verbose)");
     clp.addTriggerOption("override", {"-f", "--override"}, "Override existing output files");
@@ -72,8 +74,16 @@ int main(int argc, char* argv[]) {
     bool around_vertex_only = j.value("around_vertex_only", false);
     double vertex_radius = j.value("vertex_radius", 100.0); // cm, used if around_vertex_only=true
     int max_files = j.value("max_files", -1); // -1 means no limit
-
     int skip_files = j.value("skip_files", 0); // number of files to skip at start
+    
+    // CLI overrides JSON
+    if (clp.isOptionTriggered("skip_files")) {
+        skip_files = clp.getOptionVal<int>("skip_files");
+    }
+    if (clp.isOptionTriggered("max_files")) {
+        max_files = clp.getOptionVal<int>("max_files");
+    }
+
     LogInfo << "Number of files to skip at start: " << skip_files << std::endl;
     
     // sig_folder: pure signal TPs (input)
