@@ -24,6 +24,10 @@ void bindBranch(TTree* tree, const char* name, void* address);
 
 std::string getClustersFolder(const nlohmann::json& j);
 
+// New folder structure helpers
+std::string getConditionsString(const nlohmann::json& j);
+std::string getOutputFolder(const nlohmann::json& j, const std::string& folder_type, const std::string& json_key);
+
 template <typename T> bool SetBranchWithFallback(TTree* , std::initializer_list<const char*>, T*, const std::string& );
 
 

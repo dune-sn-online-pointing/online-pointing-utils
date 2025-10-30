@@ -1,5 +1,40 @@
 #!/usr/bin/env python3
 """
+Create 1m x 1m volume images for channel tagging.
+"""
+
+import sys
+import json
+import argparse
+from pathlib import Path
+import uproot
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+
+def get_conditions_string(config):
+    """Build conditions string from clustering parameters (matches C++ logic)"""
+    def sanitize(value):
+        s = str(value)
+        if '.' in s:
+            parts = s.split('.')
+            if len(parts) > 1:
+                s = f"{parts[0]}.{parts[1][:1]}"
+        return s.replace('.', 'p')
+    
+    tick_limit = config.get('tick_limit', 0)
+    channel_limit = config.get('channel_limit', 0)
+    min_tps = config.get('min_tps_to_cluster', 0)
+    tot_cut = config.get('tot_cut', 0)
+    energy_cut = float(config.get('energy_cut', 0.0))
+    
+    return (f"tick{sanitize(tick_limit)}_ch{sanitize(channel_limit)}_"
+            f"min{sanitize(min_tps)}_tot{sanitize(tot_cut)}_e{sanitize(energy_cut)}")
+
+
+#!/usr/bin/env python3
+"""
 create_volumes.py - Create 1m x 1m volume images for channel tagging
 
 Takes cluster ROOT files and creates volume images centered on main track clusters.
@@ -509,7 +544,19 @@ def main():
     
     # Use get_clusters_folder to compute the full path (matching make_clusters logic)
     clusters_folder = get_clusters_folder(config)
-    output_folder = config['volumes_folder']
+    
+    # Auto-generate volumes_folder if not explicitly provided
+    if 'volumes_folder' in config and config['volumes_folder']:
+        output_folder = config['volumes_folder']
+    else:
+        # Auto-generate from tpstream_folder
+        tpstream_folder = config.get('tpstream_folder', '.')
+        if tpstream_folder.endswith('/'):
+            tpstream_folder = tpstream_folder[:-1]
+        prefix = config.get('clusters_folder_prefix', 'volumes')
+        conditions = get_conditions_string(config)
+        output_folder = f"{tpstream_folder}/volume_images_{prefix}_{conditions}"
+    
     plane = config.get('plane', 'X')  # Default to collection plane
     
     # CLI overrides JSON settings

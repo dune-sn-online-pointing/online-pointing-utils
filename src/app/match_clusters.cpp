@@ -41,12 +41,26 @@ int main(int argc, char* argv[]) {
     std::ifstream i(json);
     nlohmann::json j;
     i >> j;
-    std::string input_clusters_file = j["input_clusters_file"];
-    std::string output_file = j["output_file"];
+    
+    // Get input/output paths
+    std::string input_clusters_file;
+    std::string output_file;
+    
+    if (j.contains("input_clusters_file")) {
+        // Single file mode (explicit input file)
+        input_clusters_file = j["input_clusters_file"];
+        output_file = j["output_file"];
+    } else {
+        // Batch mode: input and output folders will be handled by the shell script
+        LogThrowIf(true, "This executable expects explicit input_clusters_file and output_file in JSON.");
+    }
     
     // Get matching parameters with defaults
     int time_tolerance_ticks = j.value("time_tolerance_ticks", 100);  // Default 100 ticks
     float spatial_tolerance_cm = j.value("spatial_tolerance_cm", 5.0);  // Default 5 cm
+    
+    LogInfo << "Input:  " << input_clusters_file << std::endl;
+    LogInfo << "Output: " << output_file << std::endl;
     
     LogInfo << "Matching parameters:" << std::endl;
     LogInfo << "  Time tolerance: ±" << time_tolerance_ticks << " ticks (" 

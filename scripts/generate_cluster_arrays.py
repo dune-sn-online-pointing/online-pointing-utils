@@ -137,7 +137,7 @@ def get_clusters_folder(json_config):
 def get_images_folder(json_config):
     """
     Compose images folder name from JSON configuration.
-    Mirrors get_clusters_folder but for images output.
+    Uses auto-generation logic: explicit path or auto-generate from tpstream_folder.
     
     Args:
         json_config: Dict with clustering parameters or path to JSON file
@@ -152,14 +152,20 @@ def get_images_folder(json_config):
     else:
         j = json_config
     
-    # Extract parameters with defaults matching C++ code
+    # If explicit cluster_images_folder provided, use it
+    if 'cluster_images_folder' in j and j['cluster_images_folder']:
+        return j['cluster_images_folder']
+    
+    # Auto-generate from tpstream_folder
+    tpstream_folder = j.get('tpstream_folder', '.').rstrip('/')
     cluster_prefix = j.get("clusters_folder_prefix", "clusters")
+    
+    # Get conditions string
     tick_limit = j.get("tick_limit", 0)
     channel_limit = j.get("channel_limit", 0)
     min_tps_to_cluster = j.get("min_tps_to_cluster", 0)
     tot_cut = j.get("tot_cut", 0)
     energy_cut = float(j.get("energy_cut", 0.0))
-    outfolder = j.get("clusters_folder", ".").rstrip('/')
     
     def sanitize(value):
         """
@@ -190,7 +196,7 @@ def get_images_folder(json_config):
     
     # Build subfolder name matching C++ format
     images_subfolder = (
-        f"images_{cluster_prefix}"
+        f"cluster_images_{cluster_prefix}"
         f"_tick{sanitize(tick_limit)}"
         f"_ch{sanitize(channel_limit)}"
         f"_min{sanitize(min_tps_to_cluster)}"
@@ -198,7 +204,7 @@ def get_images_folder(json_config):
         f"_e{sanitize(energy_cut)}"
     )
     
-    images_folder_path = f"{outfolder}/{images_subfolder}"
+    images_folder_path = f"{tpstream_folder}/{images_subfolder}"
     return images_folder_path
 
 

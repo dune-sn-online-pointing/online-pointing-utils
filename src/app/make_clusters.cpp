@@ -101,11 +101,18 @@ int main(int argc, char* argv[]) {
     
     LogInfo << "Number of files to skip at start: " << skip_files << std::endl;
 
-    std::string clusters_folder_path = getClustersFolder(j);
+    // Use new folder logic: explicit JSON > auto-generate from tpstream_folder
+    std::string clusters_folder_path;
+    if (clp.isOptionTriggered("outFolder")) {
+        // CLI override - build full path manually
+        clusters_folder_path = getClustersFolder(j);
+    } else {
+        // Use new auto-generation logic
+        clusters_folder_path = getOutputFolder(j, "clusters", "clusters_folder");
+    }
 
     LogInfo << "Settings from json file:" << std::endl;
-    LogInfo << " - Base output folder: " << outfolder << std::endl;
-    LogInfo << " - Full clusters path: " << clusters_folder_path << std::endl;
+    LogInfo << " - Clusters output path: " << clusters_folder_path << std::endl;
     LogInfo << " - Tick limit: " << tick_limit << std::endl;
     LogInfo << " - Channel limit: " << channel_limit << std::endl;
     LogInfo << " - Minimum TPs to form a cluster: " << min_tps_to_cluster << std::endl;

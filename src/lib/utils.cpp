@@ -82,6 +82,76 @@ std::string getClustersFolder(const nlohmann::json& j) {
     return clusters_folder_path;
 }
 
+// Helper: Build conditions string from clustering parameters
+std::string getConditionsString(const nlohmann::json& j) {
+    auto sanitize = [](const std::string& s) {
+        std::string out = s;
+        auto pos = out.find('.');
+        if (pos != std::string::npos) {
+            size_t keep = std::min(out.size(), pos + 2);
+            out = out.substr(0, keep);
+        }
+        std::replace(out.begin(), out.end(), '.', 'p');
+        return out;
+    };
+
+    int tick_limit = j.value("tick_limit", 0);
+    int channel_limit = j.value("channel_limit", 0);
+    int min_tps_to_cluster = j.value("min_tps_to_cluster", 0);
+    int tot_cut = j.value("tot_cut", 0);
+    float energy_cut = 0.0f;
+    if (j.contains("energy_cut")) {
+        try {
+            energy_cut = j.at("energy_cut").get<float>();
+        } catch (const std::exception&) {
+            energy_cut = static_cast<float>(j.at("energy_cut").get<double>());
+        }
+    }
+
+    return "tick" + sanitize(std::to_string(tick_limit))
+        + "_ch" + sanitize(std::to_string(channel_limit))
+        + "_min" + sanitize(std::to_string(min_tps_to_cluster))
+        + "_tot" + sanitize(std::to_string(tot_cut))
+        + "_e" + sanitize(std::to_string(energy_cut));
+}
+
+// Helper: Get output folder with auto-generation logic
+// Priority: 1) Explicit JSON key, 2) Auto-generate from tpstream_folder
+std::string getOutputFolder(const nlohmann::json& j, const std::string& folder_type, const std::string& json_key) {
+    // If explicit path provided in JSON, use it
+    if (j.contains(json_key) && !j[json_key].get<std::string>().empty()) {
+        return j[json_key].get<std::string>();
+    }
+
+    // Auto-generate from tpstream_folder
+    std::string base_folder = j.value("tpstream_folder", std::string("."));
+    
+    // Remove trailing slash if present
+    if (!base_folder.empty() && base_folder.back() == '/') {
+        base_folder.pop_back();
+    }
+
+    std::string prefix = j.value("clusters_folder_prefix", std::string(""));
+    std::string conditions = getConditionsString(j);
+
+    if (folder_type == "tps_bg") {
+        return base_folder + "/tps_bg";
+    } else if (folder_type == "clusters") {
+        return base_folder + "/clusters_" + prefix + "_" + conditions;
+    } else if (folder_type == "cluster_images") {
+        return base_folder + "/cluster_images_" + prefix + "_" + conditions;
+    } else if (folder_type == "volume_images" || folder_type == "volumes") {
+        return base_folder + "/volume_images_" + prefix + "_" + conditions;
+    } else if (folder_type == "reports") {
+        return base_folder + "/reports";
+    } else if (folder_type == "matched_clusters") {
+        return base_folder + "/matched_clusters_" + prefix + "_" + conditions;
+    }
+
+    // Default: return base folder
+    return base_folder;
+}
+
 // std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix) {
 //     std::vector<std::string> filenames;
 //     filenames.reserve(64);
