@@ -10,6 +10,7 @@ print_help(){
     echo "  --no-compile                Do not recompile the code"
     echo "  --clean-compile             Clean and recompile the code"
     echo "  -j|--json-settings <json>   Global json file including all steps. Overrides individual jsons if parsed"
+    echo "  --home-dir <path>          Path to the home directory (overrides default)"
     echo "  --max-files <n>             Maximum number of files to process (overrides JSON)"
     echo "  --skip-files <n>            Number of files to skip at start (overrides JSON)"
     echo "  -bt               Run backtrack step"
@@ -56,6 +57,7 @@ while [[ $# -gt 0 ]]; do
         case $1 in
                 -s|--sample) sample="$2"; shift 2 ;;
                 -j|--json-settings) settingsFile="$2"; shift 2 ;;
+                --home-dir) HOME_DIR="$2"; echo "Home directory set from CLI to: $HOME_DIR"; source ${HOME_DIR}/scripts/init.sh; shift 2 ;;
                 --max-files) max_files="$2"; shift 2 ;;
                 --skip-files) skip_files="$2"; shift 2 ;;
                 --no-compile) noCompile=true; shift ;;

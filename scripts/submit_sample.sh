@@ -81,7 +81,7 @@ touch $list_of_jobs
 for i in $(seq 1 $max_jobs); do
     skip=$(( (i - 1) * max_files ))
     echo "Adding job $i with skip $skip"
-    echo "-j ${JSON_SETTINGS} -bt -f --skip-files $skip --max-files $max_files" >> $list_of_jobs
+    echo "-j ${JSON_SETTINGS} --home-dir ${HOME_DIR} --no-compile -bt -f --skip-files $skip --max-files $max_files" >> $list_of_jobs
 done
 
 echo "List of jobs:"
@@ -107,8 +107,6 @@ log                 = ${JOB_OUTPUT_DIR}job.\$(ClusterId).\$(JOBNAME).log
 # request_cpus        = 1
 # request_memory      = 2000
 
-#requirements = (OpSysAndVer =?= "CentOS7")
-MY.WantOS = "el7"
 +JobFlavour         = "workday"
 
 queue arguments from ${list_of_jobs}

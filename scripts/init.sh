@@ -1,6 +1,8 @@
 #!/bin/bash
 
-if [[ $INIT_DONE == true ]]; then
+# On worker nodes, INIT_DONE might be inherited but environment is not
+# Always reinitialize to ensure LCG is properly loaded
+if [[ $INIT_DONE == true ]] && [[ -n "${ONLINE_POINTING_UTILS_LCG_VIEW:-}" ]]; then
     echo "Environment is already initialized, not running init.sh again."
     echo "If it is not loaded properly, run export INIT_DONE=false and rerun init.sh"
 else
@@ -16,11 +18,12 @@ else
     export PARAMETERS_DIR="${HOME_DIR}/parameters"
     echo " Parameters directory is $PARAMETERS_DIR"
 
-    # In lxplus, set up a full ROOT environment from LCG
+    # In lxplus or worker nodes, set up a full ROOT environment from LCG
     # In fnal, we need to be in a container and set up root
-
-    if [[ $(hostname) == *"lxplus"* ]]; then
-        LCG_VIEW_PATH=/cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-el9-gcc11-opt/setup.sh
+    
+    # Check if we're at CERN (lxplus or worker nodes like b9pgpun, b9g47n, etc.)
+    if [[ $(hostname) == *"lxplus"* ]] || [[ $(hostname -f) == *".cern.ch" ]]; then
+        LCG_VIEW_PATH=/cvmfs/sft.cern.ch/lcg/views/LCG_106/x86_64-el9-gcc13-opt/setup.sh
         if [[ -z ${ONLINE_POINTING_UTILS_LCG_VIEW:-} ]]; then
             if [[ -f ${LCG_VIEW_PATH} ]]; then
                 echo " Setting up environment for lxplus using ${LCG_VIEW_PATH}"

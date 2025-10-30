@@ -72,6 +72,7 @@ else
         return 1
     fi
 
+    echo "Using $nproc_to_use processors for compilation"
     make -j $nproc_to_use
     # check if make was successful
     if [ $? -ne 0 ]
