@@ -13,8 +13,9 @@
     "clusters_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/",
     "clusters_folder_prefix": "cc_valid_bg",
     "reports_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports/",
+    "volumes_folder": "/home/virgolaema/dune/online-pointing-utils/output/volumes/",
 
-    "max_files": 100,
+    "max_files": 5,
     "skip_files": 0,
 
     "backtracker_error_margin": 10,
@@ -23,6 +24,9 @@
     "channel_limit": 2,
     "min_tps_to_cluster": 2,
     "tot_cut": 1,
-    "energy_cut": 0
+    "energy_cut": 0,
+
+    "time_tolerance_ticks": 100,
+    "spatial_tolerance_cm": 5.0
 
 }

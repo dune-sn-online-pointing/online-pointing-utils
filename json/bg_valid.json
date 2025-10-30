@@ -14,7 +14,7 @@
     "clusters_folder_prefix": "bg_valid",
     "reports_folder": "/home/virgolaema/dune/online-pointing-utils/data/bkgs/reports/",
 
-    "max_files": 100,
+    "max_files": -1,
     "skip_files": 0,
 
     "backtracker_error_margin": 10,

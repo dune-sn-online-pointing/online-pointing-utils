@@ -6,6 +6,7 @@ set( SRC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/global.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ParametersManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/geometry.cpp
 )
 
 if( USE_STATIC_LINKS )
@@ -17,6 +18,7 @@ endif()
 target_include_directories(
     ${LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/src/objects
 )
 
 

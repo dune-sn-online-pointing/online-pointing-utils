@@ -433,8 +433,15 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
             'true_pos_x', 'true_pos_y', 'true_pos_z',
             'true_dir_x', 'true_dir_y', 'true_dir_z',
             'true_mom_x', 'true_mom_y', 'true_mom_z',
-            'true_neutrino_energy', 'true_particle_energy', 'true_interaction'
+            'true_neutrino_energy', 'true_particle_energy', 'true_interaction',
+            'cluster_id'
         ]
+        
+        # Check if match_id exists (for matched_clusters files)
+        has_match_id = 'match_id' in tree.keys()
+        if has_match_id:
+            branches.extend(['match_id', 'match_type'])
+        
         data = tree.arrays(branches, library='np')
         
         images = []
@@ -481,6 +488,11 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                 interaction_str = str(data['true_interaction'][i])
                 is_es_interaction = 1.0 if interaction_str == "ES" else 0.0
                 
+                # Get cluster ID and match info
+                cluster_id = int(data['cluster_id'][i])
+                match_id = int(data['match_id'][i]) if has_match_id else -1
+                match_type = int(data['match_type'][i]) if has_match_id else -1
+                
                 # Generate image
                 img_array = draw_cluster_to_array(
                     channels, times, adc_integrals, adc_peaks,
@@ -489,7 +501,7 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                     img_width=16, img_height=128
                 )
                 
-                # Prepare metadata
+                # Prepare metadata (extended with match info)
                 metadata_array = np.array([
                     int(is_marley),
                     int(is_main_track),
@@ -499,7 +511,10 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                     np.float32(true_nu_energy),
                     np.float32(true_particle_energy),
                     plane_number,
-                    is_es_interaction
+                    is_es_interaction,
+                    cluster_id,
+                    match_id,
+                    match_type
                 ], dtype=np.float32)
                 
                 images.append(img_array)

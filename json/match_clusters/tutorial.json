@@ -1,16 +1,4 @@
 {
-    "input_file": "", // Path to the input file containing the list of input files
-    "clusters_u": "", // Path to the clusters file for U plane
-    "clusters_v": "", // Path to the clusters file for V plane
-    "clusters_x": "", // Path to the clusters file for X plane
-    "create_clusters_from_file": 1, // 0 = uses clusters from file, 1 = create clusters from input file
-    "output_folder": "", // Path to the output folder where the matched clusters will be saved
-    "supernova_option": 0, // This controls if the SN tps are read from file: 0 = both SN and bkg, 1 = only SN, 2 = only bkg
-    "main_track_option": 3, // This controls the main track selection: 0 = keep all, 1 = keep only the main track, 2 = keep everything but the main track, 3 = keep everything but assign different labels to main track and other tracks
-    "tick_limit": 3, // This controls the proximity condition on the ticks dimension
-    "channel_limit": 1, // This controls the proximity condition on the channels dimension
-    "min_tps_to_cluster": 1, // This controls the minimum number of tps to form a cluster
-    "max_events_per_filename": 1000, // This controls the maximum number of events to be processed per input file
-    "adc_integral_cut": 0, // This controls the cut on the integral of the ADC values
-    "use_electron_direction": 0 // This controls the use of the electron direction as true direction
+    "input_clusters_file": "", // Path to the clusters ROOT file containing U, V, X plane clusters
+    "output_file": "" // Path to output ROOT file for matched multiplane clusters
 }

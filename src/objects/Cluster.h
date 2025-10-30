@@ -34,7 +34,8 @@ class Cluster {
         float get_number_of_tps() { return tps_.size(); }
         int get_event() { return tps_.at(0)->GetEvent(); }
         int get_true_pdg() const { return true_pdg_; }
-        bool get_is_main_cluster() const { return is_main_cluster_; }        
+        bool get_is_main_cluster() const { return is_main_cluster_; }
+        int get_cluster_id() const { return cluster_id_; }
         
         // setters
         std::vector<TriggerPrimitive*> get_tps() const { return tps_; }
@@ -50,6 +51,7 @@ class Cluster {
         void set_is_es_interaction(bool is_es) { is_es_interaction_ = is_es; }
         void set_true_pdg(int pdg) { true_pdg_ = pdg; }
         void set_is_main_cluster(bool is_main) { is_main_cluster_ = is_main; }
+        void set_cluster_id(int id) { cluster_id_ = id; }
         // void set_total_charge(float charge) { total_charge_ = charge; }
 
         // methods 
@@ -73,6 +75,7 @@ class Cluster {
         float total_energy_ {0.0f};
         int true_pdg_ {0};
         bool is_main_cluster_ {false};
+        int cluster_id_ {-1}; // Unique ID per file to link matched clusters
 };
 
 float distance(Cluster cluster1, Cluster cluster2);

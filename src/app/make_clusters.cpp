@@ -228,6 +228,9 @@ int main(int argc, char* argv[]) {
         clusters_file->mkdir("clusters");
         clusters_file->mkdir("discarded");
 
+        // Cluster ID counter (unique per file, shared across all views)
+        int next_cluster_id = 0;
+
         // Process events
         for (auto& kv : tps_by_event) {
             int event = kv.first;
@@ -282,6 +285,9 @@ int main(int argc, char* argv[]) {
                 std::vector<Cluster> discarded_clusters;
                 
                 for (auto& cluster : clusters_per_view.at(iView)) {
+                    // Assign unique cluster ID
+                    cluster.set_cluster_id(next_cluster_id++);
+                    
                     // Get cluster energy in MeV
                     float cluster_energy_mev = 0.0f;
                     if (APA::views.at(iView) == "X") {

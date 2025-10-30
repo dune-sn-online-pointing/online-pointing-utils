@@ -419,6 +419,10 @@ int main(int argc, char* argv[]){
       std::vector<int>* v_sot=nullptr;
       std::vector<int>* v_adcint=nullptr;
       std::vector<double>* v_simide_energy=nullptr;
+      // match_id branches (for matched_clusters files)
+      int match_id=-1, match_type=-1;
+      bool has_match_id = false;
+      
       pd.tree->SetBranchAddress("event", &event);
       pd.tree->SetBranchAddress("n_tps", &n_tps);
       // prefer new names; fallback if needed
@@ -436,6 +440,13 @@ int main(int argc, char* argv[]){
         pd.tree->SetBranchAddress("marley_tp_fraction", &marley_tp_fraction);
         has_marley_tp_fraction_branch = true;
       }
+      if (pd.tree->GetBranch("match_id")) {
+        pd.tree->SetBranchAddress("match_id", &match_id);
+        has_match_id = true;
+      }
+      if (pd.tree->GetBranch("match_type")) {
+        pd.tree->SetBranchAddress("match_type", &match_type);
+      }
       if (pd.tree->GetBranch("true_pos_x")) pd.tree->SetBranchAddress("true_pos_x", &true_pos_x);
       if (pd.tree->GetBranch("true_pos_y")) pd.tree->SetBranchAddress("true_pos_y", &true_pos_y);
       if (pd.tree->GetBranch("true_pos_z")) pd.tree->SetBranchAddress("true_pos_z", &true_pos_z);
@@ -445,6 +456,11 @@ int main(int argc, char* argv[]){
       if (pd.tree->GetBranch("tp_samples_over_threshold")) pd.tree->SetBranchAddress("tp_samples_over_threshold", &v_sot);
       if (pd.tree->GetBranch("tp_adc_integral")) pd.tree->SetBranchAddress("tp_adc_integral", &v_adcint);
       if (pd.tree->GetBranch("tp_simide_energy")) pd.tree->SetBranchAddress("tp_simide_energy", &v_simide_energy);
+
+      // Report if this is a matched_clusters file
+      if (has_match_id && pd.name == planes[0].name) { // Only log once per file
+        LogInfo << "  File contains match_id information (matched_clusters file)" << std::endl;
+      }
 
       // Histos per plane
       TH1F* h_ntps = ensureHist(n_tps_plane_h, std::string("n_tps_")+pd.name, (std::string("Cluster size (n_tps) - ")+pd.name+";n_{TPs};Clusters").c_str(), 40, 0, 40);

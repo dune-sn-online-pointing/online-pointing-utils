@@ -61,11 +61,15 @@ install( TARGETS split_by_apa DESTINATION bin )
 # target_link_libraries( create_volume_clusters clustersLibs )
 # install( TARGETS create_volume_clusters DESTINATION bin )
 
-# Temporarily 
-# cmessage( STATUS "Creating match_clusters app..." )
-# add_executable( match_clusters ${CMAKE_CURRENT_SOURCE_DIR}/match_clusters.cpp )
-# target_link_libraries( match_clusters planesMatchingLibs )
-# install( TARGETS match_clusters DESTINATION bin )
+cmessage( STATUS "Creating match_clusters app..." )
+add_executable( match_clusters ${CMAKE_CURRENT_SOURCE_DIR}/match_clusters.cpp )
+target_link_libraries( match_clusters planesMatchingLibs )
+install( TARGETS match_clusters DESTINATION bin )
+
+cmessage( STATUS "Creating analyze_matching app..." )
+add_executable( analyze_matching ${CMAKE_CURRENT_SOURCE_DIR}/analyze_matching.cpp )
+target_link_libraries( analyze_matching clustersLibs globalLib )
+install( TARGETS analyze_matching DESTINATION bin )
 
 # Temporarily 
 # cmessage( STATUS "Creating superimpose_signal_and_backgrounds app..." )

@@ -43,15 +43,6 @@ int main(int argc, char* argv[]) {
     i >> j;
     std::string input_clusters_file = j["input_clusters_file"];
     std::string output_file = j["output_file"];
-    
-    // Get matching parameters with defaults
-    int time_tolerance_ticks = j.value("time_tolerance_ticks", 100);  // Default 100 ticks
-    float spatial_tolerance_cm = j.value("spatial_tolerance_cm", 5.0);  // Default 5 cm
-    
-    LogInfo << "Matching parameters:" << std::endl;
-    LogInfo << "  Time tolerance: ±" << time_tolerance_ticks << " ticks (" 
-            << (time_tolerance_ticks * 0.512) << " µs)" << std::endl;
-    LogInfo << "  Spatial tolerance: " << spatial_tolerance_cm << " cm" << std::endl;
 
     // start the clock
     std::clock_t start;
@@ -112,12 +103,12 @@ int main(int argc, char* argv[]) {
         start_j = std::max(start_j-10, 0);
         for (int j = start_j; j < clusters_u.size(); j++) {
 
-            if (clusters_u[j].get_tps()[0]->GetTimeStart() > clusters_x[i].get_tps()[0]->GetTimeStart() + time_tolerance_ticks) {
+            if (clusters_u[j].get_tps()[0]->GetTimeStart() > clusters_x[i].get_tps()[0]->GetTimeStart() + 5000) {
                 // LogInfo << "continue" << std::endl;
                 break;
             }
 
-            if (clusters_u[j].get_tps()[0]->GetTimeStart() < clusters_x[i].get_tps()[0]->GetTimeStart() - time_tolerance_ticks) {
+            if (clusters_u[j].get_tps()[0]->GetTimeStart() < clusters_x[i].get_tps()[0]->GetTimeStart() - 5000) {
                 // LogInfo << "continue" << std::endl;
                 continue;
             }
@@ -138,11 +129,11 @@ int main(int argc, char* argv[]) {
             }
             start_k = std::max(start_k-10, 0);
             for (int k = start_k; k < clusters_v.size(); k++) {
-                if (clusters_v[k].get_tps()[0]->GetTimeStart() > clusters_u[j].get_tps()[0]->GetTimeStart() + time_tolerance_ticks) {
+                if (clusters_v[k].get_tps()[0]->GetTimeStart() > clusters_u[j].get_tps()[0]->GetTimeStart() + 5000) {
                     // LogInfo << "break" << std::endl;
                     break;
                 }
-                if (clusters_v[k].get_tps()[0]->GetTimeStart() < clusters_u[j].get_tps()[0]->GetTimeStart() - time_tolerance_ticks) {
+                if (clusters_v[k].get_tps()[0]->GetTimeStart() < clusters_u[j].get_tps()[0]->GetTimeStart() - 5000) {
                     // LogInfo << "break" << std::endl;
                     continue;
                 }
@@ -152,7 +143,7 @@ int main(int argc, char* argv[]) {
                     continue;
                 }
 
-                if (are_compatibles(clusters_u[j], clusters_v[k], clusters_x[i], spatial_tolerance_cm)) {
+                if (are_compatibles(clusters_u[j], clusters_v[k], clusters_x[i], 5)) {
                     clusters.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
                     Cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
                     multiplane_clusters.push_back(c);

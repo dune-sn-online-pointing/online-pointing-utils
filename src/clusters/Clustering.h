@@ -26,7 +26,11 @@ std::vector<Cluster> filter_out_main_track(std::vector<Cluster>& clusters);
 // write the clusters to a root file
 void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::string view);
 
+// write the clusters to a root file with match_id information
+void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, int>& cluster_to_match, TFile* clusters_file, std::string view);
+
 std::vector<Cluster> read_clusters(std::string root_filename);
+std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::string view);
 
 std::map<int, std::vector<Cluster>> create_event_mapping(std::vector<Cluster>& clusters);
 

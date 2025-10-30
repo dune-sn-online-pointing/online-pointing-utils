@@ -1,0 +1,15 @@
+{
+  "inputFile": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T230004Z_gen_003949_supernova_g4_detsim_ana_2025-10-21T_092141Z_tpstream.root",
+  "inputFolder": "",
+  "inputList": [],
+  "inputListFile": "",
+
+  "clusters_folder": "/home/virgolaema/dune/online-pointing-utils/output",
+  "clusters_folder_prefix": "test_cc_valid",
+  
+  "tick_limit": 3,
+  "channel_limit": 1,
+  "min_tps_to_cluster": 1,
+  "tot_cut": 0,
+  "energy_cut": 0
+}

@@ -167,8 +167,13 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
             'true_label', 'marley_tp_fraction',
             'tp_detector_channel', 'tp_time_start',
             'tp_adc_integral', 'tp_adc_peak', 
-            'tp_samples_over_threshold', 'tp_samples_to_peak'
+            'tp_samples_over_threshold', 'tp_samples_to_peak',
+            'cluster_id'
         ]
+        
+        # Check if match_id exists (for matched_clusters files)
+        if 'match_id' in tree.keys():
+            branches.extend(['match_id', 'match_type'])
         
         arrays = tree.arrays(branches, library='np')
         n_entries = len(arrays['event'])
@@ -225,7 +230,10 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
                 'true_mom_y': float(arrays['true_mom_y'][i]),
                 'true_mom_z': float(arrays['true_mom_z'][i]),
                 'is_marley': is_marley,
-                'marley_tp_fraction': float(arrays['marley_tp_fraction'][i])
+                'marley_tp_fraction': float(arrays['marley_tp_fraction'][i]),
+                'cluster_id': int(arrays['cluster_id'][i]),
+                'match_id': int(arrays['match_id'][i]) if 'match_id' in arrays else -1,
+                'match_type': int(arrays['match_type'][i]) if 'match_type' in arrays else -1
             }
             
             all_clusters.append(cluster_info)
@@ -467,7 +475,8 @@ def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
             'center_channel': float(main_cluster['center_channel']),
             'center_time_tpc': float(main_cluster['center_time_tpc']),
             'volume_size_cm': VOLUME_SIZE_CM,
-            'image_shape': image.shape
+            'image_shape': image.shape,
+            'main_cluster_id': main_cluster['cluster_id']
         }
         
         # Save to npz file

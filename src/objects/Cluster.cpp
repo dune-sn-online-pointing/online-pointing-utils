@@ -11,7 +11,8 @@ LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 Cluster::Cluster(std::vector<TriggerPrimitive*> tps) {
     // check that all tps come from same event
-    // check that all tps come from same view
+    // NOTE: For multiplane clusters, TPs may come from different views (U, V, X)
+    // The view check is skipped if TPs are from multiple views
 
     if (tps.size() == 0) {
         LogError << "Cluster has no TPs!" << std::endl;
@@ -28,13 +29,26 @@ Cluster::Cluster(std::vector<TriggerPrimitive*> tps) {
             LogError << "Cluster has TPs from different events!" << std::endl;
             return;
         }
-
-        if (tp->GetView() != tps.at(0)->GetView()) {
-            LogError << "Cluster has TPs from different views!" << std::endl;
-            return;
+    }
+    
+    // Check if all TPs are from same view (single-plane cluster)
+    // If they're not all the same view, this is a multiplane cluster
+    bool same_view = true;
+    std::string first_view = tps.at(0)->GetView();
+    for (auto& tp : tps) {
+        if (tp->GetView() != first_view) {
+            same_view = false;
+            break;
         }
     }
-
+    
+    // Only enforce view consistency for single-plane clusters
+    if (same_view) {
+        // All TPs have same view - this is expected for single-plane clusters
+    } else {
+        // Mixed views - this is a multiplane cluster, which is valid
+        if (debugMode) LogDebug << "Creating multiplane cluster with mixed views" << std::endl;
+    }
 
     tps_ = tps;
     update_cluster_info();
@@ -112,7 +126,8 @@ void Cluster::update_cluster_info() {
     }
     
     // Set generator fractions
-    if (tps_.size() > 0) {
+    // Only recalculate if TPs have truth information, otherwise preserve existing value
+    if (tps_.size() > 0 && tps_with_truth > 0) {
         // Count MARLEY TPs (case-insensitive)
         int marley_count = 0;
         for (const auto& kv : generator_counts) {
@@ -123,8 +138,7 @@ void Cluster::update_cluster_info() {
             }
         }
         supernova_tp_fraction_ = (float)marley_count / tps_.size();
-        generator_tp_fraction_ = (tps_with_truth > 0) ? 
-            (float)tps_with_truth / tps_.size() : 0.0f;
+        generator_tp_fraction_ = (float)tps_with_truth / tps_.size();
     }
     
     // Find dominant particle (most TPs matched to it)
@@ -139,7 +153,7 @@ void Cluster::update_cluster_info() {
     
     // Debug: Always log for MARLEY clusters
     if (supernova_tp_fraction_ > 0) {
-        std::cerr << "MARLEY cluster: marley_fraction=" << supernova_tp_fraction_ 
+        if (debugMode) LogDebug << "MARLEY cluster: marley_fraction=" << supernova_tp_fraction_ 
                   << " dominant_gen=" << dominant_key.generator 
                   << " max_count=" << max_particle_count 
                   << " tps_size=" << tps_.size() << std::endl;

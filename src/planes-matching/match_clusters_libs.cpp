@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "match_clusters_libs.h"
 #include "Cluster.h"
-#include "Backtracking.h"
+#include "geometry.h"
 // #include "position_calculator.h"
 
 
@@ -67,11 +67,19 @@ bool match_with_true_pos(Cluster& c_u, Cluster& c_v, Cluster& c_x, float radius)
 
 Cluster join_clusters(Cluster c_u, Cluster c_v, Cluster c_x){
     std::vector<TriggerPrimitive*> tps;
+    
+    // Set all TPs to same event (use X cluster's first TP event)
+    int common_event = (c_x.get_size() > 0) ? c_x.get_tps()[0]->GetEvent() : 0;
+    
     for (int i = 0; i < c_u.get_size(); i++) {
-        tps.push_back(c_u.get_tps()[i]);
+        TriggerPrimitive* tp = c_u.get_tps()[i];
+        tp->SetEvent(common_event);  // Ensure consistent event
+        tps.push_back(tp);
     }
     for (int i = 0; i < c_v.get_size(); i++) {
-        tps.push_back(c_v.get_tps()[i]);
+        TriggerPrimitive* tp = c_v.get_tps()[i];
+        tp->SetEvent(common_event);  // Ensure consistent event
+        tps.push_back(tp);
     }
     for (int i = 0; i < c_x.get_size(); i++) {
         tps.push_back(c_x.get_tps()[i]);

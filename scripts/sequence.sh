@@ -25,6 +25,7 @@ print_help(){
     echo "  -ab               Run add backgrounds step"
     echo "  --clean           Run cluster without backgrounds"
     echo "  -mc               Run make clusters step"
+    echo "  -mm               Run match clusters step"
     echo "  -ac               Run analyze step"
     echo "  -gi               Generate cluster images (16x128 numpy arrays for NN)"
     echo "  -ai               Run analyze images step"
@@ -43,6 +44,7 @@ sample="" # cc_valid, es_valid, cc_bkg_myproc, es_bkg_myproc, cc_myproc, bkg_myp
 run_backtrack=false
 run_add_backgrounds=false
 run_make_clusters=false
+run_match_clusters=false
 run_analyze=false
 run_generate_images=false
 # run_analyze_images=false
@@ -75,6 +77,7 @@ while [[ $# -gt 0 ]]; do
                 -ab) run_add_backgrounds=true; shift ;;
                 --clean) clean_clusters=true; bg_suffix=""; shift ;;
                 -mc) run_make_clusters=true; shift ;;
+                -mm) run_match_clusters=true; shift ;;
                 -ac) run_analyze=true; shift ;;
                 -gi) run_generate_images=true; shift ;;
                 # -ai) run_analyze_images=true; shift ;;
@@ -110,6 +113,7 @@ if [ "$all_steps" = "true" ]; then
         # run_analyze_tps=true
         run_add_backgrounds=true
         run_make_clusters=true
+        run_match_clusters=true
         run_analyze=true
         run_generate_images=true
         # run_analyze_images=true
@@ -123,6 +127,7 @@ echo -e "Run backtrack:\t\t$run_backtrack"
 echo -e "Run analyze_tps:\t$run_analyze_tps"
 echo -e "Run add backgrounds:\t$run_add_backgrounds"
 echo -e "Run make clusters:\t$run_make_clusters"
+echo -e "Run match clusters:\t$run_match_clusters"
 echo -e "Run analyze:\t\t$run_analyze"
 echo -e "Run generate images:\t$run_generate_images"
 # echo -e "Run analyze images:\t$run_analyze_images"
@@ -254,6 +259,26 @@ if [ "$run_make_clusters" = true ]; then
         $make_clusters_command
         if [ $? -ne 0 ]; then
                 echo "Error: Make clusters step failed."
+                exit 1
+        fi
+        echo ""
+fi
+
+####################
+
+# Match clusters step
+if [ ! -z "$settingsFile" ]; then
+        match_clusters_json="$settingsFile"
+else
+        match_clusters_json="$JSON_DIR/match_clusters/${sample}${bg_suffix}.json"
+fi
+match_clusters_command="./scripts/match_clusters.sh -j $match_clusters_json $common_options"
+if [ "$run_match_clusters" = true ]; then
+        echo "Running match clusters step with command:"
+        echo $match_clusters_command
+        $match_clusters_command
+        if [ $? -ne 0 ]; then
+                echo "Error: Match clusters step failed."
                 exit 1
         fi
         echo ""

@@ -1,0 +1,19 @@
+# script to submit jobs to the grid for sn simulation
+
+notify_user         = virgolaema@cern.ch
+notification        = Error
+
+JOBNAME             = process_files_es-from4900to5000
+executable          = /home/virgolaema/dune/online-pointing-utils/scripts/sequence.sh
+# using the arguments from below, not this line
+output              = /home/virgolaema/dune/online-pointing-utils/job_output/job.$(ClusterId).$(ProcId).$(JOBNAME).out
+error               = /home/virgolaema/dune/online-pointing-utils/job_output/job.$(ClusterId).$(ProcId).$(JOBNAME).err
+log                 = /home/virgolaema/dune/online-pointing-utils/job_output/job.$(ClusterId).$(JOBNAME).log
+# request_cpus        = 1
+# request_memory      = 2000
+
+#requirements = (OpSysAndVer =?= "CentOS7")
+MY.WantOS = "el7"
++JobFlavour         = "workday"
+
+queue arguments from /home/virgolaema/dune/online-pointing-utils/condor/virgolaema/list_of_jobs.txt
