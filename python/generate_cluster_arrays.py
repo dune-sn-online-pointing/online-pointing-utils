@@ -222,6 +222,42 @@ def get_clusters_folder(json_config):
     return clusters_folder_path
 
 
+def get_matched_clusters_folder(json_config):
+    """
+    Get matched clusters folder path.
+    If matched_clusters_folder is specified in JSON, use that.
+    Otherwise, auto-generate from clusters_folder by replacing 'clusters_' with 'matched_clusters_'
+    
+    Args:
+        json_config: Dict with configuration or path to JSON file
+        
+    Returns:
+        str: Full path to matched_clusters folder, or None if not available
+    """
+    # Load JSON if path provided
+    if isinstance(json_config, (str, Path)):
+        with open(json_config, 'r') as f:
+            j = json.load(f)
+    else:
+        j = json_config
+    
+    # Check if explicitly specified
+    matched_folder = j.get("matched_clusters_folder", "")
+    if matched_folder:
+        return matched_folder.rstrip('/')
+    
+    # Auto-generate from clusters_folder
+    clusters_folder = get_clusters_folder(json_config)
+    if clusters_folder:
+        # Replace 'clusters_' with 'matched_clusters_' in the basename
+        parent_dir = str(Path(clusters_folder).parent)
+        basename = Path(clusters_folder).name
+        matched_basename = basename.replace('clusters_', 'matched_clusters_', 1)
+        return f"{parent_dir}/{matched_basename}"
+    
+    return None
+
+
 def get_images_folder(json_config):
     """
     Compose images folder name from JSON configuration.
@@ -864,7 +900,17 @@ if __name__ == '__main__':
         with open(json_path, 'r') as f:
             json_config = json.load(f)
         
-        clusters_folder = get_clusters_folder(json_path)
+        # Try to use matched_clusters first, fall back to regular clusters
+        matched_folder = get_matched_clusters_folder(json_path)
+        if matched_folder and Path(matched_folder).exists():
+            clusters_folder = matched_folder
+            if args.verbose:
+                print(f"Using matched clusters folder: {clusters_folder}")
+        else:
+            clusters_folder = get_clusters_folder(json_path)
+            if args.verbose:
+                print(f"Using regular clusters folder: {clusters_folder}")
+        
         images_folder = get_images_folder(json_path)
         output_dir = args.output_dir if args.output_dir else images_folder
         
@@ -877,10 +923,12 @@ if __name__ == '__main__':
         print(f"Looking for clusters matching {len(source_basenames)} source file(s)")
         
         # Find ALL cluster files in the folder
-        all_cluster_files = list(Path(clusters_folder).glob("*_clusters.root"))
+        # Try _matched.root first (from match_clusters), then _bg_clusters.root, then _clusters.root
+        all_cluster_files = list(Path(clusters_folder).glob("*_matched.root"))
         if not all_cluster_files:
-            # Try with _bg suffix as fallback
             all_cluster_files = list(Path(clusters_folder).glob("*_bg_clusters.root"))
+        if not all_cluster_files:
+            all_cluster_files = list(Path(clusters_folder).glob("*_clusters.root"))
         
         # Filter cluster files to only those matching source basenames
         cluster_files = []

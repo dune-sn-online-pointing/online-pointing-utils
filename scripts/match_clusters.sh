@@ -143,7 +143,12 @@ MATCHED_FOLDER=$(python3 -c "import json; f=open('${INPUT_JSON}'); j=json.load(f
 
 # Auto-generate matched_clusters_folder if not specified
 if [ -z "$MATCHED_FOLDER" ] && [ ! -z "$CLUSTERS_FOLDER" ]; then
-    MATCHED_FOLDER="${CLUSTERS_FOLDER}/matched"
+    # Create matched_clusters folder at same level as clusters folder, not inside it
+    # e.g., clusters_cc_prod_main_tick3_ch2_min2_tot3_e2p0 -> matched_clusters_cc_prod_main_tick3_ch2_min2_tot3_e2p0
+    PARENT_DIR=$(dirname "$CLUSTERS_FOLDER")
+    CLUSTERS_BASENAME=$(basename "$CLUSTERS_FOLDER")
+    MATCHED_BASENAME="${CLUSTERS_BASENAME/clusters_/matched_clusters_}"
+    MATCHED_FOLDER="${PARENT_DIR}/${MATCHED_BASENAME}"
 fi
 
 OUTPUT_FILE=$(python3 -c "import json; f=open('${INPUT_JSON}'); j=json.load(f); print(j.get('output_file', ''))" 2>/dev/null)
