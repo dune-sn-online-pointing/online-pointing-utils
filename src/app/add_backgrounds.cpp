@@ -135,10 +135,10 @@ int main(int argc, char* argv[]) {
     }
 
     // Find signal files in sig_folder (looking for *_tps.root)
-    std::vector<std::string> signal_files = find_input_files(j, "sig");
-    LogInfo << "Found " << signal_files.size() << " signal files" << std::endl;
-    LogThrowIf(signal_files.empty(), "No signal files found in sig_folder.");
-    
+    // Use tpstream-based file tracking for consistent skip/max across pipeline
+    std::vector<std::string> signal_files = find_input_files_by_tpstream_basenames(j, "sig", skip_files, max_files);
+    LogInfo << "Found " << signal_files.size() << " signal files matching tpstream basenames" << std::endl;
+    LogThrowIf(signal_files.empty(), "No signal files found matching tpstream basenames.");
     // Find background files in bg_folder (looking for *_tps.root)
     std::vector<std::string> bkg_files = find_input_files(j, "bg");
     LogInfo << "Found " << bkg_files.size() << " background files" << std::endl;
@@ -204,25 +204,14 @@ int main(int argc, char* argv[]) {
         return {event_id, bkg_tps};
     };
 
-    // Process signal files
-    int done_files = 0, count_files = 0;
+    // Process signal files (skip/max already applied via tpstream basenames)
+    int done_files = 0;
     std::vector<std::string> output_files;
     
     for (const auto& signal_file : signal_files) {
-        if (count_files < skip_files) {
-            count_files++;
-            LogInfo << "Skipping file " << count_files << ": " << signal_file << std::endl;
-            continue;
-        }
-
-        // Check if we've reached max_files limit
-        if (max_files > 0 && done_files >= max_files) {
-            LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
-            break;
-        }
         done_files++;
         if (!verboseMode) {
-            GenericToolbox::displayProgressBar(done_files, std::min((int)signal_files.size(), max_files > 0 ? max_files : (int)signal_files.size()), "Adding backgrounds...");
+            GenericToolbox::displayProgressBar(done_files, (int)signal_files.size(), "Adding backgrounds...");
         }
         if (verboseMode) LogInfo << "\nProcessing signal file: " << signal_file << std::endl;
         

@@ -66,6 +66,86 @@ def load_display_parameters(repo_root=None):
     return params
 
 
+def load_conversion_factors(repo_root=None):
+    """
+    Load ADC to energy conversion factors from parameters/conversion.dat
+    Returns dict with adc_to_mev_collection and adc_to_mev_induction
+    """
+    if repo_root is None:
+        repo_root = Path(__file__).parent.parent
+    else:
+        repo_root = Path(repo_root)
+    
+    conversion_dat = repo_root / "parameters" / "conversion.dat"
+    
+    if not conversion_dat.exists():
+        # Return defaults if file not found (typical DUNE values)
+        return {
+            'adc_to_mev_collection': 3600.0,  # ADC per MeV for collection (X) plane
+            'adc_to_mev_induction': 900.0      # ADC per MeV for induction (U, V) planes
+        }
+    
+    params = {}
+    with open(conversion_dat, 'r') as f:
+        for line in f:
+            line = line.strip()
+            # Parse lines like: < conversion.adc_to_energy_factor_collection = 3600.0 >
+            match_collection = re.match(r'<\s*conversion\.adc_to_energy_factor_collection\s*=\s*([^>]+?)\s*>', line)
+            match_induction = re.match(r'<\s*conversion\.adc_to_energy_factor_induction\s*=\s*([^>]+?)\s*>', line)
+            
+            if match_collection:
+                params['adc_to_mev_collection'] = float(match_collection.group(1).strip())
+            elif match_induction:
+                params['adc_to_mev_induction'] = float(match_induction.group(1).strip())
+    
+    # Ensure we have both parameters with defaults
+    params.setdefault('adc_to_mev_collection', 3600.0)
+    params.setdefault('adc_to_mev_induction', 900.0)
+    
+    return params
+
+
+def extract_basename(filepath):
+    """
+    Extract basename from tpstream file path by removing _tpstream.root suffix.
+    This allows tracking files across pipeline stages.
+    
+    Example:
+        prodmarley_..._20250826T091337Z_gen_000014_..._tpstream.root
+        -> prodmarley_..._20250826T091337Z_gen_000014_...
+    """
+    filename = Path(filepath).name
+    if filename.endswith('_tpstream.root'):
+        return filename[:-len('_tpstream.root')]
+    return filename
+
+
+def get_source_basenames(json_config):
+    """
+    Get list of source tpstream file basenames with skip/max applied.
+    This ensures consistent file tracking across all pipeline stages.
+    """
+    with open(json_config, 'r') as f:
+        j = json.load(f)
+    
+    tpstream_folder = j.get('tpstream_folder', '.')
+    skip_files = j.get('skip_files', 0)
+    max_files = j.get('max_files', None)
+    
+    # Find all tpstream files
+    tpstream_files = sorted(Path(tpstream_folder).glob('*_tpstream.root'))
+    
+    # Apply skip and max to source files
+    if skip_files > 0:
+        tpstream_files = tpstream_files[skip_files:]
+    if max_files is not None and max_files > 0:
+        tpstream_files = tpstream_files[:max_files]
+    
+    # Extract basenames
+    basenames = [extract_basename(str(f)) for f in tpstream_files]
+    return basenames
+
+
 def get_clusters_folder(json_config):
     """
     Compose clusters folder name from JSON configuration.
@@ -396,6 +476,10 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
     
     # Load display parameters
     display_params = load_display_parameters(repo_root)
+    
+    # Load conversion factors
+    conversion_factors = load_conversion_factors(repo_root)
+    
     threshold_map = {
         'U': display_params['threshold_adc_u'],
         'V': display_params['threshold_adc_v'],
@@ -500,7 +584,14 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                     img_width=16, img_height=128
                 )
                 
+                # Calculate cluster energy from ADC sum (instead of using MC truth)
+                # Use plane-specific conversion factor (ADC per MeV)
+                total_adc = float(np.sum(img_array))
+                conversion_factor = conversion_factors['adc_to_mev_collection'] if plane_letter == 'X' else conversion_factors['adc_to_mev_induction']
+                cluster_energy_mev = total_adc / conversion_factor  # MeV
+                
                 # Prepare metadata
+                # Note: cluster_energy is now ADC-derived, not MC truth neutrino energy
                 metadata_array = np.array([
                     int(data['event'][i]),
                     int(is_marley),
@@ -508,7 +599,7 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                     is_es_interaction,
                     true_pos[0], true_pos[1], true_pos[2],
                     true_particle_mom[0], true_particle_mom[1], true_particle_mom[2],
-                    np.float32(true_nu_energy),
+                    np.float32(cluster_energy_mev),
                     np.float32(true_particle_energy),
                     plane_number
                 ], dtype=np.float32)
@@ -555,6 +646,9 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
     
     # Load display parameters from parameters/display.dat
     display_params = load_display_parameters(repo_root)
+    
+    # Load conversion factors from parameters/conversion.dat
+    conversion_factors = load_conversion_factors(repo_root)
     
     # Thresholds per plane (U, V, X/Collection)
     threshold_map = {
@@ -690,10 +784,17 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                     img_width=16, img_height=128
                 )
                 
+                # Calculate cluster energy from ADC sum (instead of using MC truth)
+                # Use plane-specific conversion factor (ADC per MeV)
+                total_adc = float(np.sum(img_array))
+                conversion_factor = conversion_factors['adc_to_mev_collection'] if plane_letter == 'X' else conversion_factors['adc_to_mev_induction']
+                cluster_energy_mev = total_adc / conversion_factor  # MeV
+                
                 # Prepare metadata as compact array
-                # Format: [event, is_marley, is_main_track, is_es_interaction, pos(3), 
-                #          particle_mom(3), nu_energy, particle_energy, plane_id]
+                # Format: [event, is_marley, is_main_track, is_es_interaction, pos(3),
+                #          particle_mom(3), cluster_energy, particle_energy, plane_id]
                 # All stored as float32 for efficiency (0.0/1.0 for booleans)
+                # Note: cluster_energy is now ADC-derived, not MC truth neutrino energy
                 plane_id = {'U': 0, 'V': 1, 'X': 2}.get(plane_letter, 0)
                 metadata_array = np.array([
                     int(data['event'][i]),
@@ -702,12 +803,10 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                     is_es_interaction,
                     true_pos[0], true_pos[1], true_pos[2],
                     true_particle_mom[0], true_particle_mom[1], true_particle_mom[2],
-                    np.float32(true_nu_energy),
+                    np.float32(cluster_energy_mev),
                     np.float32(true_particle_energy),
                     plane_id
-                ], dtype=np.float32)
-                
-                # Add to plane collection
+                ], dtype=np.float32)                # Add to plane collection
                 plane_images.append(img_array)
                 plane_metadata.append(metadata_array)
                 n_generated_plane += 1
@@ -769,29 +868,37 @@ if __name__ == '__main__':
         images_folder = get_images_folder(json_path)
         output_dir = args.output_dir if args.output_dir else images_folder
         
-        # Find cluster files in the computed folder
-        cluster_files = list(Path(clusters_folder).glob("*_clusters.root"))
+        # Get source basenames from tpstream folder (the source of truth for all stages)
+        source_basenames = get_source_basenames(json_path)
+        skip_files = json_config.get('skip_files', 0)
+        max_files = json_config.get('max_files', None)
+        
+        print(f"Using tpstream-based file list as source of truth (skip={skip_files}, max={max_files})")
+        print(f"Looking for clusters matching {len(source_basenames)} source file(s)")
+        
+        # Find ALL cluster files in the folder
+        all_cluster_files = list(Path(clusters_folder).glob("*_clusters.root"))
+        if not all_cluster_files:
+            # Try with _bg suffix as fallback
+            all_cluster_files = list(Path(clusters_folder).glob("*_bg_clusters.root"))
+        
+        # Filter cluster files to only those matching source basenames
+        cluster_files = []
+        for cluster_path in sorted(all_cluster_files):
+            cluster_name = cluster_path.name
+            # Check if this cluster file matches any source basename
+            for basename in source_basenames:
+                if basename in cluster_name:
+                    cluster_files.append(str(cluster_path))
+                    break
+        
         if not cluster_files:
-            print(f"Error: No *_clusters.root files found in {clusters_folder}")
+            print(f"Error: No cluster files found matching {len(source_basenames)} source basename(s)")
+            print(f"  Clusters folder: {clusters_folder}")
+            print(f"  Total cluster files in folder: {len(all_cluster_files)}")
+            if source_basenames:
+                print(f"  Expected basenames like: {source_basenames[0][:80]}...")
             sys.exit(1)
-        
-        # Sort for consistent ordering
-        cluster_files = sorted(cluster_files)
-        
-        # Read skip_files and max_files from JSON if not provided via CLI
-        skip_files = args.skip_files if args.skip_files is not None else json_config.get('skip_files', 0)
-        max_files = args.max_files if args.max_files is not None else json_config.get('max_files', None)
-        
-        # Apply skip and max filters
-        if skip_files > 0:
-            cluster_files = cluster_files[skip_files:]
-            print(f"Skipping first {skip_files} files (from {'CLI' if args.skip_files is not None else 'JSON'})")
-        
-        if max_files is not None:
-            cluster_files = cluster_files[:max_files]
-            print(f"Processing at most {max_files} files (from {'CLI' if args.max_files is not None else 'JSON'})")
-        
-        cluster_files = [str(f) for f in cluster_files]
         
         print(f"Using JSON config: {json_path}")
         print(f"Computed clusters folder: {clusters_folder}")

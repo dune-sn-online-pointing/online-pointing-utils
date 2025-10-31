@@ -321,6 +321,9 @@ if [ "$run_generate_images" = true ]; then
                 if [ "$verbose" = true ]; then
                         generate_images_command+=" -v"
                 fi
+                if [ "$override" = true ]; then
+                        generate_images_command+=" -f"
+                fi
                 
                 echo "Running generate cluster images step with command:"
                 echo $generate_images_command
@@ -386,6 +389,9 @@ if [ "$run_generate_volumes" = true ]; then
                 generate_volumes_command="$SCRIPTS_DIR/create_volumes.sh -j $volumes_json"
                 if [ "$verbose" = true ]; then
                         generate_volumes_command+=" -v"
+                fi
+                if [ "$override" = true ]; then
+                        generate_volumes_command+=" -f"
                 fi
                 
                 echo "Running generate volumes step with command:"

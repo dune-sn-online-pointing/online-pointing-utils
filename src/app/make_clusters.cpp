@@ -34,8 +34,19 @@ int main(int argc, char* argv[]) {
     bool overrideExistingFiles = false;
     if (clp.isOptionTriggered("override")) { overrideExistingFiles = true; }
 
-    // Use utility function for file finding (reads from tps_folder = merged TPs with backgrounds)
-    std::vector<std::string> inputs = find_input_files(j, "tps");
+    // Handle skip and max files with CLI override BEFORE file finding
+    int max_files = j.value("max_files", -1);
+    int skip_files = j.value("skip_files", 0);
+    
+    if (clp.isOptionTriggered("skip_files")) {
+        skip_files = clp.getOptionVal<int>("skip_files");
+    }
+    if (clp.isOptionTriggered("max_files")) {
+        max_files = clp.getOptionVal<int>("max_files");
+    }
+
+    // Use tpstream-based file tracking for consistent skip/max across pipeline
+    std::vector<std::string> inputs = find_input_files_by_tpstream_basenames(j, "tps", skip_files, max_files);
     
     // Override with CLI input if provided
     if (clp.isOptionTriggered("inputFile")) {
@@ -54,7 +65,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    LogInfo << "Number of valid files (merged TPs): " << inputs.size() << std::endl;
+    LogInfo << "Found " << inputs.size() << " files matching tpstream basenames" << std::endl;
+    LogThrowIf(inputs.empty(), "No valid input files found in tps_folder.");    LogInfo << "Number of valid files (merged TPs): " << inputs.size() << std::endl;
     LogThrowIf(inputs.empty(), "No valid input files found in tps_folder.");
 
     // Get output folder: CLI > clusters_folder > outputFolder > default
@@ -83,25 +95,8 @@ int main(int argc, char* argv[]) {
     float adc_integral_cut_col = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");
     float adc_integral_cut_ind = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
     int tot_cut = j.value("tot_cut", 0);
-    
-    // Handle skip and max files with CLI override
-    int max_files = j.value("max_files", -1);
-    int skip_files = j.value("skip_files", 0);
-    
-    if (clp.isOptionTriggered("skip_files")) {
-        skip_files = clp.getOptionVal<int>("skip_files");
-    }
-    if (clp.isOptionTriggered("max_files")) {
-        max_files = clp.getOptionVal<int>("max_files");
-    }
-    
-    if (max_files <= 0) {
-        max_files = inputs.size();
-    }
-    
-    LogInfo << "Number of files to skip at start: " << skip_files << std::endl;
 
-    // Use new folder logic: explicit JSON > auto-generate from tpstream_folder
+    // Get output folder: CLI > clusters_folder > outputFolder > default
     std::string clusters_folder_path;
     if (clp.isOptionTriggered("outFolder")) {
         // CLI override - build full path manually
@@ -120,12 +115,7 @@ int main(int argc, char* argv[]) {
     LogInfo << "    - ADC integral cut (induction): " << adc_integral_cut_ind << std::endl;
     LogInfo << "    - ADC integral cut (collection): " << adc_integral_cut_col << std::endl;
     LogInfo << " - ToT cut: " << tot_cut << std::endl;
-    if (max_files > 0) {
-        LogInfo << " - Max files to process: " << max_files << std::endl;
-    } else {
-        LogInfo << " - Max files to process: unlimited" << std::endl;
-        max_files = inputs.size();
-    }
+    LogInfo << " - Files to process (after skip/max): " << inputs.size() << std::endl;
 
     // Create clusters subfolder if it doesn't exist
     std::filesystem::create_directories(clusters_folder_path);    
@@ -162,21 +152,9 @@ int main(int argc, char* argv[]) {
     };
 
     std::vector<std::string> produced_files;
-    int done_files = 0, count_files = 0;
+    int done_files = 0;
 
     for (const auto& tps_file : inputs) {
-        if (count_files < skip_files) {
-            count_files++;
-            LogInfo << "Skipping file " << count_files << ": " << tps_file << std::endl;
-            continue;
-        }
-
-        // Check if we've reached max_files limit
-        if (done_files >= max_files) {
-            LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
-            break;
-        }
-        
         // Generate output filename: replace "_tps.root" with "_clusters.root"
         std::filesystem::path tps_path(tps_file);
         std::string base_name = tps_path.filename().string();
@@ -203,7 +181,7 @@ int main(int argc, char* argv[]) {
 
         done_files++;
         
-        GenericToolbox::displayProgressBar(done_files, max_files, "Making clusters...");
+        GenericToolbox::displayProgressBar(done_files, (int)inputs.size(), "Making clusters...");
 
         // Read TPs
         std::map<int, std::vector<TriggerPrimitive>> tps_by_event;

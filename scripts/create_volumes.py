@@ -73,6 +73,47 @@ THRESHOLD_ADC_U = 70   # Induction plane U
 THRESHOLD_ADC_V = 70   # Induction plane V
 
 
+def extract_basename(filepath):
+    """
+    Extract basename from tpstream file path by removing _tpstream.root suffix.
+    This allows tracking files across pipeline stages.
+    
+    Example:
+        prodmarley_..._20250826T091337Z_gen_000014_..._tpstream.root
+        -> prodmarley_..._20250826T091337Z_gen_000014_...
+    """
+    filename = Path(filepath).name
+    if filename.endswith('_tpstream.root'):
+        return filename[:-len('_tpstream.root')]
+    return filename
+
+
+def get_source_basenames(json_config):
+    """
+    Get list of source tpstream file basenames with skip/max applied.
+    This ensures consistent file tracking across all pipeline stages.
+    """
+    with open(json_config, 'r') as f:
+        config = json.load(f)
+    
+    tpstream_folder = config.get('tpstream_folder', '.')
+    skip_files = config.get('skip_files', 0)
+    max_files = config.get('max_files', None)
+    
+    # Find all tpstream files
+    tpstream_files = sorted(Path(tpstream_folder).glob('*_tpstream.root'))
+    
+    # Apply skip and max to source files
+    if skip_files > 0:
+        tpstream_files = tpstream_files[skip_files:]
+    if max_files is not None and max_files > 0:
+        tpstream_files = tpstream_files[:max_files]
+    
+    # Extract basenames
+    basenames = [extract_basename(str(f)) for f in tpstream_files]
+    return basenames
+
+
 def get_clusters_folder(json_config):
     """
     Compose clusters folder name from JSON configuration.
@@ -571,6 +612,9 @@ def main():
     skip_files = args.skip if args.skip is not None else config.get('skip_files', 0)
     max_files = args.max if args.max is not None else config.get('max_files', None)
     
+    # Get source basenames from tpstream folder (the source of truth for all stages)
+    source_basenames = get_source_basenames(args.json)
+    
     print("="*60)
     print("Volume Image Creation for Channel Tagging")
     print("="*60)
@@ -578,23 +622,32 @@ def main():
     print(f"Output folder: {output_folder}")
     print(f"Plane: {plane}")
     print(f"Volume size: {VOLUME_SIZE_CM} cm x {VOLUME_SIZE_CM} cm")
-    if skip_files > 0:
-        print(f"Skipping first {skip_files} files")
-    if max_files is not None:
-        print(f"Processing at most {max_files} files")
+    print(f"Using tpstream-based file list as source of truth (skip={skip_files}, max={max_files})")
+    print(f"Looking for clusters matching {len(source_basenames)} source file(s)")
     print("="*60)
     
-    # Find all cluster files (look for *_clusters.root pattern)
-    cluster_files = sorted(Path(clusters_folder).glob('*_clusters.root'))
+    # Find ALL cluster files (look for *_clusters.root pattern, including *_bg_clusters.root)
+    all_cluster_files = sorted(Path(clusters_folder).glob('*_clusters.root'))
+    if len(all_cluster_files) == 0:
+        # Try with _bg suffix as fallback
+        all_cluster_files = sorted(Path(clusters_folder).glob('*_bg_clusters.root'))
     
-    # Apply skip and max
-    if skip_files > 0:
-        cluster_files = cluster_files[skip_files:]
-    if max_files is not None:
-        cluster_files = cluster_files[:max_files]
+    # Filter cluster files to only those matching source basenames
+    cluster_files = []
+    for cluster_path in all_cluster_files:
+        cluster_name = cluster_path.name
+        # Check if this cluster file matches any source basename
+        for basename in source_basenames:
+            if basename in cluster_name:
+                cluster_files.append(cluster_path)
+                break
     
     if len(cluster_files) == 0:
-        print(f"No cluster files found in {clusters_folder}")
+        print(f"No cluster files found matching {len(source_basenames)} source basename(s)")
+        print(f"Total cluster files in folder: {len(all_cluster_files)}")
+        if source_basenames:
+            print(f"Expected basenames like: {source_basenames[0][:80]}...")
+        print(f"Tried patterns: *_clusters.root and *_bg_clusters.root")
         return 1
     
     print(f"Found {len(cluster_files)} cluster files")

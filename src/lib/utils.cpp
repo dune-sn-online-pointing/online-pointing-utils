@@ -696,3 +696,107 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
 
     return input_files;
 }
+
+std::string extractBasename(const std::string& filepath) {
+    /**
+     * Extract basename from tpstream file by removing _tpstream.root suffix.
+     * This allows consistent file tracking across pipeline stages.
+     * 
+     * Example:
+     *   prodmarley_..._20250826T091337Z_gen_000014_..._tpstream.root
+     *   -> prodmarley_..._20250826T091337Z_gen_000014_...
+     */
+    std::filesystem::path p(filepath);
+    std::string filename = p.filename().string();
+    
+    const std::string suffix = "_tpstream.root";
+    if (filename.size() > suffix.size() && 
+        filename.substr(filename.size() - suffix.size()) == suffix) {
+        return filename.substr(0, filename.size() - suffix.size());
+    }
+    
+    return filename;
+}
+
+std::vector<std::string> findFilesMatchingBasenames(
+    const std::vector<std::string>& basenames,
+    const std::vector<std::string>& candidate_files) {
+    /**
+     * Filter candidate files to only those matching the given basenames.
+     * This ensures skip/max from tpstream list applies to all pipeline stages.
+     */
+    std::vector<std::string> matched_files;
+    
+    for (const auto& candidate : candidate_files) {
+        std::filesystem::path p(candidate);
+        std::string filename = p.filename().string();
+        
+        // Check if this file matches any of the basenames
+        for (const auto& basename : basenames) {
+            if (filename.find(basename) != std::string::npos) {
+                matched_files.push_back(candidate);
+                break;
+            }
+        }
+    }
+    
+    // Maintain original order
+    return matched_files;
+}
+
+std::vector<std::string> find_input_files_by_tpstream_basenames(
+    const nlohmann::json& j,
+    const std::string& pattern,
+    int skip_files,
+    int max_files) {
+    /**
+     * Find input files using tpstream file list as source of truth.
+     * 
+     * This ensures skip/max parameters consistently refer to the same
+     * source files across all pipeline stages (backtrack, add_backgrounds,
+     * make_clusters, generate_images, create_volumes).
+     * 
+     * Algorithm:
+     *   1. Get list of tpstream files
+     *   2. Apply skip/max to tpstream list
+     *   3. Extract basenames from selected tpstream files
+     *   4. Find files matching those basenames with the requested pattern
+     */
+    
+    // Get tpstream files (the source of truth)
+    std::vector<std::string> tpstream_files = find_input_files(j, "tpstream");
+    
+    if (tpstream_files.empty()) {
+        LogWarning << "[find_input_files_by_tpstream_basenames] No tpstream files found" << std::endl;
+        return {};
+    }
+    
+    // Apply skip and max to tpstream list
+    if (skip_files > 0 && skip_files < (int)tpstream_files.size()) {
+        tpstream_files.erase(tpstream_files.begin(), tpstream_files.begin() + skip_files);
+    }
+    if (max_files > 0 && max_files < (int)tpstream_files.size()) {
+        tpstream_files.resize(max_files);
+    }
+    
+    // Extract basenames
+    std::vector<std::string> basenames;
+    for (const auto& tpstream_file : tpstream_files) {
+        basenames.push_back(extractBasename(tpstream_file));
+    }
+    
+    LogInfo << "[find_input_files_by_tpstream_basenames] Using " << basenames.size() 
+            << " basenames from tpstream files (skip=" << skip_files 
+            << ", max=" << max_files << ")" << std::endl;
+    
+    // Now find files matching the requested pattern
+    std::vector<std::string> all_pattern_files = find_input_files(j, pattern);
+    
+    // Filter to only files matching our basenames
+    std::vector<std::string> matched_files = findFilesMatchingBasenames(basenames, all_pattern_files);
+    
+    LogInfo << "[find_input_files_by_tpstream_basenames] Found " << matched_files.size() 
+            << " files matching basenames for pattern '" << pattern << "'" << std::endl;
+    
+    return matched_files;
+}

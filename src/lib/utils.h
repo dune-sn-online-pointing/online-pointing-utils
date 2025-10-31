@@ -11,6 +11,11 @@
 std::vector<std::string> find_input_files(const nlohmann::json& j, const std::vector<std::string>& file_suffixes);
 std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& pattern);
 
+
+// Basename tracking for consistent skip/max across pipeline stages
+std::string extractBasename(const std::string& filepath);
+std::vector<std::string> findFilesMatchingBasenames(const std::vector<std::string>& basenames, const std::vector<std::string>& candidate_files);
+std::vector<std::string> find_input_files_by_tpstream_basenames(const nlohmann::json& j, const std::string& pattern, int skip_files, int max_files);
 std::string toLower(std::string s);
 
 bool ensureDirectoryExists(const std::string& folder);
