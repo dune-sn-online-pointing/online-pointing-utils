@@ -11,6 +11,7 @@ source $HOME_DIR/scripts/init.sh
 print_help() {
     echo "Usage: $0 -w <which-interaction> -f <first-job> -l <last-job> [OPTIONS]"
     echo "  -w, --which                 Which interaction (es or cc)"
+    echo "  --tot-files                 Total number of files to process (default: 5000)"
     echo "  --max-files                 Maximum number of files to process per job (default: 100)"
     echo "  -d, --delete-submit-files   Delete submit files after submission (default: false)"
     echo "  --delete-root               Delete root files (default: true)"
@@ -25,8 +26,7 @@ delete_root_files=true
 JSON_SETTINGS=""
 which_interaction=""
 tot_files=5000
-max_files=100
-max_jobs=50 # this is tot_files / max_files
+max_files=20
 skip=0
 
 
@@ -34,6 +34,7 @@ skip=0
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -w|--which) which_interaction="$2"; shift ;;
+        --tot-files) tot_files="$2"; shift ;;
         --max-files) max_files="$2"; shift ;;
         -d|--delete-submit-files) delete_submit_files="$2"; shift ;;
         --delete-root) delete_root_files="$2"; shift ;;
@@ -43,6 +44,8 @@ while [[ "$#" -gt 0 ]]; do
     esac
     shift
 done
+
+max_jobs=$(( (tot_files + max_files - 1) / max_files ))
 
 # Validate required parameters
 if [ -z "$which_interaction" ]; then
@@ -81,7 +84,7 @@ touch $list_of_jobs
 for i in $(seq 1 $max_jobs); do
     skip=$(( (i - 1) * max_files ))
     echo "Adding job $i with skip $skip"
-    echo "-j ${JSON_SETTINGS} --home-dir ${HOME_DIR} --no-compile -bt -f --skip-files $skip --max-files $max_files" >> $list_of_jobs
+    echo "-j ${JSON_SETTINGS} --home-dir ${HOME_DIR} --no-compile -ab -f --skip-files $skip --max-files $max_files" >> $list_of_jobs
 done
 
 echo "List of jobs:"
@@ -89,7 +92,7 @@ cat $list_of_jobs
 
 
 # generate a submit file for condor 
-submit_file="${output_folder}submit_pointing_test_${which_interaction}-from${skip}to$((skip + max_files)).sub"
+submit_file="${output_folder}submit_pointing_test_${which_interaction}.sub"
 echo "Creating submit file: $submit_file"
 
 cat <<EOF > $submit_file
@@ -98,7 +101,7 @@ cat <<EOF > $submit_file
 notify_user         = ${user_email}
 notification        = Error
 
-JOBNAME             = process_files_${which_interaction}-from${skip}to$((skip + max_files))
+JOBNAME             = process_files_${which_interaction}
 executable          = ${HOME_DIR}/scripts/sequence.sh
 # using the arguments from below, not this line
 output              = ${JOB_OUTPUT_DIR}job.\$(ClusterId).\$(ProcId).\$(JOBNAME).out
@@ -120,7 +123,7 @@ if [ "$print_only" = true ]; then
     cat $list_of_jobs
     exit 0
 else 
-    echo "Submitting $max_files jobs from ${skip} to $((skip + max_files)) for ${which_interaction} interaction"
+    echo "Submitting all jobs from ${skip} to $((skip + max_files)) for ${which_interaction} interaction"
     condor_submit $submit_file
     if [ "$delete_submit_files" = true ]; then
         rm $submit_file

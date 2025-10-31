@@ -2,7 +2,18 @@
 
 set -e
 export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source $SCRIPTS_DIR/init.sh
+# Use absolute path to init.sh from AFS when running on worker nodes
+if [[ -f "${SCRIPTS_DIR}/init.sh" ]]; then
+    source ${SCRIPTS_DIR}/init.sh
+else
+    # Fallback: use HOME_DIR if set (passed from parent script), or search up for AFS path
+    if [[ -n "${HOME_DIR:-}" ]]; then
+        source ${HOME_DIR}/scripts/init.sh
+    else
+        echo "ERROR: Cannot find init.sh and HOME_DIR not set"
+        exit 1
+    fi
+fi
 
 print_help(){
   echo "Usage: $0 -j <json> [--no-compile] [--clean-compile] [-o <dir>]"; 

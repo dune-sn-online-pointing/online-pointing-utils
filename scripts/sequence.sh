@@ -1,7 +1,14 @@
 #!/bin/bash
 
 export SCRIPTS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source ${SCRIPTS_DIR}/init.sh
+# Use absolute path to init.sh from AFS when running on worker nodes
+if [[ -f "${SCRIPTS_DIR}/init.sh" ]]; then
+    source ${SCRIPTS_DIR}/init.sh
+else
+    # Fallback: reconstruct path from script location in AFS
+    REPO_DIR="$(dirname "${SCRIPTS_DIR}")"
+    source ${REPO_DIR}/scripts/init.sh
+fi
 
 
 print_help(){
@@ -57,7 +64,7 @@ while [[ $# -gt 0 ]]; do
         case $1 in
                 -s|--sample) sample="$2"; shift 2 ;;
                 -j|--json-settings) settingsFile="$2"; shift 2 ;;
-                --home-dir) HOME_DIR="$2"; echo "Home directory set from CLI to: $HOME_DIR"; source ${HOME_DIR}/scripts/init.sh; shift 2 ;;
+                --home-dir) export HOME_DIR="$2"; echo "Home directory set from CLI to: $HOME_DIR"; source ${HOME_DIR}/scripts/init.sh; shift 2 ;;
                 --max-files) max_files="$2"; shift 2 ;;
                 --skip-files) skip_files="$2"; shift 2 ;;
                 --no-compile) noCompile=true; shift ;;
@@ -183,7 +190,7 @@ if [ ! -z "$settingsFile" ]; then
 else
         backtrack_json="$JSON_DIR/backtrack/${sample}.json"
 fi
-backtrack_command="./scripts/backtrack.sh -j $backtrack_json $common_options"
+backtrack_command="${HOME_DIR}/scripts/backtrack.sh -j $backtrack_json $common_options"
 if [ "$run_backtrack" = true ]; then
         echo "Running backtrack step with command:"
         echo $backtrack_command
@@ -202,7 +209,7 @@ if [ ! -z "$settingsFile" ]; then
 else
         analyze_tps_json="$JSON_DIR/analyze_tps/${sample}.json"
 fi
-analyze_tps_command="./scripts/analyze_tps.sh -j $analyze_tps_json $common_options"
+analyze_tps_command="${HOME_DIR}/scripts/analyze_tps.sh -j $analyze_tps_json $common_options"
 if [ "$run_analyze_tps" = true ]; then
         echo "Running analyze_tps step with command:"
         echo $analyze_tps_command
@@ -221,7 +228,7 @@ if [ ! -z "$settingsFile" ]; then
 else
         add_backgrounds_json="$JSON_DIR/add_backgrounds/${sample}.json"
 fi
-add_backgrounds_command="./scripts/add_backgrounds.sh -j $add_backgrounds_json $common_options"
+add_backgrounds_command="${HOME_DIR}/scripts/add_backgrounds.sh -j $add_backgrounds_json $common_options"
 if [ "$run_add_backgrounds" = true ] && [ "$clean_clusters" = false ]; then
         echo "Running add backgrounds step with command:"
         echo $add_backgrounds_command
@@ -240,7 +247,7 @@ if [ ! -z "$settingsFile" ]; then
 else
         make_clusters_json="$JSON_DIR/make_clusters/${sample}${bg_suffix}.json"
 fi
-make_clusters_command="./scripts/make_clusters.sh -j $make_clusters_json $common_options"
+make_clusters_command="${HOME_DIR}/scripts/make_clusters.sh -j $make_clusters_json $common_options"
 if [ "$run_make_clusters" = true ]; then
         echo "Running make clusters step with command:"
         echo $make_clusters_command
@@ -259,7 +266,7 @@ if [ ! -z "$settingsFile" ]; then
 else
         analyze_clusters_json="$JSON_DIR/analyze_clusters/${sample}${bg_suffix}.json"
 fi
-analyze_command="./scripts/analyze_clusters.sh -j $analyze_clusters_json $common_options"
+analyze_command="${HOME_DIR}/scripts/analyze_clusters.sh -j $analyze_clusters_json $common_options"
 if [ "$run_analyze" = true ]; then
         echo "Running analyze step with command: $analyze_command"
         $analyze_command

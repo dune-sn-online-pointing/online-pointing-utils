@@ -1,0 +1,45 @@
+040 (17832090.012.000) 10/30 00:59:12 Started transferring input files
+	Transferring to host: <188.185.193.154:9618?addrs=188.185.193.154-9618+[2001-1458-303-20--100-96]-9618&alias=b9p19p4407.cern.ch&noUDP&sock=slot1_1_5659_06ff_35991>
+...
+040 (17832090.012.000) 10/30 00:59:12 Finished transferring input files
+...
+001 (17832090.012.000) 10/30 00:59:13 Job executing on host: <188.185.193.154:9618?addrs=188.185.193.154-9618+[2001-1458-303-20--100-96]-9618&alias=b9p19p4407.cern.ch&noUDP&sock=startd_4540_a40f>
+	SlotName: slot1_1@b9p19p4407.cern.ch
+	CondorScratchDir = "/pool/condor/dir_65086"
+	Cpus = 1
+	Disk = 3861
+	GPUs = 0
+	Memory = 3000
+...
+006 (17832090.012.000) 10/30 00:59:26 Image size of job updated: 4328
+	5  -  MemoryUsage of job (MB)
+	4328  -  ResidentSetSize of job (KB)
+...
+006 (17832090.012.000) 10/30 00:59:31 Image size of job updated: 6200
+	5  -  MemoryUsage of job (MB)
+	4328  -  ResidentSetSize of job (KB)
+...
+040 (17832090.012.000) 10/30 00:59:31 Started transferring output files
+...
+040 (17832090.012.000) 10/30 00:59:31 Finished transferring output files
+...
+005 (17832090.012.000) 10/30 00:59:31 Job terminated.
+	(1) Normal termination (return value 1)
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Run Local Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Remote Usage
+		Usr 0 00:00:00, Sys 0 00:00:00  -  Total Local Usage
+	6870  -  Run Bytes Sent By Job
+	15628  -  Run Bytes Received By Job
+	6870  -  Total Bytes Sent By Job
+	31256  -  Total Bytes Received By Job
+	Partitionable Resources :    Usage  Request Allocated 
+	   Cpus                 :        0        1         1 
+	   Disk (KB)            :       51       17      3861 
+	   GPUs                 :                           0 
+	   Memory (MB)          :        5     3000      3000 
+	   TimeExecute (s)      :       18                    
+	   TimeSlotBusy (s)     :       20                    
+
+	Job terminated of its own accord at 2025-10-29T23:59:31Z with exit-code 1.
+...

@@ -500,24 +500,58 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
         std::string folder = j[folder_key].get<std::string>();
         if (verboseMode) LogInfo << "[find_input_files] Found key '" << folder_key << "' with value: " << folder << std::endl;
         if (!folder.empty()) {
-            std::error_code ec;
             if (verboseMode) LogInfo << "[find_input_files] Scanning folder '" << folder << "' for matching files..." << std::endl;
-            for (const auto& entry : std::filesystem::directory_iterator(folder, ec)) {
-                if (ec) {
-                    LogError << "[find_input_files] Error iterating directory '" << folder << "': " << ec.message() << std::endl;
-                    break;
+            
+            // OPTIMIZATION: Use system find command for faster directory scanning on EOS
+            // Build the find command based on pattern
+            std::string find_pattern;
+            if (pattern == "sig" || pattern == "bg") {
+                find_pattern = "*_tps.root";
+            } else {
+                find_pattern = "*" + pattern + "*.root";
+            }
+            
+            std::string find_cmd = "find \"" + folder + "\" -maxdepth 1 -type f -name \"" + find_pattern + "\" 2>/dev/null";
+            if (verboseMode) LogInfo << "[find_input_files] Using fast find command: " << find_cmd << std::endl;
+            
+            FILE* pipe = popen(find_cmd.c_str(), "r");
+            if (pipe) {
+                char buffer[4096];
+                while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+                    std::string filepath(buffer);
+                    // Remove trailing newline
+                    if (!filepath.empty() && filepath.back() == '\n') {
+                        filepath.pop_back();
+                    }
+                    if (!filepath.empty() && matches_pattern(filepath)) {
+                        if (verboseMode) LogInfo << "[find_input_files] Adding file from folder: " << filepath << std::endl;
+                        input_files.push_back(filepath);
+                    }
                 }
-                if (!entry.is_regular_file()) {
-                    if (debugMode) LogDebug << "[find_input_files] Skipping non-regular file: " << entry.path().string() << std::endl;
-                    continue;
-                }
-                std::string filepath = entry.path().string();
-                if (debugMode) LogDebug << "[find_input_files] Found file: " << filepath << std::endl;
-                if (file_exists(filepath) && matches_pattern(filepath)) {
-                    if (verboseMode) LogInfo << "[find_input_files] Adding file from folder: " << filepath << std::endl;
-                    input_files.push_back(filepath);
-                } else {
-                    if (debugMode) LogDebug << "[find_input_files] File '" << filepath << "' does not exist or does not match pattern" << std::endl;
+                pclose(pipe);
+                
+                if (verboseMode) LogInfo << "[find_input_files] Fast find completed, found " << input_files.size() << " files" << std::endl;
+            } else {
+                // Fallback to original method if popen fails
+                LogWarning << "[find_input_files] Fast find command failed, using fallback method" << std::endl;
+                std::error_code ec;
+                for (const auto& entry : std::filesystem::directory_iterator(folder, ec)) {
+                    if (ec) {
+                        LogError << "[find_input_files] Error iterating directory '" << folder << "': " << ec.message() << std::endl;
+                        break;
+                    }
+                    if (!entry.is_regular_file()) {
+                        if (debugMode) LogDebug << "[find_input_files] Skipping non-regular file: " << entry.path().string() << std::endl;
+                        continue;
+                    }
+                    std::string filepath = entry.path().string();
+                    if (debugMode) LogDebug << "[find_input_files] Found file: " << filepath << std::endl;
+                    if (file_exists(filepath) && matches_pattern(filepath)) {
+                        if (verboseMode) LogInfo << "[find_input_files] Adding file from folder: " << filepath << std::endl;
+                        input_files.push_back(filepath);
+                    } else {
+                        if (debugMode) LogDebug << "[find_input_files] File '" << filepath << "' does not exist or does not match pattern" << std::endl;
+                    }
                 }
             }
         } else {

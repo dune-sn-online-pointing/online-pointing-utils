@@ -1,0 +1,79 @@
+/pool/condor/dir_1852072/sequence.sh: line 10: /pool/condor/scripts/init.sh: No such file or directory
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082329Z_gen_000001_supernova_g4_detsim_ana_2025-10-21T_090355Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082329Z_gen_000002_supernova_g4_detsim_ana_2025-10-21T_092404Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082330Z_gen_000003_supernova_g4_detsim_ana_2025-10-21T_092418Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082334Z_gen_000005_supernova_g4_detsim_ana_2025-10-21T_092851Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082334Z_gen_000006_supernova_g4_detsim_ana_2025-10-21T_090305Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082335Z_gen_000008_supernova_g4_detsim_ana_2025-10-21T_084435Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082336Z_gen_000009_supernova_g4_detsim_ana_2025-10-21T_094414Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082337Z_gen_000012_supernova_g4_detsim_ana_2025-10-21T_092825Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082338Z_gen_000014_supernova_g4_detsim_ana_2025-10-21T_092821Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082338Z_gen_000016_supernova_g4_detsim_ana_2025-10-21T_092345Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082340Z_gen_000020_supernova_g4_detsim_ana_2025-10-21T_092310Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082341Z_gen_000021_supernova_g4_detsim_ana_2025-10-21T_092301Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082350Z_gen_000035_supernova_g4_detsim_ana_2025-10-21T_092501Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082350Z_gen_000036_supernova_g4_detsim_ana_2025-10-21T_092302Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082352Z_gen_000041_supernova_g4_detsim_ana_2025-10-21T_092510Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082358Z_gen_000045_supernova_g4_detsim_ana_2025-10-21T_092246Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082359Z_gen_000048_supernova_g4_detsim_ana_2025-10-21T_084424Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082400Z_gen_000050_supernova_g4_detsim_ana_2025-10-21T_090414Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082401Z_gen_000055_supernova_g4_detsim_ana_2025-10-21T_094445Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082401Z_gen_000056_supernova_g4_detsim_ana_2025-10-21T_092846Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082402Z_gen_000059_supernova_g4_detsim_ana_2025-10-21T_094516Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082402Z_gen_000061_supernova_g4_detsim_ana_2025-10-21T_092442Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082405Z_gen_000071_supernova_g4_detsim_ana_2025-10-21T_091825Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082406Z_gen_000074_supernova_g4_detsim_ana_2025-10-21T_092508Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082407Z_gen_000078_supernova_g4_detsim_ana_2025-10-21T_084422Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082410Z_gen_000084_supernova_g4_detsim_ana_2025-10-21T_092235Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082412Z_gen_000086_supernova_g4_detsim_ana_2025-10-21T_084428Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082412Z_gen_000088_supernova_g4_detsim_ana_2025-10-21T_090305Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082414Z_gen_000093_supernova_g4_detsim_ana_2025-10-21T_092855Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082415Z_gen_000096_supernova_g4_detsim_ana_2025-10-21T_094457Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082415Z_gen_000097_supernova_g4_detsim_ana_2025-10-21T_092326Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082416Z_gen_000099_supernova_g4_detsim_ana_2025-10-21T_094515Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082416Z_gen_000100_supernova_g4_detsim_ana_2025-10-21T_090257Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082417Z_gen_000101_supernova_g4_detsim_ana_2025-10-21T_094404Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082417Z_gen_000102_supernova_g4_detsim_ana_2025-10-21T_092419Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082419Z_gen_000105_supernova_g4_detsim_ana_2025-10-21T_094514Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082419Z_gen_000107_supernova_g4_detsim_ana_2025-10-21T_091122Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082420Z_gen_000109_supernova_g4_detsim_ana_2025-10-21T_093221Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082421Z_gen_000111_supernova_g4_detsim_ana_2025-10-21T_092846Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082428Z_gen_000122_supernova_g4_detsim_ana_2025-10-21T_090337Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082431Z_gen_000125_supernova_g4_detsim_ana_2025-10-21T_092806Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::TFile>: file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/bkgs//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082433Z_gen_000127_supernova_g4_detsim_ana_2025-10-21T_094510Z_bg_tps.root can not be opened Input/output error
+SysError in <TFile::ReadBuffer>: error reading from file /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082442Z_gen_000137_supernova_g4_detsim_ana_2025-10-21T_094449Z_tps.root Input/output error
+Error in <TFile::Init>: /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082442Z_gen_000137_supernova_g4_detsim_ana_2025-10-21T_094449Z_tps.root failed to read the file type data.
+
+ *** Break *** bus error
+
+
+
+===========================================================
+There was a crash.
+This is the entire stack trace of all threads:
+===========================================================
+#0  0x0000153fbc8d8fba in wait4 () from /lib64/libc.so.6
+#1  0x0000153fbc84b7e3 in do_system () from /lib64/libc.so.6
+#2  0x0000153fbe8fbc2c in TUnixSystem::StackTrace() () from /cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-el9-gcc11-opt/lib/libCore.so
+#3  0x0000153fbe8f9345 in TUnixSystem::DispatchSignals(ESignals) () from /cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-el9-gcc11-opt/lib/libCore.so
+#4  <signal handler called>
+#5  0x00000000004b7012 in (anonymous namespace)::Logger& (anonymous namespace)::Logger::operator<< <char [13]>(char const (&) [13]) ()
+#6  0x000000000041a80f in main ()
+===========================================================
+
+
+The lines below might hint at the cause of the crash. If you see question
+marks as part of the stack trace, try to recompile with debugging information
+enabled and export CLING_DEBUG=1 environment variable before running.
+You may get help by asking at the ROOT forum https://root.cern/forum
+Only if you are really convinced it is a bug in ROOT then please submit a
+report at https://root.cern/bugs Please post the ENTIRE stack trace
+from above as an attachment in addition to anything else
+that might help us fixing this issue.
+===========================================================
+#5  0x00000000004b7012 in (anonymous namespace)::Logger& (anonymous namespace)::Logger::operator<< <char [13]>(char const (&) [13]) ()
+#6  0x000000000041a80f in main ()
+===========================================================
+
+
+/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/add_backgrounds.sh: line 126:   434 Bus error               (core dumped) $command_to_run

@@ -1,7 +1,10 @@
 #include "Backtracking.h"
 #include "Clustering.h"
+#include <random>
 
-LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
+LoggerInit([]{
+  Logger::getUserHeader() << "[" << FILENAME << "]";
+});
 
 // Helper function to find files in a folder matching a pattern
 std::vector<std::string> find_files_in_folder(const std::string& folder, const std::string& pattern = "", const std::string& suffix = ".root") {
@@ -54,7 +57,7 @@ int main(int argc, char* argv[]) {
     
     clp.parseCmdLine(argc, argv);
     LogThrowIf( clp.isNoOptionTriggered(), "No option was provided." );
-
+    
     verboseMode = clp.isOptionTriggered("verboseMode");
     debugMode = clp.isOptionTriggered("debugMode");
     bool overrideMode = clp.isOptionTriggered("override");
@@ -62,11 +65,11 @@ int main(int argc, char* argv[]) {
     
     // Load parameters
     ParametersManager::getInstance().loadParameters();
-
+    
     std::string json = clp.getOptionVal<std::string>("json");
-    std::ifstream i(json); 
+    std::ifstream i(json);
     LogThrowIf(!i.good(), "Failed to open JSON config: " << json);
-    nlohmann::json j; 
+    nlohmann::json j;
     i >> j;
 
     // Parse JSON configuration
@@ -100,7 +103,7 @@ int main(int argc, char* argv[]) {
         output_folder = j.value("tps_folder", std::string(""));
     }
     LogThrowIf(output_folder.empty(), "tps_bg_folder (or tps_folder) is not specified in JSON config.");
-
+    
     LogInfo << "Configuration:" << std::endl;
     LogInfo << " - Signal type: " << signal_type << std::endl;
     LogInfo << " - Signal folder (pure signal TPs): " << sig_folder << std::endl;
@@ -120,46 +123,77 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> signal_files = find_input_files(j, "sig");
     LogInfo << "Found " << signal_files.size() << " signal files" << std::endl;
     LogThrowIf(signal_files.empty(), "No signal files found in sig_folder.");
-
+    
     // Find background files in bg_folder (looking for *_tps.root)
     std::vector<std::string> bkg_files = find_input_files(j, "bg");
     LogInfo << "Found " << bkg_files.size() << " background files" << std::endl;
     LogThrowIf(bkg_files.empty(), "No background files found in bg_folder.");
 
-
-    // Background cycling state (persists across all signal files)
-    size_t bkg_file_idx = 0;
-    size_t bkg_event_idx = 0; 
+    // Random starting point for background files, then sequential access
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<size_t> file_dist(0, bkg_files.size() - 1);
+    size_t bkg_file_idx = file_dist(rng);  // Random starting file
+    size_t bkg_event_idx = 0;
     
-    // Cache for current background file to avoid repeated reads
-    std::map<int, std::vector<TriggerPrimitive>> cached_bkg_tps;
-    std::map<int, std::vector<TrueParticle>> cached_bkg_true;
-    std::map<int, std::vector<Neutrino>> cached_bkg_nu;
-    std::vector<int> cached_bkg_event_ids;
-
-    // Lambda to load next background file
-    auto load_bkg_file = [&](size_t file_idx) {
-        cached_bkg_tps.clear();
-        cached_bkg_true.clear();
-        cached_bkg_nu.clear();
-        cached_bkg_event_ids.clear();
-        read_tps(bkg_files[file_idx], cached_bkg_tps, cached_bkg_true, cached_bkg_nu);
-        for (const auto& kv : cached_bkg_tps) {
-            cached_bkg_event_ids.push_back(kv.first);
-        }
-        if (verboseMode) LogInfo << "Loaded background file: " << bkg_files[file_idx] << " (" 
-                                 << cached_bkg_event_ids.size() << " events)" << std::endl;
-    };
+    // Current background file data (cached)
+    std::map<int, std::vector<TriggerPrimitive>> current_bkg_tps;
+    std::map<int, std::vector<TrueParticle>> current_bkg_true;
+    std::map<int, std::vector<Neutrino>> current_bkg_nu;
+    std::vector<int> current_event_ids;
     
     // Load first background file
-    load_bkg_file(bkg_file_idx);
+    read_tps(bkg_files[bkg_file_idx], current_bkg_tps, current_bkg_true, current_bkg_nu);
+    for (const auto& kv : current_bkg_tps) {
+        current_event_ids.push_back(kv.first);
+    }
+    
+    if (verboseMode) {
+        LogInfo << "Starting with random background file " << (bkg_file_idx + 1) << "/" << bkg_files.size()
+                << ": " << std::filesystem::path(bkg_files[bkg_file_idx]).filename().string() << std::endl;
+    }
+    
+    // Lambda to get next sequential background event (cycling through files)
+    auto get_next_bkg_event = [&]() -> std::tuple<int, std::vector<TriggerPrimitive>> {
+        // Check if we need to load next background file
+        if (bkg_event_idx >= current_event_ids.size()) {
+            bkg_event_idx = 0;
+            bkg_file_idx = (bkg_file_idx + 1) % bkg_files.size();  // Wrap around
+            
+            current_bkg_tps.clear();
+            current_bkg_true.clear();
+            current_bkg_nu.clear();
+            current_event_ids.clear();
+            
+            read_tps(bkg_files[bkg_file_idx], current_bkg_tps, current_bkg_true, current_bkg_nu);
+            for (const auto& kv : current_bkg_tps) {
+                current_event_ids.push_back(kv.first);
+            }
+            
+            if (current_bkg_tps.empty()) {
+                LogWarning << "Background file " << bkg_files[bkg_file_idx] << " has no events!" << std::endl;
+                return {-1, {}};
+            }
+        }
+        
+        int event_id = current_event_ids[bkg_event_idx];
+        auto bkg_tps = current_bkg_tps.at(event_id);
+        
+        if (verboseMode) {
+            LogInfo << "Using background: file " << std::filesystem::path(bkg_files[bkg_file_idx]).filename().string()
+                    << " event " << event_id << " (file " << (bkg_file_idx + 1) << "/" << bkg_files.size()
+                    << ", event " << (bkg_event_idx + 1) << "/" << current_event_ids.size() << ")" << std::endl;
+        }
+        
+        bkg_event_idx++;
+        return {event_id, bkg_tps};
+    };
 
     // Process signal files
     int done_files = 0, count_files = 0;
     std::vector<std::string> output_files;
     
     for (const auto& signal_file : signal_files) {
-
         if (count_files < skip_files) {
             count_files++;
             LogInfo << "Skipping file " << count_files << ": " << signal_file << std::endl;
@@ -176,11 +210,13 @@ int main(int argc, char* argv[]) {
             GenericToolbox::displayProgressBar(done_files, std::min((int)signal_files.size(), max_files > 0 ? max_files : (int)signal_files.size()), "Adding backgrounds...");
         }
         if (verboseMode) LogInfo << "\nProcessing signal file: " << signal_file << std::endl;
+        
         // Read signal TPs
         std::map<int, std::vector<TriggerPrimitive>> signal_tps_by_event;
         std::map<int, std::vector<TrueParticle>> signal_true_by_event;
         std::map<int, std::vector<Neutrino>> signal_nu_by_event;
         read_tps(signal_file, signal_tps_by_event, signal_true_by_event, signal_nu_by_event);
+        
         // Prepare output file name
         std::filesystem::path signal_path(signal_file);
         
@@ -197,18 +233,22 @@ int main(int argc, char* argv[]) {
             output_filename += "_bg_tps.root";
         }
         if (verboseMode) LogInfo << "Output file: " << output_filename << std::endl;
+        
         // Check if output file already exists
         if (std::filesystem::exists(output_filename) && !overrideMode) {
             done_files--;
             if (verboseMode) LogInfo << "Output file already exists, skipping (use --override to overwrite)" << std::endl;
             continue;
         }
-    // Prepare merged data structures
+        
+        // Prepare merged data structures
         std::vector<std::vector<TriggerPrimitive>> merged_tps_vec;
         std::vector<std::vector<TrueParticle>> merged_true_vec;
         std::vector<std::vector<Neutrino>> merged_nu_vec;
+        
         // Track signal TP counts for each event (for diagnostics)
         std::vector<int> signal_tp_counts;
+        
         // Process each event in the signal file
         for (const auto& kv : signal_tps_by_event) {
             int event_id = kv.first;
@@ -223,7 +263,7 @@ int main(int argc, char* argv[]) {
                     vertex_pos.SetXYZ(neutrinos[0].GetX(), neutrinos[0].GetY(), neutrinos[0].GetZ());
                     has_vertex = true;
                     if (debugMode) {
-                        LogInfo << "Event " << event_id << " vertex at (" 
+                        LogInfo << "Event " << event_id << " vertex at ("
                                 << vertex_pos.X() << ", " << vertex_pos.Y() << ", " << vertex_pos.Z() << ")" << std::endl;
                     }
                 }
@@ -236,25 +276,10 @@ int main(int argc, char* argv[]) {
             std::vector<TrueParticle> merged_true;
             std::vector<Neutrino> merged_nu;
             
-            // Get next background event (cycling through files as needed)
-            if (!cached_bkg_event_ids.empty()) {
-                // Check if we need to move to next file
-                if (bkg_event_idx >= cached_bkg_event_ids.size()) {
-                    bkg_file_idx = (bkg_file_idx + 1) % bkg_files.size();
-                    bkg_event_idx = 0;
-                    load_bkg_file(bkg_file_idx);
-                }
-                
-                int bkg_event_id = cached_bkg_event_ids[bkg_event_idx];
-                const auto& bkg_tps = cached_bkg_tps.at(bkg_event_id);
-                
-                if (verboseMode) {
-                    LogInfo << "Signal event " << event_id << ": merging with background "
-                            << std::filesystem::path(bkg_files[bkg_file_idx]).filename().string()
-                            << " event " << bkg_event_id << " (index " << bkg_event_idx << ", "
-                            << bkg_tps.size() << " TPs)" << std::endl;
-                }
-                
+            // Get random background event
+            auto [bkg_event_id, bkg_tps] = get_next_bkg_event();
+            
+            if (bkg_event_id >= 0 && !bkg_tps.empty()) {
                 int bkg_added = 0;
                 int bkg_truth_linked = 0;
                 int bkg_unknown_filtered = 0;
@@ -286,7 +311,7 @@ int main(int argc, char* argv[]) {
                 
                 if (verboseMode) {
                     LogInfo << "Signal event " << event_id << ": " << signal_tps.size() << " signal TPs + "
-                            << bkg_added << " background TPs (truth linked: " << bkg_truth_linked 
+                            << bkg_added << " background TPs (truth linked: " << bkg_truth_linked
                             << ", filtered UNKNOWN: " << bkg_unknown_filtered << ") = "
                             << merged_tps.size() << " total TPs" << std::endl;
                 }
@@ -298,9 +323,6 @@ int main(int argc, char* argv[]) {
                 if (signal_nu_by_event.count(event_id) > 0) {
                     merged_nu = signal_nu_by_event.at(event_id);
                 }
-                
-                // Move to next event (and potentially next file)
-                bkg_event_idx++; // TEMP
                 
             } else {
                 // No background TPs available, just use signal truth
@@ -315,7 +337,7 @@ int main(int argc, char* argv[]) {
             // CRITICAL FIX: Sort merged TPs by time to ensure consistent clustering
             // Background TPs were appended after signal TPs, which can cause different
             // clustering behavior compared to background-only files
-            std::sort(merged_tps.begin(), merged_tps.end(), 
+            std::sort(merged_tps.begin(), merged_tps.end(),
                 [](const TriggerPrimitive& a, const TriggerPrimitive& b) {
                     return a.GetTimeStart() < b.GetTimeStart();
                 });
@@ -326,19 +348,7 @@ int main(int argc, char* argv[]) {
             signal_tp_counts.push_back(signal_tps.size());
         }
         
-        // NOTE: With embedded truth, TP pointers no longer need relinking
-        // Truth information is copied directly with each TP and travels with it
-        // The old relinking logic is removed as truth is now self-contained in each TP
-        
-        // Diagnostics: count MARLEY-labeled TPs (signal) vs other generators (background)
-        // Note: After sorting by time, signal and background TPs are mixed  
-        // DISABLED FOR NOW - causing crashes
-        // if (verboseMode) {
-        //     ...
-        // }
-        
         // Write output file with merged TPs
-        // Background truth pointers remain valid since all background data is pre-loaded
         try {
             write_tps(output_filename, merged_tps_vec, merged_true_vec, merged_nu_vec);
             output_files.push_back(output_filename);

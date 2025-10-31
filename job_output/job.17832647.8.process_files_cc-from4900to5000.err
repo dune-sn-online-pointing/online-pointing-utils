@@ -1,0 +1,2 @@
+/pool/condor/dir_1409533/sequence.sh: line 4: /pool/condor/dir_1409533/init.sh: No such file or directory
+Fatal in <TROOT::InitInterpreter>: cannot load library /cvmfs/sft.cern.ch/lcg/views/LCG_106/x86_64-el9-gcc13-opt/lib/libRIO.so: undefined symbol: _ZTI15TVirtualMapFile

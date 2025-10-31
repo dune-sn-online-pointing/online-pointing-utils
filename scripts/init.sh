@@ -23,7 +23,7 @@ else
     
     # Check if we're at CERN (lxplus or worker nodes like b9pgpun, b9g47n, etc.)
     if [[ $(hostname) == *"lxplus"* ]] || [[ $(hostname -f) == *".cern.ch" ]]; then
-        LCG_VIEW_PATH=/cvmfs/sft.cern.ch/lcg/views/LCG_106/x86_64-el9-gcc13-opt/setup.sh
+        LCG_VIEW_PATH=/cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-el9-gcc11-opt/setup.sh
         if [[ -z ${ONLINE_POINTING_UTILS_LCG_VIEW:-} ]]; then
             if [[ -f ${LCG_VIEW_PATH} ]]; then
                 echo " Setting up environment for lxplus using ${LCG_VIEW_PATH}"

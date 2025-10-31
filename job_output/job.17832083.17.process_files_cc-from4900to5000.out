@@ -1,0 +1,26 @@
+**************************
+Selected options:
+Run backtrack:		true
+Run analyze_tps:	false
+Run add backgrounds:	false
+Run make clusters:	false
+Run analyze:		false
+Run generate images:	false
+Run generate volumes:	false
+Run analyze volumes:	false
+Clean clusters (no backgrounds):	false
+No compile:		false
+Clean compile:		false
+Override:		true
+**************************
+
+**************************
+Sample selected: .
+Global json settings file provided: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json
+**************************
+ Looking for json settings using command: /srv/findSettings.sh -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json
+Global settings file found, full path is:  
+
+Using this for all steps, overriding individual jsons.
+Compiling the code with the following command:
+/srv/compile.sh -p --no-compile false --clean-compile false

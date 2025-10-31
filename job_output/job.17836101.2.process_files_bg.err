@@ -1,0 +1,4 @@
+/pool/condor/dir_617207/sequence.sh: line 10: /pool/condor/scripts/init.sh: No such file or directory
+terminate called after throwing an instance of 'std::runtime_error'
+  what():  exception thrown by the logger at add_backgrounds.cpp:95: bg_folder.empty(): "bg_folder is not specified in JSON config."
+/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/add_backgrounds.sh: line 126:   434 Aborted                 (core dumped) $command_to_run

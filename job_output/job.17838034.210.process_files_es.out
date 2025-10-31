@@ -1,0 +1,1161 @@
+Home directory set from CLI to: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils
+
+init.sh script started
+ Repository home is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils
+ Parameters directory is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/parameters
+ Setting up environment for lxplus using /cvmfs/sft.cern.ch/lcg/views/LCG_104/x86_64-el9-gcc11-opt/setup.sh
+ WARNING: python environment not found, not activating.
+init.sh finished
+
+**************************
+Selected options:
+Run backtrack:		false
+Run analyze_tps:	false
+Run add backgrounds:	true
+Run make clusters:	false
+Run analyze:		false
+Run generate images:	false
+Run generate volumes:	false
+Run analyze volumes:	false
+Clean clusters (no backgrounds):	false
+No compile:		true
+Clean compile:		false
+Override:		true
+**************************
+
+**************************
+Sample selected: .
+Global json settings file provided: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json
+**************************
+ Looking for json settings using command: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/findSettings.sh -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json
+Global settings file found, full path is: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json 
+
+Using this for all steps, overriding individual jsons.
+Compiling the code with the following command:
+/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/compile.sh -p /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils --no-compile true --clean-compile false
+Starting script /pool/condor/dir_1267352/sequence.sh
+Environment is already initialized, not running init.sh again.
+If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
+ Got home path as argument
+  No compilation was requested. Stopping execution of this script.
+
+Running add backgrounds step with command:
+/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/add_backgrounds.sh -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json --no-compile -f true -v false -d false --max-files 20 --skip-files 4200
+Environment is already initialized, not running init.sh again.
+If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
+ Looking for json settings using command: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/findSettings.sh -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json
+Settings file found, full path is: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json 
+
+Compiling the code with the following command:
+/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/compile.sh -p /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils --no-compile true --clean-compile
+Starting script /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/add_backgrounds.sh
+Environment is already initialized, not running init.sh again.
+If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
+ Got home path as argument
+  No compilation was requested. Stopping execution of this script.
+
+Running: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/build//src/app/add_backgrounds -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json -f
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: > add_backgrounds app - Merge signal TPs with random background events, writing *_tps_bg.root files.
+
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: Usage: 
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: ──────────── Main options ────────────
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: skip_files {-s,--skip}: Number of files to skip at start (overrides JSON) (expected: N values)
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: max_files {-m,--max}: Maximum number of files to process (overrides JSON) (expected: N values)
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: verboseMode {-v,--verbose}: Run in verbose mode (trigger)
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: debugMode {-d,--debug}: Run in debug mode (more detailed than verbose) (trigger)
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: override {-f,--override}: Override existing output files (trigger)
+
+
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: Number of files to skip at start: 0
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: Configuration:
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m:  - Signal type: cc
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m:  - Signal folder (pure signal TPs): /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m:  - Background folder (pure bg TPs): /eos/user/e/evilla/dune/sn-tps/bkgs/
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m:  - Output folder (merged TPs): /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs/
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m:  - Add backgrounds around vertex only: NO
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m:  - Max files to process: unlimited
+30/10/2025 17:48:26 [32m[utils.cpp][0m: [find_input_files] Called with pattern: sig
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: Found 3999 signal files
+30/10/2025 17:48:26 [32m[utils.cpp][0m: [find_input_files] Called with pattern: bg
+30/10/2025 17:48:26 [32m[add_backgrounds.cpp][0m: Found 346 background files
+Adding backgrounds...   0% (    0 it/s)
+[1F[1K30/10/2025 17:48:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_174_tps.root
+30/10/2025 17:48:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_174_tps.root has no events!
+30/10/2025 17:51:07 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091329Z_gen_000005_supernova_g4_detsim_ana_2025-10-21T_094330Z_bg_tps.root
+30/10/2025 17:51:11 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091329Z_gen_000006_supernova_g4_detsim_ana_2025-10-21T_092153Z_bg_tps.root
+30/10/2025 17:52:22 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091334Z_gen_000008_supernova_g4_detsim_ana_2025-10-21T_094318Z_bg_tps.root
+30/10/2025 17:52:30 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091335Z_gen_000012_supernova_g4_detsim_ana_2025-10-21T_085048Z_bg_tps.root
+30/10/2025 17:52:34 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091337Z_gen_000014_supernova_g4_detsim_ana_2025-10-21T_085320Z_bg_tps.root
+30/10/2025 17:52:39 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091338Z_gen_000016_supernova_g4_detsim_ana_2025-10-21T_092149Z_bg_tps.root
+30/10/2025 17:52:48 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091340Z_gen_000018_supernova_g4_detsim_ana_2025-10-21T_094325Z_bg_tps.root
+30/10/2025 17:52:51 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091341Z_gen_000019_supernova_g4_detsim_ana_2025-10-21T_094331Z_bg_tps.root
+30/10/2025 17:52:54 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091341Z_gen_000021_supernova_g4_detsim_ana_2025-10-21T_092153Z_bg_tps.root
+30/10/2025 17:52:57 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091343Z_gen_000023_supernova_g4_detsim_ana_2025-10-21T_094328Z_bg_tps.root
+30/10/2025 17:53:01 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091344Z_gen_000024_supernova_g4_detsim_ana_2025-10-21T_085343Z_bg_tps.root
+Adding backgrounds...   1% (    0 it/s)
+[1F[1K30/10/2025 17:53:05 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091345Z_gen_000025_supernova_g4_detsim_ana_2025-10-21T_091401Z_bg_tps.root
+30/10/2025 17:53:09 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091345Z_gen_000026_supernova_g4_detsim_ana_2025-10-21T_092136Z_bg_tps.root
+30/10/2025 17:53:11 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091346Z_gen_000028_supernova_g4_detsim_ana_2025-10-21T_091420Z_bg_tps.root
+30/10/2025 17:55:28 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091352Z_gen_000032_supernova_g4_detsim_ana_2025-10-21T_092209Z_bg_tps.root
+30/10/2025 17:57:27 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091353Z_gen_000036_supernova_g4_detsim_ana_2025-10-21T_094323Z_bg_tps.root
+30/10/2025 17:57:29 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091353Z_gen_000037_supernova_g4_detsim_ana_2025-10-21T_094247Z_bg_tps.root
+30/10/2025 17:57:31 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091354Z_gen_000038_supernova_g4_detsim_ana_2025-10-21T_094246Z_bg_tps.root
+30/10/2025 17:58:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_310_tps.root
+30/10/2025 17:58:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_310_tps.root has no events!
+30/10/2025 17:58:48 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091355Z_gen_000041_supernova_g4_detsim_ana_2025-10-21T_091351Z_bg_tps.root
+30/10/2025 18:00:09 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091356Z_gen_000043_supernova_g4_detsim_ana_2025-10-21T_095551Z_bg_tps.root
+30/10/2025 18:00:11 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091356Z_gen_000044_supernova_g4_detsim_ana_2025-10-21T_092143Z_bg_tps.root
+30/10/2025 18:02:47 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091358Z_gen_000047_supernova_g4_detsim_ana_2025-10-21T_091337Z_bg_tps.root
+30/10/2025 18:02:51 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091359Z_gen_000049_supernova_g4_detsim_ana_2025-10-21T_091311Z_bg_tps.root
+30/10/2025 18:02:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091359Z_gen_000050_supernova_g4_detsim_ana_2025-10-21T_092154Z_bg_tps.root
+30/10/2025 18:02:56 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091401Z_gen_000051_supernova_g4_detsim_ana_2025-10-21T_091328Z_bg_tps.root
+30/10/2025 18:03:03 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091402Z_gen_000054_supernova_g4_detsim_ana_2025-10-21T_095548Z_bg_tps.root
+30/10/2025 18:03:12 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091404Z_gen_000055_supernova_g4_detsim_ana_2025-10-21T_091445Z_bg_tps.root
+30/10/2025 18:04:37 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091404Z_gen_000057_supernova_g4_detsim_ana_2025-10-21T_092129Z_bg_tps.root
+30/10/2025 18:04:40 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091404Z_gen_000059_supernova_g4_detsim_ana_2025-10-21T_092134Z_bg_tps.root
+30/10/2025 18:06:20 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091406Z_gen_000061_supernova_g4_detsim_ana_2025-10-21T_094320Z_bg_tps.root
+30/10/2025 18:07:10 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091406Z_gen_000062_supernova_g4_detsim_ana_2025-10-21T_092204Z_bg_tps.root
+30/10/2025 18:07:35 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091408Z_gen_000064_supernova_g4_detsim_ana_2025-10-21T_095603Z_bg_tps.root
+30/10/2025 18:07:37 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091409Z_gen_000065_supernova_g4_detsim_ana_2025-10-21T_095531Z_bg_tps.root
+30/10/2025 18:08:31 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091411Z_gen_000070_supernova_g4_detsim_ana_2025-10-21T_094314Z_bg_tps.root
+Adding backgrounds...   2% (    0 it/s)
+[1F[1K30/10/2025 18:08:34 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091411Z_gen_000071_supernova_g4_detsim_ana_2025-10-21T_085058Z_bg_tps.root
+30/10/2025 18:08:47 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091412Z_gen_000073_supernova_g4_detsim_ana_2025-10-21T_092151Z_bg_tps.root
+30/10/2025 18:08:51 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091413Z_gen_000074_supernova_g4_detsim_ana_2025-10-21T_085253Z_bg_tps.root
+30/10/2025 18:10:17 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091414Z_gen_000076_supernova_g4_detsim_ana_2025-10-21T_093112Z_bg_tps.root
+30/10/2025 18:11:22 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091416Z_gen_000079_supernova_g4_detsim_ana_2025-10-21T_094340Z_bg_tps.root
+30/10/2025 18:11:31 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091417Z_gen_000080_supernova_g4_detsim_ana_2025-10-21T_092159Z_bg_tps.root
+30/10/2025 18:11:34 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091418Z_gen_000081_supernova_g4_detsim_ana_2025-10-21T_094250Z_bg_tps.root
+30/10/2025 18:11:38 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091418Z_gen_000082_supernova_g4_detsim_ana_2025-10-21T_093107Z_bg_tps.root
+30/10/2025 18:13:05 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091420Z_gen_000084_supernova_g4_detsim_ana_2025-10-21T_095617Z_bg_tps.root
+30/10/2025 18:13:18 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091421Z_gen_000087_supernova_g4_detsim_ana_2025-10-21T_094238Z_bg_tps.root
+30/10/2025 18:14:57 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091421Z_gen_000090_supernova_g4_detsim_ana_2025-10-21T_094331Z_bg_tps.root
+30/10/2025 18:15:01 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091421Z_gen_000092_supernova_g4_detsim_ana_2025-10-21T_094327Z_bg_tps.root
+30/10/2025 18:15:45 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091424Z_gen_000098_supernova_g4_detsim_ana_2025-10-21T_085128Z_bg_tps.root
+30/10/2025 18:16:04 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091426Z_gen_000101_supernova_g4_detsim_ana_2025-10-21T_094257Z_bg_tps.root
+30/10/2025 18:17:43 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091427Z_gen_000102_supernova_g4_detsim_ana_2025-10-21T_094334Z_bg_tps.root
+30/10/2025 18:17:45 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091427Z_gen_000103_supernova_g4_detsim_ana_2025-10-21T_092208Z_bg_tps.root
+30/10/2025 18:17:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091428Z_gen_000106_supernova_g4_detsim_ana_2025-10-21T_094331Z_bg_tps.root
+30/10/2025 18:18:03 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091429Z_gen_000111_supernova_g4_detsim_ana_2025-10-21T_092132Z_bg_tps.root
+30/10/2025 18:18:07 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091432Z_gen_000112_supernova_g4_detsim_ana_2025-10-21T_091337Z_bg_tps.root
+30/10/2025 18:19:47 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091433Z_gen_000115_supernova_g4_detsim_ana_2025-10-21T_093122Z_bg_tps.root
+30/10/2025 18:20:38 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091435Z_gen_000118_supernova_g4_detsim_ana_2025-10-21T_094333Z_bg_tps.root
+Adding backgrounds...   3% (    0 it/s)
+[1F[1K30/10/2025 18:21:04 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091439Z_gen_000125_supernova_g4_detsim_ana_2025-10-21T_085054Z_bg_tps.root
+30/10/2025 18:21:12 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091443Z_gen_000127_supernova_g4_detsim_ana_2025-10-21T_094334Z_bg_tps.root
+30/10/2025 18:21:14 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091446Z_gen_000128_supernova_g4_detsim_ana_2025-10-21T_092213Z_bg_tps.root
+30/10/2025 18:22:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091447Z_gen_000129_supernova_g4_detsim_ana_2025-10-21T_092113Z_bg_tps.root
+30/10/2025 18:25:30 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091452Z_gen_000134_supernova_g4_detsim_ana_2025-10-21T_092131Z_bg_tps.root
+30/10/2025 18:25:30 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 18:25:30 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 18:25:54 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091453Z_gen_000136_supernova_g4_detsim_ana_2025-10-21T_085055Z_bg_tps.root
+30/10/2025 18:26:30 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091501Z_gen_000143_supernova_g4_detsim_ana_2025-10-21T_092140Z_bg_tps.root
+30/10/2025 18:26:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091504Z_gen_000148_supernova_g4_detsim_ana_2025-10-21T_085743Z_bg_tps.root
+30/10/2025 18:28:28 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091506Z_gen_000150_supernova_g4_detsim_ana_2025-10-21T_092158Z_bg_tps.root
+30/10/2025 18:28:30 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091507Z_gen_000151_supernova_g4_detsim_ana_2025-10-21T_095527Z_bg_tps.root
+30/10/2025 18:29:28 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091510Z_gen_000155_supernova_g4_detsim_ana_2025-10-21T_091333Z_bg_tps.root
+30/10/2025 18:30:27 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091512Z_gen_000158_supernova_g4_detsim_ana_2025-10-21T_092209Z_bg_tps.root
+30/10/2025 18:30:45 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091514Z_gen_000161_supernova_g4_detsim_ana_2025-10-21T_095556Z_bg_tps.root
+30/10/2025 18:35:18 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091522Z_gen_000170_supernova_g4_detsim_ana_2025-10-21T_092153Z_bg_tps.root
+30/10/2025 18:35:35 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091523Z_gen_000171_supernova_g4_detsim_ana_2025-10-21T_094330Z_bg_tps.root
+30/10/2025 18:37:06 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091525Z_gen_000172_supernova_g4_detsim_ana_2025-10-21T_095539Z_bg_tps.root
+Adding backgrounds...   4% (    0 it/s)
+[1F[1K30/10/2025 18:37:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091528Z_gen_000175_supernova_g4_detsim_ana_2025-10-21T_095558Z_bg_tps.root
+30/10/2025 18:40:02 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091549Z_gen_000182_supernova_g4_detsim_ana_2025-10-21T_091404Z_bg_tps.root
+30/10/2025 18:41:41 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091551Z_gen_000184_supernova_g4_detsim_ana_2025-10-21T_091435Z_bg_tps.root
+30/10/2025 18:43:31 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091559Z_gen_000188_supernova_g4_detsim_ana_2025-10-21T_091431Z_bg_tps.root
+30/10/2025 18:43:45 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091608Z_gen_000191_supernova_g4_detsim_ana_2025-10-21T_085251Z_bg_tps.root
+30/10/2025 18:43:51 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091609Z_gen_000192_supernova_g4_detsim_ana_2025-10-21T_092153Z_bg_tps.root
+30/10/2025 18:43:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091611Z_gen_000194_supernova_g4_detsim_ana_2025-10-21T_092115Z_bg_tps.root
+30/10/2025 18:43:55 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091613Z_gen_000195_supernova_g4_detsim_ana_2025-10-21T_091353Z_bg_tps.root
+30/10/2025 18:45:25 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091616Z_gen_000200_supernova_g4_detsim_ana_2025-10-21T_093127Z_bg_tps.root
+30/10/2025 18:45:35 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091620Z_gen_000204_supernova_g4_detsim_ana_2025-10-21T_095543Z_bg_tps.root
+30/10/2025 18:47:38 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091623Z_gen_000208_supernova_g4_detsim_ana_2025-10-21T_094301Z_bg_tps.root
+30/10/2025 18:47:58 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091625Z_gen_000212_supernova_g4_detsim_ana_2025-10-21T_095549Z_bg_tps.root
+30/10/2025 18:50:08 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091626Z_gen_000215_supernova_g4_detsim_ana_2025-10-21T_094323Z_bg_tps.root
+30/10/2025 18:50:15 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091627Z_gen_000216_supernova_g4_detsim_ana_2025-10-21T_095554Z_bg_tps.root
+30/10/2025 18:50:43 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091628Z_gen_000219_supernova_g4_detsim_ana_2025-10-21T_091438Z_bg_tps.root
+30/10/2025 18:50:45 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091630Z_gen_000222_supernova_g4_detsim_ana_2025-10-21T_093113Z_bg_tps.root
+30/10/2025 18:50:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 18:50:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 18:51:01 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091630Z_gen_000224_supernova_g4_detsim_ana_2025-10-21T_092147Z_bg_tps.root
+30/10/2025 18:51:05 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091630Z_gen_000225_supernova_g4_detsim_ana_2025-10-21T_094302Z_bg_tps.root
+Adding backgrounds...   5% (    0 it/s)
+[1F[1K30/10/2025 18:51:21 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091632Z_gen_000228_supernova_g4_detsim_ana_2025-10-21T_085125Z_bg_tps.root
+30/10/2025 18:52:39 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091634Z_gen_000232_supernova_g4_detsim_ana_2025-10-21T_085331Z_bg_tps.root
+30/10/2025 18:52:49 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091636Z_gen_000235_supernova_g4_detsim_ana_2025-10-21T_091351Z_bg_tps.root
+30/10/2025 18:53:17 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091637Z_gen_000239_supernova_g4_detsim_ana_2025-10-21T_085327Z_bg_tps.root
+30/10/2025 18:55:54 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091643Z_gen_000246_supernova_g4_detsim_ana_2025-10-21T_091339Z_bg_tps.root
+30/10/2025 18:56:12 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091644Z_gen_000248_supernova_g4_detsim_ana_2025-10-21T_091450Z_bg_tps.root
+30/10/2025 18:57:12 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091649Z_gen_000249_supernova_g4_detsim_ana_2025-10-21T_094323Z_bg_tps.root
+30/10/2025 18:57:14 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091649Z_gen_000250_supernova_g4_detsim_ana_2025-10-21T_093116Z_bg_tps.root
+30/10/2025 18:58:37 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091653Z_gen_000258_supernova_g4_detsim_ana_2025-10-21T_094254Z_bg_tps.root
+30/10/2025 19:01:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091653Z_gen_000260_supernova_g4_detsim_ana_2025-10-21T_092147Z_bg_tps.root
+30/10/2025 19:03:40 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091655Z_gen_000262_supernova_g4_detsim_ana_2025-10-21T_094323Z_bg_tps.root
+30/10/2025 19:04:43 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091659Z_gen_000267_supernova_g4_detsim_ana_2025-10-21T_085737Z_bg_tps.root
+30/10/2025 19:06:25 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091700Z_gen_000268_supernova_g4_detsim_ana_2025-10-21T_093126Z_bg_tps.root
+30/10/2025 19:09:04 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091701Z_gen_000273_supernova_g4_detsim_ana_2025-10-21T_093122Z_bg_tps.root
+Adding backgrounds...   6% (    0 it/s)
+[1F[1K30/10/2025 19:10:27 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091821Z_gen_000289_supernova_g4_detsim_ana_2025-10-21T_092147Z_bg_tps.root
+30/10/2025 19:12:16 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091825Z_gen_000294_supernova_g4_detsim_ana_2025-10-21T_093113Z_bg_tps.root
+30/10/2025 19:13:26 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091846Z_gen_000299_supernova_g4_detsim_ana_2025-10-21T_094332Z_bg_tps.root
+30/10/2025 19:14:26 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091850Z_gen_000301_supernova_g4_detsim_ana_2025-10-21T_095526Z_bg_tps.root
+30/10/2025 19:15:19 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091858Z_gen_000304_supernova_g4_detsim_ana_2025-10-21T_094332Z_bg_tps.root
+30/10/2025 19:16:07 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091906Z_gen_000307_supernova_g4_detsim_ana_2025-10-21T_092143Z_bg_tps.root
+30/10/2025 19:16:09 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091909Z_gen_000308_supernova_g4_detsim_ana_2025-10-21T_095536Z_bg_tps.root
+30/10/2025 19:16:09 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 19:16:09 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 19:16:17 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091918Z_gen_000311_supernova_g4_detsim_ana_2025-10-21T_093130Z_bg_tps.root
+30/10/2025 19:17:21 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091920Z_gen_000312_supernova_g4_detsim_ana_2025-10-21T_094319Z_bg_tps.root
+30/10/2025 19:18:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091938Z_gen_000314_supernova_g4_detsim_ana_2025-10-21T_093125Z_bg_tps.root
+30/10/2025 19:19:34 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091940Z_gen_000316_supernova_g4_detsim_ana_2025-10-21T_091342Z_bg_tps.root
+30/10/2025 19:21:13 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091941Z_gen_000321_supernova_g4_detsim_ana_2025-10-21T_094316Z_bg_tps.root
+Adding backgrounds...   7% (    0 it/s)
+[1F[1K30/10/2025 19:22:45 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091945Z_gen_000325_supernova_g4_detsim_ana_2025-10-21T_091354Z_bg_tps.root
+30/10/2025 19:22:55 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091950Z_gen_000328_supernova_g4_detsim_ana_2025-10-21T_092119Z_bg_tps.root
+30/10/2025 19:24:20 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091958Z_gen_000334_supernova_g4_detsim_ana_2025-10-21T_094331Z_bg_tps.root
+30/10/2025 19:25:44 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092000Z_gen_000335_supernova_g4_detsim_ana_2025-10-21T_085312Z_bg_tps.root
+30/10/2025 19:26:16 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092017Z_gen_000341_supernova_g4_detsim_ana_2025-10-21T_093114Z_bg_tps.root
+30/10/2025 19:26:29 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092019Z_gen_000343_supernova_g4_detsim_ana_2025-10-21T_093123Z_bg_tps.root
+30/10/2025 19:27:54 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092023Z_gen_000345_supernova_g4_detsim_ana_2025-10-21T_094334Z_bg_tps.root
+30/10/2025 19:28:04 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092032Z_gen_000347_supernova_g4_detsim_ana_2025-10-21T_095605Z_bg_tps.root
+30/10/2025 19:29:44 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092042Z_gen_000354_supernova_g4_detsim_ana_2025-10-21T_094307Z_bg_tps.root
+30/10/2025 19:29:52 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092042Z_gen_000356_supernova_g4_detsim_ana_2025-10-21T_095606Z_bg_tps.root
+30/10/2025 19:31:21 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092045Z_gen_000179_supernova_g4_detsim_ana_2025-10-21T_091414Z_bg_tps.root
+30/10/2025 19:32:07 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092046Z_gen_000180_supernova_g4_detsim_ana_2025-10-21T_091407Z_bg_tps.root
+30/10/2025 19:32:15 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092048Z_gen_000360_supernova_g4_detsim_ana_2025-10-21T_094310Z_bg_tps.root
+30/10/2025 19:32:19 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092053Z_gen_000362_supernova_g4_detsim_ana_2025-10-21T_091401Z_bg_tps.root
+30/10/2025 19:32:21 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092053Z_gen_000363_supernova_g4_detsim_ana_2025-10-21T_094257Z_bg_tps.root
+30/10/2025 19:33:23 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092058Z_gen_000367_supernova_g4_detsim_ana_2025-10-21T_094259Z_bg_tps.root
+Adding backgrounds...   8% (    0 it/s)
+[1F[1K30/10/2025 19:34:45 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092108Z_gen_000374_supernova_g4_detsim_ana_2025-10-21T_094307Z_bg_tps.root
+30/10/2025 19:36:05 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092117Z_gen_000379_supernova_g4_detsim_ana_2025-10-21T_092118Z_bg_tps.root
+30/10/2025 19:37:18 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092147Z_gen_000381_supernova_g4_detsim_ana_2025-10-21T_095557Z_bg_tps.root
+30/10/2025 19:39:00 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092233Z_gen_000388_supernova_g4_detsim_ana_2025-10-21T_091443Z_bg_tps.root
+30/10/2025 19:39:07 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 19:39:07 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 19:41:06 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092236Z_gen_000395_supernova_g4_detsim_ana_2025-10-21T_094321Z_bg_tps.root
+30/10/2025 19:42:21 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092253Z_gen_000399_supernova_g4_detsim_ana_2025-10-21T_095528Z_bg_tps.root
+30/10/2025 19:42:34 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092308Z_gen_000402_supernova_g4_detsim_ana_2025-10-21T_085135Z_bg_tps.root
+30/10/2025 19:44:16 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092330Z_gen_000409_supernova_g4_detsim_ana_2025-10-21T_094329Z_bg_tps.root
+30/10/2025 19:44:18 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092336Z_gen_000410_supernova_g4_detsim_ana_2025-10-21T_094322Z_bg_tps.root
+30/10/2025 19:45:43 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092405Z_gen_000413_supernova_g4_detsim_ana_2025-10-21T_092202Z_bg_tps.root
+30/10/2025 19:45:45 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092409Z_gen_000414_supernova_g4_detsim_ana_2025-10-21T_094327Z_bg_tps.root
+30/10/2025 19:46:00 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092409Z_gen_000416_supernova_g4_detsim_ana_2025-10-21T_091348Z_bg_tps.root
+30/10/2025 19:46:31 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092418Z_gen_000423_supernova_g4_detsim_ana_2025-10-21T_092212Z_bg_tps.root
+Adding backgrounds...   9% (    0 it/s)
+[1F[1K30/10/2025 19:47:01 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092425Z_gen_000427_supernova_g4_detsim_ana_2025-10-21T_094303Z_bg_tps.root
+30/10/2025 19:47:30 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092428Z_gen_000434_supernova_g4_detsim_ana_2025-10-21T_093120Z_bg_tps.root
+30/10/2025 19:48:24 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092428Z_gen_000435_supernova_g4_detsim_ana_2025-10-21T_093126Z_bg_tps.root
+30/10/2025 19:48:26 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092428Z_gen_000436_supernova_g4_detsim_ana_2025-10-21T_095555Z_bg_tps.root
+30/10/2025 19:50:07 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092428Z_gen_000437_supernova_g4_detsim_ana_2025-10-21T_094334Z_bg_tps.root
+30/10/2025 19:51:46 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092430Z_gen_000442_supernova_g4_detsim_ana_2025-10-21T_094328Z_bg_tps.root
+30/10/2025 19:51:54 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092430Z_gen_000444_supernova_g4_detsim_ana_2025-10-21T_093120Z_bg_tps.root
+30/10/2025 19:52:15 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092435Z_gen_000449_supernova_g4_detsim_ana_2025-10-21T_094309Z_bg_tps.root
+30/10/2025 19:52:49 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092442Z_gen_000457_supernova_g4_detsim_ana_2025-10-21T_092202Z_bg_tps.root
+30/10/2025 19:53:59 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092446Z_gen_000461_supernova_g4_detsim_ana_2025-10-21T_094334Z_bg_tps.root
+30/10/2025 19:56:06 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092455Z_gen_000464_supernova_g4_detsim_ana_2025-10-21T_092124Z_bg_tps.root
+30/10/2025 19:57:18 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092457Z_gen_000465_supernova_g4_detsim_ana_2025-10-21T_095611Z_bg_tps.root
+30/10/2025 19:59:52 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092504Z_gen_000474_supernova_g4_detsim_ana_2025-10-21T_093125Z_bg_tps.root
+Adding backgrounds...  10% (    0 it/s)
+[1F[1K30/10/2025 20:00:12 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092505Z_gen_000477_supernova_g4_detsim_ana_2025-10-21T_085104Z_bg_tps.root
+30/10/2025 20:02:14 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092507Z_gen_000479_supernova_g4_detsim_ana_2025-10-21T_094331Z_bg_tps.root
+30/10/2025 20:02:27 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 20:02:27 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 20:03:50 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092518Z_gen_000484_supernova_g4_detsim_ana_2025-10-21T_094314Z_bg_tps.root
+30/10/2025 20:06:12 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092527Z_gen_000490_supernova_g4_detsim_ana_2025-10-21T_085128Z_bg_tps.root
+30/10/2025 20:07:18 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092530Z_gen_000492_supernova_g4_detsim_ana_2025-10-21T_094314Z_bg_tps.root
+30/10/2025 20:07:28 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092535Z_gen_000495_supernova_g4_detsim_ana_2025-10-21T_094253Z_bg_tps.root
+30/10/2025 20:08:52 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T092542Z_gen_000496_supernova_g4_detsim_ana_2025-10-21T_085119Z_bg_tps.root
+30/10/2025 20:09:15 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182624Z_gen_000001_supernova_g4_detsim_ana_2025-10-21T_095729Z_bg_tps.root
+30/10/2025 20:10:45 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182625Z_gen_000003_supernova_g4_detsim_ana_2025-10-21T_094407Z_bg_tps.root
+30/10/2025 20:10:47 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182629Z_gen_000006_supernova_g4_detsim_ana_2025-10-21T_095524Z_bg_tps.root
+30/10/2025 20:10:51 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182629Z_gen_000007_supernova_g4_detsim_ana_2025-10-21T_095718Z_bg_tps.root
+30/10/2025 20:10:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182632Z_gen_000010_supernova_g4_detsim_ana_2025-10-21T_093616Z_bg_tps.root
+30/10/2025 20:10:57 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182633Z_gen_000013_supernova_g4_detsim_ana_2025-10-21T_094559Z_bg_tps.root
+30/10/2025 20:11:11 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182634Z_gen_000017_supernova_g4_detsim_ana_2025-10-21T_090751Z_bg_tps.root
+30/10/2025 20:12:13 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182642Z_gen_000028_supernova_g4_detsim_ana_2025-10-21T_092317Z_bg_tps.root
+30/10/2025 20:12:29 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182646Z_gen_000038_supernova_g4_detsim_ana_2025-10-21T_094414Z_bg_tps.root
+30/10/2025 20:12:42 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182650Z_gen_000047_supernova_g4_detsim_ana_2025-10-21T_085844Z_bg_tps.root
+Adding backgrounds...  11% (    0 it/s)
+[1F[1K30/10/2025 20:13:25 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182701Z_gen_000064_supernova_g4_detsim_ana_2025-10-21T_091435Z_bg_tps.root
+30/10/2025 20:14:28 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182701Z_gen_000065_supernova_g4_detsim_ana_2025-10-21T_085900Z_bg_tps.root
+30/10/2025 20:15:31 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182709Z_gen_000077_supernova_g4_detsim_ana_2025-10-21T_091724Z_bg_tps.root
+30/10/2025 20:17:27 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182712Z_gen_000087_supernova_g4_detsim_ana_2025-10-21T_093658Z_bg_tps.root
+30/10/2025 20:17:34 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182714Z_gen_000090_supernova_g4_detsim_ana_2025-10-21T_090740Z_bg_tps.root
+30/10/2025 20:17:36 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182714Z_gen_000091_supernova_g4_detsim_ana_2025-10-21T_094530Z_bg_tps.root
+30/10/2025 20:17:38 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182714Z_gen_000092_supernova_g4_detsim_ana_2025-10-21T_094550Z_bg_tps.root
+30/10/2025 20:19:00 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182716Z_gen_000096_supernova_g4_detsim_ana_2025-10-21T_095024Z_bg_tps.root
+30/10/2025 20:20:28 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182716Z_gen_000099_supernova_g4_detsim_ana_2025-10-21T_095527Z_bg_tps.root
+30/10/2025 20:22:05 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182723Z_gen_000118_supernova_g4_detsim_ana_2025-10-21T_090340Z_bg_tps.root
+30/10/2025 20:22:19 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182728Z_gen_000127_supernova_g4_detsim_ana_2025-10-21T_095056Z_bg_tps.root
+30/10/2025 20:23:15 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182732Z_gen_000131_supernova_g4_detsim_ana_2025-10-21T_093601Z_bg_tps.root
+30/10/2025 20:23:24 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 20:23:24 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 20:23:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182808Z_gen_000146_supernova_g4_detsim_ana_2025-10-21T_092002Z_bg_tps.root
+Adding backgrounds...  12% (    0 it/s)
+[1F[1K30/10/2025 20:25:09 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182846Z_gen_000158_supernova_g4_detsim_ana_2025-10-21T_090731Z_bg_tps.root
+30/10/2025 20:25:54 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182911Z_gen_000170_supernova_g4_detsim_ana_2025-10-21T_094955Z_bg_tps.root
+30/10/2025 20:27:32 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T182957Z_gen_000199_supernova_g4_detsim_ana_2025-10-21T_093157Z_bg_tps.root
+30/10/2025 20:28:48 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183030Z_gen_000216_supernova_g4_detsim_ana_2025-10-21T_091401Z_bg_tps.root
+30/10/2025 20:28:50 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183031Z_gen_000217_supernova_g4_detsim_ana_2025-10-21T_094453Z_bg_tps.root
+30/10/2025 20:30:42 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183049Z_gen_000225_supernova_g4_detsim_ana_2025-10-21T_091744Z_bg_tps.root
+30/10/2025 20:31:01 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183108Z_gen_000237_supernova_g4_detsim_ana_2025-10-21T_091412Z_bg_tps.root
+30/10/2025 20:32:49 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183326Z_gen_000287_supernova_g4_detsim_ana_2025-10-21T_093102Z_bg_tps.root
+30/10/2025 20:34:33 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183337Z_gen_000291_supernova_g4_detsim_ana_2025-10-21T_095012Z_bg_tps.root
+30/10/2025 20:36:08 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183417Z_gen_000312_supernova_g4_detsim_ana_2025-10-21T_093646Z_bg_tps.root
+30/10/2025 20:37:36 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183427Z_gen_000318_supernova_g4_detsim_ana_2025-10-21T_094427Z_bg_tps.root
+30/10/2025 20:40:37 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183432Z_gen_000321_supernova_g4_detsim_ana_2025-10-21T_093156Z_bg_tps.root
+30/10/2025 20:41:52 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183444Z_gen_000326_supernova_g4_detsim_ana_2025-10-21T_095534Z_bg_tps.root
+Adding backgrounds...  13% (    0 it/s)
+[1F[1K30/10/2025 20:43:52 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183455Z_gen_000337_supernova_g4_detsim_ana_2025-10-21T_091736Z_bg_tps.root
+30/10/2025 20:44:56 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183515Z_gen_000348_supernova_g4_detsim_ana_2025-10-21T_093619Z_bg_tps.root
+30/10/2025 20:46:23 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183520Z_gen_000354_supernova_g4_detsim_ana_2025-10-21T_091604Z_bg_tps.root
+30/10/2025 20:48:10 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183525Z_gen_000363_supernova_g4_detsim_ana_2025-10-21T_093043Z_bg_tps.root
+30/10/2025 20:49:07 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183528Z_gen_000365_supernova_g4_detsim_ana_2025-10-21T_095539Z_bg_tps.root
+30/10/2025 20:49:23 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 20:49:23 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 20:50:24 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183532Z_gen_000370_supernova_g4_detsim_ana_2025-10-21T_094641Z_bg_tps.root
+30/10/2025 20:51:29 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183536Z_gen_000374_supernova_g4_detsim_ana_2025-10-21T_092150Z_bg_tps.root
+30/10/2025 20:54:50 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183551Z_gen_000386_supernova_g4_detsim_ana_2025-10-21T_094338Z_bg_tps.root
+30/10/2025 20:56:23 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183554Z_gen_000388_supernova_g4_detsim_ana_2025-10-21T_092153Z_bg_tps.root
+30/10/2025 20:56:37 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183557Z_gen_000391_supernova_g4_detsim_ana_2025-10-21T_094412Z_bg_tps.root
+30/10/2025 20:58:11 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183600Z_gen_000393_supernova_g4_detsim_ana_2025-10-21T_095718Z_bg_tps.root
+Adding backgrounds...  14% (    0 it/s)
+[1F[1K30/10/2025 21:00:02 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183613Z_gen_000401_supernova_g4_detsim_ana_2025-10-21T_095620Z_bg_tps.root
+30/10/2025 21:00:03 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183614Z_gen_000402_supernova_g4_detsim_ana_2025-10-21T_092558Z_bg_tps.root
+30/10/2025 21:01:55 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183620Z_gen_000405_supernova_g4_detsim_ana_2025-10-21T_094310Z_bg_tps.root
+30/10/2025 21:01:59 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183621Z_gen_000406_supernova_g4_detsim_ana_2025-10-21T_094956Z_bg_tps.root
+30/10/2025 21:03:13 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183635Z_gen_000411_supernova_g4_detsim_ana_2025-10-21T_094359Z_bg_tps.root
+30/10/2025 21:04:30 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183639Z_gen_000413_supernova_g4_detsim_ana_2025-10-21T_091428Z_bg_tps.root
+30/10/2025 21:04:47 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183644Z_gen_000414_supernova_g4_detsim_ana_2025-10-21T_093206Z_bg_tps.root
+30/10/2025 21:05:32 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183706Z_gen_000418_supernova_g4_detsim_ana_2025-10-21T_094543Z_bg_tps.root
+30/10/2025 21:06:36 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183711Z_gen_000424_supernova_g4_detsim_ana_2025-10-21T_095650Z_bg_tps.root
+30/10/2025 21:07:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183714Z_gen_000426_supernova_g4_detsim_ana_2025-10-21T_091317Z_bg_tps.root
+30/10/2025 21:10:42 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183723Z_gen_000436_supernova_g4_detsim_ana_2025-10-21T_095702Z_bg_tps.root
+30/10/2025 21:10:44 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183725Z_gen_000437_supernova_g4_detsim_ana_2025-10-21T_092035Z_bg_tps.root
+30/10/2025 21:12:18 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183737Z_gen_000444_supernova_g4_detsim_ana_2025-10-21T_093629Z_bg_tps.root
+30/10/2025 21:12:20 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183741Z_gen_000446_supernova_g4_detsim_ana_2025-10-21T_092224Z_bg_tps.root
+30/10/2025 21:14:18 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183743Z_gen_000450_supernova_g4_detsim_ana_2025-10-21T_093042Z_bg_tps.root
+Adding backgrounds...  15% (    0 it/s)
+[1F[1K30/10/2025 21:14:21 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183746Z_gen_000451_supernova_g4_detsim_ana_2025-10-21T_094956Z_bg_tps.root
+30/10/2025 21:15:09 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183750Z_gen_000453_supernova_g4_detsim_ana_2025-10-21T_091927Z_bg_tps.root
+30/10/2025 21:16:43 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183752Z_gen_000456_supernova_g4_detsim_ana_2025-10-21T_090333Z_bg_tps.root
+30/10/2025 21:16:45 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183756Z_gen_000458_supernova_g4_detsim_ana_2025-10-21T_095506Z_bg_tps.root
+30/10/2025 21:18:09 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 21:18:09 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 21:19:14 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183807Z_gen_000469_supernova_g4_detsim_ana_2025-10-21T_093319Z_bg_tps.root
+30/10/2025 21:20:07 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183808Z_gen_000470_supernova_g4_detsim_ana_2025-10-21T_093005Z_bg_tps.root
+30/10/2025 21:20:08 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183809Z_gen_000471_supernova_g4_detsim_ana_2025-10-21T_095537Z_bg_tps.root
+30/10/2025 21:20:16 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183819Z_gen_000476_supernova_g4_detsim_ana_2025-10-21T_093050Z_bg_tps.root
+30/10/2025 21:22:18 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183829Z_gen_000483_supernova_g4_detsim_ana_2025-10-21T_094913Z_bg_tps.root
+30/10/2025 21:22:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183833Z_gen_000486_supernova_g4_detsim_ana_2025-10-21T_085926Z_tps.root
+30/10/2025 21:23:38 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183840Z_gen_000488_supernova_g4_detsim_ana_2025-10-21T_094700Z_bg_tps.root
+30/10/2025 21:25:20 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183847Z_gen_000492_supernova_g4_detsim_ana_2025-10-21T_092108Z_bg_tps.root
+30/10/2025 21:27:08 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183857Z_gen_000502_supernova_g4_detsim_ana_2025-10-21T_093131Z_bg_tps.root
+30/10/2025 21:27:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183859Z_gen_000004_supernova_g4_detsim_ana_2025-10-21T_095732Z_bg_tps.root
+Adding backgrounds...  16% (    0 it/s)
+[1F[1K30/10/2025 21:31:26 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183906Z_gen_000509_supernova_g4_detsim_ana_2025-10-21T_093246Z_bg_tps.root
+30/10/2025 21:32:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183908Z_gen_000513_supernova_g4_detsim_ana_2025-10-21T_092352Z_bg_tps.root
+30/10/2025 21:34:51 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183918Z_gen_000523_supernova_g4_detsim_ana_2025-10-21T_092031Z_bg_tps.root
+30/10/2025 21:36:45 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183919Z_gen_000524_supernova_g4_detsim_ana_2025-10-21T_091748Z_bg_tps.root
+30/10/2025 21:39:08 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183926Z_gen_000531_supernova_g4_detsim_ana_2025-10-21T_093148Z_bg_tps.root
+30/10/2025 21:41:51 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183944Z_gen_000544_supernova_g4_detsim_ana_2025-10-22T_075739Z_bg_tps.root
+30/10/2025 21:42:39 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183944Z_gen_000545_supernova_g4_detsim_ana_2025-10-21T_094335Z_bg_tps.root
+30/10/2025 21:43:03 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183947Z_gen_000549_supernova_g4_detsim_ana_2025-10-21T_093356Z_bg_tps.root
+30/10/2025 21:43:11 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T183949Z_gen_000551_supernova_g4_detsim_ana_2025-10-21T_094349Z_bg_tps.root
+30/10/2025 21:44:47 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184002Z_gen_000560_supernova_g4_detsim_ana_2025-10-21T_093144Z_bg_tps.root
+Adding backgrounds...  17% (    0 it/s)
+[1F[1K30/10/2025 21:45:00 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 21:45:00 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 21:46:24 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184005Z_gen_000564_supernova_g4_detsim_ana_2025-10-21T_092904Z_bg_tps.root
+30/10/2025 21:47:42 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184010Z_gen_000567_supernova_g4_detsim_ana_2025-10-21T_093100Z_bg_tps.root
+30/10/2025 21:49:10 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184749Z_gen_000574_supernova_g4_detsim_ana_2025-10-21T_092047Z_bg_tps.root
+30/10/2025 21:52:10 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184749Z_gen_000587_supernova_g4_detsim_ana_2025-10-21T_092418Z_bg_tps.root
+30/10/2025 21:53:20 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184749Z_gen_000589_supernova_g4_detsim_ana_2025-10-21T_093517Z_bg_tps.root
+30/10/2025 21:53:48 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184749Z_gen_000596_supernova_g4_detsim_ana_2025-10-21T_094349Z_bg_tps.root
+30/10/2025 21:54:58 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184749Z_gen_000598_supernova_g4_detsim_ana_2025-10-21T_085837Z_bg_tps.root
+30/10/2025 21:55:57 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184749Z_gen_000601_supernova_g4_detsim_ana_2025-10-21T_092444Z_bg_tps.root
+30/10/2025 21:57:49 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184749Z_gen_000605_supernova_g4_detsim_ana_2025-10-21T_093116Z_bg_tps.root
+30/10/2025 21:59:11 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184749Z_gen_000606_supernova_g4_detsim_ana_2025-10-21T_094545Z_bg_tps.root
+30/10/2025 22:00:47 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184749Z_gen_000612_supernova_g4_detsim_ana_2025-10-21T_093101Z_bg_tps.root
+30/10/2025 22:01:55 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184749Z_gen_000614_supernova_g4_detsim_ana_2025-10-21T_094314Z_bg_tps.root
+Adding backgrounds...  18% (    0 it/s)
+[1F[1K30/10/2025 22:03:28 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184750Z_gen_000570_supernova_g4_detsim_ana_2025-10-21T_095538Z_bg_tps.root
+30/10/2025 22:04:42 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184750Z_gen_000617_supernova_g4_detsim_ana_2025-10-21T_094717Z_bg_tps.root
+30/10/2025 22:06:15 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184759Z_gen_000626_supernova_g4_detsim_ana_2025-10-21T_091743Z_bg_tps.root
+30/10/2025 22:09:10 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184806Z_gen_000645_supernova_g4_detsim_ana_2025-10-21T_093708Z_bg_tps.root
+30/10/2025 22:11:09 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184807Z_gen_000638_supernova_g4_detsim_ana_2025-10-21T_092400Z_bg_tps.root
+30/10/2025 22:13:00 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184807Z_gen_000653_supernova_g4_detsim_ana_2025-10-21T_093749Z_bg_tps.root
+30/10/2025 22:13:14 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 22:13:14 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 22:13:31 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_40_tps.root
+30/10/2025 22:13:31 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_40_tps.root has no events!
+30/10/2025 22:14:35 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184808Z_gen_000659_supernova_g4_detsim_ana_2025-10-21T_094326Z_bg_tps.root
+30/10/2025 22:14:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_43_tps.root
+30/10/2025 22:14:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_43_tps.root has no events!
+30/10/2025 22:14:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_44_tps.root
+30/10/2025 22:14:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_44_tps.root has no events!
+30/10/2025 22:14:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_47_tps.root
+30/10/2025 22:14:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_47_tps.root has no events!
+30/10/2025 22:14:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_48_tps.root
+30/10/2025 22:14:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_48_tps.root has no events!
+30/10/2025 22:14:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_49_tps.root
+30/10/2025 22:14:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_49_tps.root has no events!
+30/10/2025 22:14:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_4_tps.root
+30/10/2025 22:14:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_4_tps.root has no events!
+30/10/2025 22:14:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_54_tps.root
+30/10/2025 22:14:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_54_tps.root has no events!
+30/10/2025 22:15:27 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184810Z_gen_000661_supernova_g4_detsim_ana_2025-10-21T_085851Z_bg_tps.root
+30/10/2025 22:15:31 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_64_tps.root
+30/10/2025 22:15:31 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_64_tps.root has no events!
+30/10/2025 22:15:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_74_tps.root
+30/10/2025 22:15:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_74_tps.root has no events!
+Adding backgrounds...  19% (    0 it/s)
+[1F[1K30/10/2025 22:15:58 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_84_tps.root
+30/10/2025 22:15:58 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_84_tps.root has no events!
+30/10/2025 22:16:19 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_94_tps.root
+30/10/2025 22:16:19 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_94_tps.root has no events!
+30/10/2025 22:19:35 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184934Z_gen_000669_supernova_g4_detsim_ana_2025-10-21T_095717Z_bg_tps.root
+30/10/2025 22:19:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_104_tps.root
+30/10/2025 22:19:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_104_tps.root has no events!
+30/10/2025 22:20:43 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184934Z_gen_000671_supernova_g4_detsim_ana_2025-10-21T_095643Z_bg_tps.root
+30/10/2025 22:20:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_114_tps.root
+30/10/2025 22:20:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_114_tps.root has no events!
+30/10/2025 22:22:19 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184936Z_gen_000672_supernova_g4_detsim_ana_2025-10-21T_094908Z_bg_tps.root
+30/10/2025 22:22:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_124_tps.root
+30/10/2025 22:22:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_124_tps.root has no events!
+30/10/2025 22:23:27 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184940Z_gen_000676_supernova_g4_detsim_ana_2025-10-21T_095705Z_bg_tps.root
+30/10/2025 22:23:32 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_134_tps.root
+30/10/2025 22:23:32 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_134_tps.root has no events!
+30/10/2025 22:23:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_140_tps.root
+30/10/2025 22:23:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_140_tps.root has no events!
+30/10/2025 22:23:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_141_tps.root
+30/10/2025 22:23:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_141_tps.root has no events!
+30/10/2025 22:23:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_142_tps.root
+30/10/2025 22:23:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_142_tps.root has no events!
+30/10/2025 22:23:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_143_tps.root
+30/10/2025 22:23:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_143_tps.root has no events!
+30/10/2025 22:23:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_144_tps.root
+30/10/2025 22:23:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_144_tps.root has no events!
+30/10/2025 22:23:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_145_tps.root
+30/10/2025 22:23:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_145_tps.root has no events!
+30/10/2025 22:23:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_146_tps.root
+30/10/2025 22:23:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_146_tps.root has no events!
+30/10/2025 22:23:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_147_tps.root
+30/10/2025 22:23:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_147_tps.root has no events!
+30/10/2025 22:23:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_148_tps.root
+30/10/2025 22:23:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_148_tps.root has no events!
+30/10/2025 22:23:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_149_tps.root
+30/10/2025 22:23:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_149_tps.root has no events!
+30/10/2025 22:23:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_14_tps.root
+30/10/2025 22:23:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_14_tps.root has no events!
+30/10/2025 22:23:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_154_tps.root
+30/10/2025 22:23:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_154_tps.root has no events!
+30/10/2025 22:23:57 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_164_tps.root
+30/10/2025 22:23:57 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_164_tps.root has no events!
+30/10/2025 22:24:09 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_174_tps.root
+30/10/2025 22:24:09 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_174_tps.root has no events!
+30/10/2025 22:24:19 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_184_tps.root
+30/10/2025 22:24:19 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_184_tps.root has no events!
+30/10/2025 22:24:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_194_tps.root
+30/10/2025 22:24:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_194_tps.root has no events!
+30/10/2025 22:24:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_204_tps.root
+30/10/2025 22:24:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_204_tps.root has no events!
+30/10/2025 22:24:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_214_tps.root
+30/10/2025 22:24:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_214_tps.root has no events!
+30/10/2025 22:25:09 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_224_tps.root
+30/10/2025 22:25:09 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_224_tps.root has no events!
+30/10/2025 22:25:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_234_tps.root
+30/10/2025 22:25:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_234_tps.root has no events!
+30/10/2025 22:25:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_240_tps.root
+30/10/2025 22:25:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_240_tps.root has no events!
+30/10/2025 22:25:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_241_tps.root
+30/10/2025 22:25:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_241_tps.root has no events!
+30/10/2025 22:25:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_242_tps.root
+30/10/2025 22:25:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_242_tps.root has no events!
+30/10/2025 22:25:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_243_tps.root
+30/10/2025 22:25:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_243_tps.root has no events!
+30/10/2025 22:25:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_244_tps.root
+30/10/2025 22:25:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_244_tps.root has no events!
+30/10/2025 22:25:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_245_tps.root
+30/10/2025 22:25:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_245_tps.root has no events!
+30/10/2025 22:25:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_246_tps.root
+30/10/2025 22:25:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_246_tps.root has no events!
+30/10/2025 22:25:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_247_tps.root
+30/10/2025 22:25:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_247_tps.root has no events!
+30/10/2025 22:25:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_248_tps.root
+30/10/2025 22:25:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_248_tps.root has no events!
+30/10/2025 22:25:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_249_tps.root
+30/10/2025 22:25:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_249_tps.root has no events!
+30/10/2025 22:25:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_24_tps.root
+30/10/2025 22:25:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_24_tps.root has no events!
+30/10/2025 22:25:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_254_tps.root
+30/10/2025 22:25:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_254_tps.root has no events!
+30/10/2025 22:25:53 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_264_tps.root
+30/10/2025 22:25:53 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_264_tps.root has no events!
+30/10/2025 22:26:07 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_274_tps.root
+30/10/2025 22:26:07 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_274_tps.root has no events!
+30/10/2025 22:27:39 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184955Z_gen_000707_supernova_g4_detsim_ana_2025-10-21T_090432Z_bg_tps.root
+30/10/2025 22:27:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_284_tps.root
+30/10/2025 22:27:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_284_tps.root has no events!
+Adding backgrounds...  20% (    0 it/s)
+[1F[1K30/10/2025 22:27:49 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_294_tps.root
+30/10/2025 22:27:49 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_294_tps.root has no events!
+30/10/2025 22:28:05 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_304_tps.root
+30/10/2025 22:28:05 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_304_tps.root has no events!
+30/10/2025 22:28:17 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_314_tps.root
+30/10/2025 22:28:17 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_314_tps.root has no events!
+30/10/2025 22:28:25 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184958Z_gen_000717_supernova_g4_detsim_ana_2025-10-21T_094913Z_bg_tps.root
+30/10/2025 22:28:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_324_tps.root
+30/10/2025 22:28:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_324_tps.root has no events!
+30/10/2025 22:28:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_334_tps.root
+30/10/2025 22:28:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_334_tps.root has no events!
+30/10/2025 22:28:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_340_tps.root
+30/10/2025 22:28:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_340_tps.root has no events!
+30/10/2025 22:28:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_341_tps.root
+30/10/2025 22:28:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_341_tps.root has no events!
+30/10/2025 22:28:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_342_tps.root
+30/10/2025 22:28:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_342_tps.root has no events!
+30/10/2025 22:28:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_343_tps.root
+30/10/2025 22:28:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_343_tps.root has no events!
+30/10/2025 22:28:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 22:28:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 22:28:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_345_tps.root
+30/10/2025 22:28:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_345_tps.root has no events!
+30/10/2025 22:28:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_346_tps.root
+30/10/2025 22:28:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_346_tps.root has no events!
+30/10/2025 22:28:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_347_tps.root
+30/10/2025 22:28:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_347_tps.root has no events!
+30/10/2025 22:28:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_348_tps.root
+30/10/2025 22:28:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_348_tps.root has no events!
+30/10/2025 22:28:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_349_tps.root
+30/10/2025 22:28:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_349_tps.root has no events!
+30/10/2025 22:28:45 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_34_tps.root
+30/10/2025 22:28:45 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_34_tps.root has no events!
+30/10/2025 22:28:50 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_40_tps.root
+30/10/2025 22:28:50 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_40_tps.root has no events!
+30/10/2025 22:28:55 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_42_tps.root
+30/10/2025 22:28:55 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_42_tps.root has no events!
+30/10/2025 22:28:55 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_43_tps.root
+30/10/2025 22:28:55 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_43_tps.root has no events!
+30/10/2025 22:28:55 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_44_tps.root
+30/10/2025 22:28:55 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_44_tps.root has no events!
+30/10/2025 22:28:55 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_47_tps.root
+30/10/2025 22:28:55 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_47_tps.root has no events!
+30/10/2025 22:28:55 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_48_tps.root
+30/10/2025 22:28:55 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_48_tps.root has no events!
+30/10/2025 22:28:55 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_49_tps.root
+30/10/2025 22:28:55 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_49_tps.root has no events!
+30/10/2025 22:28:55 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_4_tps.root
+30/10/2025 22:28:55 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_4_tps.root has no events!
+30/10/2025 22:28:55 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_54_tps.root
+30/10/2025 22:28:55 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_54_tps.root has no events!
+30/10/2025 22:29:07 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_64_tps.root
+30/10/2025 22:29:07 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_64_tps.root has no events!
+30/10/2025 22:29:27 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_74_tps.root
+30/10/2025 22:29:27 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_74_tps.root has no events!
+30/10/2025 22:29:41 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185005Z_gen_000440_supernova_g4_detsim_ana_2025-10-21T_094416Z_bg_tps.root
+30/10/2025 22:29:41 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_84_tps.root
+30/10/2025 22:29:41 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_84_tps.root has no events!
+30/10/2025 22:29:49 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185005Z_gen_000733_supernova_g4_detsim_ana_2025-10-21T_090247Z_bg_tps.root
+30/10/2025 22:29:49 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_94_tps.root
+30/10/2025 22:29:49 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_94_tps.root has no events!
+30/10/2025 22:30:03 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185005Z_gen_000735_supernova_g4_detsim_ana_2025-10-21T_092110Z_bg_tps.root
+30/10/2025 22:30:03 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_104_tps.root
+30/10/2025 22:30:03 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_104_tps.root has no events!
+30/10/2025 22:30:14 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_114_tps.root
+30/10/2025 22:30:14 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_114_tps.root has no events!
+30/10/2025 22:30:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_124_tps.root
+30/10/2025 22:30:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_124_tps.root has no events!
+30/10/2025 22:30:31 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185008Z_gen_000740_supernova_g4_detsim_ana_2025-10-21T_093637Z_bg_tps.root
+30/10/2025 22:30:37 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_134_tps.root
+30/10/2025 22:30:37 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_134_tps.root has no events!
+30/10/2025 22:30:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_140_tps.root
+30/10/2025 22:30:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_140_tps.root has no events!
+30/10/2025 22:30:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_141_tps.root
+30/10/2025 22:30:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_141_tps.root has no events!
+30/10/2025 22:30:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_142_tps.root
+30/10/2025 22:30:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_142_tps.root has no events!
+30/10/2025 22:30:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_143_tps.root
+30/10/2025 22:30:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_143_tps.root has no events!
+30/10/2025 22:30:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_144_tps.root
+30/10/2025 22:30:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_144_tps.root has no events!
+30/10/2025 22:30:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_145_tps.root
+30/10/2025 22:30:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_145_tps.root has no events!
+30/10/2025 22:30:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_146_tps.root
+30/10/2025 22:30:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_146_tps.root has no events!
+30/10/2025 22:30:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_147_tps.root
+30/10/2025 22:30:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_147_tps.root has no events!
+30/10/2025 22:30:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_148_tps.root
+30/10/2025 22:30:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_148_tps.root has no events!
+30/10/2025 22:30:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_149_tps.root
+30/10/2025 22:30:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_149_tps.root has no events!
+30/10/2025 22:30:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_14_tps.root
+30/10/2025 22:30:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_14_tps.root has no events!
+30/10/2025 22:30:49 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_154_tps.root
+30/10/2025 22:30:49 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_154_tps.root has no events!
+30/10/2025 22:31:05 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_164_tps.root
+30/10/2025 22:31:05 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_164_tps.root has no events!
+30/10/2025 22:31:15 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185012Z_gen_000747_supernova_g4_detsim_ana_2025-10-21T_093157Z_bg_tps.root
+30/10/2025 22:31:15 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_174_tps.root
+30/10/2025 22:31:15 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_174_tps.root has no events!
+30/10/2025 22:31:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_184_tps.root
+30/10/2025 22:31:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_184_tps.root has no events!
+30/10/2025 22:33:05 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185013Z_gen_000751_supernova_g4_detsim_ana_2025-10-21T_095528Z_bg_tps.root
+30/10/2025 22:33:10 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_194_tps.root
+30/10/2025 22:33:10 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_194_tps.root has no events!
+30/10/2025 22:34:49 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185014Z_gen_000753_supernova_g4_detsim_ana_2025-10-21T_093618Z_bg_tps.root
+Adding backgrounds...  21% (    0 it/s)
+[1F[1K30/10/2025 22:34:56 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_204_tps.root
+30/10/2025 22:34:56 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_204_tps.root has no events!
+30/10/2025 22:35:14 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_214_tps.root
+30/10/2025 22:35:14 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_214_tps.root has no events!
+30/10/2025 22:35:23 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_224_tps.root
+30/10/2025 22:35:23 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_224_tps.root has no events!
+30/10/2025 22:35:37 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_234_tps.root
+30/10/2025 22:35:37 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_234_tps.root has no events!
+30/10/2025 22:35:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_240_tps.root
+30/10/2025 22:35:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_240_tps.root has no events!
+30/10/2025 22:35:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_241_tps.root
+30/10/2025 22:35:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_241_tps.root has no events!
+30/10/2025 22:35:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_242_tps.root
+30/10/2025 22:35:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_242_tps.root has no events!
+30/10/2025 22:35:49 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_243_tps.root
+30/10/2025 22:35:49 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_243_tps.root has no events!
+30/10/2025 22:35:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_244_tps.root
+30/10/2025 22:35:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_244_tps.root has no events!
+30/10/2025 22:35:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_245_tps.root
+30/10/2025 22:35:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_245_tps.root has no events!
+30/10/2025 22:35:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_246_tps.root
+30/10/2025 22:35:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_246_tps.root has no events!
+30/10/2025 22:35:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_247_tps.root
+30/10/2025 22:35:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_247_tps.root has no events!
+30/10/2025 22:35:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_248_tps.root
+30/10/2025 22:35:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_248_tps.root has no events!
+30/10/2025 22:35:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_249_tps.root
+30/10/2025 22:35:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_249_tps.root has no events!
+30/10/2025 22:35:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_24_tps.root
+30/10/2025 22:35:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_24_tps.root has no events!
+30/10/2025 22:35:58 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_254_tps.root
+30/10/2025 22:35:58 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_254_tps.root has no events!
+30/10/2025 22:36:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_264_tps.root
+30/10/2025 22:36:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_264_tps.root has no events!
+30/10/2025 22:38:26 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185022Z_gen_000771_supernova_g4_detsim_ana_2025-10-21T_093134Z_bg_tps.root
+30/10/2025 22:38:26 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_274_tps.root
+30/10/2025 22:38:26 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_274_tps.root has no events!
+30/10/2025 22:38:28 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185022Z_gen_000772_supernova_g4_detsim_ana_2025-10-21T_084700Z_bg_tps.root
+30/10/2025 22:38:38 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_284_tps.root
+30/10/2025 22:38:38 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_284_tps.root has no events!
+30/10/2025 22:38:46 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_294_tps.root
+30/10/2025 22:38:46 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_294_tps.root has no events!
+30/10/2025 22:38:56 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_304_tps.root
+30/10/2025 22:38:56 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_304_tps.root has no events!
+30/10/2025 22:39:08 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_314_tps.root
+30/10/2025 22:39:08 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_314_tps.root has no events!
+30/10/2025 22:39:22 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_324_tps.root
+30/10/2025 22:39:22 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_324_tps.root has no events!
+30/10/2025 22:39:32 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_334_tps.root
+30/10/2025 22:39:32 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_334_tps.root has no events!
+30/10/2025 22:39:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_340_tps.root
+30/10/2025 22:39:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_340_tps.root has no events!
+30/10/2025 22:39:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_341_tps.root
+30/10/2025 22:39:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_341_tps.root has no events!
+30/10/2025 22:39:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_342_tps.root
+30/10/2025 22:39:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_342_tps.root has no events!
+30/10/2025 22:39:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_343_tps.root
+30/10/2025 22:39:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_343_tps.root has no events!
+30/10/2025 22:39:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 22:39:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 22:39:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_345_tps.root
+30/10/2025 22:39:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_345_tps.root has no events!
+30/10/2025 22:39:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_346_tps.root
+30/10/2025 22:39:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_346_tps.root has no events!
+30/10/2025 22:39:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_347_tps.root
+30/10/2025 22:39:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_347_tps.root has no events!
+30/10/2025 22:39:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_348_tps.root
+30/10/2025 22:39:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_348_tps.root has no events!
+30/10/2025 22:39:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_349_tps.root
+30/10/2025 22:39:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_349_tps.root has no events!
+30/10/2025 22:39:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_34_tps.root
+30/10/2025 22:39:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_34_tps.root has no events!
+30/10/2025 22:39:50 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_40_tps.root
+30/10/2025 22:39:50 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_40_tps.root has no events!
+30/10/2025 22:39:50 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_42_tps.root
+30/10/2025 22:39:50 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_42_tps.root has no events!
+30/10/2025 22:39:50 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_43_tps.root
+30/10/2025 22:39:50 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_43_tps.root has no events!
+30/10/2025 22:39:52 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185039Z_gen_000795_supernova_g4_detsim_ana_2025-10-21T_093257Z_bg_tps.root
+30/10/2025 22:39:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_44_tps.root
+30/10/2025 22:39:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_44_tps.root has no events!
+30/10/2025 22:39:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_47_tps.root
+30/10/2025 22:39:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_47_tps.root has no events!
+30/10/2025 22:39:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_48_tps.root
+30/10/2025 22:39:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_48_tps.root has no events!
+30/10/2025 22:39:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_49_tps.root
+30/10/2025 22:39:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_49_tps.root has no events!
+30/10/2025 22:39:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_4_tps.root
+30/10/2025 22:39:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_4_tps.root has no events!
+30/10/2025 22:39:53 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_54_tps.root
+30/10/2025 22:39:53 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_54_tps.root has no events!
+30/10/2025 22:40:05 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_64_tps.root
+30/10/2025 22:40:05 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_64_tps.root has no events!
+30/10/2025 22:41:51 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185041Z_gen_000799_supernova_g4_detsim_ana_2025-10-21T_094345Z_bg_tps.root
+30/10/2025 22:41:53 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_74_tps.root
+30/10/2025 22:41:53 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_74_tps.root has no events!
+30/10/2025 22:42:48 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185050Z_gen_000804_supernova_g4_detsim_ana_2025-10-21T_090431Z_bg_tps.root
+30/10/2025 22:42:49 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_84_tps.root
+30/10/2025 22:42:49 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_84_tps.root has no events!
+30/10/2025 22:42:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_94_tps.root
+30/10/2025 22:42:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_94_tps.root has no events!
+30/10/2025 22:43:47 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185057Z_gen_000809_supernova_g4_detsim_ana_2025-10-21T_093634Z_bg_tps.root
+30/10/2025 22:43:53 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_104_tps.root
+30/10/2025 22:43:53 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_104_tps.root has no events!
+Adding backgrounds...  22% (    0 it/s)
+[1F[1K30/10/2025 22:44:50 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_114_tps.root
+30/10/2025 22:44:50 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_114_tps.root has no events!
+30/10/2025 22:45:36 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185100Z_gen_000813_supernova_g4_detsim_ana_2025-10-21T_092251Z_bg_tps.root
+30/10/2025 22:45:47 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_124_tps.root
+30/10/2025 22:45:47 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_124_tps.root has no events!
+30/10/2025 22:47:06 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185103Z_gen_000816_supernova_g4_detsim_ana_2025-10-21T_095703Z_bg_tps.root
+30/10/2025 22:47:06 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_134_tps.root
+30/10/2025 22:47:06 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_134_tps.root has no events!
+30/10/2025 22:47:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_140_tps.root
+30/10/2025 22:47:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_140_tps.root has no events!
+30/10/2025 22:47:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_141_tps.root
+30/10/2025 22:47:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_141_tps.root has no events!
+30/10/2025 22:47:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_142_tps.root
+30/10/2025 22:47:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_142_tps.root has no events!
+30/10/2025 22:47:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_143_tps.root
+30/10/2025 22:47:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_143_tps.root has no events!
+30/10/2025 22:47:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_144_tps.root
+30/10/2025 22:47:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_144_tps.root has no events!
+30/10/2025 22:47:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_145_tps.root
+30/10/2025 22:47:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_145_tps.root has no events!
+30/10/2025 22:47:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_146_tps.root
+30/10/2025 22:47:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_146_tps.root has no events!
+30/10/2025 22:47:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_147_tps.root
+30/10/2025 22:47:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_147_tps.root has no events!
+30/10/2025 22:47:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_148_tps.root
+30/10/2025 22:47:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_148_tps.root has no events!
+30/10/2025 22:47:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_149_tps.root
+30/10/2025 22:47:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_149_tps.root has no events!
+30/10/2025 22:47:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_14_tps.root
+30/10/2025 22:47:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_14_tps.root has no events!
+30/10/2025 22:47:16 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_154_tps.root
+30/10/2025 22:47:16 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_154_tps.root has no events!
+30/10/2025 22:47:32 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_164_tps.root
+30/10/2025 22:47:32 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_164_tps.root has no events!
+30/10/2025 22:47:44 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_174_tps.root
+30/10/2025 22:47:44 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_174_tps.root has no events!
+30/10/2025 22:47:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_184_tps.root
+30/10/2025 22:47:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_184_tps.root has no events!
+30/10/2025 22:48:40 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185142Z_gen_000828_supernova_g4_detsim_ana_2025-10-21T_092938Z_bg_tps.root
+30/10/2025 22:48:42 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185145Z_gen_000829_supernova_g4_detsim_ana_2025-10-21T_093607Z_bg_tps.root
+30/10/2025 22:48:42 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_194_tps.root
+30/10/2025 22:48:42 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_194_tps.root has no events!
+30/10/2025 22:49:00 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_204_tps.root
+30/10/2025 22:49:00 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_204_tps.root has no events!
+30/10/2025 22:49:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_214_tps.root
+30/10/2025 22:49:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_214_tps.root has no events!
+30/10/2025 22:49:23 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_224_tps.root
+30/10/2025 22:49:23 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_224_tps.root has no events!
+30/10/2025 22:49:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_234_tps.root
+30/10/2025 22:49:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_234_tps.root has no events!
+30/10/2025 22:50:28 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185211Z_gen_000841_supernova_g4_detsim_ana_2025-10-21T_094419Z_bg_tps.root
+30/10/2025 22:50:33 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_240_tps.root
+30/10/2025 22:50:33 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_240_tps.root has no events!
+30/10/2025 22:50:33 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_241_tps.root
+30/10/2025 22:50:33 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_241_tps.root has no events!
+30/10/2025 22:50:33 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_242_tps.root
+30/10/2025 22:50:33 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_242_tps.root has no events!
+30/10/2025 22:50:33 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_243_tps.root
+30/10/2025 22:50:33 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_243_tps.root has no events!
+30/10/2025 22:50:33 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_244_tps.root
+30/10/2025 22:50:33 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_244_tps.root has no events!
+30/10/2025 22:50:33 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_245_tps.root
+30/10/2025 22:50:33 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_245_tps.root has no events!
+30/10/2025 22:50:37 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_246_tps.root
+30/10/2025 22:50:37 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_246_tps.root has no events!
+30/10/2025 22:50:37 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_247_tps.root
+30/10/2025 22:50:37 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_247_tps.root has no events!
+30/10/2025 22:50:37 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_248_tps.root
+30/10/2025 22:50:37 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_248_tps.root has no events!
+30/10/2025 22:50:37 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_249_tps.root
+30/10/2025 22:50:37 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_249_tps.root has no events!
+30/10/2025 22:50:37 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_24_tps.root
+30/10/2025 22:50:37 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_24_tps.root has no events!
+30/10/2025 22:50:38 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_254_tps.root
+30/10/2025 22:50:38 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_254_tps.root has no events!
+30/10/2025 22:50:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_264_tps.root
+30/10/2025 22:50:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_264_tps.root has no events!
+30/10/2025 22:51:39 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185212Z_gen_000846_supernova_g4_detsim_ana_2025-10-21T_093720Z_bg_tps.root
+30/10/2025 22:51:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_274_tps.root
+30/10/2025 22:51:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_274_tps.root has no events!
+30/10/2025 22:51:51 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185217Z_gen_000849_supernova_g4_detsim_ana_2025-10-21T_093230Z_bg_tps.root
+30/10/2025 22:51:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_284_tps.root
+30/10/2025 22:51:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_284_tps.root has no events!
+30/10/2025 22:51:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185220Z_gen_000851_supernova_g4_detsim_ana_2025-10-21T_094331Z_bg_tps.root
+30/10/2025 22:51:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_294_tps.root
+30/10/2025 22:51:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_294_tps.root has no events!
+30/10/2025 22:52:09 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185222Z_gen_000857_supernova_g4_detsim_ana_2025-10-21T_091502Z_bg_tps.root
+30/10/2025 22:52:15 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_304_tps.root
+30/10/2025 22:52:15 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_304_tps.root has no events!
+30/10/2025 22:54:01 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185222Z_gen_000859_supernova_g4_detsim_ana_2025-10-21T_092217Z_bg_tps.root
+30/10/2025 22:54:05 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185223Z_gen_000860_supernova_g4_detsim_ana_2025-10-21T_095025Z_bg_tps.root
+30/10/2025 22:54:05 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_314_tps.root
+30/10/2025 22:54:05 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_314_tps.root has no events!
+Adding backgrounds...  23% (    0 it/s)
+[1F[1K30/10/2025 22:54:18 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_324_tps.root
+30/10/2025 22:54:18 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_324_tps.root has no events!
+30/10/2025 22:55:22 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_334_tps.root
+30/10/2025 22:55:22 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_334_tps.root has no events!
+30/10/2025 22:56:06 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185224Z_gen_000866_supernova_g4_detsim_ana_2025-10-21T_094414Z_bg_tps.root
+30/10/2025 22:56:06 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_340_tps.root
+30/10/2025 22:56:06 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_340_tps.root has no events!
+30/10/2025 22:56:06 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_341_tps.root
+30/10/2025 22:56:06 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_341_tps.root has no events!
+30/10/2025 22:56:06 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_342_tps.root
+30/10/2025 22:56:06 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_342_tps.root has no events!
+30/10/2025 22:56:06 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_343_tps.root
+30/10/2025 22:56:06 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_343_tps.root has no events!
+30/10/2025 22:56:06 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 22:56:06 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 22:56:06 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_345_tps.root
+30/10/2025 22:56:06 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_345_tps.root has no events!
+30/10/2025 22:56:06 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_346_tps.root
+30/10/2025 22:56:06 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_346_tps.root has no events!
+30/10/2025 22:56:06 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_347_tps.root
+30/10/2025 22:56:06 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_347_tps.root has no events!
+30/10/2025 22:56:06 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_348_tps.root
+30/10/2025 22:56:06 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_348_tps.root has no events!
+30/10/2025 22:56:06 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_349_tps.root
+30/10/2025 22:56:06 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_349_tps.root has no events!
+30/10/2025 22:56:06 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_34_tps.root
+30/10/2025 22:56:06 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_34_tps.root has no events!
+30/10/2025 22:56:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_40_tps.root
+30/10/2025 22:56:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_40_tps.root has no events!
+30/10/2025 22:56:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_42_tps.root
+30/10/2025 22:56:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_42_tps.root has no events!
+30/10/2025 22:56:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_43_tps.root
+30/10/2025 22:56:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_43_tps.root has no events!
+30/10/2025 22:56:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_44_tps.root
+30/10/2025 22:56:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_44_tps.root has no events!
+30/10/2025 22:56:12 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_47_tps.root
+30/10/2025 22:56:12 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_47_tps.root has no events!
+30/10/2025 22:56:16 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_48_tps.root
+30/10/2025 22:56:16 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_48_tps.root has no events!
+30/10/2025 22:56:16 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_49_tps.root
+30/10/2025 22:56:16 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_49_tps.root has no events!
+30/10/2025 22:56:16 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_4_tps.root
+30/10/2025 22:56:16 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_4_tps.root has no events!
+30/10/2025 22:56:17 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_54_tps.root
+30/10/2025 22:56:17 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_54_tps.root has no events!
+30/10/2025 22:56:42 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_64_tps.root
+30/10/2025 22:56:42 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_64_tps.root has no events!
+30/10/2025 22:56:57 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_74_tps.root
+30/10/2025 22:56:57 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_74_tps.root has no events!
+30/10/2025 22:57:10 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_84_tps.root
+30/10/2025 22:57:10 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_84_tps.root has no events!
+30/10/2025 22:58:04 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185232Z_gen_000877_supernova_g4_detsim_ana_2025-10-21T_092339Z_bg_tps.root
+30/10/2025 22:58:10 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_94_tps.root
+30/10/2025 22:58:10 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_94_tps.root has no events!
+30/10/2025 22:58:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_104_tps.root
+30/10/2025 22:58:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_104_tps.root has no events!
+30/10/2025 22:59:32 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185233Z_gen_000882_supernova_g4_detsim_ana_2025-10-21T_095517Z_bg_tps.root
+30/10/2025 22:59:42 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_114_tps.root
+30/10/2025 22:59:42 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_114_tps.root has no events!
+30/10/2025 23:01:31 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185234Z_gen_000886_supernova_g4_detsim_ana_2025-10-21T_085807Z_bg_tps.root
+30/10/2025 23:01:40 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_124_tps.root
+30/10/2025 23:01:40 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_124_tps.root has no events!
+30/10/2025 23:02:53 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185235Z_gen_000889_supernova_g4_detsim_ana_2025-10-21T_092125Z_bg_tps.root
+30/10/2025 23:02:55 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185235Z_gen_000890_supernova_g4_detsim_ana_2025-10-21T_093437Z_bg_tps.root
+30/10/2025 23:02:55 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_134_tps.root
+30/10/2025 23:02:55 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_134_tps.root has no events!
+30/10/2025 23:02:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_140_tps.root
+30/10/2025 23:02:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_140_tps.root has no events!
+30/10/2025 23:02:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_141_tps.root
+30/10/2025 23:02:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_141_tps.root has no events!
+30/10/2025 23:02:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_142_tps.root
+30/10/2025 23:02:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_142_tps.root has no events!
+30/10/2025 23:02:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_143_tps.root
+30/10/2025 23:02:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_143_tps.root has no events!
+30/10/2025 23:02:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_144_tps.root
+30/10/2025 23:02:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_144_tps.root has no events!
+30/10/2025 23:02:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_145_tps.root
+30/10/2025 23:02:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_145_tps.root has no events!
+30/10/2025 23:02:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_146_tps.root
+30/10/2025 23:02:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_146_tps.root has no events!
+30/10/2025 23:02:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_147_tps.root
+30/10/2025 23:02:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_147_tps.root has no events!
+30/10/2025 23:02:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_148_tps.root
+30/10/2025 23:02:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_148_tps.root has no events!
+30/10/2025 23:02:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_149_tps.root
+30/10/2025 23:02:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_149_tps.root has no events!
+30/10/2025 23:02:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_14_tps.root
+30/10/2025 23:02:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_14_tps.root has no events!
+30/10/2025 23:03:05 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_154_tps.root
+30/10/2025 23:03:05 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_154_tps.root has no events!
+30/10/2025 23:05:05 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185237Z_gen_000894_supernova_g4_detsim_ana_2025-10-21T_095725Z_bg_tps.root
+30/10/2025 23:05:14 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_164_tps.root
+30/10/2025 23:05:14 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_164_tps.root has no events!
+30/10/2025 23:06:48 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185238Z_gen_000897_supernova_g4_detsim_ana_2025-10-21T_095525Z_bg_tps.root
+30/10/2025 23:06:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_174_tps.root
+30/10/2025 23:06:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_174_tps.root has no events!
+30/10/2025 23:07:05 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_184_tps.root
+30/10/2025 23:07:05 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_184_tps.root has no events!
+30/10/2025 23:07:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_194_tps.root
+30/10/2025 23:07:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_194_tps.root has no events!
+30/10/2025 23:08:44 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185241Z_gen_000904_supernova_g4_detsim_ana_2025-10-21T_094643Z_bg_tps.root
+30/10/2025 23:08:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_204_tps.root
+30/10/2025 23:08:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_204_tps.root has no events!
+30/10/2025 23:09:02 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_214_tps.root
+30/10/2025 23:09:02 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_214_tps.root has no events!
+30/10/2025 23:09:04 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185243Z_gen_000909_supernova_g4_detsim_ana_2025-10-21T_093407Z_bg_tps.root
+30/10/2025 23:10:07 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185244Z_gen_000910_supernova_g4_detsim_ana_2025-10-21T_095635Z_bg_tps.root
+30/10/2025 23:10:07 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_224_tps.root
+30/10/2025 23:10:07 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_224_tps.root has no events!
+Adding backgrounds...  24% (    0 it/s)
+[1F[1K30/10/2025 23:10:26 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_234_tps.root
+30/10/2025 23:10:26 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_234_tps.root has no events!
+30/10/2025 23:11:48 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185244Z_gen_000913_supernova_g4_detsim_ana_2025-10-21T_094346Z_bg_tps.root
+30/10/2025 23:11:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_240_tps.root
+30/10/2025 23:11:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_240_tps.root has no events!
+30/10/2025 23:11:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_241_tps.root
+30/10/2025 23:11:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_241_tps.root has no events!
+30/10/2025 23:11:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_242_tps.root
+30/10/2025 23:11:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_242_tps.root has no events!
+30/10/2025 23:11:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_243_tps.root
+30/10/2025 23:11:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_243_tps.root has no events!
+30/10/2025 23:11:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_244_tps.root
+30/10/2025 23:11:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_244_tps.root has no events!
+30/10/2025 23:11:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_245_tps.root
+30/10/2025 23:11:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_245_tps.root has no events!
+30/10/2025 23:11:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_246_tps.root
+30/10/2025 23:11:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_246_tps.root has no events!
+30/10/2025 23:11:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_247_tps.root
+30/10/2025 23:11:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_247_tps.root has no events!
+30/10/2025 23:11:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_248_tps.root
+30/10/2025 23:11:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_248_tps.root has no events!
+30/10/2025 23:11:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_249_tps.root
+30/10/2025 23:11:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_249_tps.root has no events!
+30/10/2025 23:11:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_24_tps.root
+30/10/2025 23:11:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_24_tps.root has no events!
+30/10/2025 23:11:52 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_254_tps.root
+30/10/2025 23:11:52 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_254_tps.root has no events!
+30/10/2025 23:12:07 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_264_tps.root
+30/10/2025 23:12:07 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_264_tps.root has no events!
+30/10/2025 23:12:46 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185246Z_gen_000917_supernova_g4_detsim_ana_2025-10-21T_094346Z_bg_tps.root
+30/10/2025 23:12:50 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_274_tps.root
+30/10/2025 23:12:50 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_274_tps.root has no events!
+30/10/2025 23:13:02 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_284_tps.root
+30/10/2025 23:13:02 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_284_tps.root has no events!
+30/10/2025 23:13:14 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_294_tps.root
+30/10/2025 23:13:14 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_294_tps.root has no events!
+30/10/2025 23:14:24 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185249Z_gen_000925_supernova_g4_detsim_ana_2025-10-21T_095006Z_bg_tps.root
+30/10/2025 23:14:24 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_304_tps.root
+30/10/2025 23:14:24 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_304_tps.root has no events!
+30/10/2025 23:14:36 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_314_tps.root
+30/10/2025 23:14:36 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_314_tps.root has no events!
+30/10/2025 23:14:46 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_324_tps.root
+30/10/2025 23:14:46 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_324_tps.root has no events!
+30/10/2025 23:14:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_334_tps.root
+30/10/2025 23:14:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_334_tps.root has no events!
+30/10/2025 23:15:04 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_340_tps.root
+30/10/2025 23:15:04 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_340_tps.root has no events!
+30/10/2025 23:15:04 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_341_tps.root
+30/10/2025 23:15:04 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_341_tps.root has no events!
+30/10/2025 23:15:04 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_342_tps.root
+30/10/2025 23:15:04 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_342_tps.root has no events!
+30/10/2025 23:15:04 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_343_tps.root
+30/10/2025 23:15:04 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_343_tps.root has no events!
+30/10/2025 23:15:04 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 23:15:04 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 23:15:04 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_345_tps.root
+30/10/2025 23:15:04 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_345_tps.root has no events!
+30/10/2025 23:15:04 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_346_tps.root
+30/10/2025 23:15:04 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_346_tps.root has no events!
+30/10/2025 23:15:04 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_347_tps.root
+30/10/2025 23:15:04 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_347_tps.root has no events!
+30/10/2025 23:15:04 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_348_tps.root
+30/10/2025 23:15:04 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_348_tps.root has no events!
+30/10/2025 23:15:04 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_349_tps.root
+30/10/2025 23:15:04 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_349_tps.root has no events!
+30/10/2025 23:15:04 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_34_tps.root
+30/10/2025 23:15:04 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_34_tps.root has no events!
+30/10/2025 23:15:10 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_40_tps.root
+30/10/2025 23:15:10 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_40_tps.root has no events!
+30/10/2025 23:15:10 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_42_tps.root
+30/10/2025 23:15:10 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_42_tps.root has no events!
+30/10/2025 23:15:10 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_43_tps.root
+30/10/2025 23:15:10 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_43_tps.root has no events!
+30/10/2025 23:15:10 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_44_tps.root
+30/10/2025 23:15:10 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_44_tps.root has no events!
+30/10/2025 23:15:10 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_47_tps.root
+30/10/2025 23:15:10 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_47_tps.root has no events!
+30/10/2025 23:15:10 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_48_tps.root
+30/10/2025 23:15:10 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_48_tps.root has no events!
+30/10/2025 23:15:10 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_49_tps.root
+30/10/2025 23:15:10 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_49_tps.root has no events!
+30/10/2025 23:15:15 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_4_tps.root
+30/10/2025 23:15:15 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_4_tps.root has no events!
+30/10/2025 23:15:15 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_54_tps.root
+30/10/2025 23:15:15 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_54_tps.root has no events!
+30/10/2025 23:15:27 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_64_tps.root
+30/10/2025 23:15:27 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_64_tps.root has no events!
+30/10/2025 23:15:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_74_tps.root
+30/10/2025 23:15:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_74_tps.root has no events!
+30/10/2025 23:17:03 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185256Z_gen_000944_supernova_g4_detsim_ana_2025-10-21T_090047Z_bg_tps.root
+30/10/2025 23:17:03 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_84_tps.root
+30/10/2025 23:17:03 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_84_tps.root has no events!
+30/10/2025 23:17:05 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185256Z_gen_000945_supernova_g4_detsim_ana_2025-10-21T_092008Z_bg_tps.root
+30/10/2025 23:17:13 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_94_tps.root
+30/10/2025 23:17:13 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_94_tps.root has no events!
+30/10/2025 23:18:35 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185259Z_gen_000948_supernova_g4_detsim_ana_2025-10-21T_085811Z_bg_tps.root
+30/10/2025 23:18:39 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185259Z_gen_000949_supernova_g4_detsim_ana_2025-10-21T_091725Z_bg_tps.root
+30/10/2025 23:18:39 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_104_tps.root
+30/10/2025 23:18:39 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_104_tps.root has no events!
+30/10/2025 23:18:41 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185301Z_gen_000952_supernova_g4_detsim_ana_2025-10-21T_095501Z_bg_tps.root
+30/10/2025 23:18:47 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_114_tps.root
+30/10/2025 23:18:47 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_114_tps.root has no events!
+30/10/2025 23:19:00 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_124_tps.root
+30/10/2025 23:19:00 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_124_tps.root has no events!
+30/10/2025 23:19:15 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_134_tps.root
+30/10/2025 23:19:15 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_134_tps.root has no events!
+Adding backgrounds...  25% (    0 it/s)
+[1F[1K30/10/2025 23:19:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_140_tps.root
+30/10/2025 23:19:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_140_tps.root has no events!
+30/10/2025 23:19:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_141_tps.root
+30/10/2025 23:19:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_141_tps.root has no events!
+30/10/2025 23:19:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_142_tps.root
+30/10/2025 23:19:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_142_tps.root has no events!
+30/10/2025 23:19:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_143_tps.root
+30/10/2025 23:19:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_143_tps.root has no events!
+30/10/2025 23:19:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_144_tps.root
+30/10/2025 23:19:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_144_tps.root has no events!
+30/10/2025 23:19:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_145_tps.root
+30/10/2025 23:19:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_145_tps.root has no events!
+30/10/2025 23:19:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_146_tps.root
+30/10/2025 23:19:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_146_tps.root has no events!
+30/10/2025 23:19:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_147_tps.root
+30/10/2025 23:19:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_147_tps.root has no events!
+30/10/2025 23:19:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_148_tps.root
+30/10/2025 23:19:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_148_tps.root has no events!
+30/10/2025 23:19:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_149_tps.root
+30/10/2025 23:19:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_149_tps.root has no events!
+30/10/2025 23:19:25 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_14_tps.root
+30/10/2025 23:19:25 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_14_tps.root has no events!
+30/10/2025 23:19:31 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_154_tps.root
+30/10/2025 23:19:31 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_154_tps.root has no events!
+30/10/2025 23:22:23 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_164_tps.root
+30/10/2025 23:22:23 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_164_tps.root has no events!
+30/10/2025 23:23:33 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_174_tps.root
+30/10/2025 23:23:33 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_174_tps.root has no events!
+30/10/2025 23:23:47 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_184_tps.root
+30/10/2025 23:23:47 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_184_tps.root has no events!
+30/10/2025 23:23:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_194_tps.root
+30/10/2025 23:23:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_194_tps.root has no events!
+30/10/2025 23:24:54 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185314Z_gen_000977_supernova_g4_detsim_ana_2025-10-21T_093215Z_bg_tps.root
+30/10/2025 23:24:54 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_204_tps.root
+30/10/2025 23:24:54 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_204_tps.root has no events!
+30/10/2025 23:26:13 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185317Z_gen_000980_supernova_g4_detsim_ana_2025-10-21T_094949Z_bg_tps.root
+30/10/2025 23:26:13 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_214_tps.root
+30/10/2025 23:26:13 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_214_tps.root has no events!
+30/10/2025 23:26:23 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_224_tps.root
+30/10/2025 23:26:23 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_224_tps.root has no events!
+30/10/2025 23:26:33 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_234_tps.root
+30/10/2025 23:26:33 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_234_tps.root has no events!
+30/10/2025 23:26:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_240_tps.root
+30/10/2025 23:26:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_240_tps.root has no events!
+30/10/2025 23:26:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_241_tps.root
+30/10/2025 23:26:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_241_tps.root has no events!
+30/10/2025 23:26:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_242_tps.root
+30/10/2025 23:26:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_242_tps.root has no events!
+30/10/2025 23:26:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_243_tps.root
+30/10/2025 23:26:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_243_tps.root has no events!
+30/10/2025 23:26:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_244_tps.root
+30/10/2025 23:26:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_244_tps.root has no events!
+30/10/2025 23:26:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_245_tps.root
+30/10/2025 23:26:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_245_tps.root has no events!
+30/10/2025 23:26:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_246_tps.root
+30/10/2025 23:26:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_246_tps.root has no events!
+30/10/2025 23:26:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_247_tps.root
+30/10/2025 23:26:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_247_tps.root has no events!
+30/10/2025 23:26:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_248_tps.root
+30/10/2025 23:26:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_248_tps.root has no events!
+30/10/2025 23:26:48 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_249_tps.root
+30/10/2025 23:26:48 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_249_tps.root has no events!
+30/10/2025 23:26:53 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_24_tps.root
+30/10/2025 23:26:53 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_24_tps.root has no events!
+30/10/2025 23:26:53 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_254_tps.root
+30/10/2025 23:26:53 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_254_tps.root has no events!
+30/10/2025 23:27:02 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_264_tps.root
+30/10/2025 23:27:02 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_264_tps.root has no events!
+30/10/2025 23:29:13 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185455Z_gen_000990_supernova_g4_detsim_ana_2025-10-21T_095548Z_bg_tps.root
+30/10/2025 23:29:19 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_274_tps.root
+30/10/2025 23:29:19 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_274_tps.root has no events!
+30/10/2025 23:29:31 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_284_tps.root
+30/10/2025 23:29:31 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_284_tps.root has no events!
+30/10/2025 23:30:15 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185458Z_gen_000994_supernova_g4_detsim_ana_2025-10-21T_095730Z_bg_tps.root
+30/10/2025 23:30:15 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_294_tps.root
+30/10/2025 23:30:15 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_294_tps.root has no events!
+30/10/2025 23:30:35 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_304_tps.root
+30/10/2025 23:30:35 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_304_tps.root has no events!
+30/10/2025 23:32:09 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185459Z_gen_000998_supernova_g4_detsim_ana_2025-10-21T_090541Z_bg_tps.root
+30/10/2025 23:33:01 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185500Z_gen_000137_supernova_g4_detsim_ana_2025-10-21T_095514Z_bg_tps.root
+30/10/2025 23:33:01 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_314_tps.root
+30/10/2025 23:33:01 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_314_tps.root has no events!
+30/10/2025 23:35:03 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185502Z_gen_001001_supernova_g4_detsim_ana_2025-10-21T_095518Z_bg_tps.root
+30/10/2025 23:35:03 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_324_tps.root
+30/10/2025 23:35:03 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_324_tps.root has no events!
+30/10/2025 23:35:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_334_tps.root
+30/10/2025 23:35:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_334_tps.root has no events!
+30/10/2025 23:36:28 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185504Z_gen_001004_supernova_g4_detsim_ana_2025-10-21T_090727Z_bg_tps.root
+30/10/2025 23:36:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_340_tps.root
+30/10/2025 23:36:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_340_tps.root has no events!
+30/10/2025 23:36:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_341_tps.root
+30/10/2025 23:36:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_341_tps.root has no events!
+30/10/2025 23:36:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_342_tps.root
+30/10/2025 23:36:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_342_tps.root has no events!
+30/10/2025 23:36:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_343_tps.root
+30/10/2025 23:36:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_343_tps.root has no events!
+30/10/2025 23:36:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root
+30/10/2025 23:36:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_344_tps.root has no events!
+30/10/2025 23:36:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_345_tps.root
+30/10/2025 23:36:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_345_tps.root has no events!
+30/10/2025 23:36:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_346_tps.root
+30/10/2025 23:36:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_346_tps.root has no events!
+30/10/2025 23:36:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_347_tps.root
+30/10/2025 23:36:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_347_tps.root has no events!
+30/10/2025 23:36:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_348_tps.root
+30/10/2025 23:36:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_348_tps.root has no events!
+30/10/2025 23:36:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_349_tps.root
+30/10/2025 23:36:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_349_tps.root has no events!
+30/10/2025 23:36:29 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_34_tps.root
+30/10/2025 23:36:29 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_34_tps.root has no events!
+30/10/2025 23:36:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_40_tps.root
+30/10/2025 23:36:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_40_tps.root has no events!
+30/10/2025 23:36:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_42_tps.root
+30/10/2025 23:36:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_42_tps.root has no events!
+30/10/2025 23:36:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_43_tps.root
+30/10/2025 23:36:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_43_tps.root has no events!
+30/10/2025 23:36:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_44_tps.root
+30/10/2025 23:36:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_44_tps.root has no events!
+30/10/2025 23:36:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_47_tps.root
+30/10/2025 23:36:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_47_tps.root has no events!
+30/10/2025 23:36:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_48_tps.root
+30/10/2025 23:36:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_48_tps.root has no events!
+30/10/2025 23:36:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_49_tps.root
+30/10/2025 23:36:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_49_tps.root has no events!
+30/10/2025 23:36:43 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_4_tps.root
+30/10/2025 23:36:43 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_4_tps.root has no events!
+30/10/2025 23:37:18 [31m[Backtracking.cpp][0m: Cannot create output file: /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/bkgs//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185506Z_gen_001005_supernova_g4_detsim_ana_2025-10-21T_092059Z_bg_tps.root
+30/10/2025 23:37:19 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_54_tps.root
+30/10/2025 23:37:19 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_54_tps.root has no events!
+Adding backgrounds...  26% (    0 it/s)
+[1F[1K30/10/2025 23:38:46 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_64_tps.root
+30/10/2025 23:38:46 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_64_tps.root has no events!
+30/10/2025 23:38:59 [31m[Clustering.cpp][0m: Cannot open: /eos/user/e/evilla/dune/sn-tps/bkgs/BG_74_tps.root
+30/10/2025 23:38:59 [33m[add_backgrounds.cpp][0m: Background file /eos/user/e/evilla/dune/sn-tps/bkgs/BG_74_tps.root has no events!
+Error: Add backgrounds step failed.
