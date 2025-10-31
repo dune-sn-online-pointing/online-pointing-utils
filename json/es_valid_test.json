@@ -5,15 +5,9 @@
     "thisIsAlsoAComment3": "bg_folder: pure background TPs (input to add_backgrounds)",
     "thisIsAlsoAComment4": "tps_folder/tps_bg_folder: merged TPs with backgrounds (output of add_backgrounds, input to clustering)",
 
-    "tpstream_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
-    "sig_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
-    "bg_folder": "/home/virgolaema/dune/online-pointing-utils/data/bkgs/",
-    "tps_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
-    "tps_bg_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
-    "clusters_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bkgs/",
+    "tpstream_folder": "/home/virgolaema/dune/online-pointing-utils/data2/prod_es/",
+    "bg_folder": "/home/virgolaema/dune/online-pointing-utils/data2/bkgs/",
     "clusters_folder_prefix": "es_valid_test_bg",
-    "reports_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/reports/",
-    "volumes_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/volumes_planeX_bg/",
 
     "signal_type": "es",
     "max_files": 2,

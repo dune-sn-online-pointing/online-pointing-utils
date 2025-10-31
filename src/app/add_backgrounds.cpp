@@ -89,21 +89,36 @@ int main(int argc, char* argv[]) {
 
     LogInfo << "Number of files to skip at start: " << skip_files << std::endl;
     
-    // sig_folder: pure signal TPs (input)
+    // sig_folder: pure signal TPs (input) - auto-generate from tpstream_folder if not specified
     std::string sig_folder = j.value("sig_folder", std::string(""));
-    LogThrowIf(sig_folder.empty(), "sig_folder is not specified in JSON config.");
+    if (sig_folder.empty()) {
+        sig_folder = j.value("tpstream_folder", std::string("."));
+        // Remove trailing slash if present
+        if (!sig_folder.empty() && sig_folder.back() == '/') {
+            sig_folder.pop_back();
+        }
+    }
+    LogThrowIf(sig_folder.empty(), "sig_folder is not specified and tpstream_folder is missing.");
     
     // bg_folder: pure background TPs (input)
     std::string bg_folder = j.value("bg_folder", std::string(""));
     LogThrowIf(bg_folder.empty(), "bg_folder is not specified in JSON config.");
     
-    // tps_bg_folder or tps_folder: merged TPs output
+    // tps_bg_folder or tps_folder: merged TPs output - auto-generate from tpstream_folder if not specified
     std::string output_folder = j.value("tps_bg_folder", std::string(""));
     if (output_folder.empty()) {
         output_folder = j.value("tps_folder", std::string(""));
     }
-    LogThrowIf(output_folder.empty(), "tps_bg_folder (or tps_folder) is not specified in JSON config.");
-    
+    if (output_folder.empty()) {
+        // Auto-generate from tpstream_folder
+        std::string base = j.value("tpstream_folder", std::string("."));
+        if (!base.empty() && base.back() == '/') {
+            base.pop_back();
+        }
+        output_folder = base + "/tps_bg";
+    }
+    LogThrowIf(output_folder.empty(), "tps_bg_folder (or tps_folder) is not specified and could not be auto-generated.");
+
     LogInfo << "Configuration:" << std::endl;
     LogInfo << " - Signal type: " << signal_type << std::endl;
     LogInfo << " - Signal folder (pure signal TPs): " << sig_folder << std::endl;

@@ -109,12 +109,19 @@ int main(int argc, char* argv[]) {
         LogInfo << "Number of files to skip at start (from JSON): " << skip_files << std::endl;
     }
 
-    // Output folder: CLI outFolder > JSON sig_folder > JSON outputFolder > "data"
+    // Output folder: CLI outFolder > JSON sig_folder > JSON outputFolder > tpstream_folder
     std::string outfolder;
     if (clp.isOptionTriggered("outFolder")) outfolder = clp.getOptionVal<std::string>("outFolder");
     else if (j.contains("sig_folder")) { try { outfolder = j.at("sig_folder").get<std::string>(); } catch (...) { /* ignore */ }}
     else if (j.contains("outputFolder")) { try { outfolder = j.at("outputFolder").get<std::string>(); } catch (...) { /* ignore */ }}
-    if (outfolder.empty()) outfolder = std::string("data");
+    if (outfolder.empty()) {
+        // Auto-generate from tpstream_folder
+        outfolder = j.value("tpstream_folder", std::string("."));
+        // Remove trailing slash if present
+        if (!outfolder.empty() && outfolder.back() == '/') {
+            outfolder.pop_back();
+        }
+    }
     LogInfo << "Output folder (pure signal TPs): " << outfolder << std::endl;
 
     std::vector<std::string> output_files;

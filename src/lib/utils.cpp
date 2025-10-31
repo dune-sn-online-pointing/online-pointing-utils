@@ -55,7 +55,15 @@ std::string getClustersFolder(const nlohmann::json& j) {
             energy_cut = static_cast<float>(j.at("energy_cut").get<double>());
         }
     }
-    std::string outfolder = j.value("clusters_folder", ".");
+    std::string outfolder = j.value("clusters_folder", std::string(""));
+    if (outfolder.empty()) {
+        // Auto-generate from tpstream_folder
+        outfolder = j.value("tpstream_folder", std::string("."));
+        // Remove trailing slash if present
+        if (!outfolder.empty() && outfolder.back() == '/') {
+            outfolder.pop_back();
+        }
+    }
 
     // Build subfolder name with clustering conditions
     auto sanitize = [](const std::string& s) {
@@ -551,6 +559,27 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
 
     if (debugMode) LogDebug << "[find_input_files] Keys: folder_key='" << folder_key << "', input_file_key='" << input_file_key << "', input_list_key='" << input_list_key << "'" << std::endl;
 
+    // Auto-generate folder path from tpstream_folder if not explicitly provided
+    std::string auto_folder;
+    if (!j.contains(folder_key)) {
+        std::string base = j.value("tpstream_folder", std::string(""));
+        if (!base.empty()) {
+            if (base.back() == '/') base.pop_back();
+            
+            if (pattern == "tps") {
+                // For tps pattern, auto-generate from tpstream_folder/tps_bg
+                auto_folder = base + "/tps_bg";
+            } else if (pattern == "sig") {
+                // For sig pattern (signal TPs), use tpstream_folder directly
+                auto_folder = base;
+            }
+            
+            if (!auto_folder.empty() && verboseMode) {
+                LogInfo << "[find_input_files] Auto-generated '" << folder_key << "': " << auto_folder << std::endl;
+            }
+        }
+    }
+
     // Priority 1: pattern_input_file (single file)
     if (j.contains(input_file_key)) {
         std::string file = j[input_file_key].get<std::string>();
@@ -566,10 +595,16 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
     }
 
     // Priority 2: pattern_folder (scan folder for files with pattern)
-    if (input_files.empty() && j.contains(folder_key)) {
-        std::string folder = j[folder_key].get<std::string>();
-        if (verboseMode) LogInfo << "[find_input_files] Found key '" << folder_key << "' with value: " << folder << std::endl;
+    if (input_files.empty()) {
+        std::string folder;
+        if (j.contains(folder_key)) {
+            folder = j[folder_key].get<std::string>();
+        } else if (!auto_folder.empty()) {
+            folder = auto_folder;
+        }
+        
         if (!folder.empty()) {
+            if (verboseMode) LogInfo << "[find_input_files] Found key '" << folder_key << "' with value: " << folder << std::endl;
             if (verboseMode) LogInfo << "[find_input_files] Scanning folder '" << folder << "' for matching files..." << std::endl;
             
             // OPTIMIZATION: Use system find command for faster directory scanning on EOS
@@ -624,10 +659,9 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
                     }
                 }
             }
-        } else {
-            LogWarning << "[find_input_files] Folder value for key '" << folder_key << "' is empty" << std::endl;
         }
-    } else if (input_files.empty()) {
+    }
+    if (input_files.empty()) {
         if (debugMode) LogDebug << "[find_input_files] Key '" << folder_key << "' not found in JSON or input_files already found" << std::endl;
     }
 
