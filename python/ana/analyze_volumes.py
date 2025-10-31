@@ -420,10 +420,44 @@ def main():
     with open(args.json, 'r') as f:
         config = json.load(f)
     
+    # Auto-generate volumes_folder if not explicitly provided
     volumes_folder = config.get('volumes_folder', None)
     if not volumes_folder:
-        print("Error: 'volumes_folder' not specified in JSON config")
-        return 1
+        # Auto-generate from tpstream_folder (matching create_volumes.py logic)
+        tpstream_folder = config.get('tpstream_folder', '.')
+        if tpstream_folder.endswith('/'):
+            tpstream_folder = tpstream_folder[:-1]
+        
+        prefix = config.get('clusters_folder_prefix', 'volumes')
+        
+        # Build conditions string from clustering parameters
+        tick_limit = config.get("tick_limit", 0)
+        channel_limit = config.get("channel_limit", 0)
+        min_tps_to_cluster = config.get("min_tps_to_cluster", 0)
+        tot_cut = config.get("tot_cut", 0)
+        energy_cut = float(config.get("energy_cut", 0.0))
+        
+        def sanitize(value):
+            if isinstance(value, float):
+                s = f"{value:.6f}"
+            else:
+                s = str(value)
+            if '.' in s:
+                parts = s.split('.')
+                if len(parts[1]) > 1:
+                    s = f"{parts[0]}.{parts[1][0]}"
+            s = s.replace('.', 'p')
+            return s
+        
+        conditions = (
+            f"tick{sanitize(tick_limit)}"
+            f"_ch{sanitize(channel_limit)}"
+            f"_min{sanitize(min_tps_to_cluster)}"
+            f"_tot{sanitize(tot_cut)}"
+            f"_e{sanitize(energy_cut)}"
+        )
+        
+        volumes_folder = f"{tpstream_folder}/volume_images_{prefix}_{conditions}"
     
     volumes_path = Path(volumes_folder)
     if not volumes_path.exists():

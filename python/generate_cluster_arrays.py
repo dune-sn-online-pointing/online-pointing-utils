@@ -91,7 +91,15 @@ def get_clusters_folder(json_config):
     min_tps_to_cluster = j.get("min_tps_to_cluster", 0)
     tot_cut = j.get("tot_cut", 0)
     energy_cut = float(j.get("energy_cut", 0.0))
-    outfolder = j.get("clusters_folder", ".").rstrip('/')
+    
+    # Auto-generate from tpstream_folder if clusters_folder not specified
+    outfolder = j.get("clusters_folder", "")
+    if not outfolder:
+        outfolder = j.get("tpstream_folder", ".")
+        if outfolder.endswith('/'):
+            outfolder = outfolder[:-1]
+    else:
+        outfolder = outfolder.rstrip('/')
     
     def sanitize(value):
         """
@@ -159,7 +167,15 @@ def get_images_folder(json_config):
     min_tps_to_cluster = j.get("min_tps_to_cluster", 0)
     tot_cut = j.get("tot_cut", 0)
     energy_cut = float(j.get("energy_cut", 0.0))
-    outfolder = j.get("clusters_folder", ".").rstrip('/')
+    
+    # Auto-generate from tpstream_folder if clusters_folder not specified
+    outfolder = j.get("clusters_folder", "")
+    if not outfolder:
+        outfolder = j.get("tpstream_folder", ".")
+        if outfolder.endswith('/'):
+            outfolder = outfolder[:-1]
+    else:
+        outfolder = outfolder.rstrip('/')
     
     def sanitize(value):
         """

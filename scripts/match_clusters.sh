@@ -110,9 +110,42 @@ echo "Running match_clusters..."
 echo "========================================="
 
 # Parse JSON to check if we need to process a folder or a single file
-CLUSTERS_FOLDER=$(python3 -c "import json; f=open('${INPUT_JSON}'); j=json.load(f); print(j.get('clusters_folder', ''))" 2>/dev/null)
+# Auto-generate clusters_folder if not specified (same logic as C++ code)
+CLUSTERS_FOLDER=$(python3 -c "
+import json
+with open('${INPUT_JSON}') as f:
+    j = json.load(f)
+    
+clusters_folder = j.get('clusters_folder', '')
+if not clusters_folder:
+    # Auto-generate from tpstream_folder and clustering parameters
+    tpstream_folder = j.get('tpstream_folder', '.')
+    if tpstream_folder.endswith('/'):
+        tpstream_folder = tpstream_folder[:-1]
+    
+    prefix = j.get('clusters_folder_prefix', 'clusters')
+    tick_limit = j.get('tick_limit', 0)
+    channel_limit = j.get('channel_limit', 0)
+    min_tps = j.get('min_tps_to_cluster', 0)
+    tot_cut = j.get('tot_cut', 0)
+    energy_cut = j.get('energy_cut', 0.0)
+    
+    # Format energy_cut to match C++ sanitization (keep 1 decimal, replace . with p)
+    energy_str = f'{energy_cut:.1f}'.replace('.', 'p')
+    
+    subfolder = f'clusters_{prefix}_tick{tick_limit}_ch{channel_limit}_min{min_tps}_tot{tot_cut}_e{energy_str}'
+    clusters_folder = f'{tpstream_folder}/{subfolder}'
+
+print(clusters_folder)
+" 2>/dev/null)
 INPUT_FILE=$(python3 -c "import json; f=open('${INPUT_JSON}'); j=json.load(f); print(j.get('input_clusters_file', ''))" 2>/dev/null)
 MATCHED_FOLDER=$(python3 -c "import json; f=open('${INPUT_JSON}'); j=json.load(f); print(j.get('matched_clusters_folder', ''))" 2>/dev/null)
+
+# Auto-generate matched_clusters_folder if not specified
+if [ -z "$MATCHED_FOLDER" ] && [ ! -z "$CLUSTERS_FOLDER" ]; then
+    MATCHED_FOLDER="${CLUSTERS_FOLDER}/matched"
+fi
+
 OUTPUT_FILE=$(python3 -c "import json; f=open('${INPUT_JSON}'); j=json.load(f); print(j.get('output_file', ''))" 2>/dev/null)
 JSON_MAX_FILES=$(python3 -c "import json; f=open('${INPUT_JSON}'); j=json.load(f); print(j.get('max_files', 999999))" 2>/dev/null)
 
