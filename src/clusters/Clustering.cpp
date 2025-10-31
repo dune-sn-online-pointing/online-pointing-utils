@@ -375,10 +375,8 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         LogError << "Invalid TFile pointer provided to write_clusters" << std::endl;
         return;
     }
-    // Ensure a fixed TDirectory inside the ROOT file for Cluster trees
-    TDirectory* clusters_dir = clusters_file->GetDirectory("clusters");
-    if (!clusters_dir) clusters_dir = clusters_file->mkdir("clusters");
-    clusters_dir->cd();
+    // Use the current directory (set by caller with cd())
+    TDirectory* clusters_dir = gDirectory;
     
     // Check if tree exists and if it has the new momentum branches
     TTree *old_tree = (TTree*)clusters_dir->Get(Form("clusters_tree_%s", view.c_str()));
@@ -601,9 +599,8 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
         return;
     }
     
-    TDirectory* clusters_dir = clusters_file->GetDirectory("clusters");
-    if (!clusters_dir) clusters_dir = clusters_file->mkdir("clusters");
-    clusters_dir->cd();
+    // Use the current directory (set by caller with cd())
+    TDirectory* clusters_dir = gDirectory;
     
     TTree *clusters_tree = new TTree(Form("clusters_tree_%s", view.c_str()), "Tree of clusters with match info");
     
