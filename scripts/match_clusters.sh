@@ -153,6 +153,7 @@ fi
 
 OUTPUT_FILE=$(python3 -c "import json; f=open('${INPUT_JSON}'); j=json.load(f); print(j.get('output_file', ''))" 2>/dev/null)
 JSON_MAX_FILES=$(python3 -c "import json; f=open('${INPUT_JSON}'); j=json.load(f); print(j.get('max_files', 999999))" 2>/dev/null)
+JSON_SKIP_FILES=$(python3 -c "import json; f=open('${INPUT_JSON}'); j=json.load(f); print(j.get('skip_files', 0))" 2>/dev/null)
 
 # Determine max files to process
 if [ ! -z "$MAX_FILES" ]; then
@@ -161,18 +162,65 @@ else
     ACTUAL_MAX_FILES="$JSON_MAX_FILES"
 fi
 
+# Determine skip files
+if [ ! -z "$SKIP_FILES" ]; then
+    ACTUAL_SKIP_FILES="$SKIP_FILES"
+else
+    ACTUAL_SKIP_FILES="$JSON_SKIP_FILES"
+fi
+
 if [ ! -z "$CLUSTERS_FOLDER" ] && [ -d "$CLUSTERS_FOLDER" ]; then
     # Batch mode: process all cluster files in the folder
     echo "Processing clusters from folder: ${CLUSTERS_FOLDER}"
     echo "Output will be written to: ${MATCHED_FOLDER}"
     echo "Maximum files to process: ${ACTUAL_MAX_FILES}"
+    echo "Skip files: ${ACTUAL_SKIP_FILES}"
     echo ""
     
     # Create output folder if it doesn't exist
     mkdir -p "${MATCHED_FOLDER}"
     
-    # Find all *_clusters.root files
-    CLUSTER_FILES=$(find "${CLUSTERS_FOLDER}" -name "*_clusters.root" | sort | head -n ${ACTUAL_MAX_FILES})
+    # Use Python to get cluster files matching tpstream basenames with skip/max applied
+    CLUSTER_FILES=$(python3 << EOF
+import json
+import os
+import glob
+
+# Load JSON config
+with open('${INPUT_JSON}', 'r') as f:
+    config = json.load(f)
+
+# Get tpstream folder and find files
+tpstream_folder = config.get('tpstream_folder', '')
+tpstream_files = sorted(glob.glob(os.path.join(tpstream_folder, '*_tpstream.root')))
+
+# Apply skip and max to get source basenames
+skip = ${ACTUAL_SKIP_FILES}
+max_files = ${ACTUAL_MAX_FILES}
+selected_tpstream = tpstream_files[skip:skip+max_files] if max_files < 999999 else tpstream_files[skip:]
+
+# Extract basenames (remove path and _tpstream.root suffix)
+basenames = []
+for f in selected_tpstream:
+    bn = os.path.basename(f).replace('_tpstream.root', '')
+    basenames.append(bn)
+
+# Find cluster files matching these basenames
+clusters_folder = '${CLUSTERS_FOLDER}'
+cluster_files = sorted(glob.glob(os.path.join(clusters_folder, '*_clusters.root')))
+
+# Filter to only include files whose basename matches our tpstream basenames
+matched_files = []
+for cf in cluster_files:
+    cf_base = os.path.basename(cf).replace('_bg_clusters.root', '').replace('_clusters.root', '')
+    if any(cf_base == bn for bn in basenames):
+        matched_files.append(cf)
+
+# Print one per line for bash to read
+for f in matched_files:
+    print(f)
+EOF
+)
     FILE_COUNT=$(echo "$CLUSTER_FILES" | wc -l)
     
     echo "Found ${FILE_COUNT} cluster files to process"
