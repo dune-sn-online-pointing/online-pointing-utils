@@ -15,7 +15,7 @@
     "reports_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports/",
     "volumes_folder": "/home/virgolaema/dune/online-pointing-utils/output/volumes/",
 
-    "max_files": 5,
+    "max_files": 10,
     "skip_files": 0,
 
     "backtracker_error_margin": 10,

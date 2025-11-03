@@ -265,10 +265,18 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
             center_time_tpc = np.mean(times_tpc)
             
             # Check if it's a marley cluster
+            # Use marley_tp_fraction as primary indicator since true_label may be 'UNKNOWN' in matched files
+            marley_frac = arrays['marley_tp_fraction'][i]
+            if hasattr(marley_frac, '__len__') and len(marley_frac) > 0:
+                marley_frac = marley_frac[0]
+            is_marley = float(marley_frac) > 0
+            
+            # Also check true_label as fallback
             true_label = arrays['true_label'][i]
             if isinstance(true_label, bytes):
                 true_label = true_label.decode('utf-8')
-            is_marley = 'marley' in true_label.lower()
+            if 'marley' in true_label.lower():
+                is_marley = True
             
             cluster_info = {
                 'event': int(arrays['event'][i]),
@@ -514,11 +522,13 @@ def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
         # Determine energy and interaction type
         # For marley clusters, use true_particle_energy (actual track energy)
         # For background clusters, neutrino_energy will be -1.0
+        # In matched files, truth energy may be -1.0 even for MARLEY, so use marley_tp_fraction
         is_es = main_cluster['is_es_interaction']
         if main_cluster['is_marley']:
             # Use particle energy for marley events (electron energy from neutrino interaction)
             event_energy = main_cluster['true_particle_energy']
-            interaction_type = "ES" if is_es else "CC"
+            # If matched file lost truth info, energy will be -1.0 but we still know it's ES from marley_tp_fraction
+            interaction_type = "ES" if is_es or main_cluster['marley_tp_fraction'] > 0 else "CC"
         else:
             # Background clusters
             event_energy = -1.0

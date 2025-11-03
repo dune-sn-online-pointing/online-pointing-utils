@@ -44,6 +44,8 @@ class Cluster {
         void set_true_momentum(std::vector<float> momentum) { true_momentum_ = momentum; }
         void set_true_label(std::string label) { true_label_ = label; }
         void set_true_energy(float energy) { true_neutrino_energy_ = energy; }
+        void set_true_neutrino_energy(float energy) { true_neutrino_energy_ = energy; }
+        void set_true_particle_energy(float energy) { true_particle_energy_ = energy; }
         void set_true_dir(std::vector<float> dir) { true_dir_ = dir; }
         void set_min_distance_from_true_pos(float min_distance) { min_distance_from_true_pos_ = min_distance; }
         void set_supernova_tp_fraction(float fraction) { supernova_tp_fraction_ = fraction; }

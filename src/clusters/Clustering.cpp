@@ -794,30 +794,46 @@ std::vector<Cluster> read_clusters(std::string root_filename){
         
         if (verboseMode) LogInfo << "  Found tree: " << tree->GetName() << " with " << tree->GetEntries() << " entries" << std::endl;
         
-        // Set up branch addresses for CURRENT schema (as written by write_clusters)
-        Int_t event = 0;
-        Int_t n_tps = 0;
-        Float_t true_neutrino_energy = 0;
-        Float_t true_particle_energy = 0;
-        Bool_t is_main_cluster = false;
-        Int_t cluster_id = -1;
-        std::vector<int>* tp_channel = nullptr;
-        std::vector<int>* tp_time_start = nullptr;
-        std::vector<int>* tp_s_over = nullptr;
-        std::vector<int>* tp_adc_integral = nullptr;
-        
-        if (tree->GetBranch("event")) tree->SetBranchAddress("event", &event);
-        if (tree->GetBranch("n_tps")) tree->SetBranchAddress("n_tps", &n_tps);
-        if (tree->GetBranch("true_neutrino_energy")) tree->SetBranchAddress("true_neutrino_energy", &true_neutrino_energy);
-        if (tree->GetBranch("true_particle_energy")) tree->SetBranchAddress("true_particle_energy", &true_particle_energy);
-        if (tree->GetBranch("is_main_cluster")) tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
-        if (tree->GetBranch("cluster_id")) tree->SetBranchAddress("cluster_id", &cluster_id);
-        if (tree->GetBranch("tp_detector_channel")) tree->SetBranchAddress("tp_detector_channel", &tp_channel);
-        if (tree->GetBranch("tp_time_start")) tree->SetBranchAddress("tp_time_start", &tp_time_start);
-        if (tree->GetBranch("tp_samples_over_threshold")) tree->SetBranchAddress("tp_samples_over_threshold", &tp_s_over);
-        if (tree->GetBranch("tp_adc_integral")) tree->SetBranchAddress("tp_adc_integral", &tp_adc_integral);
-        
-        // Read all entries
+    // Set up branch addresses for CURRENT schema (as written by write_clusters)
+    Int_t event = 0;
+    Int_t n_tps = 0;
+    Float_t true_pos_x = 0, true_pos_y = 0, true_pos_z = 0;
+    Float_t true_dir_x = 0, true_dir_y = 0, true_dir_z = 0;
+    Float_t true_mom_x = 0, true_mom_y = 0, true_mom_z = 0;
+    Float_t true_neutrino_energy = 0;
+    Float_t true_particle_energy = 0;
+    std::string* true_label = nullptr;
+    Bool_t is_es_interaction = false;
+    Int_t true_pdg = 0;
+    Bool_t is_main_cluster = false;
+    Int_t cluster_id = -1;
+    std::vector<int>* tp_channel = nullptr;
+    std::vector<int>* tp_time_start = nullptr;
+    std::vector<int>* tp_s_over = nullptr;
+    std::vector<int>* tp_adc_integral = nullptr;
+    
+    if (tree->GetBranch("event")) tree->SetBranchAddress("event", &event);
+    if (tree->GetBranch("n_tps")) tree->SetBranchAddress("n_tps", &n_tps);
+    if (tree->GetBranch("true_pos_x")) tree->SetBranchAddress("true_pos_x", &true_pos_x);
+    if (tree->GetBranch("true_pos_y")) tree->SetBranchAddress("true_pos_y", &true_pos_y);
+    if (tree->GetBranch("true_pos_z")) tree->SetBranchAddress("true_pos_z", &true_pos_z);
+    if (tree->GetBranch("true_dir_x")) tree->SetBranchAddress("true_dir_x", &true_dir_x);
+    if (tree->GetBranch("true_dir_y")) tree->SetBranchAddress("true_dir_y", &true_dir_y);
+    if (tree->GetBranch("true_dir_z")) tree->SetBranchAddress("true_dir_z", &true_dir_z);
+    if (tree->GetBranch("true_mom_x")) tree->SetBranchAddress("true_mom_x", &true_mom_x);
+    if (tree->GetBranch("true_mom_y")) tree->SetBranchAddress("true_mom_y", &true_mom_y);
+    if (tree->GetBranch("true_mom_z")) tree->SetBranchAddress("true_mom_z", &true_mom_z);
+    if (tree->GetBranch("true_neutrino_energy")) tree->SetBranchAddress("true_neutrino_energy", &true_neutrino_energy);
+    if (tree->GetBranch("true_particle_energy")) tree->SetBranchAddress("true_particle_energy", &true_particle_energy);
+    if (tree->GetBranch("true_label")) tree->SetBranchAddress("true_label", &true_label);
+    if (tree->GetBranch("is_es_interaction")) tree->SetBranchAddress("is_es_interaction", &is_es_interaction);
+    if (tree->GetBranch("true_pdg")) tree->SetBranchAddress("true_pdg", &true_pdg);
+    if (tree->GetBranch("is_main_cluster")) tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
+    if (tree->GetBranch("cluster_id")) tree->SetBranchAddress("cluster_id", &cluster_id);
+    if (tree->GetBranch("tp_detector_channel")) tree->SetBranchAddress("tp_detector_channel", &tp_channel);
+    if (tree->GetBranch("tp_time_start")) tree->SetBranchAddress("tp_time_start", &tp_time_start);
+    if (tree->GetBranch("tp_samples_over_threshold")) tree->SetBranchAddress("tp_samples_over_threshold", &tp_s_over);
+    if (tree->GetBranch("tp_adc_integral")) tree->SetBranchAddress("tp_adc_integral", &tp_adc_integral);        // Read all entries
         for (Long64_t i = 0; i < tree->GetEntries(); i++) {
             tree->GetEntry(i);
             
@@ -859,6 +875,14 @@ std::vector<Cluster> read_clusters(std::string root_filename){
             Cluster cluster(tps);
             cluster.set_is_main_cluster(is_main_cluster);
             cluster.set_cluster_id(cluster_id);
+            cluster.set_true_neutrino_energy(true_neutrino_energy);
+            cluster.set_true_particle_energy(true_particle_energy);
+            cluster.set_true_pos({true_pos_x, true_pos_y, true_pos_z});
+            cluster.set_true_dir({true_dir_x, true_dir_y, true_dir_z});
+            cluster.set_true_momentum({true_mom_x, true_mom_y, true_mom_z});
+            if (true_label) cluster.set_true_label(*true_label);
+            cluster.set_is_es_interaction(is_es_interaction);
+            cluster.set_true_pdg(true_pdg);
             
             clusters.push_back(cluster);
         }
@@ -900,11 +924,16 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
     // Set up branch addresses for CURRENT schema (as written by write_clusters)
     Int_t event = 0;
     Int_t n_tps = 0;
+    Float_t true_pos_x = 0, true_pos_y = 0, true_pos_z = 0;
+    Float_t true_dir_x = 0, true_dir_y = 0, true_dir_z = 0;
+    Float_t true_mom_x = 0, true_mom_y = 0, true_mom_z = 0;
     Float_t true_neutrino_energy = 0;
     Float_t true_particle_energy = 0;
     Float_t marley_tp_fraction = 0;
+    std::string* true_label = nullptr;
     Bool_t is_main_cluster = false;
     Bool_t is_es_interaction = false;
+    Int_t true_pdg = 0;
     Int_t cluster_id = -1;
     std::vector<int>* tp_channel = nullptr;
     std::vector<int>* tp_time_start = nullptr;
@@ -913,11 +942,22 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
     
     if (tree->GetBranch("event")) tree->SetBranchAddress("event", &event);
     if (tree->GetBranch("n_tps")) tree->SetBranchAddress("n_tps", &n_tps);
+    if (tree->GetBranch("true_pos_x")) tree->SetBranchAddress("true_pos_x", &true_pos_x);
+    if (tree->GetBranch("true_pos_y")) tree->SetBranchAddress("true_pos_y", &true_pos_y);
+    if (tree->GetBranch("true_pos_z")) tree->SetBranchAddress("true_pos_z", &true_pos_z);
+    if (tree->GetBranch("true_dir_x")) tree->SetBranchAddress("true_dir_x", &true_dir_x);
+    if (tree->GetBranch("true_dir_y")) tree->SetBranchAddress("true_dir_y", &true_dir_y);
+    if (tree->GetBranch("true_dir_z")) tree->SetBranchAddress("true_dir_z", &true_dir_z);
+    if (tree->GetBranch("true_mom_x")) tree->SetBranchAddress("true_mom_x", &true_mom_x);
+    if (tree->GetBranch("true_mom_y")) tree->SetBranchAddress("true_mom_y", &true_mom_y);
+    if (tree->GetBranch("true_mom_z")) tree->SetBranchAddress("true_mom_z", &true_mom_z);
     if (tree->GetBranch("true_neutrino_energy")) tree->SetBranchAddress("true_neutrino_energy", &true_neutrino_energy);
     if (tree->GetBranch("true_particle_energy")) tree->SetBranchAddress("true_particle_energy", &true_particle_energy);
     if (tree->GetBranch("marley_tp_fraction")) tree->SetBranchAddress("marley_tp_fraction", &marley_tp_fraction);
+    if (tree->GetBranch("true_label")) tree->SetBranchAddress("true_label", &true_label);
     if (tree->GetBranch("is_main_cluster")) tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
     if (tree->GetBranch("is_es_interaction")) tree->SetBranchAddress("is_es_interaction", &is_es_interaction);
+    if (tree->GetBranch("true_pdg")) tree->SetBranchAddress("true_pdg", &true_pdg);
     if (tree->GetBranch("cluster_id")) tree->SetBranchAddress("cluster_id", &cluster_id);
     if (tree->GetBranch("tp_detector_channel")) tree->SetBranchAddress("tp_detector_channel", &tp_channel);
     if (tree->GetBranch("tp_time_start")) tree->SetBranchAddress("tp_time_start", &tp_time_start);
@@ -970,6 +1010,13 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
         cluster.set_cluster_id(cluster_id);
         cluster.set_supernova_tp_fraction(marley_tp_fraction);
         cluster.set_is_es_interaction(is_es_interaction);
+        cluster.set_true_neutrino_energy(true_neutrino_energy);
+        cluster.set_true_particle_energy(true_particle_energy);
+        cluster.set_true_pos({true_pos_x, true_pos_y, true_pos_z});
+        cluster.set_true_dir({true_dir_x, true_dir_y, true_dir_z});
+        cluster.set_true_momentum({true_mom_x, true_mom_y, true_mom_z});
+        if (true_label) cluster.set_true_label(*true_label);
+        cluster.set_true_pdg(true_pdg);
         
         clusters.push_back(cluster);
     }

@@ -10,7 +10,7 @@
     "clusters_folder_prefix": "es_valid_test_bg",
 
     "signal_type": "es",
-    "max_files": 2,
+    "max_files": 10,
     "skip_files": 0,
 
     "backtracker_error_margin": 10,
