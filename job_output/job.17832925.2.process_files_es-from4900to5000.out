@@ -1,515 +1,0 @@
-Home directory set from CLI to: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils
-
-init.sh script started
- Repository home is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils
- Parameters directory is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/parameters
- WARNING: Expected LCG view at /cvmfs/sft.cern.ch/lcg/views/LCG_104d/x86_64-el9-gcc11-opt/setup.sh not found. ROOT packages may be incomplete.
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		true
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	false
-Run analyze:		false
-Run generate images:	false
-Run generate volumes:	false
-Run analyze volumes:	false
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		true
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/es_fixed_myproc.json
-**************************
- Looking for json settings using command: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/findSettings.sh -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/es_fixed_myproc.json
-Global settings file found, full path is: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/es_fixed_myproc.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/compile.sh -p /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script /pool/condor/dir_3000609/sequence.sh
-
-init.sh script started
- Repository home is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils
- Parameters directory is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/parameters
- WARNING: Expected LCG view at /cvmfs/sft.cern.ch/lcg/views/LCG_104d/x86_64-el9-gcc11-opt/setup.sh not found. ROOT packages may be incomplete.
- WARNING: python environment not found, not activating.
-init.sh finished
-
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running backtrack step with command:
-/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/backtrack.sh -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/es_fixed_myproc.json --no-compile -f true -v false -d false --max-files 100 --skip-files 200
-
-init.sh script started
- Repository home is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils
- Parameters directory is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/parameters
- WARNING: Expected LCG view at /cvmfs/sft.cern.ch/lcg/views/LCG_104d/x86_64-el9-gcc11-opt/setup.sh not found. ROOT packages may be incomplete.
- WARNING: python environment not found, not activating.
-init.sh finished
-
- Looking for json settings using command: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/findSettings.sh -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/es_fixed_myproc.json
-Settings file found, full path is: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/es_fixed_myproc.json 
-
-Compiling the code with the following command:
-/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/compile.sh -p /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/backtrack.sh
-
-init.sh script started
- Repository home is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils
- Parameters directory is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/parameters
- WARNING: Expected LCG view at /cvmfs/sft.cern.ch/lcg/views/LCG_104d/x86_64-el9-gcc11-opt/setup.sh not found. ROOT packages may be incomplete.
- WARNING: python environment not found, not activating.
-init.sh finished
-
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/build//src/app/backtrack_tpstream -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/es_fixed_myproc.json --max-files 100 --skip-files 200 --override
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: > backtrack app - extract TPs and attach truth, writing *_tps_bktr<N>.root files (N: backtracker_error_margin).
-
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: Usage: 
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: ──────────── Main options ────────────
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: bktrMargin {--bktr-margin}: Override backtracker_error_margin (int) (expected: 1 value)
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: maxFiles {--max-files}: Maximum number of files to process (overrides JSON max_files) (expected: 1 value)
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: skipFiles {--skip-files}: Number of files to skip at start (overrides JSON skip_files) (expected: 1 value)
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: ──────────── Triggers ────────────
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: verboseMode {-v,--verbose}: Run in verbose mode (trigger)
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: debugMode {-d,--debug}: Run in debug mode (more detailed than verbose) (trigger)
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: overrideMode {-f,--override}: Force reprocessing even if output already exists (trigger)
-
-
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: Loading JSON config: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/es_fixed_myproc.json
-30/10/2025 10:48:46 [32m[backtrack_tpstream.cpp][0m: Using backtracker_error_margin: 10
-30/10/2025 10:48:46 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tpstream
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Number of valid files: 4520
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Max files (from CLI): 100
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Number of files to skip at start (from CLI): 200
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Output folder (pure signal TPs): /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps/
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Effective time window (TDC ticks): 352 (conversion_tdc_to_tpc=32)
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Channel tolerance (channels): 0
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 1: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082329Z_gen_000001_supernova_g4_detsim_ana_2025-10-21T_090355Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 2: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082329Z_gen_000002_supernova_g4_detsim_ana_2025-10-21T_092404Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 3: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082330Z_gen_000003_supernova_g4_detsim_ana_2025-10-21T_092418Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 4: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082334Z_gen_000005_supernova_g4_detsim_ana_2025-10-21T_092851Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 5: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082334Z_gen_000006_supernova_g4_detsim_ana_2025-10-21T_090305Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 6: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082334Z_gen_000007_supernova_g4_detsim_ana_2025-10-21T_094505Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 7: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082335Z_gen_000008_supernova_g4_detsim_ana_2025-10-21T_084435Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 8: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082336Z_gen_000009_supernova_g4_detsim_ana_2025-10-21T_094414Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 9: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082336Z_gen_000010_supernova_g4_detsim_ana_2025-10-21T_094453Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 10: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082337Z_gen_000012_supernova_g4_detsim_ana_2025-10-21T_092825Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 11: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082338Z_gen_000014_supernova_g4_detsim_ana_2025-10-21T_092821Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 12: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082338Z_gen_000015_supernova_g4_detsim_ana_2025-10-21T_092459Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 13: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082338Z_gen_000016_supernova_g4_detsim_ana_2025-10-21T_092345Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 14: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082339Z_gen_000018_supernova_g4_detsim_ana_2025-10-21T_092754Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 15: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082340Z_gen_000019_supernova_g4_detsim_ana_2025-10-21T_094511Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 16: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082340Z_gen_000020_supernova_g4_detsim_ana_2025-10-21T_092310Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 17: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082341Z_gen_000021_supernova_g4_detsim_ana_2025-10-21T_092301Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 18: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082342Z_gen_000022_supernova_g4_detsim_ana_2025-10-21T_090421Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 19: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082343Z_gen_000023_supernova_g4_detsim_ana_2025-10-21T_094430Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 20: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082343Z_gen_000025_supernova_g4_detsim_ana_2025-10-21T_092432Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 21: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082344Z_gen_000026_supernova_g4_detsim_ana_2025-10-21T_094445Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 22: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082344Z_gen_000027_supernova_g4_detsim_ana_2025-10-21T_084427Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 23: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082346Z_gen_000028_supernova_g4_detsim_ana_2025-10-21T_092755Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 24: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082348Z_gen_000030_supernova_g4_detsim_ana_2025-10-21T_090302Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 25: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082348Z_gen_000031_supernova_g4_detsim_ana_2025-10-21T_090257Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 26: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082349Z_gen_000032_supernova_g4_detsim_ana_2025-10-21T_092740Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 27: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082350Z_gen_000034_supernova_g4_detsim_ana_2025-10-21T_090428Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 28: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082350Z_gen_000035_supernova_g4_detsim_ana_2025-10-21T_092501Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 29: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082350Z_gen_000036_supernova_g4_detsim_ana_2025-10-21T_092302Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 30: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082350Z_gen_000038_supernova_g4_detsim_ana_2025-10-21T_084444Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 31: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082351Z_gen_000039_supernova_g4_detsim_ana_2025-10-21T_084428Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 32: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082351Z_gen_000040_supernova_g4_detsim_ana_2025-10-21T_094503Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 33: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082352Z_gen_000041_supernova_g4_detsim_ana_2025-10-21T_092510Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 34: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082356Z_gen_000042_supernova_g4_detsim_ana_2025-10-21T_090255Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 35: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082356Z_gen_000043_supernova_g4_detsim_ana_2025-10-21T_092535Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 36: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082357Z_gen_000044_supernova_g4_detsim_ana_2025-10-21T_092950Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 37: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082358Z_gen_000045_supernova_g4_detsim_ana_2025-10-21T_092246Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 38: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082358Z_gen_000046_supernova_g4_detsim_ana_2025-10-21T_092554Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 39: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082359Z_gen_000047_supernova_g4_detsim_ana_2025-10-21T_094513Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 40: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082359Z_gen_000048_supernova_g4_detsim_ana_2025-10-21T_084424Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 41: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082400Z_gen_000049_supernova_g4_detsim_ana_2025-10-21T_092836Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 42: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082400Z_gen_000050_supernova_g4_detsim_ana_2025-10-21T_090414Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 43: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082400Z_gen_000051_supernova_g4_detsim_ana_2025-10-21T_092750Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 44: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082400Z_gen_000052_supernova_g4_detsim_ana_2025-10-21T_092331Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 45: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082401Z_gen_000053_supernova_g4_detsim_ana_2025-10-21T_084431Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 46: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082401Z_gen_000055_supernova_g4_detsim_ana_2025-10-21T_094445Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 47: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082401Z_gen_000056_supernova_g4_detsim_ana_2025-10-21T_092846Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 48: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082402Z_gen_000058_supernova_g4_detsim_ana_2025-10-21T_092752Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 49: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082402Z_gen_000059_supernova_g4_detsim_ana_2025-10-21T_094516Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 50: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082402Z_gen_000060_supernova_g4_detsim_ana_2025-10-21T_092535Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 51: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082402Z_gen_000061_supernova_g4_detsim_ana_2025-10-21T_092442Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 52: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082403Z_gen_000062_supernova_g4_detsim_ana_2025-10-21T_092303Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 53: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082403Z_gen_000063_supernova_g4_detsim_ana_2025-10-21T_092429Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 54: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082403Z_gen_000064_supernova_g4_detsim_ana_2025-10-21T_092830Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 55: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082403Z_gen_000065_supernova_g4_detsim_ana_2025-10-21T_092927Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 56: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082404Z_gen_000067_supernova_g4_detsim_ana_2025-10-21T_092443Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 57: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082405Z_gen_000071_supernova_g4_detsim_ana_2025-10-21T_091825Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 58: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082406Z_gen_000073_supernova_g4_detsim_ana_2025-10-21T_092500Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 59: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082406Z_gen_000074_supernova_g4_detsim_ana_2025-10-21T_092508Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 60: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082406Z_gen_000075_supernova_g4_detsim_ana_2025-10-21T_092829Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 61: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082406Z_gen_000076_supernova_g4_detsim_ana_2025-10-21T_092742Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 62: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082407Z_gen_000077_supernova_g4_detsim_ana_2025-10-21T_091831Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 63: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082407Z_gen_000078_supernova_g4_detsim_ana_2025-10-21T_084422Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 64: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082408Z_gen_000081_supernova_g4_detsim_ana_2025-10-21T_094501Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 65: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082410Z_gen_000083_supernova_g4_detsim_ana_2025-10-21T_090346Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 66: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082410Z_gen_000084_supernova_g4_detsim_ana_2025-10-21T_092235Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 67: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082411Z_gen_000085_supernova_g4_detsim_ana_2025-10-21T_092252Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 68: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082412Z_gen_000086_supernova_g4_detsim_ana_2025-10-21T_084428Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 69: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082412Z_gen_000087_supernova_g4_detsim_ana_2025-10-21T_092913Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 70: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082412Z_gen_000088_supernova_g4_detsim_ana_2025-10-21T_090305Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 71: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082413Z_gen_000090_supernova_g4_detsim_ana_2025-10-21T_094459Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 72: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082413Z_gen_000091_supernova_g4_detsim_ana_2025-10-21T_091800Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 73: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082413Z_gen_000092_supernova_g4_detsim_ana_2025-10-21T_094451Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 74: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082414Z_gen_000093_supernova_g4_detsim_ana_2025-10-21T_092855Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 75: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082415Z_gen_000094_supernova_g4_detsim_ana_2025-10-21T_092542Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 76: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082415Z_gen_000096_supernova_g4_detsim_ana_2025-10-21T_094457Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 77: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082415Z_gen_000097_supernova_g4_detsim_ana_2025-10-21T_092326Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 78: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082416Z_gen_000098_supernova_g4_detsim_ana_2025-10-21T_094452Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 79: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082416Z_gen_000099_supernova_g4_detsim_ana_2025-10-21T_094515Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 80: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082416Z_gen_000100_supernova_g4_detsim_ana_2025-10-21T_090257Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 81: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082417Z_gen_000101_supernova_g4_detsim_ana_2025-10-21T_094404Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 82: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082417Z_gen_000102_supernova_g4_detsim_ana_2025-10-21T_092419Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 83: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082418Z_gen_000103_supernova_g4_detsim_ana_2025-10-21T_092851Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 84: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082418Z_gen_000104_supernova_g4_detsim_ana_2025-10-21T_090426Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 85: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082419Z_gen_000105_supernova_g4_detsim_ana_2025-10-21T_094514Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 86: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082419Z_gen_000107_supernova_g4_detsim_ana_2025-10-21T_091122Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 87: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082420Z_gen_000109_supernova_g4_detsim_ana_2025-10-21T_093221Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 88: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082420Z_gen_000110_supernova_g4_detsim_ana_2025-10-21T_092941Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 89: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082421Z_gen_000111_supernova_g4_detsim_ana_2025-10-21T_092846Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 90: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082421Z_gen_000112_supernova_g4_detsim_ana_2025-10-21T_084431Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 91: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082422Z_gen_000113_supernova_g4_detsim_ana_2025-10-21T_094423Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 92: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082423Z_gen_000115_supernova_g4_detsim_ana_2025-10-21T_092942Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 93: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082424Z_gen_000116_supernova_g4_detsim_ana_2025-10-21T_090413Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 94: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082424Z_gen_000117_supernova_g4_detsim_ana_2025-10-21T_092844Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 95: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082425Z_gen_000118_supernova_g4_detsim_ana_2025-10-21T_092314Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 96: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082425Z_gen_000119_supernova_g4_detsim_ana_2025-10-21T_092323Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 97: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082425Z_gen_000120_supernova_g4_detsim_ana_2025-10-21T_084425Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 98: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082426Z_gen_000121_supernova_g4_detsim_ana_2025-10-21T_090430Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 99: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082428Z_gen_000122_supernova_g4_detsim_ana_2025-10-21T_090337Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 100: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082428Z_gen_000123_supernova_g4_detsim_ana_2025-10-21T_084435Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 101: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082429Z_gen_000124_supernova_g4_detsim_ana_2025-10-21T_092236Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 102: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082431Z_gen_000125_supernova_g4_detsim_ana_2025-10-21T_092806Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 103: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082432Z_gen_000126_supernova_g4_detsim_ana_2025-10-21T_094453Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 104: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082433Z_gen_000127_supernova_g4_detsim_ana_2025-10-21T_094510Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 105: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082434Z_gen_000128_supernova_g4_detsim_ana_2025-10-21T_084552Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 106: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082435Z_gen_000129_supernova_g4_detsim_ana_2025-10-21T_094457Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 107: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082435Z_gen_000130_supernova_g4_detsim_ana_2025-10-21T_084434Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 108: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082438Z_gen_000133_supernova_g4_detsim_ana_2025-10-21T_092807Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 109: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082439Z_gen_000134_supernova_g4_detsim_ana_2025-10-21T_092422Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 110: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082439Z_gen_000135_supernova_g4_detsim_ana_2025-10-21T_092451Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 111: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082441Z_gen_000136_supernova_g4_detsim_ana_2025-10-21T_090431Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 112: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082442Z_gen_000137_supernova_g4_detsim_ana_2025-10-21T_094449Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 113: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082446Z_gen_000138_supernova_g4_detsim_ana_2025-10-21T_094450Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 114: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082447Z_gen_000139_supernova_g4_detsim_ana_2025-10-21T_093212Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 115: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082447Z_gen_000141_supernova_g4_detsim_ana_2025-10-21T_091802Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 116: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082449Z_gen_000142_supernova_g4_detsim_ana_2025-10-21T_084420Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 117: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082449Z_gen_000143_supernova_g4_detsim_ana_2025-10-21T_092537Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 118: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082450Z_gen_000144_supernova_g4_detsim_ana_2025-10-21T_092813Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 119: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082450Z_gen_000145_supernova_g4_detsim_ana_2025-10-21T_092923Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 120: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082453Z_gen_000147_supernova_g4_detsim_ana_2025-10-21T_094507Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 121: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082456Z_gen_000149_supernova_g4_detsim_ana_2025-10-21T_094455Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 122: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082457Z_gen_000150_supernova_g4_detsim_ana_2025-10-21T_092356Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 123: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082458Z_gen_000151_supernova_g4_detsim_ana_2025-10-21T_092240Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 124: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082459Z_gen_000152_supernova_g4_detsim_ana_2025-10-21T_093224Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 125: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082500Z_gen_000153_supernova_g4_detsim_ana_2025-10-21T_091923Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 126: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082501Z_gen_000154_supernova_g4_detsim_ana_2025-10-21T_094448Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 127: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082502Z_gen_000155_supernova_g4_detsim_ana_2025-10-21T_092317Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 128: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082502Z_gen_000156_supernova_g4_detsim_ana_2025-10-21T_092553Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 129: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082503Z_gen_000157_supernova_g4_detsim_ana_2025-10-21T_090406Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 130: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082503Z_gen_000158_supernova_g4_detsim_ana_2025-10-21T_092506Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 131: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082504Z_gen_000159_supernova_g4_detsim_ana_2025-10-21T_084433Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 132: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082504Z_gen_000160_supernova_g4_detsim_ana_2025-10-21T_092459Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 133: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082505Z_gen_000162_supernova_g4_detsim_ana_2025-10-21T_091755Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 134: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082505Z_gen_000163_supernova_g4_detsim_ana_2025-10-21T_094502Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 135: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082506Z_gen_000164_supernova_g4_detsim_ana_2025-10-21T_090402Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 136: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082506Z_gen_000165_supernova_g4_detsim_ana_2025-10-21T_092831Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 137: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082507Z_gen_000167_supernova_g4_detsim_ana_2025-10-21T_092923Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 138: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082507Z_gen_000168_supernova_g4_detsim_ana_2025-10-21T_094501Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 139: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082509Z_gen_000169_supernova_g4_detsim_ana_2025-10-21T_084423Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 140: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082512Z_gen_000172_supernova_g4_detsim_ana_2025-10-21T_094436Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 141: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082513Z_gen_000173_supernova_g4_detsim_ana_2025-10-21T_092755Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 142: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082513Z_gen_000175_supernova_g4_detsim_ana_2025-10-21T_092901Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 143: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082513Z_gen_000176_supernova_g4_detsim_ana_2025-10-21T_084552Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 144: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082513Z_gen_000177_supernova_g4_detsim_ana_2025-10-21T_092531Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 145: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082513Z_gen_000179_supernova_g4_detsim_ana_2025-10-21T_092806Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 146: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082514Z_gen_000180_supernova_g4_detsim_ana_2025-10-21T_092906Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 147: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082514Z_gen_000182_supernova_g4_detsim_ana_2025-10-21T_094511Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 148: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082514Z_gen_000183_supernova_g4_detsim_ana_2025-10-21T_092536Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 149: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082514Z_gen_000184_supernova_g4_detsim_ana_2025-10-21T_092440Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 150: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082515Z_gen_000185_supernova_g4_detsim_ana_2025-10-21T_090419Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 151: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082515Z_gen_000186_supernova_g4_detsim_ana_2025-10-21T_092816Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 152: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082515Z_gen_000187_supernova_g4_detsim_ana_2025-10-21T_092818Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 153: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082516Z_gen_000188_supernova_g4_detsim_ana_2025-10-21T_092506Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 154: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082516Z_gen_000189_supernova_g4_detsim_ana_2025-10-21T_094507Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 155: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082519Z_gen_000196_supernova_g4_detsim_ana_2025-10-21T_092801Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 156: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082521Z_gen_000197_supernova_g4_detsim_ana_2025-10-21T_092953Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 157: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082521Z_gen_000198_supernova_g4_detsim_ana_2025-10-21T_092446Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 158: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082522Z_gen_000200_supernova_g4_detsim_ana_2025-10-21T_084432Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 159: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082524Z_gen_000201_supernova_g4_detsim_ana_2025-10-21T_092848Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 160: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082525Z_gen_000203_supernova_g4_detsim_ana_2025-10-21T_094452Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 161: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082525Z_gen_000204_supernova_g4_detsim_ana_2025-10-21T_092815Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 162: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082525Z_gen_000205_supernova_g4_detsim_ana_2025-10-21T_092524Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 163: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082526Z_gen_000206_supernova_g4_detsim_ana_2025-10-21T_092820Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 164: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082527Z_gen_000208_supernova_g4_detsim_ana_2025-10-21T_092230Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 165: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082528Z_gen_000209_supernova_g4_detsim_ana_2025-10-21T_090345Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 166: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082528Z_gen_000210_supernova_g4_detsim_ana_2025-10-21T_084436Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 167: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082528Z_gen_000211_supernova_g4_detsim_ana_2025-10-21T_090332Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 168: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082529Z_gen_000212_supernova_g4_detsim_ana_2025-10-21T_094504Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 169: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082529Z_gen_000213_supernova_g4_detsim_ana_2025-10-21T_092749Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 170: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082530Z_gen_000215_supernova_g4_detsim_ana_2025-10-21T_094445Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 171: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082533Z_gen_000217_supernova_g4_detsim_ana_2025-10-21T_092830Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 172: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082534Z_gen_000219_supernova_g4_detsim_ana_2025-10-21T_094512Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 173: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082535Z_gen_000221_supernova_g4_detsim_ana_2025-10-21T_092536Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 174: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082535Z_gen_000222_supernova_g4_detsim_ana_2025-10-21T_092814Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 175: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082535Z_gen_000223_supernova_g4_detsim_ana_2025-10-21T_090312Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 176: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082539Z_gen_000226_supernova_g4_detsim_ana_2025-10-21T_090230Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 177: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082541Z_gen_000227_supernova_g4_detsim_ana_2025-10-21T_094452Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 178: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082542Z_gen_000228_supernova_g4_detsim_ana_2025-10-21T_091846Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 179: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082551Z_gen_000232_supernova_g4_detsim_ana_2025-10-21T_092827Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 180: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082554Z_gen_000233_supernova_g4_detsim_ana_2025-10-21T_085958Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 181: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082554Z_gen_000234_supernova_g4_detsim_ana_2025-10-21T_092820Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 182: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082554Z_gen_000235_supernova_g4_detsim_ana_2025-10-21T_091755Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 183: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082554Z_gen_000236_supernova_g4_detsim_ana_2025-10-21T_092332Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 184: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082555Z_gen_000238_supernova_g4_detsim_ana_2025-10-21T_092452Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 185: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082556Z_gen_000239_supernova_g4_detsim_ana_2025-10-21T_092531Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 186: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082558Z_gen_000241_supernova_g4_detsim_ana_2025-10-21T_092837Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 187: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082559Z_gen_000242_supernova_g4_detsim_ana_2025-10-21T_091831Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 188: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082559Z_gen_000243_supernova_g4_detsim_ana_2025-10-21T_084437Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 189: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082600Z_gen_000244_supernova_g4_detsim_ana_2025-10-21T_092525Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 190: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082601Z_gen_000245_supernova_g4_detsim_ana_2025-10-21T_094447Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 191: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082602Z_gen_000246_supernova_g4_detsim_ana_2025-10-21T_094447Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 192: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082602Z_gen_000247_supernova_g4_detsim_ana_2025-10-21T_092544Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 193: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082603Z_gen_000248_supernova_g4_detsim_ana_2025-10-21T_092404Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 194: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082609Z_gen_000251_supernova_g4_detsim_ana_2025-10-21T_093149Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 195: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082612Z_gen_000253_supernova_g4_detsim_ana_2025-10-21T_092546Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 196: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082614Z_gen_000254_supernova_g4_detsim_ana_2025-10-21T_091832Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 197: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082617Z_gen_000255_supernova_g4_detsim_ana_2025-10-21T_092821Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 198: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082617Z_gen_000256_supernova_g4_detsim_ana_2025-10-21T_090415Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 199: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082618Z_gen_000257_supernova_g4_detsim_ana_2025-10-21T_092545Z_tpstream.root
-30/10/2025 10:49:00 [32m[backtrack_tpstream.cpp][0m: Skipping file 200: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082622Z_gen_000258_supernova_g4_detsim_ana_2025-10-21T_092548Z_tpstream.root
-Processing files...   1% (    0 it/s)
-[1F[1K30/10/2025 10:51:01 [31m[backtrack_tpstream.cpp][0m: Failed to open file: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082622Z_gen_000259_supernova_g4_detsim_ana_2025-10-21T_092430Z_tpstream.root
-Processing files...   2% (    0 it/s)
-[1F[1K30/10/2025 10:53:01 [31m[backtrack_tpstream.cpp][0m: Failed to open file: /eos/user/e/evilla/dune/sn-tps/production_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082628Z_gen_000261_supernova_g4_detsim_ana_2025-10-21T_094446Z_tpstream.root
-Processing files...   3% (    0 it/s)
-[1F[1KProcessing files...   4% (    0 it/s)
-[1F[1KProcessing files...   5% (    0 it/s)
-[1F[1KProcessing files...   6% (    0 it/s)
-[1F[1KProcessing files...   7% (    0 it/s)
-[1F[1KProcessing files...   8% (    0 it/s)
-[1F[1KProcessing files...   9% (    0 it/s)
-[1F[1KProcessing files...  10% (    0 it/s)
-[1F[1KProcessing files...  11% (    0 it/s)
-[1F[1KProcessing files...  12% (    0 it/s)
-[1F[1KProcessing files...  13% (    0 it/s)
-[1F[1KProcessing files...  14% (    0 it/s)
-[1F[1KProcessing files...  15% (    0 it/s)
-[1F[1KProcessing files...  16% (    0 it/s)
-[1F[1KProcessing files...  17% (    0 it/s)
-[1F[1KProcessing files...  18% (    0 it/s)
-[1F[1KProcessing files...  19% (    0 it/s)
-[1F[1KProcessing files...  20% (    9 it/s)
-[1F[1KProcessing files...  21% (    0 it/s)
-[1F[1KProcessing files...  22% (    0 it/s)
-[1F[1KProcessing files...  23% (    0 it/s)
-[1F[1KProcessing files...  24% (    0 it/s)
-[1F[1KProcessing files...  25% (    0 it/s)
-[1F[1KProcessing files...  26% (    0 it/s)
-[1F[1KProcessing files...  27% (    0 it/s)
-[1F[1KProcessing files...  28% (    0 it/s)
-[1F[1KProcessing files...  29% (    0 it/s)
-[1F[1KProcessing files...  30% (    0 it/s)
-[1F[1KProcessing files...  31% (    0 it/s)
-[1F[1KProcessing files...  32% (    7 it/s)
-[1F[1KProcessing files...  33% (   10 it/s)
-[1F[1KProcessing files...  34% (    0 it/s)
-[1F[1KProcessing files...  35% (    0 it/s)
-[1F[1KProcessing files...  36% (    4 it/s)
-[1F[1KProcessing files...  37% (    5 it/s)
-[1F[1KProcessing files...  38% (    0 it/s)
-[1F[1KProcessing files...  39% (    0 it/s)
-[1F[1KProcessing files...  40% (    0 it/s)
-[1F[1KProcessing files...  41% (    0 it/s)
-[1F[1KProcessing files...  42% (    0 it/s)
-[1F[1KProcessing files...  43% (    0 it/s)
-[1F[1KProcessing files...  44% (    0 it/s)
-[1F[1KProcessing files...  45% (    4 it/s)
-[1F[1KProcessing files...  46% (    0 it/s)
-[1F[1KProcessing files...  47% (    0 it/s)
-[1F[1KProcessing files...  48% (    0 it/s)
-[1F[1KProcessing files...  49% (    4 it/s)
-[1F[1KProcessing files...  50% (    0 it/s)
-[1F[1KProcessing files...  51% (    8 it/s)
-[1F[1KProcessing files...  52% (    0 it/s)
-[1F[1KProcessing files...  53% (    0 it/s)
-[1F[1KProcessing files...  54% (   10 it/s)
-[1F[1KProcessing files...  55% (    3 it/s)
-[1F[1KProcessing files...  56% (    0 it/s)
-[1F[1KProcessing files...  57% (    0 it/s)
-[1F[1KProcessing files...  58% (    0 it/s)
-[1F[1KProcessing files...  59% (    0 it/s)
-[1F[1KProcessing files...  60% (    0 it/s)
-[1F[1KProcessing files...  61% (   11 it/s)
-[1F[1KProcessing files...  62% (    1 it/s)
-[1F[1KProcessing files...  63% (    0 it/s)
-[1F[1KProcessing files...  64% (    2 it/s)
-[1F[1KProcessing files...  65% (    0 it/s)
-[1F[1KProcessing files...  66% (    0 it/s)
-[1F[1KProcessing files...  67% (    0 it/s)
-[1F[1KProcessing files...  68% (    0 it/s)
-[1F[1KProcessing files...  69% (    8 it/s)
-[1F[1KProcessing files...  70% (    0 it/s)
-[1F[1KProcessing files...  71% (    0 it/s)
-[1F[1KProcessing files...  72% (    0 it/s)
-[1F[1KProcessing files...  73% (    0 it/s)
-[1F[1KProcessing files...  74% (    0 it/s)
-[1F[1KProcessing files...  75% (    0 it/s)
-[1F[1KProcessing files...  76% (    0 it/s)
-[1F[1KProcessing files...  77% (    0 it/s)
-[1F[1KProcessing files...  78% (    0 it/s)
-[1F[1KProcessing files...  79% (    0 it/s)
-[1F[1KProcessing files...  80% (    0 it/s)
-[1F[1KProcessing files...  81% (    4 it/s)
-[1F[1KProcessing files...  82% (    0 it/s)
-[1F[1KProcessing files...  83% (   12 it/s)
-[1F[1KProcessing files...  84% (    0 it/s)
-[1F[1KProcessing files...  85% (    0 it/s)
-[1F[1KProcessing files...  86% (    0 it/s)
-[1F[1KProcessing files...  87% (    0 it/s)
-[1F[1KProcessing files...  88% (    0 it/s)
-[1F[1KProcessing files...  89% (    0 it/s)
-[1F[1KProcessing files...  90% (    0 it/s)
-[1F[1KProcessing files...  91% (    0 it/s)
-[1F[1KProcessing files...  92% (    9 it/s)
-[1F[1KProcessing files...  93% (    8 it/s)
-[1F[1KProcessing files...  94% (    8 it/s)
-[1F[1KProcessing files...  95% (   11 it/s)
-[1F[1KProcessing files...  96% (    5 it/s)
-[1F[1KProcessing files...  97% (    3 it/s)
-[1F[1KProcessing files...  98% (    2 it/s)
-[1F[1KProcessing files...  99% (    0 it/s)
-[1F[1KProcessing files... 100% (    0 it/s)
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m: Reached max_files limit (100), stopping.
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m: 
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m: List of output files (98):
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082629Z_gen_000262_supernova_g4_detsim_ana_2025-10-21T_092902Z_tps.root
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082633Z_gen_000263_supernova_g4_detsim_ana_2025-10-21T_092823Z_tps.root
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082635Z_gen_000265_supernovaFailed to load module MathCore
-Failed to load module Hist
-Failed to load module ROOTBrowsable
-Failed to load module Unfold
-Failed to load module RHTTPSniff
-Failed to load module HistPainter
-Failed to load module PyMVA
-Failed to load module RHTTP
-Failed to load module FitPanel
-Failed to load module ProofDraw
-Failed to load module Unuran
-Failed to load module Quadp
-Failed to load module Genetic
-Failed to load module Eve
-Failed to load module GeomPainter
-Failed to load module TreeViewer
-Failed to load module Physics
-Failed to load module ROOTTMVASofieParser
-Failed to load module EG
-Failed to load module Tree
-Failed to load module HistFactory
-Failed to load module Spectrum
-Failed to load module Matrix
-Failed to load module Html
-Failed to load module Hist
-Failed to load module GuiHtml
-Failed to load module Gpad
-Failed to load module TMVAGui
-Failed to load module Postscript
-Failed to load module ROOTEve
-Failed to load module RGL
-Failed to load module Fumili
-Failed to load module Geom
-Failed to load module RooFitMore
-Failed to load module X3d
-Failed to load module SPlot
-Failed to load module Hbook
-Failed to load module RooFit
-Failed to load module RCsg
-Failed to load module RooStats
-Failed to load module RooFitRDataFrameHelpers
-Failed to load module GeomBuilder
-Failed to load module Proof
-Failed to load module FITSIO
-Failed to load module Ged
-Failed to load module Recorder
-Failed to load module FFTW
-Failed to load module GuiBld
-Failed to load module ROOTWebDisplay
-Failed to load module RooFitCore
-Failed to load module Gui
-Failed to load module ROOTHistDraw
-Failed to load module GX11TTF
-Failed to load module ROOTTMVASofie
-Failed to load module ProofPlayer
-Failed to load module ASImage
-Failed to load module MathMore
-Failed to load module RooFitXRooFit
-Failed to load module RooFitHS3
-Failed to load module Foam
-Failed to load module SpectrumPainter
-Failed to load module Minuit2
-Failed to load module MLP
-Failed to load module ROOTDataFrame
-Failed to load module GenVector
-Failed to load module ROOTBrowserv7
-Failed to load module Minuit
-Failed to load module Graf3d
-Failed to load module TMVA
-Failed to load module ROOTNTupleUtil
-Failed to load module ASImageGui
-Failed to load module Graf
-Failed to load module GX11
-Failed to load module Gdml
-Failed to load module ROOTTreeViewer
-Failed to load module ProofBench
-Failed to load module MathCore
-Failed to load module Gviz3d
-Failed to load module WebGui6
-Failed to load module ROOTHist
-Failed to load module TreePlayer
-Failed to load module ROOTGeomViewer
-Failed to load module ROOTFitPanelv7
-Failed to load module Smatrix
-Failed to load module SessionViewer
-Failed to load module MathCore
-Failed to load module GenVector
-Failed to load module Matrix
-Failed to load module Physics
-Failed to load module Hist
-Failed to load module Graf
-Failed to load module Postscript
-Failed to load module Gpad
-Failed to load module Graf3d
-Failed to load module Tree
-Failed to load module TreePlayer
-Failed to load module ROOTDataFrame
-_g4_detsim_ana_2025-10-21T_092549Z_tps.root
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082638Z_gen_000266_supernova_g4_detsim_ana_2025-10-21T_092459Z_tps.root
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082733Z_gen_000268_supernova_g4_detsim_ana_2025-10-21T_091755Z_tps.root
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082733Z_gen_000269_supernova_g4_detsim_ana_2025-10-21T_092744Z_tps.root
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082733Z_gen_000270_supernova_g4_detsim_ana_2025-10-21T_094451Z_tps.root
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082733Z_gen_000271_supernova_g4_detsim_ana_2025-10-21T_092805Z_tps.root
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082942Z_gen_000273_supernova_g4_detsim_ana_2025-10-21T_092759Z_tps.root
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_es/fixed_tps//prodmarley_nue_flat_es_dune10kt_1x2x2_20250826T082943Z_gen_000274_supernova_g4_detsim_ana_2025-10-21T_090437Z_tps.root
-30/10/2025 10:58:31 [32m[backtrack_tpstream.cpp][0m:  ... (88 more files not shown)
-
-All requested steps completed, hopefully successfully.

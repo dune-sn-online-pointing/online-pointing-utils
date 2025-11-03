@@ -1,2 +1,0 @@
-/pool/condor/dir_359845/sequence.sh: line 10: /pool/condor/scripts/init.sh: No such file or directory
-Fatal in <TROOT::InitInterpreter>: cannot load library /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc12-opt/lib/libRIO.so: undefined symbol: _ZNK4ROOT8Internal19RConcurrentHashColl6InsertERKNS1_9HashValueEOSt6vectorIiSaIiEE

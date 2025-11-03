@@ -1,6 +1,0 @@
-/pool/condor/dir_1106349/sequence.sh: line 10: /pool/condor/scripts/init.sh: No such file or directory
-Error in <TNetXNGFile::ReadBuffer>: error reading all requested bytes, got 0 of 300
-Error in <TNetXNGFile::Init>: root://eoshome-e.cern.ch//eos/user/e/evilla/dune/sn-tps/production_cc/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184944Z_gen_000683_supernova_g4_detsim_ana_2025-10-21T_094417Z_tpstream.root failed to read the file type data.
-Error in <TNetXNGFile::TNetXNGFile>: Object is in 'zombie' state
-Error in <TFile::ReadBuffer>: error reading all requested bytes from file /eos/user/e/evilla/dune/sn-tps/production_cc/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184944Z_gen_000683_supernova_g4_detsim_ana_2025-10-21T_094417Z_tpstream.root, got 0 of 300
-Error in <TFile::Init>: /eos/user/e/evilla/dune/sn-tps/production_cc/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T184944Z_gen_000683_supernova_g4_detsim_ana_2025-10-21T_094417Z_tpstream.root failed to read the file type data.

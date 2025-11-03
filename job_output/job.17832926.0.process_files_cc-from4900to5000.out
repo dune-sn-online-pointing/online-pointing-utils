@@ -1,314 +1,0 @@
-Home directory set from CLI to: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils
-
-init.sh script started
- Repository home is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils
- Parameters directory is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/parameters
- WARNING: Expected LCG view at /cvmfs/sft.cern.ch/lcg/views/LCG_104d/x86_64-el9-gcc11-opt/setup.sh not found. ROOT packages may be incomplete.
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		true
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	false
-Run analyze:		false
-Run generate images:	false
-Run generate volumes:	false
-Run analyze volumes:	false
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		true
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json
-**************************
- Looking for json settings using command: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/findSettings.sh -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json
-Global settings file found, full path is: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/compile.sh -p /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script /pool/condor/dir_682191/sequence.sh
-
-init.sh script started
- Repository home is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils
- Parameters directory is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/parameters
- WARNING: Expected LCG view at /cvmfs/sft.cern.ch/lcg/views/LCG_104d/x86_64-el9-gcc11-opt/setup.sh not found. ROOT packages may be incomplete.
- WARNING: python environment not found, not activating.
-init.sh finished
-
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running backtrack step with command:
-/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/backtrack.sh -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json --no-compile -f true -v false -d false --max-files 100 --skip-files 0
-
-init.sh script started
- Repository home is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils
- Parameters directory is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/parameters
- WARNING: Expected LCG view at /cvmfs/sft.cern.ch/lcg/views/LCG_104d/x86_64-el9-gcc11-opt/setup.sh not found. ROOT packages may be incomplete.
- WARNING: python environment not found, not activating.
-init.sh finished
-
- Looking for json settings using command: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/findSettings.sh -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json
-Settings file found, full path is: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json 
-
-Compiling the code with the following command:
-/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/compile.sh -p /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/scripts/backtrack.sh
-
-init.sh script started
- Repository home is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils
- Parameters directory is /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/parameters
- WARNING: Expected LCG view at /cvmfs/sft.cern.ch/lcg/views/LCG_104d/x86_64-el9-gcc11-opt/setup.sh not found. ROOT packages may be incomplete.
- WARNING: python environment not found, not activating.
-init.sh finished
-
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/build//src/app/backtrack_tpstream -j /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json --max-files 100 --skip-files 0 --override
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: > backtrack app - extract TPs and attach truth, writing *_tps_bktr<N>.root files (N: backtracker_error_margin).
-
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: Usage: 
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: ──────────── Main options ────────────
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: bktrMargin {--bktr-margin}: Override backtracker_error_margin (int) (expected: 1 value)
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: maxFiles {--max-files}: Maximum number of files to process (overrides JSON max_files) (expected: 1 value)
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: skipFiles {--skip-files}: Number of files to skip at start (overrides JSON skip_files) (expected: 1 value)
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: ──────────── Triggers ────────────
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: verboseMode {-v,--verbose}: Run in verbose mode (trigger)
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: debugMode {-d,--debug}: Run in debug mode (more detailed than verbose) (trigger)
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: overrideMode {-f,--override}: Force reprocessing even if output already exists (trigger)
-
-
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: Loading JSON config: /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cc_fixed_myproc.json
-30/10/2025 10:49:25 [32m[backtrack_tpstream.cpp][0m: Using backtracker_error_margin: 10
-30/10/2025 10:49:25 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tpstream
-30/10/2025 10:49:39 [32m[backtrack_tpstream.cpp][0m: Number of valid files: 4001
-30/10/2025 10:49:39 [32m[backtrack_tpstream.cpp][0m: Max files (from CLI): 100
-30/10/2025 10:49:39 [32m[backtrack_tpstream.cpp][0m: Number of files to skip at start (from CLI): 0
-30/10/2025 10:49:39 [32m[backtrack_tpstream.cpp][0m: Output folder (pure signal TPs): /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps/
-30/10/2025 10:49:39 [32m[backtrack_tpstream.cpp][0m: Effective time window (TDC ticks): 352 (conversion_tdc_to_tpc=32)
-30/10/2025 10:49:39 [32m[backtrack_tpstream.cpp][0m: Channel tolerance (channels): 0
-Processing files...   1% (    0 it/s)
-[1F[1K30/10/2025 10:51:43 [31m[backtrack_tpstream.cpp][0m: Failed to open file: /eos/user/e/evilla/dune/sn-tps/production_cc/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091326Z_gen_000001_supernova_g4_detsim_ana_2025-10-21T_092201Z_tpstream.root
-Processing files...   2% (    0 it/s)
-[1F[1KProcessing files...   3% (    0 it/s)
-[1F[1KProcessing files...   4% (    0 it/s)
-[1F[1KProcessing files...   5% (    0 it/s)
-[1F[1KProcessing files...   6% (    0 it/s)
-[1F[1KProcessing files...   7% (    0 it/s)
-[1F[1KProcessing files...   8% (    0 it/s)
-[1F[1KProcessing files...   9% (    0 it/s)
-[1F[1KProcessing files...  10% (    0 it/s)
-[1F[1KProcessing files...  11% (    0 it/s)
-[1F[1KProcessing files...  12% (    0 it/s)
-[1F[1KProcessing files...  13% (    4 it/s)
-[1F[1KProcessing files...  14% (    0 it/s)
-[1F[1KProcessing files...  15% (    0 it/s)
-[1F[1KProcessing files...  16% (    0 it/s)
-[1F[1KProcessing files...  17% (    0 it/s)
-[1F[1KProcessing files...  18% (    0 it/s)
-[1F[1KProcessing files...  19% (    0 it/s)
-[1F[1KProcessing files...  20% (    0 it/s)
-[1F[1KProcessing files...  21% (    0 it/s)
-[1F[1KProcessing files...  22% (    0 it/s)
-[1F[1KProcessing files...  23% (    0 it/s)
-[1F[1KProcessing files...  24% (    0 it/s)
-[1F[1KProcessing files...  25% (    0 it/s)
-[1F[1KProcessing files...  26% (    0 it/s)
-[1F[1KProcessing files...  27% (    0 it/s)
-[1F[1KProcessing files...  28% (    0 it/s)
-[1F[1KProcessing files...  29% (    0 it/s)
-[1F[1KProcessing files...  30% (    0 it/s)
-[1F[1KProcessing files...  31% (    0 it/s)
-[1F[1KProcessing files...  32% (    0 it/s)
-[1F[1KProcessing files...  33% (    0 it/s)
-[1F[1KProcessing files...  34% (    0 it/s)
-[1F[1KProcessing files...  35% (    0 it/s)
-[1F[1KProcessing files...  36% (    0 it/s)
-[1F[1KProcessing files...  37% (    0 it/s)
-[1F[1KProcessing files...  38% (    0 it/s)
-[1F[1KProcessing files...  39% (    0 it/s)
-[1F[1KProcessing files...  40% (    0 it/s)
-[1F[1KProcessing files...  41% (    0 it/s)
-[1F[1KProcessing files...  42% (    1 it/s)
-[1F[1KProcessing files...  43% (    0 it/s)
-[1F[1KProcessing files...  44% (    0 it/s)
-[1F[1KProcessing files...  45% (    0 it/s)
-[1F[1KProcessing files...  46% (    0 it/s)
-[1F[1KProcessing files...  47% (    0 it/s)
-[1F[1KProcessing files...  48% (    0 it/s)
-[1F[1KProcessing files...  49% (    0 it/s)
-[1F[1KProcessing files...  50% (    0 it/s)
-[1F[1KProcessing files...  51% (    7 it/s)
-[1F[1KProcessing files...  52% (    0 it/s)
-[1F[1KProcessing files...  53% (    0 it/s)
-[1F[1KProcessing files...  54% (    0 it/s)
-[1F[1KProcessing files...  55% (    5 it/s)
-[1F[1KProcessing files...  56% (    0 it/s)
-[1F[1KProcessing files...  57% (    0 it/s)
-[1F[1KProcessing files...  58% (    0 it/s)
-[1F[1KProcessing files...  59% (    5 it/s)
-[1F[1KProcessing files...  60% (    0 it/s)
-[1F[1KProcessing files...  61% (    0 it/s)
-[1F[1KProcessing files...  62% (    0 it/s)
-[1F[1KProcessing files...  63% (    0 it/s)
-[1F[1KProcessing files...  64% (    0 it/s)
-[1F[1KProcessing files...  65% (    0 it/s)
-[1F[1KProcessing files...  66% (    0 it/s)
-[1F[1KProcessing files...  67% (    0 it/s)
-[1F[1KProcessing files...  68% (    0 it/s)
-[1F[1KProcessing files...  69% (    3 it/s)
-[1F[1KProcessing files...  70% (    0 it/s)
-[1F[1KProcessing files...  71% (    0 it/s)
-[1F[1KProcessing files...  72% (    0 it/s)
-[1F[1KProcessing files...  73% (    0 it/s)
-[1F[1KProcessing files...  74% (    0 it/s)
-[1F[1KProcessing files...  75% (    0 it/s)
-[1F[1KProcessing files...  76% (    0 it/s)
-[1F[1KProcessing files...  77% (    0 it/s)
-[1F[1KProcessing files...  78% (    8 it/s)
-[1F[1KProcessing files...  79% (    0 it/s)
-[1F[1KProcessing files...  80% (    0 it/s)
-[1F[1KProcessing files...  81% (    0 it/s)
-[1F[1KProcessing files...  82% (    0 it/s)
-[1F[1KProcessing files...  83% (    0 it/s)
-[1F[1KProcessing files...  84% (    8 it/s)
-[1F[1KProcessing files...  85% (    0 it/s)
-[1F[1KProcessing files...  86% (    0 it/s)
-[1F[1KProcessing files...  87% (    0 it/s)
-[1F[1KProcessing files...  88% (    9 it/s)
-[1F[1KProcessing files...  89% (    4 it/s)
-[1F[1KProcessing files...  90% (    2 it/s)
-[1F[1KProcessing files...  91% (    0 it/s)
-[1F[1KProcessing files...  92% (    2 it/s)
-[1F[1KProcessing files...  93% (    2 it/s)
-[1F[1KProcessing files...  94% (    0 it/s)
-[1F[1KProcessing files...  95% (    0 it/s)
-[1F[1KProcessing files...  96% (    5 it/s)
-[1F[1KProcessing files...  97% (    0 it/s)
-[1F[1KProcessing files...  98% (    5 it/s)
-[1F[1KProcessing files...  99% (    5 it/s)
-[1F[1KProcessing files... 100% (    1 it/s)
-30/10/2025 10:58:24 [32m[backtrack_tpstream.cpp][0m: Reached max_files limit (100), stopping.
-30/10/2025 10:58:26 [32m[backtrack_tpstream.cpp][0m: 
-30/10/2025 10:58:26 [32m[backtrack_tpstream.cpp][0m: List of output files (99):
-30/10/2025 10:58:26 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091326Z_gen_000002_supernova_g4_detsim_ana_2025-10-21T_095540Z_tps.root
-30/10/202Failed to load module MathCore
-Failed to load module Hist
-Failed to load module ROOTBrowsable
-Failed to load module Unfold
-Failed to load module RHTTPSniff
-Failed to load module HistPainter
-Failed to load module PyMVA
-Failed to load module RHTTP
-Failed to load module FitPanel
-Failed to load module ProofDraw
-Failed to load module Unuran
-Failed to load module Quadp
-Failed to load module Genetic
-Failed to load module Eve
-Failed to load module GeomPainter
-Failed to load module TreeViewer
-Failed to load module Physics
-Failed to load module ROOTTMVASofieParser
-Failed to load module EG
-Failed to load module Tree
-Failed to load module HistFactory
-Failed to load module Spectrum
-Failed to load module Matrix
-Failed to load module Html
-Failed to load module Hist
-Failed to load module GuiHtml
-Failed to load module Gpad
-Failed to load module TMVAGui
-Failed to load module Postscript
-Failed to load module ROOTEve
-Failed to load module RGL
-Failed to load module Fumili
-Failed to load module Geom
-Failed to load module RooFitMore
-Failed to load module X3d
-Failed to load module SPlot
-Failed to load module Hbook
-Failed to load module RooFit
-Failed to load module RCsg
-Failed to load module RooStats
-Failed to load module RooFitRDataFrameHelpers
-Failed to load module GeomBuilder
-Failed to load module Proof
-Failed to load module FITSIO
-Failed to load module Ged
-Failed to load module Recorder
-Failed to load module FFTW
-Failed to load module GuiBld
-Failed to load module ROOTWebDisplay
-Failed to load module RooFitCore
-Failed to load module Gui
-Failed to load module ROOTHistDraw
-Failed to load module GX11TTF
-Failed to load module ROOTTMVASofie
-Failed to load module ProofPlayer
-Failed to load module ASImage
-Failed to load module MathMore
-Failed to load module RooFitXRooFit
-Failed to load module RooFitHS3
-Failed to load module Foam
-Failed to load module SpectrumPainter
-Failed to load module Minuit2
-Failed to load module MLP
-Failed to load module ROOTDataFrame
-Failed to load module GenVector
-Failed to load module ROOTBrowserv7
-Failed to load module Minuit
-Failed to load module Graf3d
-Failed to load module TMVA
-Failed to load module ROOTNTupleUtil
-Failed to load module ASImageGui
-Failed to load module Graf
-Failed to load module GX11
-Failed to load module Gdml
-Failed to load module ROOTTreeViewer
-Failed to load module ProofBench
-Failed to load module MathCore
-Failed to load module Gviz3d
-Failed to load module WebGui6
-Failed to load module ROOTHist
-Failed to load module TreePlayer
-Failed to load module ROOTGeomViewer
-Failed to load module ROOTFitPanelv7
-Failed to load module Smatrix
-Failed to load module SessionViewer
-Failed to load module MathCore
-Failed to load module GenVector
-Failed to load module Matrix
-Failed to load module Physics
-Failed to load module Hist
-Failed to load module Graf
-Failed to load module Postscript
-Failed to load module Gpad
-Failed to load module Graf3d
-Failed to load module Tree
-Failed to load module TreePlayer
-Failed to load module ROOTDataFrame
-5 10:58:26 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091329Z_gen_000004_supernova_g4_detsim_ana_2025-10-21T_092135Z_tps.root
-30/10/2025 10:58:26 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091329Z_gen_000005_supernova_g4_detsim_ana_2025-10-21T_094330Z_tps.root
-30/10/2025 10:58:26 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091329Z_gen_000006_supernova_g4_detsim_ana_2025-10-21T_092153Z_tps.root
-30/10/2025 10:58:26 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091332Z_gen_000007_supernova_g4_detsim_ana_2025-10-21T_092156Z_tps.root
-30/10/2025 10:58:26 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091334Z_gen_000008_supernova_g4_detsim_ana_2025-10-21T_094318Z_tps.root
-30/10/2025 10:58:26 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091335Z_gen_000010_supernova_g4_detsim_ana_2025-10-21T_094314Z_tps.root
-30/10/2025 10:58:26 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091335Z_gen_000012_supernova_g4_detsim_ana_2025-10-21T_085048Z_tps.root
-30/10/2025 10:58:26 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091336Z_gen_000013_supernova_g4_detsim_ana_2025-10-21T_085303Z_tps.root
-30/10/2025 10:58:26 [32m[backtrack_tpstream.cpp][0m:  - /eos/user/e/evilla/dune/sn-tps/production_cc/fixed_tps//prodmarley_nue_flat_cc_dune10kt_1x2x2_20250826T091337Z_gen_000014_supernova_g4_detsim_ana_2025-10-21T_085320Z_tps.root
-30/10/2025 10:58:26 [32m[backtrack_tpstream.cpp][0m:  ... (89 more files not shown)
-
-All requested steps completed, hopefully successfully.
