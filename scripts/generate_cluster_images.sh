@@ -4,13 +4,15 @@ export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source $SCRIPTS_DIR/init.sh
 
 print_help() {
-    echo "Usage: $0 -j <json> [-o <output>] [-d|--draw-mode <mode>] [-f|--override] [-v|--verbose]"
+    echo "Usage: $0 -j <json> [-o <output>] [-d|--draw-mode <mode>] [-f|--override] [-v|--verbose] [--skip-files <n>] [--max-files <n>]"
     echo "Options:"
     echo "  -j|--json <file>            JSON settings file (required)"
     echo "  -o|--output-dir <dir>       Output directory (overrides JSON clusters_folder)"
     echo "  -d|--draw-mode <mode>       Drawing mode: pentagon (default), triangle, or rectangle"
     echo "  -f|--override               Force reprocessing even if output batch files already exist"
     echo "  -v|--verbose                Enable verbose output"
+    echo "     --skip-files <n>        Skip first N cluster files (overrides JSON)"
+    echo "     --max-files <n>         Process at most N cluster files (overrides JSON)"
     echo "  -h|--help                   Print this help message"
     echo ""
     echo "Example:"
@@ -25,12 +27,16 @@ output_dir=""
 draw_mode="pentagon"
 override=false
 verbose=false
+skip_files=""
+max_files=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -j|--json) settingsFile="$2"; shift 2;;
         -o|--output-dir) output_dir="$2"; shift 2;;
         -d|--draw-mode) draw_mode="$2"; shift 2;;
+        --skip-files) skip_files="$2"; shift 2;;
+        --max-files) max_files="$2"; shift 2;;
         -f|--override)
             if [[ $2 == "true" || $2 == "false" ]]; then
                 override=$2
@@ -69,6 +75,12 @@ fi
 
 # Build command
 cmd="python3 ${SCRIPTS_DIR}/../python/generate_cluster_arrays.py --json $settingsFile --draw-mode $draw_mode"
+if [[ -n "$skip_files" ]]; then
+    cmd+=" --skip-files $skip_files"
+fi
+if [[ -n "$max_files" ]]; then
+    cmd+=" --max-files $max_files"
+fi
 
 if [[ -n "$output_dir" ]]; then
     cmd+=" --output-dir $output_dir"

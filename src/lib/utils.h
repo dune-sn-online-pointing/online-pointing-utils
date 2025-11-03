@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+
 #include <nlohmann/json.hpp>
 
 #include "ParametersManager.h"
@@ -19,6 +20,10 @@ std::vector<std::string> find_input_files_by_tpstream_basenames(const nlohmann::
 std::string toLower(std::string s);
 
 bool ensureDirectoryExists(const std::string& folder);
+
+// Path helpers
+std::string getTpstreamBaseFolder(const nlohmann::json& j);
+std::string resolveFolderAgainstTpstream(const nlohmann::json& j, const std::string& folder, bool useBaseOnEmpty = false);
 
 // Time conversion utilities (declared here, defined in utils.cpp to avoid circular dependency)
 int toTPCticks(int tdcTicks);

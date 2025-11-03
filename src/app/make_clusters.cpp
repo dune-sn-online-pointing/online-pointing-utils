@@ -8,8 +8,8 @@ int main(int argc, char* argv[]) {
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
     clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
-    clp.addOption("skip_files", {"-s", "--skip"}, "Number of files to skip at start (overrides JSON)", -1);
-    clp.addOption("max_files", {"-m", "--max"}, "Maximum number of files to process (overrides JSON)", -1);
+    clp.addOption("skip_files", {"-s", "--skip", "--skip-files"}, "Number of files to skip at start (overrides JSON)", -1);
+    clp.addOption("max_files", {"-m", "--max", "--max-files"}, "Maximum number of files to process (overrides JSON)", -1);
     clp.addOption("override", {"-f", "--override"}, "Override existing output files (default: false)", false);
     clp.addOption("outFolder", {"--output-folder"}, "Output folder path (default: data)");
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");

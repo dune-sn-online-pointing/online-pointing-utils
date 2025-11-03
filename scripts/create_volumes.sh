@@ -34,7 +34,15 @@ while [[ $# -gt 0 ]]; do
             SKIP_OVERRIDE="--skip $2"
             shift 2
             ;;
+        --skip-files)
+            SKIP_OVERRIDE="--skip $2"
+            shift 2
+            ;;
         --max)
+            MAX_OVERRIDE="--max $2"
+            shift 2
+            ;;
+        --max-files)
             MAX_OVERRIDE="--max $2"
             shift 2
             ;;

@@ -29,6 +29,31 @@ bool ensureDirectoryExists(const std::string& folder) {
     return true;
 }
 
+std::string getTpstreamBaseFolder(const nlohmann::json& j) {
+    std::string base = j.value("tpstream_folder", std::string("."));
+    if (base.empty()) {
+        base = ".";
+    }
+    std::filesystem::path base_path(base);
+    return base_path.lexically_normal().string();
+}
+
+std::string resolveFolderAgainstTpstream(const nlohmann::json& j, const std::string& folder, bool useBaseOnEmpty) {
+    std::string base = getTpstreamBaseFolder(j);
+
+    if (folder.empty()) {
+        return useBaseOnEmpty ? base : std::string{};
+    }
+
+    std::filesystem::path folder_path(folder);
+    if (folder_path.is_absolute()) {
+        return folder_path.lexically_normal().string();
+    }
+
+    std::filesystem::path resolved = std::filesystem::path(base) / folder_path;
+    return resolved.lexically_normal().string();
+}
+
 
 void bindBranch(TTree *tree, const char* name, void* address) {
     if (tree->SetBranchAddress(name, address) < 0) {
@@ -57,12 +82,9 @@ std::string getClustersFolder(const nlohmann::json& j) {
     }
     std::string outfolder = j.value("clusters_folder", std::string(""));
     if (outfolder.empty()) {
-        // Auto-generate from tpstream_folder
-        outfolder = j.value("tpstream_folder", std::string("."));
-        // Remove trailing slash if present
-        if (!outfolder.empty() && outfolder.back() == '/') {
-            outfolder.pop_back();
-        }
+        outfolder = getTpstreamBaseFolder(j);
+    } else {
+        outfolder = resolveFolderAgainstTpstream(j, outfolder, true);
     }
 
     // Build subfolder name with clustering conditions
@@ -86,8 +108,8 @@ std::string getClustersFolder(const nlohmann::json& j) {
         + "_tot" + sanitize(std::to_string(tot_cut))
         + "_e" + sanitize(std::to_string(energy_cut));
     
-    std::string clusters_folder_path = outfolder + "/" + clusters_subfolder;
-    return clusters_folder_path;
+    std::filesystem::path clusters_folder_path = std::filesystem::path(outfolder) / clusters_subfolder;
+    return clusters_folder_path.lexically_normal().string();
 }
 
 // Helper: Build conditions string from clustering parameters
@@ -128,36 +150,32 @@ std::string getConditionsString(const nlohmann::json& j) {
 std::string getOutputFolder(const nlohmann::json& j, const std::string& folder_type, const std::string& json_key) {
     // If explicit path provided in JSON, use it
     if (j.contains(json_key) && !j[json_key].get<std::string>().empty()) {
-        return j[json_key].get<std::string>();
+        return resolveFolderAgainstTpstream(j, j[json_key].get<std::string>(), true);
     }
 
     // Auto-generate from tpstream_folder
-    std::string base_folder = j.value("tpstream_folder", std::string("."));
-    
-    // Remove trailing slash if present
-    if (!base_folder.empty() && base_folder.back() == '/') {
-        base_folder.pop_back();
-    }
+    std::string base_folder = getTpstreamBaseFolder(j);
+    std::filesystem::path base_path(base_folder);
 
     std::string prefix = j.value("clusters_folder_prefix", std::string(""));
     std::string conditions = getConditionsString(j);
 
     if (folder_type == "tps_bg") {
-        return base_folder + "/tps_bg";
+        return (base_path / "tps_bg").lexically_normal().string();
     } else if (folder_type == "clusters") {
-        return base_folder + "/clusters_" + prefix + "_" + conditions;
+        return (base_path / ("clusters_" + prefix + "_" + conditions)).lexically_normal().string();
     } else if (folder_type == "cluster_images") {
-        return base_folder + "/cluster_images_" + prefix + "_" + conditions;
+        return (base_path / ("cluster_images_" + prefix + "_" + conditions)).lexically_normal().string();
     } else if (folder_type == "volume_images" || folder_type == "volumes") {
-        return base_folder + "/volume_images_" + prefix + "_" + conditions;
+        return (base_path / ("volume_images_" + prefix + "_" + conditions)).lexically_normal().string();
     } else if (folder_type == "reports") {
-        return base_folder + "/reports";
+        return (base_path / "reports").lexically_normal().string();
     } else if (folder_type == "matched_clusters") {
-        return base_folder + "/matched_clusters_" + prefix + "_" + conditions;
+        return (base_path / ("matched_clusters_" + prefix + "_" + conditions)).lexically_normal().string();
     }
 
     // Default: return base folder
-    return base_folder;
+    return base_path.lexically_normal().string();
 }
 
 // std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix) {
@@ -561,22 +579,16 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
 
     // Auto-generate folder path from tpstream_folder if not explicitly provided
     std::string auto_folder;
+    std::string base_folder = getTpstreamBaseFolder(j);
     if (!j.contains(folder_key)) {
-        std::string base = j.value("tpstream_folder", std::string(""));
-        if (!base.empty()) {
-            if (base.back() == '/') base.pop_back();
-            
-            if (pattern == "tps") {
-                // For tps pattern, auto-generate from tpstream_folder/tps_bg
-                auto_folder = base + "/tps_bg";
-            } else if (pattern == "sig") {
-                // For sig pattern (signal TPs), use tpstream_folder directly
-                auto_folder = base;
-            }
-            
-            if (!auto_folder.empty() && verboseMode) {
-                LogInfo << "[find_input_files] Auto-generated '" << folder_key << "': " << auto_folder << std::endl;
-            }
+        if (pattern == "tps") {
+            auto_folder = (std::filesystem::path(base_folder) / "tps_bg").lexically_normal().string();
+        } else if (pattern == "sig" || pattern == "tpstream") {
+            auto_folder = base_folder;
+        }
+
+        if (!auto_folder.empty() && verboseMode) {
+            LogInfo << "[find_input_files] Auto-generated '" << folder_key << "': " << auto_folder << std::endl;
         }
     }
 
@@ -598,12 +610,21 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
     if (input_files.empty()) {
         std::string folder;
         if (j.contains(folder_key)) {
-            folder = j[folder_key].get<std::string>();
+            folder = resolveFolderAgainstTpstream(j, j[folder_key].get<std::string>(), pattern == "sig");
         } else if (!auto_folder.empty()) {
             folder = auto_folder;
         }
         
         if (!folder.empty()) {
+            if (!std::filesystem::exists(folder)) {
+                if (pattern == "sig") {
+                    std::string fallback = base_folder;
+                    if (folder != fallback) {
+                        LogWarning << "[find_input_files] Folder '" << folder << "' does not exist. Falling back to tpstream_folder: " << fallback << std::endl;
+                        folder = fallback;
+                    }
+                }
+            }
             if (verboseMode) LogInfo << "[find_input_files] Found key '" << folder_key << "' with value: " << folder << std::endl;
             if (verboseMode) LogInfo << "[find_input_files] Scanning folder '" << folder << "' for matching files..." << std::endl;
             
