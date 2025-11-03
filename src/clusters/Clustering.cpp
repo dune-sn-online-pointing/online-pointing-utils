@@ -893,8 +893,8 @@ std::vector<Cluster> read_clusters(std::string root_filename){
     return clusters;
 }
 
-std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::string view){
-    LogInfo << "Reading " << view << " clusters from: " << root_filename << std::endl;
+std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::string view, std::string directory){
+    LogInfo << "Reading " << view << " clusters from: " << root_filename << " (directory: " << directory << ")" << std::endl;
     std::vector<Cluster> clusters;
     TFile *f = TFile::Open(root_filename.c_str());
     if (!f || f->IsZombie()) {
@@ -902,10 +902,10 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
         return clusters;
     }
     
-    // Find clusters directory
-    TDirectory* clusters_dir = dynamic_cast<TDirectory*>(f->Get("clusters"));
+    // Find specified directory
+    TDirectory* clusters_dir = dynamic_cast<TDirectory*>(f->Get(directory.c_str()));
     if (!clusters_dir) {
-        LogWarning << "No 'clusters' directory found, trying file root" << std::endl;
+        LogWarning << "No '" << directory << "' directory found, trying file root" << std::endl;
         clusters_dir = f;
     }
     

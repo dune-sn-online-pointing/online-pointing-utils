@@ -120,38 +120,15 @@ int main(int argc, char* argv[]) {
 
             if (verboseMode) LogInfo << "  Clusters: U=" << clusters_u.size() << " V=" << clusters_v.size() << " X=" << clusters_x.size() << std::endl;
             
-            // Read discarded clusters (may be empty)
-            std::vector<Cluster> discarded_u, discarded_v, discarded_x;
-            TFile* input_file = TFile::Open(input_clusters_file.c_str());
-            if (input_file && !input_file->IsZombie()) {
-                TDirectory* discarded_dir = dynamic_cast<TDirectory*>(input_file->Get("discarded"));
-                if (discarded_dir) {
-                    // Temporarily change directory context for reading
-                    TDirectory* save_dir = gDirectory;
-                    discarded_dir->cd();
-                    
-                    // Read discarded clusters if they exist
-                    if (discarded_dir->Get("clusters_tree_U")) {
-                        input_file->Close();
-                        delete input_file;
-                        // Read using modified function (we'll pass "discarded/U" as hint)
-                        // For now, manually read from discarded directory
-                        input_file = TFile::Open(input_clusters_file.c_str());
-                        discarded_dir = dynamic_cast<TDirectory*>(input_file->Get("discarded"));
-                        if (discarded_dir) {
-                            TTree* tree_u = dynamic_cast<TTree*>(discarded_dir->Get("clusters_tree_U"));
-                            TTree* tree_v = dynamic_cast<TTree*>(discarded_dir->Get("clusters_tree_V"));
-                            TTree* tree_x = dynamic_cast<TTree*>(discarded_dir->Get("clusters_tree_X"));
-                            
-                            if (verboseMode && tree_u) LogInfo << "  Discarded: U=" << tree_u->GetEntries() 
-                                << " V=" << (tree_v ? tree_v->GetEntries() : 0) 
-                                << " X=" << (tree_x ? tree_x->GetEntries() : 0) << std::endl;
-                        }
-                    }
-                    save_dir->cd();
-                }
-                input_file->Close();
-                delete input_file;
+            // Read discarded clusters from discarded/ directory
+            std::vector<Cluster> discarded_u = read_clusters_from_tree(input_clusters_file, "U", "discarded");
+            std::vector<Cluster> discarded_v = read_clusters_from_tree(input_clusters_file, "V", "discarded");
+            std::vector<Cluster> discarded_x = read_clusters_from_tree(input_clusters_file, "X", "discarded");
+            
+            if (verboseMode && (discarded_u.size() > 0 || discarded_v.size() > 0 || discarded_x.size() > 0)) {
+                LogInfo << "  Discarded: U=" << discarded_u.size() 
+                        << " V=" << discarded_v.size() 
+                        << " X=" << discarded_x.size() << std::endl;
             }
             
             // Match clusters

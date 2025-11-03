@@ -317,7 +317,7 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
     return all_clusters
 
 
-def get_clusters_in_volume(all_clusters, center_channel, center_time_tpc, volume_size_cm=100.0):
+def get_clusters_in_volume(all_clusters, center_channel, center_time_tpc, volume_size_cm=100.0, event=None):
     """
     Get all clusters within a volume around the center point.
     
@@ -326,6 +326,7 @@ def get_clusters_in_volume(all_clusters, center_channel, center_time_tpc, volume
         center_channel: Center channel number
         center_time_tpc: Center time in TPC ticks
         volume_size_cm: Volume size in cm (default 100cm = 1m)
+        event: If provided, only include clusters from this event
     
     Returns:
         List of cluster dicts within the volume
@@ -343,6 +344,10 @@ def get_clusters_in_volume(all_clusters, center_channel, center_time_tpc, volume
     # Filter clusters
     volume_clusters = []
     for cluster in all_clusters:
+        # Filter by event if specified
+        if event is not None and cluster['event'] != event:
+            continue
+        
         if (min_channel <= cluster['center_channel'] <= max_channel and
             min_time <= cluster['center_time_tpc'] <= max_time):
             volume_clusters.append(cluster)
@@ -480,12 +485,13 @@ def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
     
     # Process each main track
     for idx, main_cluster in enumerate(main_clusters):
-        # Get clusters in volume around this main track
+        # Get clusters in volume around this main track (only from same event)
         volume_clusters = get_clusters_in_volume(
             clusters,
             main_cluster['center_channel'],
             main_cluster['center_time_tpc'],
-            VOLUME_SIZE_CM
+            VOLUME_SIZE_CM,
+            event=main_cluster['event']  # Only include clusters from the same event
         )
         
         if len(volume_clusters) == 0:
