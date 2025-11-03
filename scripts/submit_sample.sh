@@ -54,7 +54,7 @@ if [ -z "$which_interaction" ]; then
     print_help
 fi
 
-JSON_SETTINGS="json/${which_interaction}_fixed_myproc.json"
+JSON_SETTINGS="json/${which_interaction}_prod.json"
 
 echo "Looking for settings file $JSON_SETTINGS. If execution stops, it means that the file was not found."
 findSettings_command="$SCRIPTS_DIR/findSettings.sh -j $JSON_SETTINGS"
@@ -84,7 +84,7 @@ touch $list_of_jobs
 for i in $(seq 1 $max_jobs); do
     skip=$(( (i - 1) * max_files ))
     echo "Adding job $i with skip $skip"
-    echo "-j ${JSON_SETTINGS} --home-dir ${HOME_DIR} --no-compile -ab -f --skip-files $skip --max-files $max_files" >> $list_of_jobs
+    echo "-j ${JSON_SETTINGS} --home-dir ${HOME_DIR} --no-compile --all --skip-files $skip --max-files $max_files" >> $list_of_jobs
 done
 
 echo "List of jobs:"

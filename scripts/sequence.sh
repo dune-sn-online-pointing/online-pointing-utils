@@ -114,11 +114,11 @@ if [ "$all_steps" = "true" ]; then
         run_add_backgrounds=true
         run_make_clusters=true
         run_match_clusters=true
-        run_analyze=true
+        # run_analyze=true
         run_generate_images=true
         # run_analyze_images=true
         run_generate_volumes=true
-        run_analyze_volumes=true
+        # run_analyze_volumes=true
 fi
 
 echo "**************************"
@@ -183,12 +183,6 @@ echo $compile_command
 cd $HOME_DIR
 
 common_options="--no-compile -f $override -v $verbose -d $debug"
-if [ ! -z "$max_files" ]; then
-        common_options="$common_options --max-files $max_files"
-fi
-if [ ! -z "$skip_files" ]; then
-        common_options="$common_options --skip-files $skip_files"
-fi
 
 if [ ! -z "$settingsFile" ]; then
         backtrack_json="$settingsFile"
@@ -196,6 +190,12 @@ else
         backtrack_json="$JSON_DIR/backtrack/${sample}.json"
 fi
 backtrack_command="${HOME_DIR}/scripts/backtrack.sh -j $backtrack_json $common_options"
+if [ -n "$max_files" ]; then
+        backtrack_command="$backtrack_command --max-files $max_files"
+fi
+if [ -n "$skip_files" ]; then
+        backtrack_command="$backtrack_command --skip-files $skip_files"
+fi
 if [ "$run_backtrack" = true ]; then
         echo "Running backtrack step with command:"
         echo $backtrack_command
@@ -234,6 +234,12 @@ else
         add_backgrounds_json="$JSON_DIR/add_backgrounds/${sample}.json"
 fi
 add_backgrounds_command="${HOME_DIR}/scripts/add_backgrounds.sh -j $add_backgrounds_json $common_options"
+if [ -n "$max_files" ]; then
+        add_backgrounds_command="$add_backgrounds_command -m $max_files"
+fi
+if [ -n "$skip_files" ]; then
+        add_backgrounds_command="$add_backgrounds_command -s $skip_files"
+fi
 if [ "$run_add_backgrounds" = true ] && [ "$clean_clusters" = false ]; then
         echo "Running add backgrounds step with command:"
         echo $add_backgrounds_command
@@ -253,6 +259,12 @@ else
         make_clusters_json="$JSON_DIR/make_clusters/${sample}${bg_suffix}.json"
 fi
 make_clusters_command="${HOME_DIR}/scripts/make_clusters.sh -j $make_clusters_json $common_options"
+if [ -n "$max_files" ]; then
+        make_clusters_command="$make_clusters_command -m $max_files"
+fi
+if [ -n "$skip_files" ]; then
+        make_clusters_command="$make_clusters_command -s $skip_files"
+fi
 if [ "$run_make_clusters" = true ]; then
         echo "Running make clusters step with command:"
         echo $make_clusters_command
@@ -273,6 +285,12 @@ else
         match_clusters_json="$JSON_DIR/match_clusters/${sample}${bg_suffix}.json"
 fi
 match_clusters_command="./scripts/match_clusters.sh -j $match_clusters_json $common_options"
+if [ -n "$max_files" ]; then
+        match_clusters_command="$match_clusters_command --max-files $max_files"
+fi
+if [ -n "$skip_files" ]; then
+        match_clusters_command="$match_clusters_command --skip-files $skip_files"
+fi
 if [ "$run_match_clusters" = true ]; then
         echo "Running match clusters step with command:"
         echo $match_clusters_command
@@ -318,6 +336,12 @@ if [ "$run_generate_images" = true ]; then
                 echo "Skipping image generation step."
         else
                 generate_images_command="$SCRIPTS_DIR/generate_cluster_images.sh -j $images_json"
+                if [ -n "$max_files" ]; then
+                        generate_images_command+=" --max-files $max_files"
+                fi
+                if [ -n "$skip_files" ]; then
+                        generate_images_command+=" --skip-files $skip_files"
+                fi
                 if [ "$verbose" = true ]; then
                         generate_images_command+=" -v"
                 fi
@@ -387,6 +411,12 @@ if [ "$run_generate_volumes" = true ]; then
                 echo "Skipping generate volumes step."
         else
                 generate_volumes_command="$SCRIPTS_DIR/create_volumes.sh -j $volumes_json"
+                if [ -n "$max_files" ]; then
+                        generate_volumes_command+=" --max $max_files"
+                fi
+                if [ -n "$skip_files" ]; then
+                        generate_volumes_command+=" --skip $skip_files"
+                fi
                 if [ "$verbose" = true ]; then
                         generate_volumes_command+=" -v"
                 fi

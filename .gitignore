@@ -12,3 +12,5 @@ output/
 *.jpg
 data/*
 data2/*
+job_output/
+*.cc

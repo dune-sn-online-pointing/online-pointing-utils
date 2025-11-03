@@ -35,8 +35,8 @@ while [[ $# -gt 0 ]]; do
     -j|--json) settingsFile="$2"; shift 2;;
     -i|--input-file) inputFile="$2"; shift 2;;
     -o|--output-folder) output_folder="$2"; shift 2;;
-    -s|--skip) skip_files="$2"; shift 2;;
-    -m|--max) max_files="$2"; shift 2;;
+  -s|--skip|--skip-files) skip_files="$2"; shift 2;;
+  -m|--max|--max-files) max_files="$2"; shift 2;;
     --no-compile) noCompile=true; shift;;
     --clean-compile) cleanCompile=true; shift;;        
     -f|--override)

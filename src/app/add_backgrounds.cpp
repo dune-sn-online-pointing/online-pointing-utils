@@ -44,8 +44,8 @@ int main(int argc, char* argv[]) {
     clp.getDescription() << "> add_backgrounds app - Merge signal TPs with random background events, writing *_tps_bg.root files." << std::endl;
     clp.addDummyOption("Main options");
     clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
-    clp.addOption("skip_files", {"-s", "--skip"}, "Number of files to skip at start (overrides JSON)", -1);
-    clp.addOption("max_files", {"-m", "--max"}, "Maximum number of files to process (overrides JSON)", -1);
+    clp.addOption("skip_files", {"-s", "--skip", "--skip-files"}, "Number of files to skip at start (overrides JSON)", -1);
+    clp.addOption("max_files", {"-m", "--max", "--max-files"}, "Maximum number of files to process (overrides JSON)", -1);
     clp.addTriggerOption("verboseMode", {"-v", "--verbose"}, "Run in verbose mode");
     clp.addTriggerOption("debugMode", {"-d", "--debug"}, "Run in debug mode (more detailed than verbose)");
     clp.addTriggerOption("override", {"-f", "--override"}, "Override existing output files");
@@ -88,42 +88,32 @@ int main(int argc, char* argv[]) {
     }
 
     LogInfo << "Number of files to skip at start: " << skip_files << std::endl;
-    
-    // sig_folder: pure signal TPs (input) - auto-generate from tpstream_folder if not specified
-    std::string sig_folder = j.value("sig_folder", std::string(""));
-    if (sig_folder.empty()) {
-        sig_folder = j.value("tpstream_folder", std::string("."));
-        // Remove trailing slash if present
-        if (!sig_folder.empty() && sig_folder.back() == '/') {
-            sig_folder.pop_back();
-        }
-    }
+
+    std::string base_folder = getTpstreamBaseFolder(j);
+
+    // sig_folder: pure signal TPs (input) - default to tpstream_folder
+    std::string sig_folder_cfg = j.value("sig_folder", std::string(""));
+    std::string sig_folder = sig_folder_cfg.empty()
+        ? base_folder
+        : resolveFolderAgainstTpstream(j, sig_folder_cfg, true);
     LogThrowIf(sig_folder.empty(), "sig_folder is not specified and tpstream_folder is missing.");
     
     // bg_folder: pure background TPs (input)
-    std::string bg_folder = j.value("bg_folder", std::string(""));
-    LogThrowIf(bg_folder.empty(), "bg_folder is not specified in JSON config.");
+    std::string bg_folder_cfg = j.value("bg_folder", std::string(""));
+    LogThrowIf(bg_folder_cfg.empty(), "bg_folder is not specified in JSON config.");
+    std::string bg_folder = resolveFolderAgainstTpstream(j, bg_folder_cfg, true);
     
-    // tps_bg_folder or tps_folder: merged TPs output - auto-generate from tpstream_folder if not specified
-    std::string output_folder = j.value("tps_bg_folder", std::string(""));
-    if (output_folder.empty()) {
-        output_folder = j.value("tps_folder", std::string(""));
-    }
-    if (output_folder.empty()) {
-        // Auto-generate from tpstream_folder
-        std::string base = j.value("tpstream_folder", std::string("."));
-        if (!base.empty() && base.back() == '/') {
-            base.pop_back();
-        }
-        output_folder = base + "/tps_bg";
-    }
+    // tps_bg_folder or tps_folder: merged TPs output
+    std::string output_folder = getOutputFolder(j, "tps_bg", "tps_bg_folder");
     LogThrowIf(output_folder.empty(), "tps_bg_folder (or tps_folder) is not specified and could not be auto-generated.");
+    LogThrowIf(!ensureDirectoryExists(output_folder), "Unable to create output folder '" << output_folder << "'.");
 
     LogInfo << "Configuration:" << std::endl;
     LogInfo << " - Signal type: " << signal_type << std::endl;
     LogInfo << " - Signal folder (pure signal TPs): " << sig_folder << std::endl;
     LogInfo << " - Background folder (pure bg TPs): " << bg_folder << std::endl;
     LogInfo << " - Output folder (merged TPs): " << output_folder << std::endl;
+    LogInfo << " - Override existing output files: " << (overrideMode ? "YES" : "NO") << std::endl;
     LogInfo << " - Add backgrounds around vertex only: " << (around_vertex_only ? "YES" : "NO") << std::endl;
     if (around_vertex_only) {
         LogInfo << " - Vertex radius: " << vertex_radius << " cm" << std::endl;
