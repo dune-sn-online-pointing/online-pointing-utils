@@ -105,47 +105,6 @@ def load_conversion_factors(repo_root=None):
     return params
 
 
-def extract_basename(filepath):
-    """
-    Extract basename from tpstream file path by removing _tpstream.root suffix.
-    This allows tracking files across pipeline stages.
-    
-    Example:
-        prodmarley_..._20250826T091337Z_gen_000014_..._tpstream.root
-        -> prodmarley_..._20250826T091337Z_gen_000014_...
-    """
-    filename = Path(filepath).name
-    if filename.endswith('_tpstream.root'):
-        return filename[:-len('_tpstream.root')]
-    return filename
-
-
-def get_source_basenames(json_config):
-    """
-    Get list of source tpstream file basenames with skip/max applied.
-    This ensures consistent file tracking across all pipeline stages.
-    """
-    with open(json_config, 'r') as f:
-        j = json.load(f)
-    
-    tpstream_folder = j.get('tpstream_folder', '.')
-    skip_files = j.get('skip_files', 0)
-    max_files = j.get('max_files', None)
-    
-    # Find all tpstream files
-    tpstream_files = sorted(Path(tpstream_folder).glob('*_tpstream.root'))
-    
-    # Apply skip and max to source files
-    if skip_files > 0:
-        tpstream_files = tpstream_files[skip_files:]
-    if max_files is not None and max_files > 0:
-        tpstream_files = tpstream_files[:max_files]
-    
-    # Extract basenames
-    basenames = [extract_basename(str(f)) for f in tpstream_files]
-    return basenames
-
-
 def get_clusters_folder(json_config):
     """
     Compose clusters folder name from JSON configuration.
@@ -223,39 +182,21 @@ def get_clusters_folder(json_config):
 
 
 def get_matched_clusters_folder(json_config):
-    """
-    Get matched clusters folder path.
-    If matched_clusters_folder is specified in JSON, use that.
-    Otherwise, auto-generate from clusters_folder by replacing 'clusters_' with 'matched_clusters_'
-    
-    Args:
-        json_config: Dict with configuration or path to JSON file
-        
-    Returns:
-        str: Full path to matched_clusters folder, or None if not available
-    """
-    # Load JSON if path provided
+    """Get the matched_clusters folder path from JSON config."""
     if isinstance(json_config, (str, Path)):
         with open(json_config, 'r') as f:
             j = json.load(f)
     else:
         j = json_config
     
-    # Check if explicitly specified
-    matched_folder = j.get("matched_clusters_folder", "")
-    if matched_folder:
-        return matched_folder.rstrip('/')
+    # Get matched_clusters_folder from JSON
+    if 'matched_clusters_folder' in j and j['matched_clusters_folder']:
+        return j['matched_clusters_folder']
     
     # Auto-generate from clusters_folder
     clusters_folder = get_clusters_folder(json_config)
-    if clusters_folder:
-        # Replace 'clusters_' with 'matched_clusters_' in the basename
-        parent_dir = str(Path(clusters_folder).parent)
-        basename = Path(clusters_folder).name
-        matched_basename = basename.replace('clusters_', 'matched_clusters_', 1)
-        return f"{parent_dir}/{matched_basename}"
-    
-    return None
+    matched_folder = clusters_folder.replace('/clusters_', '/matched_clusters_')
+    return matched_folder
 
 
 def get_images_folder(json_config):
@@ -702,12 +643,12 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
         file = uproot.open(cluster_file)
     except Exception as e:
         print(f"  Error opening file: {e}")
-        return 0
+        return {}
     
     # Get clusters directory
     if 'clusters' not in file:
         print(f"  No 'clusters' directory found")
-        return 0
+        return {}
     
     clusters_dir = file['clusters']
     
@@ -716,7 +657,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
     
     if not tree_names:
         print(f"  No cluster trees found")
-        return 0
+        return {}
 
     if verbose:
         print(f"  Found {len(tree_names)} planes with clusters")
@@ -900,53 +841,47 @@ if __name__ == '__main__':
         with open(json_path, 'r') as f:
             json_config = json.load(f)
         
-        # Try to use matched_clusters first, fall back to regular clusters
-        matched_folder = get_matched_clusters_folder(json_path)
-        if matched_folder and Path(matched_folder).exists():
-            clusters_folder = matched_folder
-            if args.verbose:
-                print(f"Using matched clusters folder: {clusters_folder}")
+        # Try to use matched clusters folder if it exists
+        matched_clusters_folder = get_matched_clusters_folder(json_path)
+        if matched_clusters_folder and Path(matched_clusters_folder).exists():
+            matched_files = list(Path(matched_clusters_folder).glob("*_matched.root"))
+            if matched_files:
+                print(f"Using matched clusters folder: {matched_clusters_folder}")
+                clusters_folder = matched_clusters_folder
+                file_pattern = "*_matched.root"
+            else:
+                clusters_folder = get_clusters_folder(json_path)
+                file_pattern = "*_clusters.root"
         else:
             clusters_folder = get_clusters_folder(json_path)
-            if args.verbose:
-                print(f"Using regular clusters folder: {clusters_folder}")
+            file_pattern = "*_clusters.root"
         
         images_folder = get_images_folder(json_path)
         output_dir = args.output_dir if args.output_dir else images_folder
         
-        # Get source basenames from tpstream folder (the source of truth for all stages)
-        source_basenames = get_source_basenames(json_path)
-        skip_files = json_config.get('skip_files', 0)
-        max_files = json_config.get('max_files', None)
-        
-        print(f"Using tpstream-based file list as source of truth (skip={skip_files}, max={max_files})")
-        print(f"Looking for clusters matching {len(source_basenames)} source file(s)")
-        
-        # Find ALL cluster files in the folder
-        # Try _matched.root first (from match_clusters), then _bg_clusters.root, then _clusters.root
-        all_cluster_files = list(Path(clusters_folder).glob("*_matched.root"))
-        if not all_cluster_files:
-            all_cluster_files = list(Path(clusters_folder).glob("*_bg_clusters.root"))
-        if not all_cluster_files:
-            all_cluster_files = list(Path(clusters_folder).glob("*_clusters.root"))
-        
-        # Filter cluster files to only those matching source basenames
-        cluster_files = []
-        for cluster_path in sorted(all_cluster_files):
-            cluster_name = cluster_path.name
-            # Check if this cluster file matches any source basename
-            for basename in source_basenames:
-                if basename in cluster_name:
-                    cluster_files.append(str(cluster_path))
-                    break
-        
+        # Find cluster files in the computed folder
+        cluster_files = list(Path(clusters_folder).glob(file_pattern))
         if not cluster_files:
-            print(f"Error: No cluster files found matching {len(source_basenames)} source basename(s)")
-            print(f"  Clusters folder: {clusters_folder}")
-            print(f"  Total cluster files in folder: {len(all_cluster_files)}")
-            if source_basenames:
-                print(f"  Expected basenames like: {source_basenames[0][:80]}...")
+            print(f"Error: No *_clusters.root files found in {clusters_folder}")
             sys.exit(1)
+        
+        # Sort for consistent ordering
+        cluster_files = sorted(cluster_files)
+        
+        # Read skip_files and max_files from JSON if not provided via CLI
+        skip_files = args.skip_files if args.skip_files is not None else json_config.get('skip_files', 0)
+        max_files = args.max_files if args.max_files is not None else json_config.get('max_files', None)
+        
+        # Apply skip and max filters
+        if skip_files > 0:
+            cluster_files = cluster_files[skip_files:]
+            print(f"Skipping first {skip_files} files (from {'CLI' if args.skip_files is not None else 'JSON'})")
+        
+        if max_files is not None:
+            cluster_files = cluster_files[:max_files]
+            print(f"Processing at most {max_files} files (from {'CLI' if args.max_files is not None else 'JSON'})")
+        
+        cluster_files = [str(f) for f in cluster_files]
         
         print(f"Using JSON config: {json_path}")
         print(f"Computed clusters folder: {clusters_folder}")

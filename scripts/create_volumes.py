@@ -73,47 +73,6 @@ THRESHOLD_ADC_U = 70   # Induction plane U
 THRESHOLD_ADC_V = 70   # Induction plane V
 
 
-def extract_basename(filepath):
-    """
-    Extract basename from tpstream file path by removing _tpstream.root suffix.
-    This allows tracking files across pipeline stages.
-    
-    Example:
-        prodmarley_..._20250826T091337Z_gen_000014_..._tpstream.root
-        -> prodmarley_..._20250826T091337Z_gen_000014_...
-    """
-    filename = Path(filepath).name
-    if filename.endswith('_tpstream.root'):
-        return filename[:-len('_tpstream.root')]
-    return filename
-
-
-def get_source_basenames(json_config):
-    """
-    Get list of source tpstream file basenames with skip/max applied.
-    This ensures consistent file tracking across all pipeline stages.
-    """
-    with open(json_config, 'r') as f:
-        config = json.load(f)
-    
-    tpstream_folder = config.get('tpstream_folder', '.')
-    skip_files = config.get('skip_files', 0)
-    max_files = config.get('max_files', None)
-    
-    # Find all tpstream files
-    tpstream_files = sorted(Path(tpstream_folder).glob('*_tpstream.root'))
-    
-    # Apply skip and max to source files
-    if skip_files > 0:
-        tpstream_files = tpstream_files[skip_files:]
-    if max_files is not None and max_files > 0:
-        tpstream_files = tpstream_files[:max_files]
-    
-    # Extract basenames
-    basenames = [extract_basename(str(f)) for f in tpstream_files]
-    return basenames
-
-
 def get_clusters_folder(json_config):
     """
     Compose clusters folder name from JSON configuration.
@@ -182,39 +141,21 @@ def get_clusters_folder(json_config):
 
 
 def get_matched_clusters_folder(json_config):
-    """
-    Get matched clusters folder path.
-    If matched_clusters_folder is specified in JSON, use that.
-    Otherwise, auto-generate from clusters_folder by replacing 'clusters_' with 'matched_clusters_'
-    
-    Args:
-        json_config: Dict with configuration or path to JSON file
-        
-    Returns:
-        str: Full path to matched_clusters folder, or None if not available
-    """
-    # Load JSON if path provided
+    """Get matched_clusters folder from JSON config."""
     if isinstance(json_config, (str, Path)):
         with open(json_config, 'r') as f:
             j = json.load(f)
     else:
         j = json_config
     
-    # Check if explicitly specified
-    matched_folder = j.get("matched_clusters_folder", "")
+    matched_folder = j.get("matched_clusters_folder", "").rstrip('/')
     if matched_folder:
-        return matched_folder.rstrip('/')
+        return matched_folder
     
-    # Auto-generate from clusters_folder
     clusters_folder = get_clusters_folder(json_config)
-    if clusters_folder:
-        # Replace 'clusters_' with 'matched_clusters_' in the basename
-        parent_dir = str(Path(clusters_folder).parent)
-        basename = Path(clusters_folder).name
-        matched_basename = basename.replace('clusters_', 'matched_clusters_', 1)
-        return f"{parent_dir}/{matched_basename}"
-    
-    return None
+    matched_folder = clusters_folder.replace("/clusters_", "/matched_clusters_")
+    return matched_folder
+
 
 
 def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, threshold_adc):
@@ -495,12 +436,10 @@ def create_volume_image(volume_clusters, center_channel, center_time_tpc, volume
     return image
 
 
-def process_cluster_file(cluster_file, output_folder, plane='X', override=False, verbose=False):
+def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
     """
     Process a single cluster file and create volume images for all main tracks.
-    
-    Args:
-        override: If True, overwrite existing output files. If False, skip existing files.
+    All volumes from one input file are saved into a single output NPZ file.
     
     Returns:
         Number of volumes created
@@ -524,10 +463,12 @@ def process_cluster_file(cluster_file, output_folder, plane='X', override=False,
     # Create output folder if needed
     os.makedirs(output_folder, exist_ok=True)
     
-    # Get base filename
-    base_name = Path(cluster_file).stem
+    # Get base filename for output (e.g., 'clusters_0' from 'clusters_0_clusters.root')
+    base_name = Path(cluster_file).stem.replace('_clusters', '')
     
-    volumes_created = 0
+    # Collect all volumes and metadata
+    all_images = []
+    all_metadata = []
     
     # Process each main track
     for idx, main_cluster in enumerate(main_clusters):
@@ -599,38 +540,41 @@ def process_cluster_file(cluster_file, output_folder, plane='X', override=False,
             'center_time_tpc': float(main_cluster['center_time_tpc']),
             'volume_size_cm': VOLUME_SIZE_CM,
             'image_shape': image.shape,
-            'main_cluster_id': main_cluster['cluster_id']
+            'main_cluster_id': main_cluster['cluster_id'],
+            'volume_index': idx  # Add volume index within this file
         }
         
-        # Save to npz file
-        output_file = os.path.join(output_folder, f"{base_name}_plane{plane}_volume{idx:03d}.npz")
-        
-        # Check if file exists and skip if not overriding
-        if os.path.exists(output_file) and not override:
-            if verbose:
-                print(f"  Skipping existing volume {idx}: {output_file}")
-            continue
-        
-        np.savez_compressed(output_file, image=image, metadata=np.array([metadata], dtype=object))
+        # Add to collections
+        all_images.append(image)
+        all_metadata.append(metadata)
         
         if verbose:
             interaction_str = "ES" if main_cluster['is_es_interaction'] else "CC" if main_cluster['is_marley'] else "Background"
-            print(f"  Created volume {idx}: {len(volume_clusters)} clusters "
+            print(f"  Volume {idx}: {len(volume_clusters)} clusters "
                   f"({n_marley_clusters} marley, {n_non_marley_clusters} non-marley), "
                   f"event {main_cluster['event']}, {interaction_str}")
-        
-        volumes_created += 1
     
-    return volumes_created
+    # Save all volumes from this file into a single NPZ
+    if len(all_images) > 0:
+        output_file = os.path.join(output_folder, f"{base_name}_plane{plane}.npz")
+        # Save as arrays - images as a list of arrays (variable size), metadata as object array
+        np.savez_compressed(output_file, 
+                           images=np.array(all_images, dtype=object),  # Object array to handle variable shapes
+                           metadata=np.array(all_metadata, dtype=object))
+        
+        if verbose:
+            print(f"  Saved {len(all_images)} volumes to {output_file}")
+    
+    return len(all_images)
 
 
 def main():
     parser = argparse.ArgumentParser(description='Create 1m x 1m volume images for channel tagging')
     parser.add_argument('-j', '--json', required=True, help='JSON configuration file')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
-    parser.add_argument('-f', '--override', action='store_true', help='Force override existing output files')
     parser.add_argument('--skip', type=int, default=None, help='Override JSON skip_files: skip first N files')
     parser.add_argument('--max', type=int, default=None, help='Override JSON max_files: process at most N files')
+    parser.add_argument('-f', '--override', action='store_true', help='Force reprocessing (kept for compatibility)')
     
     args = parser.parse_args()
     
@@ -638,16 +582,16 @@ def main():
     with open(args.json, 'r') as f:
         config = json.load(f)
     
-    # Try to use matched_clusters first, fall back to regular clusters
-    matched_folder = get_matched_clusters_folder(config)
-    if matched_folder and Path(matched_folder).exists():
-        clusters_folder = matched_folder
-        if args.verbose:
-            print(f"Using matched clusters folder: {clusters_folder}")
-    else:
-        clusters_folder = get_clusters_folder(config)
-        if args.verbose:
-            print(f"Using regular clusters folder: {clusters_folder}")
+    # Use get_clusters_folder to compute the full path (matching make_clusters logic)
+    clusters_folder = get_clusters_folder(config)
+    
+    # Try to use matched_clusters_folder if it exists
+    matched_clusters_folder = get_matched_clusters_folder(config)
+    if matched_clusters_folder and Path(matched_clusters_folder).exists():
+        matched_files = list(Path(matched_clusters_folder).glob("*_matched.root"))
+        if matched_files:
+            clusters_folder = matched_clusters_folder
+            print(f"Using matched clusters folder: {matched_clusters_folder}")
     
     # Auto-generate volumes_folder if not explicitly provided
     if 'volumes_folder' in config and config['volumes_folder']:
@@ -667,9 +611,6 @@ def main():
     skip_files = args.skip if args.skip is not None else config.get('skip_files', 0)
     max_files = args.max if args.max is not None else config.get('max_files', None)
     
-    # Get source basenames from tpstream folder (the source of truth for all stages)
-    source_basenames = get_source_basenames(args.json)
-    
     print("="*60)
     print("Volume Image Creation for Channel Tagging")
     print("="*60)
@@ -677,34 +618,25 @@ def main():
     print(f"Output folder: {output_folder}")
     print(f"Plane: {plane}")
     print(f"Volume size: {VOLUME_SIZE_CM} cm x {VOLUME_SIZE_CM} cm")
-    print(f"Using tpstream-based file list as source of truth (skip={skip_files}, max={max_files})")
-    print(f"Looking for clusters matching {len(source_basenames)} source file(s)")
+    if skip_files > 0:
+        print(f"Skipping first {skip_files} files")
+    if max_files is not None:
+        print(f"Processing at most {max_files} files")
     print("="*60)
     
-    # Find ALL cluster files
-    # Try _matched.root first (from match_clusters), then _bg_clusters.root, then _clusters.root
-    all_cluster_files = sorted(Path(clusters_folder).glob('*_matched.root'))
-    if len(all_cluster_files) == 0:
-        all_cluster_files = sorted(Path(clusters_folder).glob('*_bg_clusters.root'))
-    if len(all_cluster_files) == 0:
-        all_cluster_files = sorted(Path(clusters_folder).glob('*_clusters.root'))
+    # Find all cluster files (look for *_clusters.root pattern)
+    cluster_files = sorted(Path(clusters_folder).glob('*_matched.root'))
+    if not cluster_files:
+        cluster_files = sorted(Path(clusters_folder).glob('*_clusters.root'))
     
-    # Filter cluster files to only those matching source basenames
-    cluster_files = []
-    for cluster_path in all_cluster_files:
-        cluster_name = cluster_path.name
-        # Check if this cluster file matches any source basename
-        for basename in source_basenames:
-            if basename in cluster_name:
-                cluster_files.append(cluster_path)
-                break
+    # Apply skip and max
+    if skip_files > 0:
+        cluster_files = cluster_files[skip_files:]
+    if max_files is not None:
+        cluster_files = cluster_files[:max_files]
     
     if len(cluster_files) == 0:
-        print(f"No cluster files found matching {len(source_basenames)} source basename(s)")
-        print(f"Total cluster files in folder: {len(all_cluster_files)}")
-        if source_basenames:
-            print(f"Expected basenames like: {source_basenames[0][:80]}...")
-        print(f"Tried patterns: *_clusters.root and *_bg_clusters.root")
+        print(f"No cluster files found in {clusters_folder}")
         return 1
     
     print(f"Found {len(cluster_files)} cluster files")
@@ -719,7 +651,6 @@ def main():
             str(cluster_file),
             output_folder,
             plane=plane,
-            override=args.override,
             verbose=args.verbose
         )
         

@@ -249,15 +249,16 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
             for (auto& tp1 : candidate) {
                 adc_integral += tp1->GetAdcIntegral();
             }
-            if (adc_integral > adc_integral_cut) {
+            // ENERGY CUT LOGIC IN THE APP, NOT HERE
+            // if (adc_integral > adc_integral_cut) {
                 // check validity of tps in candidate
                 if (debugMode) LogInfo << "Candidate Cluster has " << candidate.size() << " TPs" << std::endl;
                 clusters.emplace_back(Cluster(std::move(candidate)));
                 if (debugMode) LogInfo << "Cluster created with " << clusters.back().get_tps().size() << " TPs" << std::endl;
-            }
-            else {
-                if (verboseMode) LogInfo << "Candidate Cluster rejected due to adc_integral cut: " << adc_integral << " <= " << adc_integral_cut << std::endl;
-            }
+            // }
+            // else {
+            //     if (verboseMode) LogInfo << "Candidate Cluster rejected due to adc_integral cut: " << adc_integral << " <= " << adc_integral_cut << std::endl;
+            // }
         }
     }
 
@@ -767,7 +768,7 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
 }
 
 std::vector<Cluster> read_clusters(std::string root_filename){
-    LogInfo << "Reading clusters from: " << root_filename << std::endl;
+    if (verboseMode) LogInfo << "Reading clusters from: " << root_filename << std::endl;
     std::vector<Cluster> clusters;
     TFile *f = TFile::Open(root_filename.c_str());
     if (!f || f->IsZombie()) {
