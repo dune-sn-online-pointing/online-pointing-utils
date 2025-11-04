@@ -557,7 +557,8 @@ def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
             'volume_size_cm': VOLUME_SIZE_CM,
             'image_shape': image.shape,
             'main_cluster_id': main_cluster['cluster_id'],
-            'volume_index': idx  # Add volume index within this file
+            'volume_index': idx,  # Add volume index within this file
+            'source_root_file': os.path.abspath(cluster_file)
         }
         
         # Add to collections

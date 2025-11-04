@@ -25,20 +25,34 @@ class VolumeViewer:
         
         # Load data
         data = np.load(npz_file, allow_pickle=True)
+        self.npz_path = Path(npz_file)
+        self.npz_dir = self.npz_path.parent
         self.images = data['images']
         self.metadata = data['metadata']
         self.n_volumes = len(self.images)
         self.current_idx = 0
-        
+
         # Determine ROOT file path for cluster loading
-        self.root_file = self._find_root_file(npz_file)
-        
-        print(f"\nFile: {Path(npz_file).name}")
+        self.root_file = None
+        if self.n_volumes > 0:
+            first_meta = self.metadata[0]
+            source_root = first_meta.get('source_root_file') if isinstance(first_meta, dict) else None
+            if source_root:
+                resolved = Path(source_root)
+                if not resolved.is_absolute():
+                    resolved = (self.npz_dir / resolved).resolve()
+                if resolved.exists():
+                    self.root_file = str(resolved)
+
+        if self.root_file is None:
+            self.root_file = self._find_root_file(npz_file)
+
+        print(f"\nFile: {self.npz_path.name}")
         print(f"Total volumes: {self.n_volumes}")
         if self.root_file and HAS_UPROOT:
             print(f"ROOT file: {Path(self.root_file).name}")
         print("Navigation: Left/Right arrows, Space (next), q (quit)")
-        
+
         # Create figure with three panels (TP image, clusters, metadata)
         self.fig, self.axes = plt.subplots(1, 3, figsize=(20, 7))
         self.ax_tps, self.ax_clusters, self.ax_info = self.axes
@@ -75,7 +89,6 @@ class VolumeViewer:
             return None
         
         # Look for matched clusters ROOT file
-        volume_dir = Path(npz_path).parent
         root_dir = volume_dir.parent
         
         # Try matched_clusters folder
@@ -102,10 +115,29 @@ class VolumeViewer:
     
     def _load_clusters_for_volume(self, metadata):
         """Load clusters from ROOT file for the current volume"""
-        if not self.root_file or not HAS_UPROOT:
+        if not HAS_UPROOT:
             return []
-        
+
         try:
+            root_path = metadata.get('source_root_file') if isinstance(metadata, dict) else None
+            candidate_path = None
+
+            if root_path:
+                candidate = Path(root_path)
+                if not candidate.is_absolute():
+                    candidate = (self.npz_dir / candidate).resolve()
+                if candidate.exists():
+                    candidate_path = candidate
+
+            if candidate_path is None and self.root_file:
+                fallback_candidate = Path(self.root_file)
+                if fallback_candidate.exists():
+                    candidate_path = fallback_candidate
+
+            if candidate_path is None or not candidate_path.exists():
+                return []
+
+            self.root_file = str(candidate_path)
             f = uproot.open(self.root_file)
             plane = metadata.get('plane', 'X')
             event = metadata.get('event')
@@ -194,8 +226,8 @@ class VolumeViewer:
                         zorder = 10
                     elif is_discarded:
                         color = '#666666'  # Gray
-                        size = 80
-                        marker = 'x'
+                        size = 90
+                        marker = 'o'
                         label = 'Discarded'
                         zorder = 2
                     elif is_marley:
@@ -292,12 +324,22 @@ class VolumeViewer:
                                         alpha=0.7, edgecolors='black', linewidths=1,
                                         label=f'Background ({len(bg_clusters)})', zorder=3, marker='o')
             
-            if discarded_clusters:
-                times = [c['time'] for c in discarded_clusters]
-                channels = [c['channel'] for c in discarded_clusters]
-                self.ax_clusters.scatter(times, channels, s=80, c='#666666',
-                                        alpha=0.6, edgecolors='black', linewidths=1.5,
-                                        label=f'Discarded ({len(discarded_clusters)})', zorder=2, marker='x')
+            discarded_bg = [c for c in discarded_clusters if not c['is_marley']]
+            discarded_marley = [c for c in discarded_clusters if c['is_marley']]
+
+            if discarded_bg:
+                times = [c['time'] for c in discarded_bg]
+                channels = [c['channel'] for c in discarded_bg]
+                self.ax_clusters.scatter(times, channels, s=90, c='#0088FF',
+                                        alpha=0.5, edgecolors='black', linewidths=1.2,
+                                        label=f'Background < E_cut ({len(discarded_bg)})', zorder=2, marker='o')
+
+            if discarded_marley:
+                times = [c['time'] for c in discarded_marley]
+                channels = [c['channel'] for c in discarded_marley]
+                self.ax_clusters.scatter(times, channels, s=90, c='#FF8800',
+                                        alpha=0.5, edgecolors='black', linewidths=1.2,
+                                        label=f'MARLEY < E_cut ({len(discarded_marley)})', zorder=2, marker='o')
             
             if marley_clusters:
                 times = [c['time'] for c in marley_clusters]
@@ -362,17 +404,17 @@ class VolumeViewer:
         info_lines.append("=== Main Track ===")
         particle_energy = meta.get('particle_energy', -1)
         if particle_energy >= 0:
-            info_lines.append(f"Energy:  {particle_energy:.3f} GeV")
+            info_lines.append(f"Energy:  {particle_energy:.3f} MeV")
         else:
             info_lines.append("Energy:  background (no truth)")
         
         mom = meta.get('main_track_momentum', -1)
         if mom >= 0:
             info_lines.append(f"Momentum:")
-            info_lines.append(f"  |p|: {mom:.4f} GeV/c")
-            info_lines.append(f"  px:  {meta.get('main_track_momentum_x', 0):.4f}")
-            info_lines.append(f"  py:  {meta.get('main_track_momentum_y', 0):.4f}")
-            info_lines.append(f"  pz:  {meta.get('main_track_momentum_z', 0):.4f}")
+            info_lines.append(f"  |p|: {mom*1000:.2f} MeV/c")
+            info_lines.append(f"  px:  {meta.get('main_track_momentum_x', 0)*1000:.2f}")
+            info_lines.append(f"  py:  {meta.get('main_track_momentum_y', 0)*1000:.2f}")
+            info_lines.append(f"  pz:  {meta.get('main_track_momentum_z', 0)*1000:.2f}")
         
         info_lines.append("")
         info_lines.append("=== Image Statistics ===")
@@ -408,7 +450,7 @@ class VolumeViewer:
         
         self.fig.canvas.draw_idle()
         
-        print(f"[{self.current_idx + 1}/{self.n_volumes}] MARLEY: {meta.get('n_marley_clusters', 0)}/{meta.get('n_clusters_in_volume', 0)} ({marley_frac:.1%}), Energy: {particle_energy:.2f} GeV")
+        print(f"[{self.current_idx + 1}/{self.n_volumes}] MARLEY: {meta.get('n_marley_clusters', 0)}/{meta.get('n_clusters_in_volume', 0)} ({marley_frac:.1%}), Energy: {particle_energy:.2f} MeV")
     
     def prev_volume(self, event=None):
         """Go to previous volume"""
