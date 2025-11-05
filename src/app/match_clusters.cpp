@@ -6,6 +6,13 @@
 #include "match_clusters_libs.h"
 #include "ParametersManager.h"
 #include "utils.h"
+#include "verbosity.h"
+
+#include <algorithm>
+#include <climits>
+#include <limits>
+#include <tuple>
+#include <unordered_map>
 
 LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -64,6 +71,9 @@ int main(int argc, char* argv[]) {
     LogInfo << "Provided arguments: " << std::endl;
     LogInfo << clp.getValueSummary() << std::endl << std::endl;
 
+    verboseMode = clp.isOptionTriggered("verboseMode") || clp.isOptionTriggered("debugMode");
+    debugMode = clp.isOptionTriggered("debugMode");
+
     std::string json = clp.getOptionVal<std::string>("json");
     std::ifstream i(json);
     nlohmann::json j;
@@ -118,7 +128,14 @@ int main(int argc, char* argv[]) {
     
     int processed = 0;
     int failed = 0;
-    verboseMode = clp.isOptionTriggered("verboseMode");  // Set global verboseMode
+    
+    // Global matching statistics
+    int global_total_main_x = 0;
+    int global_complete_matches = 0;
+    int global_partial_u_matches = 0;
+    int global_partial_v_matches = 0;
+    std::unordered_map<int, int> global_event_delta_hist_u;
+    std::unordered_map<int, int> global_event_delta_hist_v;
     
     // Process each cluster file
     for (size_t file_idx = 0; file_idx < cluster_files.size(); file_idx++) {
@@ -151,7 +168,38 @@ int main(int argc, char* argv[]) {
             std::vector<Cluster> clusters_v = read_clusters_from_tree(input_clusters_file, "V");
             std::vector<Cluster> clusters_x = read_clusters_from_tree(input_clusters_file, "X");
 
-            if (verboseMode) LogInfo << "  Clusters: U=" << clusters_u.size() << " V=" << clusters_v.size() << " X=" << clusters_x.size() << std::endl;
+            // Ensure deterministic ordering by earliest time so the binary-search scan below is valid
+            auto sortClustersByStartTime = [](std::vector<Cluster>& clusters) {
+                std::stable_sort(clusters.begin(), clusters.end(), [](const Cluster& a, const Cluster& b) {
+                    auto range_a = getClusterTimeRange(a);
+                    auto range_b = getClusterTimeRange(b);
+                    if (range_a.first != range_b.first) {
+                        return range_a.first < range_b.first;
+                    }
+                    auto tps_a = a.get_tps();
+                    auto tps_b = b.get_tps();
+                    int event_a = tps_a.empty() ? std::numeric_limits<int>::min() : tps_a.front()->GetEvent();
+                    int event_b = tps_b.empty() ? std::numeric_limits<int>::min() : tps_b.front()->GetEvent();
+                    if (event_a != event_b) {
+                        return event_a < event_b;
+                    }
+                    return a.get_cluster_id() < b.get_cluster_id();
+                });
+            };
+            sortClustersByStartTime(clusters_u);
+            sortClustersByStartTime(clusters_v);
+            sortClustersByStartTime(clusters_x);
+
+            // Count main clusters in X
+            int n_main_x = 0;
+            for (const auto& c : clusters_x) {
+                if (c.get_is_main_cluster()) n_main_x++;
+            }
+
+            if (verboseMode) {
+                LogInfo << "  Clusters: U=" << clusters_u.size() << " V=" << clusters_v.size() 
+                        << " X=" << clusters_x.size() << " (main=" << n_main_x << ")" << std::endl;
+            }
             
             // Read discarded clusters from discarded/ directory
             std::vector<Cluster> discarded_u = read_clusters_from_tree(input_clusters_file, "U", "discarded");
@@ -164,9 +212,13 @@ int main(int argc, char* argv[]) {
                         << " X=" << discarded_x.size() << std::endl;
             }
             
-            // Match clusters
+            // Match clusters - now allowing partial matches (X+U or X+V)
             std::vector<std::vector<Cluster>> matches;
             std::vector<Cluster> multiplane_clusters;
+            
+            // Track partial matches
+            std::map<int, int> x_to_u_match;  // X cluster ID -> U cluster ID
+            std::map<int, int> x_to_v_match;  // X cluster ID -> V cluster ID
 
             int start_j = 0;
             int start_k = 0;
@@ -176,10 +228,21 @@ int main(int argc, char* argv[]) {
             int failed_time_v = 0, failed_event_v = 0, failed_apa_v = 0;
             int failed_spatial = 0;
 
+            const size_t max_event_mismatch_samples = 20;
+            std::vector<std::tuple<int, int, int, int>> event_mismatch_samples_u; // X_id, X_event, U_id, U_event
+            std::vector<std::tuple<int, int, int, int>> event_mismatch_samples_v; // X_id, X_event, V_id, V_event
+            std::unordered_map<int, int> event_delta_hist_u;
+            std::unordered_map<int, int> event_delta_hist_v;
+
+            // First pass: match X with U
             for (size_t i = 0; i < clusters_x.size(); i++) {
-                auto x_time_range = getClusterTimeRange(clusters_x[i]);
+                // Only match main clusters
+                if (!clusters_x[i].get_is_main_cluster()) continue;
                 
-                // Binary search for starting point in U using TPC ticks
+                auto x_time_range = getClusterTimeRange(clusters_x[i]);
+                int x_id = clusters_x[i].get_cluster_id();
+                
+                // Binary search for starting point in U
                 int min_range_j = 0;
                 int max_range_j = clusters_u.size();
                 while (min_range_j < max_range_j) {
@@ -199,51 +262,195 @@ int main(int argc, char* argv[]) {
                     // Check if U cluster time range overlaps with X cluster time range
                     if (u_time_range.first > x_time_range.second + time_tolerance_ticks_tdc) break;
                     if (!timesOverlap(u_time_range, x_time_range, time_tolerance_ticks_tdc)) { failed_time_u++; continue; }
-                    if (clusters_u[j].get_tps()[0]->GetEvent() != clusters_x[i].get_tps()[0]->GetEvent()) { failed_event_u++; continue; }
+                    int u_event = clusters_u[j].get_tps()[0]->GetEvent();
+                    int x_event = clusters_x[i].get_tps()[0]->GetEvent();
+                    if (u_event != x_event) {
+                        failed_event_u++;
+                        event_delta_hist_u[u_event - x_event]++;
+                        if (event_mismatch_samples_u.size() < max_event_mismatch_samples) {
+                            event_mismatch_samples_u.emplace_back(clusters_x[i].get_cluster_id(), x_event, clusters_u[j].get_cluster_id(), u_event);
+                        }
+                        continue;
+                    }
                     if (int(clusters_u[j].get_tps()[0]->GetDetectorChannel()/APA::total_channels) != int(clusters_x[i].get_tps()[0]->GetDetectorChannel()/APA::total_channels)) { failed_apa_u++; continue; }
                     
-                    // Binary search for starting point in V
-                    int min_range_k = 0;
-                    int max_range_k = clusters_v.size();
-                    while (min_range_k < max_range_k) {
-                        start_k = (min_range_k + max_range_k) / 2;
-                        auto v_time = getClusterTimeRange(clusters_v[start_k]);
-                        if (v_time.first < x_time_range.first) {
-                            min_range_k = start_k + 1;
-                        } else {
-                            max_range_k = start_k;
-                        }
-                    }
-                    start_k = std::max(start_k-10, 0);
-                    
-                    for (size_t k = start_k; k < clusters_v.size(); k++) {
-                        test_combinations++;
-                        auto v_time_range = getClusterTimeRange(clusters_v[k]);
-                        
-                        // Check if V cluster time range overlaps with U and X cluster time ranges
-                        if (v_time_range.first > u_time_range.second + time_tolerance_ticks_tdc) break;
-                        if (!timesOverlap(v_time_range, u_time_range, time_tolerance_ticks_tdc)) { failed_time_v++; continue; }
-                        if (clusters_v[k].get_tps()[0]->GetEvent() != clusters_x[i].get_tps()[0]->GetEvent()) { failed_event_v++; continue; }
-                        if (int(clusters_v[k].get_tps()[0]->GetDetectorChannel()/APA::total_channels) != int(clusters_x[i].get_tps()[0]->GetDetectorChannel()/APA::total_channels)) { failed_apa_v++; continue; }
-
-                        if (are_compatibles(clusters_u[j], clusters_v[k], clusters_x[i], spatial_tolerance_cm)) {
-                            matches.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
-                            Cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
-                            multiplane_clusters.push_back(c);
-                        } else {
-                            failed_spatial++;
-                        }
+                    // Found a matching U cluster - record it (take first match)
+                    if (x_to_u_match.find(x_id) == x_to_u_match.end()) {
+                        x_to_u_match[x_id] = j;
                     }
                 }
             }
+            
+            // Second pass: match X with V
+            for (size_t i = 0; i < clusters_x.size(); i++) {
+                // Only match main clusters
+                if (!clusters_x[i].get_is_main_cluster()) continue;
+                
+                auto x_time_range = getClusterTimeRange(clusters_x[i]);
+                int x_id = clusters_x[i].get_cluster_id();
+                
+                // Binary search for starting point in V
+                int min_range_k = 0;
+                int max_range_k = clusters_v.size();
+                while (min_range_k < max_range_k) {
+                    start_k = (min_range_k + max_range_k) / 2;
+                    auto v_time = getClusterTimeRange(clusters_v[start_k]);
+                    if (v_time.first < x_time_range.first) {
+                        min_range_k = start_k + 1;
+                    } else {
+                        max_range_k = start_k;
+                    }
+                }
+                start_k = std::max(start_k-10, 0);
+                
+                for (size_t k = start_k; k < clusters_v.size(); k++) {
+                    auto v_time_range = getClusterTimeRange(clusters_v[k]);
+                    
+                    // Check if V cluster time range overlaps with X cluster time range
+                    if (v_time_range.first > x_time_range.second + time_tolerance_ticks_tdc) break;
+                    if (!timesOverlap(v_time_range, x_time_range, time_tolerance_ticks_tdc)) { failed_time_v++; continue; }
+                    int v_event = clusters_v[k].get_tps()[0]->GetEvent();
+                    int x_event = clusters_x[i].get_tps()[0]->GetEvent();
+                    if (v_event != x_event) {
+                        failed_event_v++;
+                        event_delta_hist_v[v_event - x_event]++;
+                        if (event_mismatch_samples_v.size() < max_event_mismatch_samples) {
+                            event_mismatch_samples_v.emplace_back(clusters_x[i].get_cluster_id(), x_event, clusters_v[k].get_cluster_id(), v_event);
+                        }
+                        continue;
+                    }
+                    if (int(clusters_v[k].get_tps()[0]->GetDetectorChannel()/APA::total_channels) != int(clusters_x[i].get_tps()[0]->GetDetectorChannel()/APA::total_channels)) { failed_apa_v++; continue; }
+                    
+                    // Found a matching V cluster - record it (take first match)
+                    if (x_to_v_match.find(x_id) == x_to_v_match.end()) {
+                        x_to_v_match[x_id] = k;
+                    }
+                }
+            }
+            
+            // Third pass: create matches based on what we found
+            int complete_matches = 0;  // X+U+V
+            int partial_u_matches = 0; // X+U only
+            int partial_v_matches = 0; // X+V only
+            
+            for (size_t i = 0; i < clusters_x.size(); i++) {
+                if (!clusters_x[i].get_is_main_cluster()) continue;
+                
+                int x_id = clusters_x[i].get_cluster_id();
+                bool has_u = x_to_u_match.find(x_id) != x_to_u_match.end();
+                bool has_v = x_to_v_match.find(x_id) != x_to_v_match.end();
+                
+                if (has_u && has_v) {
+                    // Complete match: X+U+V
+                    test_combinations++;
+                    size_t j = x_to_u_match[x_id];
+                    size_t k = x_to_v_match[x_id];
+                    
+                    if (are_compatibles(clusters_u[j], clusters_v[k], clusters_x[i], spatial_tolerance_cm)) {
+                        matches.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
+                        Cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
+                        multiplane_clusters.push_back(c);
+                        complete_matches++;
+                        
+                        if (verboseMode && matches.size() <= 3) {
+                            LogInfo << "    Match #" << matches.size() << ": U_id=" << clusters_u[j].get_cluster_id() 
+                                    << " V_id=" << clusters_v[k].get_cluster_id()
+                                    << " X_id=" << clusters_x[i].get_cluster_id() << std::endl;
+                        }
+                    } else {
+                        failed_spatial++;
+                    }
+                } else if (has_u) {
+                    // Partial match: X+U only
+                    test_combinations++;
+                    size_t j = x_to_u_match[x_id];
+                    matches.push_back({clusters_u[j], clusters_x[i]});
+                    Cluster c = join_clusters(clusters_u[j], clusters_x[i]);
+                    multiplane_clusters.push_back(c);
+                    partial_u_matches++;
+                    
+                    if (verboseMode && matches.size() <= 3) {
+                        LogInfo << "    Partial Match #" << matches.size() << ": U_id=" << clusters_u[j].get_cluster_id() 
+                                << " X_id=" << clusters_x[i].get_cluster_id() << " (no V)" << std::endl;
+                    }
+                } else if (has_v) {
+                    // Partial match: X+V only
+                    test_combinations++;
+                    size_t k = x_to_v_match[x_id];
+                    matches.push_back({clusters_v[k], clusters_x[i]});
+                    Cluster c = join_clusters(clusters_v[k], clusters_x[i]);
+                    multiplane_clusters.push_back(c);
+                    partial_v_matches++;
+                    
+                    if (verboseMode && matches.size() <= 3) {
+                        LogInfo << "    Partial Match #" << matches.size() << ": V_id=" << clusters_v[k].get_cluster_id() 
+                                << " X_id=" << clusters_x[i].get_cluster_id() << " (no U)" << std::endl;
+                    }
+                }
+            }
+            
+            // Accumulate global statistics
+            global_total_main_x += n_main_x;
+            global_complete_matches += complete_matches;
+            global_partial_u_matches += partial_u_matches;
+            global_partial_v_matches += partial_v_matches;
 
             if (verboseMode) {
-                LogInfo << "  Found " << matches.size() << " compatible matches" << std::endl;
+                LogInfo << "  Found " << matches.size() << " total matches" << std::endl;
+                LogInfo << "    Complete (U+V): " << complete_matches << std::endl;
+                LogInfo << "    Partial (U only): " << partial_u_matches << std::endl;
+                LogInfo << "    Partial (V only): " << partial_v_matches << std::endl;
                 LogInfo << "  Total clusters: U=" << clusters_u.size() << " V=" << clusters_v.size() << " X=" << clusters_x.size() << std::endl;
+                
+                // Count main clusters
+                int n_main_x_verbose = 0;
+                for (const auto& c : clusters_x) {
+                    if (c.get_is_main_cluster()) n_main_x_verbose++;
+                }
+                LogInfo << "  Main X clusters: " << n_main_x_verbose << std::endl;
+                
                 LogInfo << "  Combinations tested: " << test_combinations << std::endl;
                 LogInfo << "  Failed filters: time_u=" << failed_time_u << " event_u=" << failed_event_u << " apa_u=" << failed_apa_u;
                 LogInfo << " time_v=" << failed_time_v << " event_v=" << failed_event_v << " apa_v=" << failed_apa_v;
                 LogInfo << " spatial=" << failed_spatial << std::endl;
+
+                if (!event_mismatch_samples_u.empty()) {
+                    LogInfo << "  Event mismatch samples (X vs U):" << std::endl;
+                    for (size_t idx = 0; idx < event_mismatch_samples_u.size(); ++idx) {
+                        const auto& sample = event_mismatch_samples_u[idx];
+                        LogInfo << "    #" << (idx + 1) << ": X_id=" << std::get<0>(sample)
+                                << " (event=" << std::get<1>(sample) << ") vs U_id=" << std::get<2>(sample)
+                                << " (event=" << std::get<3>(sample) << ")" << std::endl;
+                    }
+                }
+                if (!event_mismatch_samples_v.empty()) {
+                    LogInfo << "  Event mismatch samples (X vs V):" << std::endl;
+                    for (size_t idx = 0; idx < event_mismatch_samples_v.size(); ++idx) {
+                        const auto& sample = event_mismatch_samples_v[idx];
+                        LogInfo << "    #" << (idx + 1) << ": X_id=" << std::get<0>(sample)
+                                << " (event=" << std::get<1>(sample) << ") vs V_id=" << std::get<2>(sample)
+                                << " (event=" << std::get<3>(sample) << ")" << std::endl;
+                    }
+                }
+                auto log_event_delta = [&](const char* label, const std::unordered_map<int, int>& hist) {
+                    if (hist.empty()) return;
+                    std::vector<std::pair<int, int>> entries(hist.begin(), hist.end());
+                    std::sort(entries.begin(), entries.end(), [](const auto& a, const auto& b) { return a.second > b.second; });
+                    size_t limit = std::min<size_t>(5, entries.size());
+                    LogInfo << "  Top event deltas " << label << " (candidate - X):" << std::endl;
+                    for (size_t i = 0; i < limit; ++i) {
+                        LogInfo << "    delta=" << entries[i].first << " count=" << entries[i].second << std::endl;
+                    }
+                };
+                log_event_delta("U", event_delta_hist_u);
+                log_event_delta("V", event_delta_hist_v);
+            }
+
+            for (const auto& entry : event_delta_hist_u) {
+                global_event_delta_hist_u[entry.first] += entry.second;
+            }
+            for (const auto& entry : event_delta_hist_v) {
+                global_event_delta_hist_v[entry.first] += entry.second;
             }
             
             // Assign match IDs and track X plane matching details
@@ -257,19 +464,51 @@ int main(int argc, char* argv[]) {
             std::map<int, int> x_to_v_map;  // X cluster_id -> V cluster_id
             
             for (size_t match_id = 0; match_id < matches.size(); match_id++) {
-                int u_id = matches[match_id][0].get_cluster_id();
-                int v_id = matches[match_id][1].get_cluster_id();
-                int x_id = matches[match_id][2].get_cluster_id();
+                int match_size = matches[match_id].size();
                 
-                if (u_cluster_to_match.find(u_id) == u_cluster_to_match.end()) u_cluster_to_match[u_id] = match_id;
-                if (v_cluster_to_match.find(v_id) == v_cluster_to_match.end()) v_cluster_to_match[v_id] = match_id;
-                if (x_cluster_to_match.find(x_id) == x_cluster_to_match.end()) {
-                    x_cluster_to_match[x_id] = match_id;
-                    // Track the first U and V matched to this X cluster
-                    if (x_to_u_map.find(x_id) == x_to_u_map.end()) x_to_u_map[x_id] = u_id;
-                    if (x_to_v_map.find(x_id) == x_to_v_map.end()) x_to_v_map[x_id] = v_id;
+                if (match_size == 3) {
+                    // Complete match: U, V, X
+                    int u_id = matches[match_id][0].get_cluster_id();
+                    int v_id = matches[match_id][1].get_cluster_id();
+                    int x_id = matches[match_id][2].get_cluster_id();
+                    
+                    if (u_cluster_to_match.find(u_id) == u_cluster_to_match.end()) u_cluster_to_match[u_id] = match_id;
+                    if (v_cluster_to_match.find(v_id) == v_cluster_to_match.end()) v_cluster_to_match[v_id] = match_id;
+                    if (x_cluster_to_match.find(x_id) == x_cluster_to_match.end()) {
+                        x_cluster_to_match[x_id] = match_id;
+                        // Track the first U and V matched to this X cluster
+                        if (x_to_u_map.find(x_id) == x_to_u_map.end()) x_to_u_map[x_id] = u_id;
+                        if (x_to_v_map.find(x_id) == x_to_v_map.end()) x_to_v_map[x_id] = v_id;
+                    }
+                    match_type_map[match_id] = 3;
+                } else if (match_size == 2) {
+                    // Partial match: determine if it's U+X or V+X based on plane
+                    auto& c1 = matches[match_id][0];
+                    auto& c2 = matches[match_id][1];
+                    
+                    bool c1_is_x = (c1.get_size() > 0 && c1.get_tps()[0]->GetView() == "X");
+                    bool c1_is_u = (c1.get_size() > 0 && c1.get_tps()[0]->GetView() == "U");
+                    
+                    int x_id = c1_is_x ? c1.get_cluster_id() : c2.get_cluster_id();
+                    
+                    if (x_cluster_to_match.find(x_id) == x_cluster_to_match.end()) {
+                        x_cluster_to_match[x_id] = match_id;
+                    }
+                    
+                    if (c1_is_u || (!c1_is_x && c2.get_tps()[0]->GetView() == "X")) {
+                        // This is U+X match
+                        int u_id = c1_is_u ? c1.get_cluster_id() : c2.get_cluster_id();
+                        if (u_cluster_to_match.find(u_id) == u_cluster_to_match.end()) u_cluster_to_match[u_id] = match_id;
+                        if (x_to_u_map.find(x_id) == x_to_u_map.end()) x_to_u_map[x_id] = u_id;
+                        match_type_map[match_id] = 2; // U+X
+                    } else {
+                        // This is V+X match
+                        int v_id = c1_is_x ? c2.get_cluster_id() : c1.get_cluster_id();
+                        if (v_cluster_to_match.find(v_id) == v_cluster_to_match.end()) v_cluster_to_match[v_id] = match_id;
+                        if (x_to_v_map.find(x_id) == x_to_v_map.end()) x_to_v_map[x_id] = v_id;
+                        match_type_map[match_id] = 1; // V+X
+                    }
                 }
-                match_type_map[match_id] = 3;
             }
             
             // Compute matching statistics
@@ -340,6 +579,40 @@ int main(int argc, char* argv[]) {
     LogInfo << "Processed: " << processed << " files" << std::endl;
     LogInfo << "Failed: " << failed << " files" << std::endl;
     LogInfo << "=========================================" << std::endl;
+    
+    // Print global matching statistics
+    if (processed > 0) {
+        int global_total_matched = global_complete_matches + global_partial_u_matches + global_partial_v_matches;
+        
+        LogInfo << std::endl;
+        LogInfo << "=========================================" << std::endl;
+        LogInfo << "GLOBAL MATCHING STATISTICS" << std::endl;
+        LogInfo << "=========================================" << std::endl;
+        LogInfo << "Total main X clusters: " << global_total_main_x << std::endl;
+        LogInfo << "Complete matches (X+U+V): " << global_complete_matches 
+                << " (" << (global_total_main_x > 0 ? (global_complete_matches*100.0/global_total_main_x) : 0.0) << "%)" << std::endl;
+        LogInfo << "Partial matches (X+U only): " << global_partial_u_matches 
+                << " (" << (global_total_main_x > 0 ? (global_partial_u_matches*100.0/global_total_main_x) : 0.0) << "%)" << std::endl;
+        LogInfo << "Partial matches (X+V only): " << global_partial_v_matches 
+                << " (" << (global_total_main_x > 0 ? (global_partial_v_matches*100.0/global_total_main_x) : 0.0) << "%)" << std::endl;
+        LogInfo << "Total matched: " << global_total_matched 
+                << " (" << (global_total_main_x > 0 ? (global_total_matched*100.0/global_total_main_x) : 0.0) << "%)" << std::endl;
+        LogInfo << "Unmatched: " << (global_total_main_x - global_total_matched) 
+                << " (" << (global_total_main_x > 0 ? ((global_total_main_x-global_total_matched)*100.0/global_total_main_x) : 0.0) << "%)" << std::endl;
+        auto log_global_deltas = [&](const char* label, const std::unordered_map<int, int>& hist) {
+            if (hist.empty()) return;
+            std::vector<std::pair<int, int>> entries(hist.begin(), hist.end());
+            std::sort(entries.begin(), entries.end(), [](const auto& a, const auto& b) { return a.second > b.second; });
+            size_t limit = std::min<size_t>(10, entries.size());
+            LogInfo << "Top global event deltas " << label << " (candidate - X):" << std::endl;
+            for (size_t i = 0; i < limit; ++i) {
+                LogInfo << "  delta=" << entries[i].first << " count=" << entries[i].second << std::endl;
+            }
+        };
+        log_global_deltas("U", global_event_delta_hist_u);
+        log_global_deltas("V", global_event_delta_hist_v);
+        LogInfo << "=========================================" << std::endl;
+    }
     
     return (failed > 0) ? 1 : 0;
 }
