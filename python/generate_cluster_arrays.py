@@ -275,47 +275,104 @@ def get_images_folder(json_config):
     return images_folder_path
 
 
-def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_integral, threshold_adc):
+def _polygon_area(vertices):
+    """Compute polygon area via Shoelace formula."""
+    area = 0.0
+    n = len(vertices)
+    for i in range(n):
+        x1, y1 = vertices[i]
+        x2, y2 = vertices[(i + 1) % n]
+        area += x1 * y2 - x2 * y1
+    return abs(area) * 0.5
+
+
+def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_integral, threshold_adc, frac=0.5, _depth=0):
     """
-    Calculate pentagon parameters (matching Display.cpp logic)
-    Pentagon has a threshold baseline (plateau) at the bottom
-    Returns: (time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, valid)
+    Calculate pentagon parameters mirroring Display.cpp behaviour.
     
-    Args:
-        threshold_adc: The ADC threshold for the plane (60 for X, 70 for U/V) - this is the plateau height
+    CORRECT LOGIC:
+    1. Subtract threshold*samples_over_threshold from adc_integral to get residual area
+    2. Place vertices at midpoints: between (start, peak) and (peak, end)
+    3. Find vertex heights that minimize difference with residual area
+    
+    Returns: (time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, valid)
     """
     if time_end <= time_start:
         return (0, 0, 0, 0, 0, False)
-    
-    # Total duration
-    T = time_end - time_start
-    
-    # The threshold/plateau is the ADC threshold for the plane
-    # X plane (collection): 60 ADC
-    # U/V planes (induction): 70 ADC
+
     threshold = threshold_adc
+    adc_peak = max(float(adc_peak), 0.0)
+    time_start = float(time_start)
+    time_peak = float(time_peak)
+    time_end = float(time_end)
+
+    # Clamp peak into waveform window
+    if time_peak < time_start:
+        time_peak = time_start
+    if time_peak > time_end:
+        time_peak = time_end
+
+    # Calculate residual area above threshold
+    samples_over_threshold = time_end - time_start
+    threshold_area = threshold * samples_over_threshold
+    residual_area = adc_integral - threshold_area
     
-    # Peak position relative to start (fraction)
-    t_peak_rel = (time_peak - time_start) / T if T > 0 else 0.5
-    t_peak_rel = max(0.0, min(1.0, t_peak_rel))
+    # If residual is negative or zero, degenerate to threshold
+    if residual_area <= 0:
+        t1 = (time_start + time_peak) / 2.0
+        t2 = (time_peak + time_end) / 2.0
+        return (int(round(t1)), int(round(t2)), float(threshold), float(threshold), threshold, True)
     
-    # Intermediate point positions (fraction of total duration)
-    frac = 0.5  # Fixed fraction for intermediate vertices
-    t1 = frac * t_peak_rel  # Rising intermediate point
-    t2 = t_peak_rel + frac * (1.0 - t_peak_rel)  # Falling intermediate point
+    # Vertex time positions at midpoints
+    t1 = (time_start + time_peak) / 2.0
+    t2 = (time_peak + time_end) / 2.0
     
-    # Convert back to absolute times - INTEGERS for time (x-axis)
-    time_int_rise = int(round(time_start + t1 * T))
-    time_int_fall = int(round(time_start + t2 * T))
+    # Pentagon vertices (above threshold baseline):
+    # (time_start, 0), (t1, h1), (time_peak, peak_height), (t2, h2), (time_end, 0)
+    # where heights are relative to threshold
+    peak_height_above_threshold = adc_peak - threshold
     
-    # Calculate heights at intermediate points - keep as float (ADC values)
-    # Pentagon vertices: (time_start, threshold), (time_int_rise, h_int_rise), 
-    #                    (time_peak, adc_peak), (time_int_fall, h_int_fall), (time_end, threshold)
-    # These rise from the threshold baseline
-    h_int_rise = threshold + 0.6 * (adc_peak - threshold)
-    h_int_fall = threshold + 0.6 * (adc_peak - threshold)
+    # Scan for best vertex heights
+    best_diff = float('inf')
+    best_h1 = 0.0
+    best_h2 = 0.0
     
-    return (time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, True)
+    n_samples = 20  # number of candidate heights to try
+    for i in range(n_samples + 1):
+        frac_h = i / n_samples
+        h1 = frac_h * peak_height_above_threshold
+        
+        for j in range(n_samples + 1):
+            frac_h2 = j / n_samples
+            h2 = frac_h2 * peak_height_above_threshold
+            
+            # Calculate pentagon area (above threshold baseline)
+            vertices = [
+                (time_start, 0.0),
+                (t1, h1),
+                (time_peak, peak_height_above_threshold),
+                (t2, h2),
+                (time_end, 0.0)
+            ]
+            
+            area = _polygon_area(vertices)
+            diff = abs(area - residual_area)
+            
+            if diff < best_diff:
+                best_diff = diff
+                best_h1 = h1
+                best_h2 = h2
+    
+    # Convert heights back to absolute values (add threshold)
+    return (
+        int(round(t1)),
+        int(round(t2)),
+        float(threshold + best_h1),
+        float(threshold + best_h2),
+        threshold,
+        True
+    )
+
 
 
 def draw_cluster_to_array(channels, times, adc_integrals, adc_peaks, sot_values, stopeak_values,
@@ -380,8 +437,20 @@ def draw_cluster_to_array(channels, times, adc_integrals, adc_peaks, sot_values,
         adc_peak = adc_peaks[i]  # Use actual peak from detector data!
         adc_integral = adc_integrals[i]
         
-        # Fill pentagon with padding offsets
-        for t in range(int(time_start), int(time_end) + 1):
+        # Calculate pentagon parameters first
+        params = calculate_pentagon_params(time_start, time_peak, time_end, 
+                                           adc_peak, adc_integral, plane_threshold)
+        if not params[5]:  # Check valid flag
+            continue
+        
+        time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, _ = params
+        
+        # Fill pentagon with padding offsets - match C++ Display.cpp logic exactly
+        # Pentagon goes from threshold at edges, NOT from 0
+        t_min = int(time_start)
+        t_max = int(time_end)
+        
+        for t in range(t_min, t_max):
             # Calculate position with padding
             x = ch_idx + pad_x
             y = int(t - time_min) + pad_y
@@ -389,30 +458,20 @@ def draw_cluster_to_array(channels, times, adc_integrals, adc_peaks, sot_values,
             if x < 0 or x >= img_width or y < 0 or y >= img_height:
                 continue
             
-            # Calculate ADC intensity at this time using pentagon interpolation
-            # Pentagon includes a baseline threshold (the "plateau")
-            # Use plane-specific threshold: X=60, U=70, V=70 ADC
-            params = calculate_pentagon_params(time_start, time_peak, time_end, 
-                                               adc_peak, adc_integral, plane_threshold)
-            if not params[5]:  # Check valid flag (now at index 5)
-                continue
+            # Pentagon interpolation matching C++ Display.cpp fillHistogramPentagon
+            # Pentagon starts and ends at threshold, NOT at 0
+            intensity = threshold
             
-            time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, _ = params
-            intensity = threshold  # Default to threshold baseline
-            
-            # CRITICAL: First and last samples should be at threshold (the baseline)
-            if t == time_start or t == time_end:
-                intensity = threshold
-            elif t < time_int_rise:
-                # Rising from threshold to h_int_rise
+            if t < time_int_rise:
+                # Segment 1: rising from threshold to h_int_rise
                 span = time_int_rise - time_start
                 if span > 0:
                     frac = (t - time_start) / span
                     intensity = threshold + frac * (h_int_rise - threshold)
                 else:
-                    intensity = threshold
+                    intensity = h_int_rise
             elif t < time_peak:
-                # Rising from h_int_rise to peak
+                # Segment 2: rising from h_int_rise to peak
                 span = time_peak - time_int_rise
                 if span > 0:
                     frac = (t - time_int_rise) / span
@@ -420,9 +479,10 @@ def draw_cluster_to_array(channels, times, adc_integrals, adc_peaks, sot_values,
                 else:
                     intensity = adc_peak
             elif t == time_peak:
+                # Peak
                 intensity = adc_peak
             elif t <= time_int_fall:
-                # Falling from peak to h_int_fall
+                # Segment 3: falling from peak to h_int_fall
                 span = time_int_fall - time_peak
                 if span > 0:
                     frac = (t - time_peak) / span
@@ -430,13 +490,18 @@ def draw_cluster_to_array(channels, times, adc_integrals, adc_peaks, sot_values,
                 else:
                     intensity = h_int_fall
             else:
-                # Falling from h_int_fall back to threshold
+                # Segment 4: falling from h_int_fall to threshold
                 span = time_end - time_int_fall
                 if span > 0:
                     frac = (t - time_int_fall) / span
                     intensity = h_int_fall - frac * (h_int_fall - threshold)
+                else:
+                    intensity = threshold
             
+            # Use max() like C++ to keep highest value per pixel
             img[y, x] = max(img[y, x], intensity)
+    
+    return img
     
     # Keep raw ADC values - DO NOT normalize!
     # The pixel values represent actual ADC intensities and have physical meaning
@@ -635,19 +700,19 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
     }
     
     if verbose:
-        print(f"Processing: {cluster_file.name}")
-        print(f"  Thresholds: U={threshold_map['U']}, V={threshold_map['V']}, X={threshold_map['X']}")
+        print(f"[generate_cluster_arrays.py]   Processing: {cluster_file.name}")
+        print(f"[generate_cluster_arrays.py]   Thresholds: U={threshold_map['U']}, V={threshold_map['V']}, X={threshold_map['X']}")
     
     # Open ROOT file
     try:
         file = uproot.open(cluster_file)
     except Exception as e:
-        print(f"  Error opening file: {e}")
+        print(f"[generate_cluster_arrays.py]   Error opening file: {e}")
         return {}
     
     # Get clusters directory
     if 'clusters' not in file:
-        print(f"  No 'clusters' directory found")
+        print(f"[generate_cluster_arrays.py]   No 'clusters' directory found")
         return {}
     
     clusters_dir = file['clusters']
@@ -656,11 +721,11 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
     tree_names = [k.split(';')[0] for k in clusters_dir.keys() if 'clusters_tree_' in k]
     
     if not tree_names:
-        print(f"  No cluster trees found")
+        print(f"[generate_cluster_arrays.py]   No cluster trees found")
         return {}
 
     if verbose:
-        print(f"  Found {len(tree_names)} planes with clusters")
+        print(f"[generate_cluster_arrays.py]   Found {len(tree_names)} planes with clusters")
 
     plane_stats = {}  # Track generated clusters per plane
     plane_map = {'U': 0, 'V': 1, 'X': 2}  # Plane names to numbers
@@ -677,12 +742,12 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
             continue
         
         if verbose:
-            print(f"  Processing plane {plane_letter}: {n_entries} clusters...")
+            print(f"[generate_cluster_arrays.py]   Processing plane {plane_letter}: {n_entries} clusters...")
         
         # Get threshold for this plane
         plane_threshold = threshold_map.get(plane_letter, 60.0)
         if verbose:
-            print(f"    Using threshold = {plane_threshold} ADC for plane {plane_letter}")
+            print(f"[generate_cluster_arrays.py]     Using threshold = {plane_threshold} ADC for plane {plane_letter}")
         
         # Load all data at once for efficiency
         branches = [
@@ -791,10 +856,10 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                 # Progress indicator
                 if verbose:
                     if (n_generated_plane % 100) == 0 or (i + 1) == n_entries:
-                        print(f"    Generated {n_generated_plane} arrays total...", end='\r')
+                        print(f"[generate_cluster_arrays.py]     Generated {n_generated_plane} arrays...", end='\r')
                     
             except Exception as e:
-                print(f"\n  Warning: Failed to generate array for cluster {i} on plane {plane_letter}: {e}")
+                print(f"\n[generate_cluster_arrays.py]   Warning: Failed cluster {i} on plane {plane_letter}: {e}")
                 continue
         
         # Save all clusters for this plane to a single file
@@ -804,13 +869,13 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                     images=np.array(plane_images, dtype=np.float32),
                     metadata=np.array(plane_metadata, dtype=np.float32))
             if verbose:
-                print(f"\n    Saved {len(plane_images)} clusters to {output_file.name}")
+                print(f"\n[generate_cluster_arrays.py]     Saved {len(plane_images)} clusters to {output_file.name}")
         
         plane_stats[plane_letter] = n_generated_plane
 
     if verbose:
         total_generated = sum(plane_stats.values())
-        print(f"\n  Successfully generated {total_generated} numpy arrays total")
+        print(f"\n[generate_cluster_arrays.py]   Successfully generated {total_generated} arrays")
     return plane_stats
 
 if __name__ == '__main__':
@@ -834,7 +899,7 @@ if __name__ == '__main__':
         # Use JSON to determine clusters folder and images folder
         json_path = Path(args.json)
         if not json_path.exists():
-            print(f"Error: JSON file not found: {json_path}")
+            print(f"[generate_cluster_arrays.py] Error: JSON file not found: {json_path}")
             sys.exit(1)
         
         # Load JSON configuration
@@ -846,7 +911,7 @@ if __name__ == '__main__':
         if matched_clusters_folder and Path(matched_clusters_folder).exists():
             matched_files = list(Path(matched_clusters_folder).glob("*_matched.root"))
             if matched_files:
-                print(f"Using matched clusters folder: {matched_clusters_folder}")
+                print(f"[generate_cluster_arrays.py] Using matched clusters folder: {matched_clusters_folder}")
                 clusters_folder = matched_clusters_folder
                 file_pattern = "*_matched.root"
             else:
@@ -862,7 +927,7 @@ if __name__ == '__main__':
         # Find cluster files in the computed folder
         cluster_files = list(Path(clusters_folder).glob(file_pattern))
         if not cluster_files:
-            print(f"Error: No *_clusters.root files found in {clusters_folder}")
+            print(f"[generate_cluster_arrays.py] Error: No {file_pattern} files found in {clusters_folder}")
             sys.exit(1)
         
         # Sort for consistent ordering
@@ -875,29 +940,29 @@ if __name__ == '__main__':
         # Apply skip and max filters
         if skip_files > 0:
             cluster_files = cluster_files[skip_files:]
-            print(f"Skipping first {skip_files} files (from {'CLI' if args.skip_files is not None else 'JSON'})")
+            print(f"[generate_cluster_arrays.py] Skipping first {skip_files} files (from {'CLI' if args.skip_files is not None else 'JSON'})")
         
         if max_files is not None:
             cluster_files = cluster_files[:max_files]
-            print(f"Processing at most {max_files} files (from {'CLI' if args.max_files is not None else 'JSON'})")
+            print(f"[generate_cluster_arrays.py] Processing at most {max_files} files (from {'CLI' if args.max_files is not None else 'JSON'})")
         
         cluster_files = [str(f) for f in cluster_files]
         
-        print(f"Using JSON config: {json_path}")
-        print(f"Computed clusters folder: {clusters_folder}")
-        print(f"Computed images folder: {images_folder}")
-        print(f"Output directory: {output_dir}")
-        print(f"Processing {len(cluster_files)} cluster file(s)")
+        print(f"[generate_cluster_arrays.py] Using JSON config: {json_path}")
+        print(f"[generate_cluster_arrays.py] Computed clusters folder: {clusters_folder}")
+        print(f"[generate_cluster_arrays.py] Computed images folder: {images_folder}")
+        print(f"[generate_cluster_arrays.py] Output directory: {output_dir}")
+        print(f"[generate_cluster_arrays.py] Processing {len(cluster_files)} cluster file(s)")
         
     else:
         # Use command-line arguments
         if not args.cluster_files:
-            print("Error: Must provide cluster_files or --json")
+            print("[generate_cluster_arrays.py] Error: Must provide cluster_files or --json")
             parser.print_help()
             sys.exit(1)
         
         if not args.output_dir:
-            print("Error: --output-dir required when not using --json")
+            print("[generate_cluster_arrays.py] Error: --output-dir required when not using --json")
             parser.print_help()
             sys.exit(1)
         
@@ -910,31 +975,23 @@ if __name__ == '__main__':
         
         if skip_files > 0:
             cluster_files = cluster_files[skip_files:]
-            print(f"Skipping first {skip_files} files")
+            print(f"[generate_cluster_arrays.py] Skipping first {skip_files} files")
         
         if max_files is not None:
             cluster_files = cluster_files[:max_files]
-            print(f"Processing at most {max_files} files")
-    
-    # Check for existing output files and handle override mode
-    output_path = Path(output_dir)
-    if args.override:
-        # Override mode: delete existing NPZ files
-        existing_files = list(output_path.glob('*_plane*.npz'))
-        if existing_files:
-            print(f"\nOverride mode: Deleting {len(existing_files)} existing file(s)")
-            for f in existing_files:
-                f.unlink()
-    else:
-        # Check for existing files to potentially skip
-        existing_files = list(output_path.glob('*_plane*.npz'))
-        if existing_files:
-            print(f"\nFound {len(existing_files)} existing output file(s)")
-            print(f"Processing will skip files that already have outputs")
-            print(f"Use --override/-f to force reprocessing all files from scratch\n")
+            print(f"[generate_cluster_arrays.py] Processing at most {max_files} files")
     
     # Ensure output directory exists
+    output_path = Path(output_dir)
     output_path.mkdir(exist_ok=True, parents=True)
+    
+    # Check for existing files (but don't delete them yet)
+    if not args.override:
+        existing_files = list(output_path.glob('*_plane*.npz'))
+        if existing_files:
+            print(f"[generate_cluster_arrays.py] Found {len(existing_files)} existing output file(s)")
+            print(f"[generate_cluster_arrays.py] Processing will skip files that already have outputs")
+            print(f"[generate_cluster_arrays.py] Use --override/-f to force reprocessing\n")
     
     # Set repo root (optional)
     repo_root = Path(args.root_dir) if args.root_dir else None
@@ -945,21 +1002,32 @@ if __name__ == '__main__':
     processed_count = 0
     skipped_count = 0
     
-    for cluster_file in cluster_files:
+    print(f"\n[generate_cluster_arrays.py] Starting batch processing of {len(cluster_files)} file(s)...")
+    
+    for file_idx, cluster_file in enumerate(cluster_files):
         cluster_file = Path(cluster_file)
-        input_basename = cluster_file.stem.replace('_clusters', '')
+        input_basename = cluster_file.stem.replace('_clusters', '').replace('_matched', '')
         
-        # Check if output already exists (unless override mode)
-        if not args.override:
-            output_exists = any(output_path.glob(f"{input_basename}_plane*.npz"))
-            if output_exists:
+        # Progress indicator
+        progress_pct = int((file_idx / len(cluster_files)) * 100)
+        print(f"\n[generate_cluster_arrays.py] [{file_idx + 1}/{len(cluster_files)}] ({progress_pct}%) {cluster_file.name}")
+        
+        # Check if output already exists
+        expected_outputs = list(output_path.glob(f"{input_basename}_plane*.npz"))
+        output_exists = len(expected_outputs) > 0
+        
+        if output_exists:
+            if args.override:
+                # Override mode: delete existing outputs for THIS file only
+                print(f"[generate_cluster_arrays.py]   Override mode: Deleting {len(expected_outputs)} existing output file(s)")
+                for output_file in expected_outputs:
+                    output_file.unlink()
+            else:
+                # Skip if output exists
                 if args.verbose:
-                    print(f"\nSkipping {cluster_file.name} (output already exists)")
+                    print(f"[generate_cluster_arrays.py]   Skipping (output already exists)")
                 skipped_count += 1
                 continue
-        
-        if args.verbose:
-            print(f"\nProcessing file {processed_count + 1}/{len(cluster_files)}: {cluster_file.name}")
         
         # Generate images for this file
         plane_stats = generate_images(
@@ -977,12 +1045,12 @@ if __name__ == '__main__':
         
         processed_count += 1
     
-    print(f"\nProcessing complete:")
-    print(f"  Files processed: {processed_count}")
+    print(f"\n[generate_cluster_arrays.py] Processing complete:")
+    print(f"[generate_cluster_arrays.py]   Files processed: {processed_count}")
     if skipped_count > 0:
-        print(f"  Files skipped (already exist): {skipped_count}")
-    print(f"  Total clusters converted: {total_generated}")
+        print(f"[generate_cluster_arrays.py]   Files skipped (already exist): {skipped_count}")
+    print(f"[generate_cluster_arrays.py]   Total clusters converted: {total_generated}")
     if plane_totals:
-        print(f"  Per plane: {dict(plane_totals)}")
-    print(f"Output directory: {output_dir}")
+        print(f"[generate_cluster_arrays.py]   Per plane: {dict(plane_totals)}")
+    print(f"[generate_cluster_arrays.py] Output directory: {output_dir}")
 

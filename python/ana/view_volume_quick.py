@@ -360,10 +360,13 @@ class VolumeViewer:
             # Stats text
             n_kept = len(bg_clusters) + len(marley_clusters) + len(main_clusters)
             n_total = n_kept + len(discarded_clusters)
-            n_marley = len(marley_clusters) + (1 if main_clusters and main_clusters[0]['is_marley'] else 0)
-            marley_frac = n_marley / n_kept if n_kept > 0 else 0
+            # Count MARLEY clusters from all categories (kept + discarded)
+            n_marley_kept = len(marley_clusters) + (1 if main_clusters and main_clusters[0]['is_marley'] else 0)
+            n_marley_discarded = len(discarded_marley)
+            n_marley = n_marley_kept + n_marley_discarded
+            marley_frac = n_marley / n_total if n_total > 0 else 0
             
-            stats_text = f'Total: {n_total} clusters\nKept: {n_kept}\nDiscarded: {len(discarded_clusters)}\nMARLEY: {n_marley} ({marley_frac:.1%})'
+            stats_text = f'Total: {n_total} clusters\nKept: {n_kept}\nDiscarded: {len(discarded_clusters)}\nMARLEY (all): {n_marley} ({marley_frac:.1%})'
             self.ax_clusters.text(0.02, 0.98, stats_text, transform=self.ax_clusters.transAxes,
                                  fontsize=9, verticalalignment='top',
                                  bbox=dict(boxstyle='round', facecolor='white', alpha=0.85))

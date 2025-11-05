@@ -2,7 +2,7 @@
 Timing parameters
 *******************************************************************************
 
-< timing.time_tick_cm = 0.0805 >                 Time tick in cm
+< timing.time_tick_cm = 0.082 >                 Time tick in cm
 < timing.drift_speed = 1.61e-4 >                 Drift speed in cm/ns
 < timing.conversion_tdc_to_tpc = 32 >             Conversion factor TDC to TPC
 < timing.clock_tick_ns = 16.0 >                  Clock tick in ns

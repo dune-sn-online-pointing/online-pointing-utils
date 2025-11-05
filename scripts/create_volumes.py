@@ -73,6 +73,40 @@ THRESHOLD_ADC_U = 70   # Induction plane U
 THRESHOLD_ADC_V = 70   # Induction plane V
 
 
+def _read_conversion_factors():
+    """Read ADC->MeV conversion factors from parameters/conversion.dat if available.
+    Returns (collection_factor, induction_factor).
+    Falls back to defaults matching C++ parameters file.
+    """
+    default_col = 3600.0
+    default_ind = 900.0
+    conv_file = Path(__file__).resolve().parent.parent / 'parameters' / 'conversion.dat'
+    if not conv_file.exists():
+        return default_col, default_ind
+
+    col = default_col
+    ind = default_ind
+    try:
+        with open(conv_file, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if 'conversion.adc_to_energy_factor_collection' in line:
+                    parts = line.split('=')
+                    if len(parts) > 1:
+                        col = float(parts[1].strip().strip('> ').strip())
+                if 'conversion.adc_to_energy_factor_induction' in line:
+                    parts = line.split('=')
+                    if len(parts) > 1:
+                        ind = float(parts[1].strip().strip('> ').strip())
+    except Exception:
+        return default_col, default_ind
+
+    return col, ind
+
+
+ADC_TO_MEV_COLLECTION, ADC_TO_MEV_INDUCTION = _read_conversion_factors()
+
+
 def get_clusters_folder(json_config):
     """
     Compose clusters folder name from JSON configuration.
@@ -158,37 +192,130 @@ def get_matched_clusters_folder(json_config):
 
 
 
-def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, threshold_adc):
+def _polygon_area(vertices):
+    """Compute polygon area via Shoelace formula."""
+    area = 0.0
+    n = len(vertices)
+    for i in range(n):
+        x1, y1 = vertices[i]
+        x2, y2 = vertices[(i + 1) % n]
+        area += x1 * y2 - x2 * y1
+    return abs(area) * 0.5
+
+
+def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_integral, threshold_adc, frac=0.5, _depth=0):
     """
-    Calculate pentagon parameters for ADC interpolation.
-    Pentagon has a threshold baseline at the bottom.
-    
+    Calculate pentagon parameters mirroring Display.cpp behaviour.
     Returns: (time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, valid)
     """
     if time_end <= time_start:
         return (0, 0, 0, 0, 0, False)
-    
-    T = time_end - time_start
+
     threshold = threshold_adc
-    
-    # Peak position relative to start
-    t_peak_rel = (time_peak - time_start) / T if T > 0 else 0.5
-    t_peak_rel = max(0.0, min(1.0, t_peak_rel))
-    
-    # Intermediate point positions
-    frac = 0.5
-    t1 = frac * t_peak_rel
-    t2 = t_peak_rel + frac * (1.0 - t_peak_rel)
-    
-    # Convert to absolute times
-    time_int_rise = int(round(time_start + t1 * T))
-    time_int_fall = int(round(time_start + t2 * T))
-    
-    # Heights at intermediate points
-    h_int_rise = threshold + 0.6 * (adc_peak - threshold)
-    h_int_fall = threshold + 0.6 * (adc_peak - threshold)
-    
-    return (time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, True)
+    target_area = max(float(adc_integral), 0.0)
+    adc_peak = max(float(adc_peak), 0.0)
+    time_start = float(time_start)
+    time_peak = float(time_peak)
+    time_end = float(time_end)
+
+    # Clamp peak into waveform window to avoid negative spans
+    if time_peak < time_start:
+        time_peak = time_start
+    if time_peak > time_end:
+        time_peak = time_end
+
+    # First attempt: discrete scan matching polygon area to adc_integral
+    best = None
+    best_diff = float('inf')
+    n_samples = 10
+    span_left = time_peak - time_start
+    span_right = time_end - time_peak
+
+    if target_area > 0 and adc_peak > threshold and span_left > 0 and span_right > 0:
+        for i in range(1, n_samples):
+            frac_left = i / n_samples
+            t1 = time_start + frac_left * span_left
+            if not (time_start < t1 < time_peak):
+                continue
+
+            for j in range(1, n_samples):
+                frac_right = j / n_samples
+                t2 = time_peak + frac_right * span_right
+                if not (time_peak < t2 < time_end):
+                    continue
+
+                y1 = threshold + frac_left * (adc_peak - threshold)
+                y2 = threshold + (1.0 - frac_right) * (adc_peak - threshold)
+
+                if y1 < threshold or y1 > adc_peak or y2 < threshold or y2 > adc_peak:
+                    continue
+
+                vertices = [
+                    (time_start, threshold),
+                    (t1, y1),
+                    (time_peak, adc_peak),
+                    (t2, y2),
+                    (time_end, threshold)
+                ]
+                area = _polygon_area(vertices)
+                diff = abs(area - target_area)
+                if diff < best_diff:
+                    best_diff = diff
+                    best = (t1, t2, y1, y2)
+
+    if best is not None:
+        t1, t2, y1, y2 = best
+        return (int(round(t1)), int(round(t2)), float(y1), float(y2), threshold, True)
+
+    # Fallback: analytic approach with recursive frac adjustment (matches C++ logic)
+    frac = max(min(float(frac), 0.9), 0.1)
+    span_total = time_end - time_start
+    if span_total <= 0:
+        return (0, 0, 0, 0, 0, False)
+
+    rise = max(time_peak - time_start, 0.0)
+    fall = max(time_end - time_peak, 0.0)
+
+    ad = rise * frac
+    dh = rise - ad
+    eb = fall * frac
+    he = fall - eb
+
+    time_int_rise = time_start + ad
+    time_int_fall = time_peak + eb
+
+    peak_width = dh * (1.0 - frac) + frac * he
+    if target_area <= 0:
+        intermediate_height = threshold
+    else:
+        intermediate_height = (2.0 * target_area - adc_peak * peak_width) / span_total
+
+    if intermediate_height < threshold:
+        if frac >= 0.9 or _depth > 8:
+            intermediate_height = threshold
+        else:
+            new_frac = 1.0 - 0.5 * (1.0 - frac)
+            return calculate_pentagon_params(time_start, time_peak, time_end, adc_peak,
+                                             target_area, threshold, new_frac, _depth + 1)
+
+    if intermediate_height > adc_peak:
+        if frac <= 0.1 or _depth > 8:
+            intermediate_height = adc_peak
+        else:
+            new_frac = 0.5 * frac
+            return calculate_pentagon_params(time_start, time_peak, time_end, adc_peak,
+                                             target_area, threshold, new_frac, _depth + 1)
+
+    intermediate_height = max(threshold, min(intermediate_height, adc_peak))
+
+    return (
+        int(round(time_int_rise)),
+        int(round(time_int_fall)),
+        float(intermediate_height),
+        float(intermediate_height),
+        threshold,
+        True
+    )
 
 
 def load_clusters_from_file(cluster_file, plane='X', verbose=False):
@@ -231,6 +358,9 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
             'tp_samples_over_threshold', 'tp_samples_to_peak',
             'cluster_id'
         ]
+        # total_charge is written by clustering (reconstructed charge for the cluster)
+        if 'total_charge' in tree.keys():
+            branches.append('total_charge')
         
         # Check if match_id exists (for matched_clusters files)
         if 'match_id' in tree.keys():
@@ -247,6 +377,7 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
             adc_peaks = arrays['tp_adc_peak'][i]
             samples_over_threshold = arrays['tp_samples_over_threshold'][i]
             samples_to_peak = arrays['tp_samples_to_peak'][i]
+            total_charge = float(arrays['total_charge'][i]) if 'total_charge' in arrays else 0.0
             
             if len(channels) == 0:
                 continue
@@ -278,6 +409,12 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
             if 'marley' in true_label.lower():
                 is_marley = True
             
+            # Compute reconstructed energy from total_charge per-cluster (MeV)
+            if isinstance(plane, str) and plane == 'X':
+                reco_energy = total_charge / ADC_TO_MEV_COLLECTION
+            else:
+                reco_energy = total_charge / ADC_TO_MEV_INDUCTION
+
             cluster_info = {
                 'event': int(arrays['event'][i]),
                 'n_tps': int(arrays['n_tps'][i]),
@@ -302,7 +439,9 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
                 'marley_tp_fraction': float(arrays['marley_tp_fraction'][i]),
                 'cluster_id': int(arrays['cluster_id'][i]),
                 'match_id': int(arrays['match_id'][i]) if 'match_id' in arrays else -1,
-                'match_type': int(arrays['match_type'][i]) if 'match_type' in arrays else -1
+                'match_type': int(arrays['match_type'][i]) if 'match_type' in arrays else -1,
+                'total_charge': total_charge,
+                'reco_energy_mev': float(reco_energy)
             }
             
             all_clusters.append(cluster_info)
@@ -392,6 +531,7 @@ def create_volume_image(volume_clusters, center_channel, center_time_tpc, volume
             time_end = times_end[tp_idx]
             time_peak = times_peak[tp_idx]
             adc_peak = adc_peaks[tp_idx]
+            adc_integral = adc_integrals[tp_idx] if tp_idx < len(adc_integrals) else 0.0
             
             # Convert channel to image coordinates
             ch_idx = int(ch - channel_offset)
@@ -400,51 +540,71 @@ def create_volume_image(volume_clusters, center_channel, center_time_tpc, volume
             
             # Calculate pentagon parameters
             time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, valid = \
-                calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, threshold_adc)
+                calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_integral, threshold_adc)
             
             if not valid:
                 continue
             
-            # Pentagon vertices in time
-            vertices_time = [time_start, time_int_rise, time_peak, time_int_fall, time_end]
-            vertices_adc = [threshold, h_int_rise, adc_peak, h_int_fall, threshold]
-            
-            # Fill pixels for this TP
-            t_min = int(time_start - time_offset)
-            t_max = int(time_end - time_offset) + 1
+            # Fill pixels for this TP - match C++ Display.cpp logic exactly
+            # Pentagon: rises from 0 to h_int_rise, then to peak, then falls to h_int_fall, then to 0
+            t_min = int(time_start - time_offset) - 1  # extended range like C++
+            t_max = int(time_end - time_offset) + 2
             
             for t_idx in range(max(0, t_min), min(n_time_bins, t_max)):
                 t_tpc = t_idx + time_offset
+                intensity = 0.0
                 
-                # Interpolate ADC value at this time
-                if t_tpc < time_start or t_tpc > time_end:
-                    continue
-                
-                # Find which pentagon section we're in
-                adc_value = threshold
-                if t_tpc <= time_int_rise:
-                    # Rising edge: threshold to h_int_rise
-                    if time_int_rise > time_start:
-                        frac = (t_tpc - time_start) / (time_int_rise - time_start)
-                        adc_value = threshold + frac * (h_int_rise - threshold)
-                elif t_tpc <= time_peak:
-                    # Rise to peak: h_int_rise to peak
-                    if time_peak > time_int_rise:
-                        frac = (t_tpc - time_int_rise) / (time_peak - time_int_rise)
-                        adc_value = h_int_rise + frac * (adc_peak - h_int_rise)
+                if t_tpc < time_start:
+                    # Extended base before time_start
+                    span = time_int_rise - time_start
+                    if span > 0:
+                        frac = (t_tpc - time_start) / span
+                        intensity = frac * h_int_rise
+                        if intensity < threshold * 0.5:
+                            intensity = 0.0
+                elif t_tpc < time_int_rise:
+                    # Segment 1: rising from 0 to h_int_rise
+                    span = time_int_rise - time_start
+                    if span > 0:
+                        frac = (t_tpc - time_start) / span
+                        intensity = frac * h_int_rise
+                elif t_tpc < time_peak:
+                    # Segment 2: rising from h_int_rise to peak
+                    span = time_peak - time_int_rise
+                    if span > 0:
+                        frac = (t_tpc - time_int_rise) / span
+                        intensity = h_int_rise + frac * (adc_peak - h_int_rise)
+                    else:
+                        intensity = adc_peak
+                elif t_tpc == time_peak:
+                    # Peak
+                    intensity = adc_peak
                 elif t_tpc <= time_int_fall:
-                    # Fall from peak: peak to h_int_fall
-                    if time_int_fall > time_peak:
-                        frac = (t_tpc - time_peak) / (time_int_fall - time_peak)
-                        adc_value = adc_peak - frac * (adc_peak - h_int_fall)
+                    # Segment 3: falling from peak to h_int_fall
+                    span = time_int_fall - time_peak
+                    if span > 0:
+                        frac = (t_tpc - time_peak) / span
+                        intensity = adc_peak - frac * (adc_peak - h_int_fall)
+                    else:
+                        intensity = h_int_fall
+                elif t_tpc < time_end:
+                    # Segment 4: falling from h_int_fall to 0
+                    span = time_end - time_int_fall
+                    if span > 0:
+                        frac = (t_tpc - time_int_fall) / span
+                        intensity = h_int_fall - frac * h_int_fall
                 else:
-                    # Falling edge: h_int_fall to threshold
-                    if time_end > time_int_fall:
-                        frac = (t_tpc - time_int_fall) / (time_end - time_int_fall)
-                        adc_value = h_int_fall - frac * (h_int_fall - threshold)
+                    # Extended base after time_end
+                    span = time_end - time_int_fall
+                    if span > 0:
+                        frac = (t_tpc - time_int_fall) / span
+                        intensity = h_int_fall - frac * h_int_fall
+                        if intensity < threshold * 0.5:
+                            intensity = 0.0
                 
-                # Add ADC value to image (keep raw ADC, not normalized)
-                image[ch_idx, t_idx] += max(0, adc_value)
+                # Use max() like C++ to keep highest value per pixel
+                if intensity > 0:
+                    image[ch_idx, t_idx] = max(image[ch_idx, t_idx], intensity)
     
     return image
 
@@ -531,8 +691,8 @@ def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
         # In matched files, truth energy may be -1.0 even for MARLEY, so use marley_tp_fraction
         is_es = main_cluster['is_es_interaction']
         if main_cluster['is_marley']:
-            # Use particle energy for marley events (electron energy from neutrino interaction)
-            event_energy = main_cluster['true_particle_energy']
+            # Use reconstructed cluster energy (from total_charge) instead of true energy
+            event_energy = main_cluster.get('reco_energy_mev', -1.0)
             # If matched file lost truth info, energy will be -1.0 but we still know it's ES from marley_tp_fraction
             interaction_type = "ES" if is_es or main_cluster['marley_tp_fraction'] > 0 else "CC"
         else:

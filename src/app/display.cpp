@@ -421,10 +421,10 @@ void drawCurrent(){
       volume_warning = " | WARNING: MIXED TPC VOLUMES!";
     }
     
-    title << "Ch range: " << min_ch << "-" << max_ch;
+    // title << "Ch range: " << min_ch << "-" << max_ch;
     if (has_volume0) title << " [Vol0]";
     if (has_volume1) title << " [Vol1]";
-    title << " | Time spread: " << time_spread_ticks << " ticks (" << std::fixed << std::setprecision(1) << time_spread_cm << " cm)";
+    // title << " | Time spread: " << time_spread_ticks << " ticks (" << std::fixed << std::setprecision(1) << time_spread_cm << " cm)";
     title << volume_warning << " | ";
   }
   

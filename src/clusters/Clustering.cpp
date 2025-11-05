@@ -566,7 +566,8 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
 
         if (tp_detector_channel) tp_detector_channel->clear();
         if (tp_detector) tp_detector->clear();
-        if (tp_samples_over_threshold) tp_samples_over_threshold->clear();
+    if (tp_samples_over_threshold) tp_samples_over_threshold->clear();
+    if (tp_samples_to_peak) tp_samples_to_peak->clear();
         if (tp_time_start) tp_time_start->clear();
         if (tp_samples_to_peak) tp_samples_to_peak->clear();
         if (tp_adc_peak) tp_adc_peak->clear();
@@ -581,6 +582,12 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
             tp_adc_peak->push_back(tp->GetAdcPeak());
             tp_adc_integral->push_back(tp->GetAdcIntegral());
             tp_simide_energy->push_back(tp->GetSimideEnergy());
+            if (debugMode && tp_samples_to_peak->size() <= 5) {
+                LogDebug << "[write_clusters_with_match_id] cluster_id=" << cluster_id
+                         << " tp_index=" << (tp_samples_to_peak->size() - 1)
+                         << " samples_to_peak=" << tp->GetSamplesToPeak()
+                         << " adc_peak=" << tp->GetAdcPeak() << std::endl;
+            }
         }
         clusters_tree->Fill();
     }
@@ -593,8 +600,10 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
     return;   
 }
 
-void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, int>& cluster_to_match, TFile* clusters_file, std::string view) {
+void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, int>& cluster_to_match, TFile* clusters_file, std::string view,
+                                   std::map<int, int>* x_to_u_map, std::map<int, int>* x_to_v_map) {
     // Similar to write_clusters but adds match_id and match_type branches
+    // For X plane, also adds matching_clusterId_U and matching_clusterId_V
     if (!clusters_file || clusters_file->IsZombie()) {
         LogError << "Invalid TFile pointer provided to write_clusters_with_match_id" << std::endl;
         return;
@@ -620,6 +629,8 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
     int cluster_id;
     int match_id;
     int match_type;
+    int matching_clusterId_U;  // Only for X plane
+    int matching_clusterId_V;  // Only for X plane
     
     std::vector<int>* tp_detector_channel = new std::vector<int>();
     std::vector<int>* tp_detector = new std::vector<int>();
@@ -656,6 +667,12 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
     clusters_tree->Branch("cluster_id", &cluster_id, "cluster_id/I");
     clusters_tree->Branch("match_id", &match_id, "match_id/I");
     clusters_tree->Branch("match_type", &match_type, "match_type/I");
+    
+    // Add matching cluster ID branches only for X plane
+    if (view == "X" && x_to_u_map && x_to_v_map) {
+        clusters_tree->Branch("matching_clusterId_U", &matching_clusterId_U, "matching_clusterId_U/I");
+        clusters_tree->Branch("matching_clusterId_V", &matching_clusterId_V, "matching_clusterId_V/I");
+    }
     
     clusters_tree->Branch("tp_detector_channel", &tp_detector_channel);
     clusters_tree->Branch("tp_detector", &tp_detector);
@@ -725,6 +742,15 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
         } else {
             match_id = -1;
             match_type = -1;  // No match
+        }
+        
+        // Set matching cluster IDs for X plane
+        if (view == "X" && x_to_u_map && x_to_v_map) {
+            auto u_it = x_to_u_map->find(cluster_id);
+            matching_clusterId_U = (u_it != x_to_u_map->end()) ? u_it->second : -1;
+            
+            auto v_it = x_to_v_map->find(cluster_id);
+            matching_clusterId_V = (v_it != x_to_v_map->end()) ? v_it->second : -1;
         }
 
         // Fill TP vectors
@@ -938,7 +964,10 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
     std::vector<int>* tp_channel = nullptr;
     std::vector<int>* tp_time_start = nullptr;
     std::vector<int>* tp_s_over = nullptr;
+    std::vector<int>* tp_samples_to_peak = nullptr;
+    std::vector<int>* tp_adc_peak = nullptr;
     std::vector<int>* tp_adc_integral = nullptr;
+    std::vector<double>* tp_simide_energy = nullptr;
     
     if (tree->GetBranch("event")) tree->SetBranchAddress("event", &event);
     if (tree->GetBranch("n_tps")) tree->SetBranchAddress("n_tps", &n_tps);
@@ -962,7 +991,10 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
     if (tree->GetBranch("tp_detector_channel")) tree->SetBranchAddress("tp_detector_channel", &tp_channel);
     if (tree->GetBranch("tp_time_start")) tree->SetBranchAddress("tp_time_start", &tp_time_start);
     if (tree->GetBranch("tp_samples_over_threshold")) tree->SetBranchAddress("tp_samples_over_threshold", &tp_s_over);
+    if (tree->GetBranch("tp_samples_to_peak")) tree->SetBranchAddress("tp_samples_to_peak", &tp_samples_to_peak);
+    if (tree->GetBranch("tp_adc_peak")) tree->SetBranchAddress("tp_adc_peak", &tp_adc_peak);
     if (tree->GetBranch("tp_adc_integral")) tree->SetBranchAddress("tp_adc_integral", &tp_adc_integral);
+    if (tree->GetBranch("tp_simide_energy")) tree->SetBranchAddress("tp_simide_energy", &tp_simide_energy);
     
     // Read all entries
     for (Long64_t i = 0; i < tree->GetEntries(); i++) {
@@ -981,11 +1013,35 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
             int channel = (*tp_channel)[j];
             int time_start = (*tp_time_start)[j];
             int s_over_threshold = (*tp_s_over)[j];
+            int samples_to_peak = 0;
+            if (tp_samples_to_peak && j < tp_samples_to_peak->size()) {
+                samples_to_peak = (*tp_samples_to_peak)[j];
+            }
+            int adc_peak = (tp_adc_peak && j < tp_adc_peak->size()) ? (*tp_adc_peak)[j] : 0;
             int adc_integral = (*tp_adc_integral)[j];
+            double simide_energy = 0.0;
+            if (tp_simide_energy && j < tp_simide_energy->size()) {
+                simide_energy = (*tp_simide_energy)[j];
+            }
+
+            if (debugMode) {
+                LogDebug << "      TP " << j
+                         << " channel=" << channel
+                         << " time_start=" << time_start
+                         << " sot=" << s_over_threshold
+                         << " samples_to_peak=" << samples_to_peak
+                         << " adc_peak=" << adc_peak
+                         << " adc_integral=" << adc_integral
+                         << " simide_energy=" << simide_energy
+                         << std::endl;
+            }
             
             // Create TP - Note: event number set via SetEvent() after construction
             // because TriggerPrimitive constructor doesn't take event as parameter
-            TriggerPrimitive* tp = new TriggerPrimitive(0, 0, 0, channel, s_over_threshold, time_start, 0, adc_integral, 0);
+            TriggerPrimitive* tp = new TriggerPrimitive(0, 0, 0, channel, s_over_threshold, time_start, samples_to_peak, adc_integral, adc_peak);
+            
+            // Set simide energy
+            tp->SetSimideEnergy(simide_energy);
             
             // IMPORTANT: Set event BEFORE adding to vector to avoid Cluster constructor check failures
             tp->SetEvent(event);

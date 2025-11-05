@@ -26,133 +26,80 @@ PentagonParams calculatePentagonParams(
     PentagonParams result;
     result.valid = false;
     
-    // Target area is the adc_integral
-    double target_area = adc_integral;
-    // Use the threshold for the plane (60 for X, 70 for U/V) as the plateau baseline
-    double threshold = threshold_adc;
+    // CORRECT LOGIC:
+    // 1. Subtract threshold*samples_over_threshold from adc_integral to get residual area
+    // 2. Place vertices at midpoints: between (start, peak) and (peak, end)
+    // 3. Find vertex heights that minimize difference with residual area
     
-    // Scan for best pentagon vertices that match the target area
-    // Try different intermediate points (t1 between start-peak, t2 between peak-end)
-    double best_diff = std::numeric_limits<double>::max();
-    int best_t1 = -1;
-    int best_t2 = -1;
-    double best_y1 = 0.0;
-    double best_y2 = 0.0;
+    double samples_over_threshold = time_end - time_start;
+    double threshold_area = threshold_adc * samples_over_threshold;
+    double residual_area = adc_integral - threshold_area;
     
-    // Sample intermediate points
-    int n_samples = 10; // number of candidate points to try
-    for (int i = 1; i < n_samples; ++i) {
-        double frac_left = double(i) / double(n_samples);
-        int t1 = static_cast<int>(time_start + frac_left * (time_peak - time_start));
-        if (t1 <= time_start || t1 >= time_peak) continue;
-        
-        for (int j = 1; j < n_samples; ++j) {
-            double frac_right = double(j) / double(n_samples);
-            int t2 = static_cast<int>(time_peak + frac_right * (time_end - time_peak));
-            if (t2 <= time_peak || t2 >= time_end) continue;
-            
-            // Calculate intermediate heights for this configuration
-            // Use linear interpolation as a starting point
-            double y1 = threshold + frac_left * (adc_peak - threshold);
-            double y2 = threshold + (1.0 - frac_right) * (adc_peak - threshold);
-            
-            // Ensure y1 and y2 are between threshold and peak
-            if (y1 < threshold || y1 > adc_peak) continue;
-            if (y2 < threshold || y2 > adc_peak) continue;
-            
-            // Calculate pentagon area with these vertices
-            // Pentagon: (time_start, threshold), (t1, y1), (time_peak, adc_peak), (t2, y2), (time_end, threshold)
-            std::vector<std::pair<double, double>> vertices = {
-                {time_start, threshold},
-                {t1, y1},
-                {time_peak, adc_peak},
-                {t2, y2},
-                {time_end, threshold}
-            };
-            
-            double area = polygonArea(vertices);
-            double diff = std::abs(area - target_area);
-            
-            if (diff < best_diff) {
-                best_diff = diff;
-                best_t1 = t1;
-                best_t2 = t2;
-                best_y1 = y1;
-                best_y2 = y2;
-            }
-        }
-    }
-    
-    // If we found a reasonable solution, use it
-    if (best_t1 > 0 && best_t2 > 0) {
-        result.time_int_rise = best_t1;
-        result.time_int_fall = best_t2;
-        result.h_int_rise = best_y1;
-        result.h_int_fall = best_y2;
-        result.frac = frac; // keep original frac for compatibility
+    // If residual is negative or zero, degenerate to threshold
+    if (residual_area <= 0) {
+        result.time_int_rise = (time_start + time_peak) / 2.0;
+        result.time_int_fall = (time_peak + time_end) / 2.0;
+        result.h_int_rise = threshold_adc;
+        result.h_int_fall = threshold_adc;
+        result.frac = 0.5;
         result.valid = true;
         return result;
     }
     
-    // Fallback to old parametric approach if scan failed
-    result.frac = frac;
-  
-  // Bounds checking for frac
-  if (frac < 0.1) {
-    result.h_int_rise = 0;
-    result.h_int_fall = 0;
-    result.frac = 0.1;
+    // Vertex time positions at midpoints
+    double t1 = (time_start + time_peak) / 2.0;
+    double t2 = (time_peak + time_end) / 2.0;
+    
+    // Pentagon vertices (above threshold baseline):
+    // (time_start, 0), (t1, h1), (time_peak, adc_peak - threshold), (t2, h2), (time_end, 0)
+    // where heights are relative to threshold
+    
+    double peak_height_above_threshold = adc_peak - threshold_adc;
+    
+    // Scan for best vertex heights
+    double best_diff = std::numeric_limits<double>::max();
+    double best_h1 = 0.0;
+    double best_h2 = 0.0;
+    
+    int n_samples = 20; // number of candidate heights to try
+    for (int i = 0; i <= n_samples; ++i) {
+        double frac_h = double(i) / double(n_samples);
+        double h1 = frac_h * peak_height_above_threshold;
+        
+        for (int j = 0; j <= n_samples; ++j) {
+            double frac_h2 = double(j) / double(n_samples);
+            double h2 = frac_h2 * peak_height_above_threshold;
+            
+            // Calculate pentagon area (above threshold baseline)
+            // Pentagon: (time_start, 0), (t1, h1), (time_peak, peak_height), (t2, h2), (time_end, 0)
+            std::vector<std::pair<double, double>> vertices = {
+                {time_start, 0.0},
+                {t1, h1},
+                {time_peak, peak_height_above_threshold},
+                {t2, h2},
+                {time_end, 0.0}
+            };
+            
+            double area = polygonArea(vertices);
+            double diff = std::abs(area - residual_area);
+            
+            if (diff < best_diff) {
+                best_diff = diff;
+                best_h1 = h1;
+                best_h2 = h2;
+            }
+        }
+    }
+    
+    // Convert heights back to absolute values (add threshold)
+    result.time_int_rise = t1;
+    result.time_int_fall = t2;
+    result.h_int_rise = threshold_adc + best_h1;
+    result.h_int_fall = threshold_adc + best_h2;
+    result.frac = 0.5; // midpoint
     result.valid = true;
+    
     return result;
-  }
-  if (frac > 0.9) {
-    result.h_int_rise = adc_peak;
-    result.h_int_fall = adc_peak;
-    result.frac = 0.9;
-    result.valid = true;
-    return result;
-  }
-  
-  // Calculate time positions
-  double ah = time_peak - time_start;  // rise time
-  double bh = time_end - time_peak;     // fall time
-  double ch = adc_peak;
-  
-  double ad = ah * frac;
-  double dh = ah - ad;
-  double eb = bh * frac;
-  double he = bh - eb;
-  
-  result.time_int_rise = time_start + ad;
-  result.time_int_fall = time_peak + eb;
-  
-  // Calculate intermediate height from area constraint
-  double time_over_threshold = time_end - time_start;
-  // target_area already defined above, reuse it
-  
-  double peak_width = dh * (1.0 - frac) + frac * he;
-  double intermediate_height = (2 * target_area - ch * peak_width) / time_over_threshold;
-  
-  // Validate intermediate height
-  if (intermediate_height < 0) {
-    // Adjust frac upward
-    double new_frac = 1.0 - 0.5 * (1.0 - frac);
-    return calculatePentagonParams(time_start, time_peak, time_end, adc_peak, 
-                                   adc_integral, new_frac, threshold_adc);
-  }
-  else if (intermediate_height > ch) {
-    // Adjust frac downward
-    double new_frac = 0.5 * frac;
-    return calculatePentagonParams(time_start, time_peak, time_end, adc_peak, 
-                                   adc_integral, new_frac, threshold_adc);
-  }
-  
-  // Valid result
-  result.h_int_rise = intermediate_height;
-  result.h_int_fall = intermediate_height;
-  result.valid = true;
-  
-  return result;
 }
 
 void fillHistogramTriangle(
@@ -232,38 +179,25 @@ void fillHistogramPentagon(
   }
   
   // Fill histogram with pentagon shape
-  // Pentagon vertices: (time_start, 0), (time_int_rise, h_int_rise), (time_peak, adc_peak),
-  //                     (time_int_fall, h_int_fall), (time_end, 0)
-  // The sides must pass through (time_start, threshold_adc) and (time_end, threshold_adc)
+  // Pentagon vertices: (time_start, threshold), (time_int_rise, h_int_rise), (time_peak, adc_peak),
+  //                     (time_int_fall, h_int_fall), (time_end, threshold)
+  // The pentagon starts and ends at threshold, NOT at 0
   
   int t_int_rise = static_cast<int>(std::round(params.time_int_rise));
   int t_int_fall = static_cast<int>(std::round(params.time_int_fall));
   
-  // EXTENDED RANGE: Pentagon base can extend 1-2 pixels beyond time_start and time_end
-  // to better match the actual waveform shape
-  int extended_start = time_start - 1;
-  int extended_end = time_end + 1;
-  
-  // CRITICAL: Loop must include ALL ticks from extended_start to extended_end (inclusive start, exclusive end)
-  for (int t = extended_start; t < extended_end; ++t) {
-    double intensity = 0.0;
+  // Loop through all ticks from time_start to time_end
+  for (int t = time_start; t < time_end; ++t) {
+    double intensity = threshold_adc;  // Start from threshold baseline
     
-    if (t < time_start) {
-      // Extended base before time_start - extrapolate from first segment
+    if (t < t_int_rise) {
+      // Segment 1: rising from threshold to h_int_rise
       double span = t_int_rise - time_start;
       if (span > 0) {
         double frac = double(t - time_start) / span;
-        intensity = frac * params.h_int_rise;
-        // Only fill if intensity is positive and above threshold
-        if (intensity < threshold_adc * 0.5) intensity = 0.0;
-      }
-    }
-    else if (t < t_int_rise) {
-      // Segment 1: rising from 0 to h_int_rise (passes through threshold at time_start)
-      double span = t_int_rise - time_start;
-      if (span > 0) {
-        double frac = double(t - time_start) / span;
-        intensity = frac * params.h_int_rise;
+        intensity = threshold_adc + frac * (params.h_int_rise - threshold_adc);
+      } else {
+        intensity = params.h_int_rise;
       }
     }
     else if (t < time_peak) {
@@ -290,33 +224,23 @@ void fillHistogramPentagon(
         intensity = params.h_int_fall;
       }
     }
-    else if (t < time_end) {
-      // Segment 4: falling from h_int_fall to 0 (passes through threshold at time_end)
-      double span = time_end - t_int_fall;
-      if (span > 0) {
-        double frac = double(t - t_int_fall) / span;
-        intensity = params.h_int_fall - frac * params.h_int_fall;
-      }
-    }
     else {
-      // Extended base after time_end - extrapolate from last segment
+      // Segment 4: falling from h_int_fall to threshold
       double span = time_end - t_int_fall;
       if (span > 0) {
         double frac = double(t - t_int_fall) / span;
-        intensity = params.h_int_fall - frac * params.h_int_fall;
-        // Only fill if intensity is positive and above threshold
-        if (intensity < threshold_adc * 0.5) intensity = 0.0;
+        intensity = params.h_int_fall - frac * (params.h_int_fall - threshold_adc);
+      } else {
+        intensity = threshold_adc;
       }
     }
     
-    // Only fill bins with positive intensity
-    if (intensity > 0) {
-      int binx = frame->GetXaxis()->FindBin(ch_contiguous);
-      int biny = frame->GetYaxis()->FindBin(t);
-      double current = frame->GetBinContent(binx, biny);
-      if (intensity > current) {
-        frame->SetBinContent(binx, biny, intensity);
-      }
+    // Fill the bin
+    int binx = frame->GetXaxis()->FindBin(ch_contiguous);
+    int biny = frame->GetYaxis()->FindBin(t);
+    double current = frame->GetBinContent(binx, biny);
+    if (intensity > current) {
+      frame->SetBinContent(binx, biny, intensity);
     }
   }
 }
