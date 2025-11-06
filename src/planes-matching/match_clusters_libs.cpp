@@ -62,48 +62,9 @@ bool are_compatibles(Cluster& c_u, Cluster& c_v, Cluster& c_x, float radius) {
             int(c_u.get_tp(0)->GetDetector()) == int(c_x.get_tp(0)->GetDetector())))
         return false;
 
-    // Wire geometry in ProtoDUNE-SP 1x2x2:
-    // - X wires: vertical (0°), parallel to Y-axis, give direct Z position
-    // - U wires: +35.7° from vertical
-    // - V wires: -35.7° from vertical
-    // 
-    // For wire crossing check:
-    // Each U/V wire channel maps to a specific wire position
-    // At a given Z position (from X plane), certain U and V wires should be present
-    // 
-    // The key: check if the U and V wire channels are compatible with the Z from X plane
-    
-    // Get Z position from X plane
-    float z_from_x = calculate_z_from_x_plane(c_x.get_tps());
-    
-    // Get average channel numbers for U and V clusters
-    float avg_u_channel = 0.0;
-    float avg_v_channel = 0.0;
-    
-    for (auto* tp : c_u.get_tps()) {
-        avg_u_channel += tp->GetDetectorChannel() % APA::total_channels;
-    }
-    avg_u_channel /= c_u.get_tps().size();
-    
-    for (auto* tp : c_v.get_tps()) {
-        avg_v_channel += tp->GetDetectorChannel() % APA::total_channels;
-    }
-    avg_v_channel /= c_v.get_tps().size();
-    
-    // Debug output for first few checks
-    static int debug_count = 0;
-    if (verboseMode && debug_count < 5) {
-        LogInfo << "Wire crossing check [" << debug_count << "]:" << std::endl;
-        LogInfo << "  Z from X plane: " << z_from_x << " cm" << std::endl;
-        LogInfo << "  U channel: " << avg_u_channel << std::endl;
-        LogInfo << "  V channel: " << avg_v_channel << std::endl;
-        LogInfo << "  Spatial tolerance: " << radius << " cm" << std::endl;
-        debug_count++;
-    }
-    
-    // For now, use a generous tolerance since we're still developing the geometry
-    // The main filter is time overlap, this is just a sanity check
-    // TODO: Implement proper wire crossing geometry calculation
+    // Simplified matching: just check time+event+APA compatibility
+    // Wire crossing geometry check disabled for now to see if it's the bottleneck
+    // Time overlap is already checked in the outer loop (match_clusters.cpp)
     
     return true;
 }
@@ -170,4 +131,40 @@ Cluster join_clusters(Cluster c_u, Cluster c_v, Cluster c_x){
     return c;
 }
 
+// Overload for joining 2 clusters (partial matches)
+Cluster join_clusters(Cluster c1, Cluster c2){
+    std::vector<TriggerPrimitive*> tps;
+    
+    // Determine which is X plane (collection) for truth info
+    bool c1_is_x = (c1.get_size() > 0 && c1.get_tps()[0]->GetView() == "X");
+    bool c2_is_x = (c2.get_size() > 0 && c2.get_tps()[0]->GetView() == "X");
+    
+    Cluster& x_cluster = c1_is_x ? c1 : c2;
+    int common_event = (x_cluster.get_size() > 0) ? x_cluster.get_tps()[0]->GetEvent() : 0;
+    
+    // Add all TPs from both clusters
+    for (int i = 0; i < c1.get_size(); i++) {
+        TriggerPrimitive* tp = c1.get_tps()[i];
+        tp->SetEvent(common_event);
+        tps.push_back(tp);
+    }
+    for (int i = 0; i < c2.get_size(); i++) {
+        TriggerPrimitive* tp = c2.get_tps()[i];
+        tp->SetEvent(common_event);
+        tps.push_back(tp);
+    }
+
+    Cluster c(tps);
+    // Copy truth info from X cluster
+    c.set_true_pos(x_cluster.get_true_pos());
+    c.set_true_dir(x_cluster.get_true_dir());
+    c.set_true_momentum(x_cluster.get_true_momentum());
+    c.set_true_energy(x_cluster.get_true_neutrino_energy());
+    c.set_true_label(x_cluster.get_true_label());
+    c.set_is_es_interaction(x_cluster.get_is_es_interaction());
+    c.set_min_distance_from_true_pos(x_cluster.get_min_distance_from_true_pos());
+    c.set_supernova_tp_fraction(x_cluster.get_supernova_tp_fraction());
+    
+    return c;
+}
 

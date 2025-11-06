@@ -1,7 +1,8 @@
 {
   "comment": "Configuration for creating 1m x 1m volume images for channel tagging",
-  "clusters_folder": "data/prod_cc/clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0/",
-  "volumes_folder": "data/prod_cc/volumes_planeX_bg/",
+  "clusters_folder": "data2/prod_cc/clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0/",
+  "volumes_folder": "data2/prod_cc/volumes_planeX_bg/",
   "plane": "X",
-  "max_files": 1
+  "max_files": 1,
+  "time_tolerance_ticks": 500
 }

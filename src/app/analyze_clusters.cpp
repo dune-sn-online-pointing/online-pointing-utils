@@ -269,6 +269,27 @@ int main(int argc, char* argv[]){
   std::map<std::string, TH1F*> total_length_plane_h;
   std::map<std::string, TH2F*> ntps_vs_total_charge_plane_h;
   std::map<std::string, double> min_cluster_charge;
+
+  struct PlaneMatchCounters {
+    long long total = 0;
+    long long matched = 0;
+    long long unmatched = 0;
+    long long main_total = 0;
+    long long main_matched = 0;
+  };
+
+  struct XMatchCounters {
+    long long main_total = 0;
+    long long matched_both = 0;
+    long long matched_u_only = 0;
+    long long matched_v_only = 0;
+    long long unmatched = 0;
+    long long ambiguous = 0;
+  };
+
+  std::map<std::string, PlaneMatchCounters> plane_match_stats;
+  XMatchCounters x_match_stats;
+  bool has_matching_data = false;
   
   // MARLEY event accumulators
   std::vector<double> marley_enu;
@@ -413,6 +434,10 @@ int main(int argc, char* argv[]){
       std::string* true_interaction_ptr=nullptr;
       float supernova_tp_fraction=0.f, generator_tp_fraction=0.f, marley_tp_fraction=0.f;
       bool has_marley_tp_fraction_branch = false; // Track if new branch exists
+  bool is_main_cluster = false;
+  int matching_clusterId_U = -1;
+  int matching_clusterId_V = -1;
+  bool has_matching_partner_ids = false;
       // vector branches for derived quantities
       std::vector<int>* v_chan=nullptr;
       std::vector<int>* v_tstart=nullptr;
@@ -440,12 +465,25 @@ int main(int argc, char* argv[]){
         pd.tree->SetBranchAddress("marley_tp_fraction", &marley_tp_fraction);
         has_marley_tp_fraction_branch = true;
       }
+      if (pd.tree->GetBranch("is_main_cluster")) {
+        pd.tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
+      }
       if (pd.tree->GetBranch("match_id")) {
         pd.tree->SetBranchAddress("match_id", &match_id);
         has_match_id = true;
       }
       if (pd.tree->GetBranch("match_type")) {
         pd.tree->SetBranchAddress("match_type", &match_type);
+      }
+      if (pd.name == "X") {
+        if (pd.tree->GetBranch("matching_clusterId_U")) {
+          pd.tree->SetBranchAddress("matching_clusterId_U", &matching_clusterId_U);
+          has_matching_partner_ids = true;
+        }
+        if (pd.tree->GetBranch("matching_clusterId_V")) {
+          pd.tree->SetBranchAddress("matching_clusterId_V", &matching_clusterId_V);
+          has_matching_partner_ids = true;
+        }
       }
       if (pd.tree->GetBranch("true_pos_x")) pd.tree->SetBranchAddress("true_pos_x", &true_pos_x);
       if (pd.tree->GetBranch("true_pos_y")) pd.tree->SetBranchAddress("true_pos_y", &true_pos_y);
@@ -476,7 +514,47 @@ int main(int argc, char* argv[]){
 
       Long64_t n = pd.tree->GetEntries();
       for (Long64_t i=0;i<n;++i){
+        match_id = -1;
+        match_type = -1;
+        is_main_cluster = false;
+        matching_clusterId_U = -1;
+        matching_clusterId_V = -1;
+
         pd.tree->GetEntry(i);
+
+        if (has_match_id) {
+          has_matching_data = true;
+          auto& stats = plane_match_stats[pd.name];
+          stats.total++;
+          if (is_main_cluster) stats.main_total++;
+
+          if (match_id >= 0) {
+            stats.matched++;
+            if (is_main_cluster) stats.main_matched++;
+          } else {
+            stats.unmatched++;
+          }
+
+          if (pd.name == "X" && is_main_cluster) {
+            x_match_stats.main_total++;
+            if (match_id >= 0) {
+              bool has_u_partner = has_matching_partner_ids && matching_clusterId_U >= 0;
+              bool has_v_partner = has_matching_partner_ids && matching_clusterId_V >= 0;
+              if (has_u_partner && has_v_partner) {
+                x_match_stats.matched_both++;
+              } else if (has_u_partner) {
+                x_match_stats.matched_u_only++;
+              } else if (has_v_partner) {
+                x_match_stats.matched_v_only++;
+              } else {
+                x_match_stats.ambiguous++;
+              }
+            } else {
+              x_match_stats.unmatched++;
+            }
+          }
+        }
+
         if (n_tps<=0) continue;
         
         // Track minimum cluster charge per plane
@@ -875,10 +953,54 @@ int main(int argc, char* argv[]){
         }
       }
     }
+
+    if (has_matching_data) {
+      float match_y = 0.32f;
+      auto match_title = new TText(0.5, match_y, "Matching Performance Summary:");
+      match_title->SetTextAlign(22); match_title->SetTextSize(0.03); match_title->SetNDC(); match_title->SetTextFont(62); match_title->Draw();
+      match_y -= 0.035f;
+
+      std::vector<std::string> plane_order = {"X", "U", "V"};
+      for (const auto& plane : plane_order) {
+        auto it = plane_match_stats.find(plane);
+        if (it == plane_match_stats.end() || it->second.total == 0) continue;
+        const auto& stats = it->second;
+        double matched_pct = (stats.total > 0) ? (100.0 * static_cast<double>(stats.matched) / static_cast<double>(stats.total)) : 0.0;
+        std::string summary_line;
+        if (stats.main_total > 0) {
+          double main_pct = 100.0 * static_cast<double>(stats.main_matched) / static_cast<double>(stats.main_total);
+          summary_line = Form("%s plane: %.1f%% matched (%lld/%lld clusters, main %.1f%%)", plane.c_str(), matched_pct, stats.matched, stats.total, main_pct);
+        } else {
+          summary_line = Form("%s plane: %.1f%% matched (%lld/%lld clusters)", plane.c_str(), matched_pct, stats.matched, stats.total);
+        }
+        auto plane_txt = new TText(0.5, match_y, summary_line.c_str());
+        plane_txt->SetTextAlign(22); plane_txt->SetTextSize(0.023); plane_txt->SetNDC(); plane_txt->Draw();
+        match_y -= 0.028f;
+
+        if (plane == "X" && x_match_stats.main_total > 0) {
+          double both_pct = 100.0 * static_cast<double>(x_match_stats.matched_both) / static_cast<double>(x_match_stats.main_total);
+          double u_only_pct = 100.0 * static_cast<double>(x_match_stats.matched_u_only) / static_cast<double>(x_match_stats.main_total);
+          double v_only_pct = 100.0 * static_cast<double>(x_match_stats.matched_v_only) / static_cast<double>(x_match_stats.main_total);
+          double unmatched_pct = 100.0 * static_cast<double>(x_match_stats.unmatched) / static_cast<double>(x_match_stats.main_total);
+          double ambiguous_pct = 100.0 * static_cast<double>(x_match_stats.ambiguous) / static_cast<double>(x_match_stats.main_total);
+          auto breakdown_txt = new TText(0.5, match_y,
+            Form("  X main breakdown: U+V %.1f%%, U-only %.1f%%, V-only %.1f%%, unmatched %.1f%%",
+                 both_pct, u_only_pct, v_only_pct, unmatched_pct));
+          breakdown_txt->SetTextAlign(22); breakdown_txt->SetTextSize(0.018); breakdown_txt->SetNDC(); breakdown_txt->Draw();
+          match_y -= 0.024f;
+          if (x_match_stats.ambiguous > 0) {
+            auto amb_txt = new TText(0.5, match_y,
+              Form("  Remaining %.1f%% have missing partner IDs", ambiguous_pct));
+            amb_txt->SetTextAlign(22); amb_txt->SetTextSize(0.018); amb_txt->SetNDC(); amb_txt->Draw();
+            match_y -= 0.024f;
+          }
+        }
+      }
+    }
     
     // Display minimum cluster charges per plane
     if (!min_cluster_charge.empty()) {
-      float ypos = 0.25;
+      float ypos = has_matching_data ? 0.18f : 0.25f;
       auto min_charge_txt = new TText(0.5, ypos, "Minimum Cluster Charge:");
       min_charge_txt->SetTextAlign(22); min_charge_txt->SetTextSize(0.03); min_charge_txt->SetNDC(); min_charge_txt->SetTextFont(62); min_charge_txt->Draw();
       ypos -= 0.04;
@@ -903,8 +1025,9 @@ int main(int argc, char* argv[]){
     TDatime now;
     auto date_txt = new TText(0.2, 0.15, Form("Generated on: %s", now.AsString()));
     date_txt->SetTextAlign(22); date_txt->SetTextSize(0.02); date_txt->SetNDC(); date_txt->Draw();
-    
-    c->SaveAs((pdf+"(").c_str());
+
+  addPageNumber(c, pageNum, totalPages);
+  c->SaveAs((pdf+"(").c_str());
     delete c;
 
     // Page: counts by label (HBAR)

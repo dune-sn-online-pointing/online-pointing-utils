@@ -66,6 +66,16 @@ add_executable( match_clusters ${CMAKE_CURRENT_SOURCE_DIR}/match_clusters.cpp )
 target_link_libraries( match_clusters planesMatchingLibs )
 install( TARGETS match_clusters DESTINATION bin )
 
+cmessage( STATUS "Creating match_clusters_truth app..." )
+add_executable( match_clusters_truth ${CMAKE_CURRENT_SOURCE_DIR}/match_clusters_truth.cpp )
+target_link_libraries( match_clusters_truth clustersLibs globalLib )
+install( TARGETS match_clusters_truth DESTINATION bin )
+
+cmessage( STATUS "Creating diagnose_timing app..." )
+add_executable( diagnose_timing ${CMAKE_CURRENT_SOURCE_DIR}/diagnose_timing.cpp )
+target_link_libraries( diagnose_timing clustersLibs globalLib )
+install( TARGETS diagnose_timing DESTINATION bin )
+
 cmessage( STATUS "Creating analyze_matching app..." )
 add_executable( analyze_matching ${CMAKE_CURRENT_SOURCE_DIR}/analyze_matching.cpp )
 target_link_libraries( analyze_matching clustersLibs globalLib )

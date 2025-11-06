@@ -17,5 +17,6 @@
   "tot_cut": 3,
   "energy_cut": 10.0,
   "clusters_folder": "data2/prod_es/test_clusters_e10",
-  "matched_clusters_folder": "data2/prod_es/test_matched_e10"
+  "matched_clusters_folder": "data2/prod_es/test_matched_e10",
+  "time_tolerance_ticks": 500
 }

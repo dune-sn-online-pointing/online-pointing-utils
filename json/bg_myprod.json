@@ -23,6 +23,7 @@
     "channel_limit": 2,
     "min_tps_to_cluster": 2,
     "tot_cut": 3,
-    "energy_cut": 0
+    "energy_cut": 0,
+    "time_tolerance_ticks": 500
 
 }
