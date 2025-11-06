@@ -16,6 +16,26 @@
 
 LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
+// Helper function to join paths properly, handling trailing/leading slashes
+std::string joinPath(const std::string& dir, const std::string& file) {
+    if (dir.empty()) return file;
+    if (file.empty()) return dir;
+    
+    // Remove trailing slash from dir if present
+    std::string clean_dir = dir;
+    while (!clean_dir.empty() && clean_dir.back() == '/') {
+        clean_dir.pop_back();
+    }
+    
+    // Remove leading slash from file if present
+    std::string clean_file = file;
+    while (!clean_file.empty() && clean_file.front() == '/') {
+        clean_file.erase(0, 1);
+    }
+    
+    return clean_dir + "/" + clean_file;
+}
+
 // Helper function to get cluster time range in TDC ticks (original tick units)
 std::pair<int, int> getClusterTimeRange(const Cluster& cluster) {
     if (cluster.get_tps().empty()) return {0, 0};
@@ -148,7 +168,7 @@ int main(int argc, char* argv[]) {
         } else if (basename.size() > 9 && basename.substr(basename.size()-9) == "_clusters") {
             basename = basename.substr(0, basename.size()-9);
         }
-        std::string output_file = matched_clusters_folder + "/" + basename + "_matched.root";
+        std::string output_file = joinPath(matched_clusters_folder, basename + "_matched.root");
         
         if (verboseMode) LogInfo << "[" << (file_idx+1) << "/" << cluster_files.size() << "] Processing: " 
                 << std::filesystem::path(input_clusters_file).filename().string() << std::endl;
