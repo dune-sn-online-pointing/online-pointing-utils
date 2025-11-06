@@ -1,1 +1,0 @@
-data/prod_es/bkgs/es_valid_bg_tick3_ch2_min2_tot1_ecutI0_ecutC0_clusters_0.root

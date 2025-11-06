@@ -22,14 +22,18 @@ void read_tpstream(std::string filename,
     }
     
     std::string this_interaction = "UNKNOWN";
-    // if in the path there is _es_, then se interaction_type to "ES", same with _cc_ and "CC"
-    // this is maybe not the best way to  do it, might find another way from metadata
-    if (filename.find("_es_") != std::string::npos || filename.find("_ES_") != std::string::npos) {
-        this_interaction = "ES";
-    } else if (filename.find("_cc_") != std::string::npos || filename.find("_CC_") != std::string::npos) {
+    // Extract interaction type from filename by looking for exact _cc_ or _es_ patterns
+    // Check _cc_ first to avoid false matches with substrings
+    if (filename.find("_cc_") != std::string::npos) {
         this_interaction = "CC";
+    } else if (filename.find("_CC_") != std::string::npos) {
+        this_interaction = "CC";
+    } else if (filename.find("_es_") != std::string::npos) {
+        this_interaction = "ES";
+    } else if (filename.find("_ES_") != std::string::npos) {
+        this_interaction = "ES";
     } else {
-        this_interaction = "UNKNOWN"; // not sure TODO
+        this_interaction = "UNKNOWN";
     }
 
     if (verboseMode) LogInfo << " For this file, interaction type: " << this_interaction << std::endl;
