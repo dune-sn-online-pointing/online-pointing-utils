@@ -1,5 +1,0 @@
-{
-  "tpstream_input_file": "/home/virgolaema/dune/online-pointing-utils/test/test_es_file_tpstream.root",
-  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/test/test_output/",
-  "backtracker_error_margin": 50
-}

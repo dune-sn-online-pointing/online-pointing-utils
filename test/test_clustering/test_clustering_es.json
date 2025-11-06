@@ -1,0 +1,10 @@
+{
+  "tps_input_file": "../test_backtrack/output/test_es_tps.root",
+  "outputFolder": "./output/",
+  "outputFilename": "test_es",
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 1,
+  "energy_cut": 0.0
+}

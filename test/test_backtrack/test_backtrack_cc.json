@@ -1,0 +1,6 @@
+{
+  "tpstream_input_file": "../data/test_cc_tpstream.root",
+  "outputFolder": "./output/",
+  "outputFilename": "test_cc",
+  "backtracker_error_margin": 50
+}

@@ -1,0 +1,6 @@
+{
+  "clusters_input_file": "../test_clustering/output/test_cc_clusters.root",
+  "outputFolder": "./output/",
+  "outputFilename": "test_cc",
+  "time_tolerance_ticks": 10
+}

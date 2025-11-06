@@ -1,0 +1,4 @@
+{
+  "tps_input_file": "../test_backtrack/output/test_es_tps.root",
+  "reports_folder": "./output/"
+}

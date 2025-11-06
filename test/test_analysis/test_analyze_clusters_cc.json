@@ -1,0 +1,4 @@
+{
+  "clusters_input_file": "../test_clustering/output/test_cc_clusters.root",
+  "reports_folder": "./output/"
+}
