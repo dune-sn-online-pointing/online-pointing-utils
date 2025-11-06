@@ -1,7 +1,0 @@
-{
-  "inputFile": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T191432Z_gen_002040_supernova_g4_detsim_ana_2025-10-03T_064030Z_tps_bktr50.root",
-  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc",
-  "tick_limit": 3,
-  "channel_limit": 1,
-  "min_tps_to_cluster": 3
-}

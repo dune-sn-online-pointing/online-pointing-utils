@@ -1,2020 +1,0 @@
-nohup: ignoring input
-Running CC simulations...
-Processing CC with energy_cut=0 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/cc_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Global settings file found, full path is: /tmp/cc_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/cc_temp.json
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:49:56 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1000
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m:  - Energy cut: 0
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 0
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 0
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 21:49:56 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 21:49:57 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_0.root
-Making clusters...   5% (    1 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 21:50:22 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:50:22 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_0.root
-22/10/2025 21:50:22 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 21:50:47 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 21:50:47 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:50:47 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_1.root
-22/10/2025 21:50:47 [32m[make_clusters.cpp][0m: 
-22/10/2025 21:50:47 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 21:50:47 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_0.root
-22/10/2025 21:50:47 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Settings file found, full path is: /tmp/cc_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/cc_temp.json
-22/10/2025 21:50:47 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 21:50:47 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 21:50:47 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:50:47 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:50:47 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:50:47 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 21:50:47 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:50:47 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:50:47 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 21:50:47 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0
-22/10/2025 21:50:47 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 21:50:47 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 21:50:47 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports/
-22/10/2025 21:50:47 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_0.root
-22/10/2025 21:50:48 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_1.root
-22/10/2025 21:50:48 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 21:50:48 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 21:50:48 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 21:50:48 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p0_report.pdf
-
-All requested steps completed, hopefully successfully.
-Processing CC with energy_cut=0.5 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/cc_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Global settings file found, full path is: /tmp/cc_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/cc_temp.json
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:50:53 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1000
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p5
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m:  - Energy cut: 0.5
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 450
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 1800
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 21:50:53 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_0.root
-Making clusters...   5% (   12 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 21:51:17 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:51:17 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_0.root
-22/10/2025 21:51:17 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 21:51:40 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 21:51:40 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:51:40 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_1.root
-22/10/2025 21:51:40 [32m[make_clusters.cpp][0m: 
-22/10/2025 21:51:40 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 21:51:40 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_0.root
-22/10/2025 21:51:40 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Settings file found, full path is: /tmp/cc_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/cc_temp.json
-22/10/2025 21:51:40 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 21:51:40 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 21:51:40 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:51:40 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:51:40 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:51:40 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 21:51:40 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:51:40 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:51:40 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 21:51:40 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p5
-22/10/2025 21:51:40 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 21:51:40 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 21:51:40 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports/
-22/10/2025 21:51:40 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_0.root
-22/10/2025 21:51:41 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_1.root
-22/10/2025 21:51:41 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 21:51:41 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 21:51:41 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 21:51:41 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e0p5_report.pdf
-
-All requested steps completed, hopefully successfully.
-Processing CC with energy_cut=1.0 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/cc_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Global settings file found, full path is: /tmp/cc_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/cc_temp.json
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:51:46 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1000
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p0
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m:  - Energy cut: 1
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 900
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 3600
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 21:51:46 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 21:51:47 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_0.root
-Making clusters...   5% (   11 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 21:52:10 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:52:10 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_0.root
-22/10/2025 21:52:10 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 21:52:33 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 21:52:33 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:52:33 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_1.root
-22/10/2025 21:52:33 [32m[make_clusters.cpp][0m: 
-22/10/2025 21:52:33 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 21:52:33 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_0.root
-22/10/2025 21:52:33 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Settings file found, full path is: /tmp/cc_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/cc_temp.json
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:52:33 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 21:52:33 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p0
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports/
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_0.root
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_1.root
-22/10/2025 21:52:33 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 21:52:34 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 21:52:34 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 21:52:34 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p0_report.pdf
-
-All requested steps completed, hopefully successfully.
-Processing CC with energy_cut=1.5 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/cc_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Global settings file found, full path is: /tmp/cc_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/cc_temp.json
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:52:39 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1000
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p5
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m:  - Energy cut: 1.5
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 1350
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 5400
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 21:52:39 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_0.root
-Making clusters...   5% (   10 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 21:53:01 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:53:01 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_0.root
-22/10/2025 21:53:01 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 21:53:25 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 21:53:25 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:53:25 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_1.root
-22/10/2025 21:53:25 [32m[make_clusters.cpp][0m: 
-22/10/2025 21:53:25 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 21:53:25 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_0.root
-22/10/2025 21:53:25 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Settings file found, full path is: /tmp/cc_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/cc_temp.json
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:53:25 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 21:53:25 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p5
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports/
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_0.root
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_1.root
-22/10/2025 21:53:25 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 21:53:26 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 21:53:26 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 21:53:26 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e1p5_report.pdf
-
-All requested steps completed, hopefully successfully.
-Processing CC with energy_cut=2.0 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/cc_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Global settings file found, full path is: /tmp/cc_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/cc_temp.json
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:53:31 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1000
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p0
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m:  - Energy cut: 2
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 1800
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 7200
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 21:53:31 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_0.root
-Making clusters...   5% (   10 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 21:53:53 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:53:53 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_0.root
-22/10/2025 21:53:53 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 21:54:17 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 21:54:17 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:54:17 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_1.root
-22/10/2025 21:54:17 [32m[make_clusters.cpp][0m: 
-22/10/2025 21:54:17 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 21:54:17 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_0.root
-22/10/2025 21:54:17 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Settings file found, full path is: /tmp/cc_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/cc_temp.json
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:54:17 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 21:54:17 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p0
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports/
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_0.root
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_1.root
-22/10/2025 21:54:17 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 21:54:18 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 21:54:18 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 21:54:18 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p0_report.pdf
-
-All requested steps completed, hopefully successfully.
-Processing CC with energy_cut=2.5 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/cc_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Global settings file found, full path is: /tmp/cc_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/cc_temp.json
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:54:23 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1000
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p5
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m:  - Energy cut: 2.5
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 2250
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 9000
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 21:54:23 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_0.root
-Making clusters...   5% (   11 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 21:54:46 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:54:46 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_0.root
-22/10/2025 21:54:46 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 21:55:10 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 21:55:10 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:55:10 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_1.root
-22/10/2025 21:55:10 [32m[make_clusters.cpp][0m: 
-22/10/2025 21:55:10 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 21:55:10 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_0.root
-22/10/2025 21:55:10 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Settings file found, full path is: /tmp/cc_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/cc_temp.json
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:55:10 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 21:55:10 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p5
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports/
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_0.root
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_1.root
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 21:55:10 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e2p5_report.pdf
-
-All requested steps completed, hopefully successfully.
-Processing CC with energy_cut=3.0 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/cc_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Global settings file found, full path is: /tmp/cc_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/cc_temp.json
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:55:16 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1000
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e3p0
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m:  - Energy cut: 3
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 2700
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 10800
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 21:55:16 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_0.root
-Making clusters...   5% (   11 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 21:55:39 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:55:39 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_0.root
-22/10/2025 21:55:39 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 21:56:02 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 21:56:02 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:56:02 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_1.root
-22/10/2025 21:56:02 [32m[make_clusters.cpp][0m: 
-22/10/2025 21:56:02 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 21:56:02 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_0.root
-22/10/2025 21:56:02 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/cc_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/cc_temp.json
-Settings file found, full path is: /tmp/cc_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/cc_temp.json
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:56:02 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 21:56:02 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e3p0
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports/
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_0.root
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_cc//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_1.root
-22/10/2025 21:56:02 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 21:56:03 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 21:56:03 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 21:56:03 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_cc/reports//clusters_cc_valid_bg_tick3_ch2_min2_tot3_e3p0_report.pdf
-
-All requested steps completed, hopefully successfully.
-Running ES simulations...
-Processing ES with energy_cut=0 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/es_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Global settings file found, full path is: /tmp/es_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/es_temp.json
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:56:08 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1004
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p0
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m:  - Energy cut: 0
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 0
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 0
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 21:56:08 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_0.root
-Making clusters...   5% (   10 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 21:56:31 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:56:31 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_0.root
-22/10/2025 21:56:31 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 21:56:52 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 21:56:52 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:56:52 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_1.root
-22/10/2025 21:56:52 [32m[make_clusters.cpp][0m: 
-22/10/2025 21:56:52 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 21:56:52 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_0.root
-22/10/2025 21:56:52 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Settings file found, full path is: /tmp/es_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/es_temp.json
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:56:53 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 21:56:53 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p0
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports/
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_0.root
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p0/clusters_1.root
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 21:56:53 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p0_report.pdf
-
-All requested steps completed, hopefully successfully.
-Processing ES with energy_cut=0.5 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/es_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Global settings file found, full path is: /tmp/es_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/es_temp.json
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:56:58 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1004
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p5
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m:  - Energy cut: 0.5
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 450
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 1800
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 21:56:58 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 21:56:59 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_0.root
-Making clusters...   5% (   11 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 21:57:22 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:57:22 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_0.root
-22/10/2025 21:57:22 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 21:57:42 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 21:57:42 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:57:42 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_1.root
-22/10/2025 21:57:42 [32m[make_clusters.cpp][0m: 
-22/10/2025 21:57:42 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 21:57:42 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_0.root
-22/10/2025 21:57:42 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Settings file found, full path is: /tmp/es_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/es_temp.json
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:57:43 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 21:57:43 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p5
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports/
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_0.root
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p5/clusters_1.root
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 21:57:43 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports//clusters_es_valid_bg_tick3_ch2_min2_tot3_e0p5_report.pdf
-
-All requested steps completed, hopefully successfully.
-Processing ES with energy_cut=1.0 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/es_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Global settings file found, full path is: /tmp/es_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/es_temp.json
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:57:49 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1004
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p0
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m:  - Energy cut: 1
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 900
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 3600
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 21:57:49 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_0.root
-Making clusters...   5% (   12 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 21:58:12 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:58:12 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_0.root
-22/10/2025 21:58:12 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 21:58:33 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 21:58:33 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:58:33 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_1.root
-22/10/2025 21:58:33 [32m[make_clusters.cpp][0m: 
-22/10/2025 21:58:33 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 21:58:33 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_0.root
-22/10/2025 21:58:33 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Settings file found, full path is: /tmp/es_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/es_temp.json
-22/10/2025 21:58:33 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 21:58:33 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 21:58:33 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:58:33 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:58:33 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:58:33 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 21:58:33 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:58:33 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:58:33 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 21:58:33 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p0
-22/10/2025 21:58:33 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 21:58:33 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 21:58:33 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports/
-22/10/2025 21:58:33 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_0.root
-22/10/2025 21:58:34 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p0/clusters_1.root
-22/10/2025 21:58:34 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 21:58:34 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 21:58:34 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 21:58:34 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p0_report.pdf
-
-All requested steps completed, hopefully successfully.
-Processing ES with energy_cut=1.5 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/es_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Global settings file found, full path is: /tmp/es_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/es_temp.json
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:58:39 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1004
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p5
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m:  - Energy cut: 1.5
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 1350
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 5400
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 21:58:39 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_0.root
-Making clusters...   5% (   12 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 21:59:02 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:59:02 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_0.root
-22/10/2025 21:59:02 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 21:59:23 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 21:59:23 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:59:23 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_1.root
-22/10/2025 21:59:23 [32m[make_clusters.cpp][0m: 
-22/10/2025 21:59:23 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 21:59:23 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_0.root
-22/10/2025 21:59:23 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Settings file found, full path is: /tmp/es_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/es_temp.json
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:59:24 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 21:59:24 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p5
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports/
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_0.root
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p5/clusters_1.root
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 21:59:24 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports//clusters_es_valid_bg_tick3_ch2_min2_tot3_e1p5_report.pdf
-
-All requested steps completed, hopefully successfully.
-Processing ES with energy_cut=2.0 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/es_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Global settings file found, full path is: /tmp/es_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/es_temp.json
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 21:59:29 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1004
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p0
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m:  - Energy cut: 2
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 1800
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 7200
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 21:59:29 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 21:59:30 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_0.root
-Making clusters...   5% (   12 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 21:59:51 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 21:59:51 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_0.root
-22/10/2025 21:59:51 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 22:00:12 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 22:00:12 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 22:00:12 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_1.root
-22/10/2025 22:00:12 [32m[make_clusters.cpp][0m: 
-22/10/2025 22:00:12 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 22:00:12 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_0.root
-22/10/2025 22:00:12 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Settings file found, full path is: /tmp/es_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/es_temp.json
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 22:00:13 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 22:00:13 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p0
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports/
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_0.root
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p0/clusters_1.root
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 22:00:13 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p0_report.pdf
-
-All requested steps completed, hopefully successfully.
-Processing ES with energy_cut=2.5 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/es_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Global settings file found, full path is: /tmp/es_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/es_temp.json
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 22:00:18 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1004
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p5
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m:  - Energy cut: 2.5
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 2250
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 9000
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 22:00:18 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 22:00:19 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_0.root
-Making clusters...   5% (   12 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 22:00:41 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 22:00:41 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_0.root
-22/10/2025 22:00:41 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 22:01:02 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 22:01:02 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 22:01:02 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_1.root
-22/10/2025 22:01:02 [32m[make_clusters.cpp][0m: 
-22/10/2025 22:01:02 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 22:01:02 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_0.root
-22/10/2025 22:01:02 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Settings file found, full path is: /tmp/es_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/es_temp.json
-22/10/2025 22:01:02 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 22:01:02 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 22:01:02 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 22:01:02 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 22:01:02 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 22:01:02 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 22:01:02 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 22:01:02 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 22:01:02 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 22:01:02 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p5
-22/10/2025 22:01:02 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 22:01:02 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 22:01:02 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports/
-22/10/2025 22:01:02 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_0.root
-22/10/2025 22:01:03 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p5/clusters_1.root
-22/10/2025 22:01:03 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 22:01:03 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 22:01:03 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 22:01:03 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports//clusters_es_valid_bg_tick3_ch2_min2_tot3_e2p5_report.pdf
-
-All requested steps completed, hopefully successfully.
-Processing ES with energy_cut=3.0 MeV
-
-init.sh script started
- Repository home is /home/virgolaema/dune/online-pointing-utils
- Parameters directory is /home/virgolaema/dune/online-pointing-utils/parameters
- WARNING: python environment not found, not activating.
-init.sh finished
-
-**************************
-Selected options:
-Run backtrack:		false
-Run analyze_tps:	false
-Run add backgrounds:	false
-Run make clusters:	true
-Run analyze:		true
-Clean clusters (no backgrounds):	false
-No compile:		true
-Clean compile:		false
-Override:		false
-**************************
-
-**************************
-Sample selected: .
-Global json settings file provided: /tmp/es_temp.json
-**************************
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Global settings file found, full path is: /tmp/es_temp.json 
-
-Using this for all steps, overriding individual jsons.
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/sequence.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running make clusters step with command:
-./scripts/make_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
-Starting script ./scripts/make_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running: /home/virgolaema/dune/online-pointing-utils/build//src/app/make_clusters -j /tmp/es_temp.json
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
-
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m: Usage: 
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 22:01:08 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m: Number of valid files (merged TPs): 1004
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m: Settings from json file:
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m:  - Base output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m:  - Full clusters path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e3p0
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m:  - Tick limit: 3
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m:  - Channel limit: 2
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m:  - Energy cut: 3
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 2700
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 10800
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m:  - ToT cut: 3
-22/10/2025 22:01:08 [32m[make_clusters.cpp][0m:  - Max files to process: 20
-22/10/2025 22:01:09 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_0.root
-Making clusters...   5% (    8 it/s)
-[1F[1KMaking clusters...  10% (    0 it/s)
-[1F[1KMaking clusters...  15% (    0 it/s)
-[1F[1KMaking clusters...  20% (    0 it/s)
-[1F[1KMaking clusters...  25% (    0 it/s)
-[1F[1KMaking clusters...  30% (    0 it/s)
-[1F[1KMaking clusters...  35% (    0 it/s)
-[1F[1KMaking clusters...  40% (    0 it/s)
-[1F[1KMaking clusters...  45% (    0 it/s)
-[1F[1KMaking clusters...  50% (    0 it/s)
-[1F[1K22/10/2025 22:01:33 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 22:01:33 [32m[make_clusters.cpp][0m: Closed output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_0.root
-22/10/2025 22:01:33 [32m[make_clusters.cpp][0m: Opened new output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_1.root
-Making clusters...  55% (    0 it/s)
-[1F[1KMaking clusters...  60% (    0 it/s)
-[1F[1KMaking clusters...  65% (    0 it/s)
-[1F[1KMaking clusters...  70% (    0 it/s)
-[1F[1KMaking clusters...  75% (    0 it/s)
-[1F[1KMaking clusters...  80% (    0 it/s)
-[1F[1KMaking clusters...  85% (    0 it/s)
-[1F[1KMaking clusters...  90% (    0 it/s)
-[1F[1KMaking clusters...  95% (    0 it/s)
-[1F[1KMaking clusters... 100% (    0 it/s)
-22/10/2025 22:02:00 [32m[make_clusters.cpp][0m: Reached max_files limit (20), stopping.
-22/10/2025 22:02:00 [32m[make_clusters.cpp][0m: Writing clustering metadata...
-22/10/2025 22:02:00 [32m[make_clusters.cpp][0m: Closed final output file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_1.root
-22/10/2025 22:02:00 [32m[make_clusters.cpp][0m: 
-22/10/2025 22:02:00 [32m[make_clusters.cpp][0m: Clustering complete! Generated 2 output file(s):
-22/10/2025 22:02:00 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_0.root
-22/10/2025 22:02:00 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_1.root
-
-Running analyze step with command: ./scripts/analyze_clusters.sh -j /tmp/es_temp.json --no-compile -f false -v false -d false
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Looking for json settings using command: /home/virgolaema/dune/online-pointing-utils/scripts/findSettings.sh -j /tmp/es_temp.json
-Settings file found, full path is: /tmp/es_temp.json 
-
-Compiling the code with the following command:
-/home/virgolaema/dune/online-pointing-utils/scripts/compile.sh -p /home/virgolaema/dune/online-pointing-utils --no-compile true --clean-compile false
-Starting script ./scripts/analyze_clusters.sh
-Environment is already initialized, not running init.sh again.
-If it is not loaded properly, run export INIT_DONE=false and rerun init.sh
- Got home path as argument
-  No compilation was requested. Stopping execution of this script.
-
-Running command: /home/virgolaema/dune/online-pointing-utils/build//src/app/analyze_clusters -j /tmp/es_temp.json
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: > analyze_clusters app - Generate plots from Cluster ROOT files.
-
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: Usage: 
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: ──────────── Main options ────────────
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (optional) (expected: 1 value)
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
-
-
-22/10/2025 22:02:00 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
-22/10/2025 22:02:00 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e3p0
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: Number of valid files: 2
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: Max files: 20
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: Output folder: /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports/
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_0.root
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: Input clusters file: /home/virgolaema/dune/online-pointing-utils/data/prod_es//clusters_es_valid_bg_tick3_ch2_min2_tot3_e3p0/clusters_1.root
-22/10/2025 22:02:00 [32m[analyze_clusters.cpp][0m: Generating combined analysis report from 2 file(s)...
-Error in <TAxis::SetBinLabel>: Illegal bin number: 141
-22/10/2025 22:02:01 [32m[analyze_clusters.cpp][0m: 
-22/10/2025 22:02:01 [32m[analyze_clusters.cpp][0m: Summary of produced files (1):
-22/10/2025 22:02:01 [32m[analyze_clusters.cpp][0m:  - /home/virgolaema/dune/online-pointing-utils/data/prod_es/reports//clusters_es_valid_bg_tick3_ch2_min2_tot3_e3p0_report.pdf
-
-All requested steps completed, hopefully successfully.
-All simulations completed!

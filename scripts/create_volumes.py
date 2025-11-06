@@ -688,13 +688,12 @@ def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
         # Determine energy and interaction type
         # For marley clusters, use true_particle_energy (actual track energy)
         # For background clusters, neutrino_energy will be -1.0
-        # In matched files, truth energy may be -1.0 even for MARLEY, so use marley_tp_fraction
         is_es = main_cluster['is_es_interaction']
         if main_cluster['is_marley']:
             # Use reconstructed cluster energy (from total_charge) instead of true energy
             event_energy = main_cluster.get('reco_energy_mev', -1.0)
-            # If matched file lost truth info, energy will be -1.0 but we still know it's ES from marley_tp_fraction
-            interaction_type = "ES" if is_es or main_cluster['marley_tp_fraction'] > 0 else "CC"
+            # Use the is_es_interaction flag directly from cluster truth
+            interaction_type = "ES" if is_es else "CC"
         else:
             # Background clusters
             event_energy = -1.0
