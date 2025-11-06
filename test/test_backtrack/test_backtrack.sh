@@ -26,8 +26,10 @@ echo "Testing ES sample..."
 ${BUILD_DIR}/src/app/backtrack_tpstream \
     -j test/test_backtrack/test_backtrack_es.json
 
-if [ -f "test/test_backtrack/output/test_es_tps.root" ]; then
+if [ -f "test/test_backtrack/output/test_es_tps_bktr0.root" ]; then
     echo "✓ ES backtracking successful"
+    # Create symlink without _bktr0 suffix for convenience
+    ln -sf test_es_tps_bktr0.root test/test_backtrack/output/test_es_tps.root
 else
     echo "✗ ES backtracking failed - output file not found"
     exit 1
@@ -38,8 +40,10 @@ echo "Testing CC sample..."
 ${BUILD_DIR}/src/app/backtrack_tpstream \
     -j test/test_backtrack/test_backtrack_cc.json
 
-if [ -f "test/test_backtrack/output/test_cc_tps.root" ]; then
+if [ -f "test/test_backtrack/output/test_cc_tps_bktr0.root" ]; then
     echo "✓ CC backtracking successful"
+    # Create symlink without _bktr0 suffix for convenience
+    ln -sf test_cc_tps_bktr0.root test/test_backtrack/output/test_cc_tps.root
 else
     echo "✗ CC backtracking failed - output file not found"
     exit 1

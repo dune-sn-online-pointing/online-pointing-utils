@@ -19,17 +19,17 @@ echo "Testing: analyze_tps"
 echo "================================================"
 
 # Ensure we have backtracked TPs files
-if [ ! -f "../test_backtrack/output/test_es_tps.root" ]; then
+if [ ! -f "test/test_backtrack/output/test_es_tps.root" ]; then
     echo "Running backtracking test first..."
-    cd ../test_backtrack && ./test_backtrack.sh && cd - > /dev/null
+    bash test/test_backtrack/test_backtrack.sh
 fi
 
 # Test ES sample
 echo "Testing ES TPs analysis..."
 ${BUILD_DIR}/src/app/analyze_tps \
-    -j ${SCRIPT_DIR}/test_analyze_tps_es.json
+    -j test/test_analysis/test_analyze_tps_es.json
 
-if [ -f "${SCRIPT_DIR}/output/test_es_tps_report.pdf" ]; then
+if [ -f "test/test_analysis/output/test_analyze_tps_es_tp_analysis_report.pdf" ]; then
     echo "✓ ES TPs analysis successful"
 else
     echo "✗ ES TPs analysis failed - PDF not found"
@@ -39,9 +39,9 @@ fi
 # Test CC sample
 echo "Testing CC TPs analysis..."
 ${BUILD_DIR}/src/app/analyze_tps \
-    -j ${SCRIPT_DIR}/test_analyze_tps_cc.json
+    -j test/test_analysis/test_analyze_tps_cc.json
 
-if [ -f "${SCRIPT_DIR}/output/test_cc_tps_report.pdf" ]; then
+if [ -f "test/test_analysis/output/test_analyze_tps_cc_tp_analysis_report.pdf" ]; then
     echo "✓ CC TPs analysis successful"
 else
     echo "✗ CC TPs analysis failed - PDF not found"

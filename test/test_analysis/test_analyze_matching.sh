@@ -19,22 +19,22 @@ echo "Testing: analyze_matching"
 echo "================================================"
 
 # Ensure we have matched files
-if [ ! -f "../test_matching/output/test_es_matched.root" ]; then
+if [ ! -f "matched_clusters__tick3_ch2_min2_tot1_e0p0/test_es_matched.root" ]; then
     echo "Running matching test first..."
-    cd ../test_matching && ./test_matching.sh && cd - > /dev/null
+    bash test/test_matching/test_matching.sh
 fi
 
 # Test ES sample
 echo "Testing ES matching analysis..."
 ${BUILD_DIR}/src/app/analyze_matching \
-    -j ${SCRIPT_DIR}/test_analyze_matching_es.json
+    -j test/test_analysis/test_analyze_matching_es.json
 
 echo "✓ ES matching analysis completed"
 
 # Test CC sample
 echo "Testing CC matching analysis..."
 ${BUILD_DIR}/src/app/analyze_matching \
-    -j ${SCRIPT_DIR}/test_analyze_matching_cc.json
+    -j test/test_analysis/test_analyze_matching_cc.json
 
 echo "✓ CC matching analysis completed"
 

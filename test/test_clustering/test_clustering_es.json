@@ -1,7 +1,9 @@
 {
+  "tpstream_input_file": "test/data/test_es_tpstream.root",
   "tps_input_file": "test/test_backtrack/output/test_es_tps.root",
   "outputFolder": "test/test_clustering/output/",
   "outputFilename": "test_es",
+  "clusters_folder_prefix": "",
   "tick_limit": 3,
   "channel_limit": 2,
   "min_tps_to_cluster": 2,

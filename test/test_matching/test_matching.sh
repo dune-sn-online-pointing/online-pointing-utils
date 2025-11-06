@@ -19,17 +19,17 @@ echo "Testing: match_clusters"
 echo "================================================"
 
 # First ensure we have cluster files
-if [ ! -f "../test_clustering/output/test_es_clusters.root" ]; then
+if [ ! -f "test/test_clustering/output/test_es_clusters.root" ]; then
     echo "Running clustering test first..."
-    cd ../test_clustering && ./test_clustering.sh && cd - > /dev/null
+    bash test/test_clustering/test_clustering.sh
 fi
 
 # Test ES sample
 echo "Testing ES matching..."
 ${BUILD_DIR}/src/app/match_clusters \
-    -j ${SCRIPT_DIR}/test_matching_es.json
+    -f -j test/test_matching/test_matching_es.json
 
-if [ -f "${SCRIPT_DIR}/output/test_es_matched.root" ]; then
+if [ -f "matched_clusters__tick3_ch2_min2_tot1_e0p0/test_es_matched.root" ]; then
     echo "✓ ES matching successful"
 else
     echo "✗ ES matching failed - output file not found"
@@ -39,9 +39,9 @@ fi
 # Test CC sample
 echo "Testing CC matching..."
 ${BUILD_DIR}/src/app/match_clusters \
-    -j ${SCRIPT_DIR}/test_matching_cc.json
+    -f -j test/test_matching/test_matching_cc.json
 
-if [ -f "${SCRIPT_DIR}/output/test_cc_matched.root" ]; then
+if [ -f "matched_clusters__tick3_ch2_min2_tot1_e0p0/test_cc_matched.root" ]; then
     echo "✓ CC matching successful"
 else
     echo "✗ CC matching failed - output file not found"
