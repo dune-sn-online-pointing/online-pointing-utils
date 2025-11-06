@@ -11,6 +11,8 @@ int main(int argc, char* argv[]) {
     clp.addOption("json", {"-j", "--json"}, "JSON file containing the configuration");
     clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
     clp.addOption("outFolder", {"--output-folder"}, "Output folder path (optional)");
+    clp.addOption("max_files", {"-m", "--max-files"}, "Maximum number of files to process (overrides JSON)", -1);
+    clp.addOption("skip_files", {"-s", "--skip-files"}, "Number of files to skip at start (overrides JSON)", 0);
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
     clp.addDummyOption();
     LogInfo << clp.getDescription().str() << std::endl;
@@ -67,6 +69,33 @@ int main(int argc, char* argv[]) {
 
     LogInfo << "Number of valid files: " << inputs.size() << std::endl;
     LogThrowIf(inputs.empty(), "No valid input files found.");
+
+    // Apply skip and max from JSON or CLI
+    int max_files = j.value("max_files", -1);
+    int skip_files = j.value("skip_files", 0);
+    
+    if (clp.isOptionTriggered("max_files")) {
+        max_files = clp.getOptionVal<int>("max_files");
+    }
+    if (clp.isOptionTriggered("skip_files")) {
+        skip_files = clp.getOptionVal<int>("skip_files");
+    }
+    
+    if (skip_files > 0) {
+        if (skip_files >= static_cast<int>(inputs.size())) {
+            LogWarning << "skip_files (" << skip_files << ") >= total files (" << inputs.size() << "), no files to process" << std::endl;
+            inputs.clear();
+        } else {
+            inputs.erase(inputs.begin(), inputs.begin() + skip_files);
+            LogInfo << "Skipped first " << skip_files << " files" << std::endl;
+        }
+    }
+    
+    if (max_files > 0 && max_files < static_cast<int>(inputs.size())) {
+        inputs.resize(max_files);
+    }
+    
+    LogInfo << "Processing " << inputs.size() << " files" << std::endl;
 
     // Get ToT cut from configuration
     int tot_cut = 0; //j.value("tot_cut", 0); // disabled by default, could enable back if needed 

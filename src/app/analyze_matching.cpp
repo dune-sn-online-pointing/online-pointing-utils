@@ -128,11 +128,24 @@ int main(int argc, char* argv[]) {
     
     // Parse command line arguments
     std::string json_file;
+    int max_files = -1;  // -1 means process all files
+    int skip_files = 0;  // 0 means start from the beginning
+    
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
         if (arg == "-j" || arg == "--json") {
             if (i + 1 < argc) {
                 json_file = argv[i + 1];
+                i++;
+            }
+        } else if (arg == "-m" || arg == "--max-files") {
+            if (i + 1 < argc) {
+                max_files = std::stoi(argv[i + 1]);
+                i++;
+            }
+        } else if (arg == "-s" || arg == "--skip-files") {
+            if (i + 1 < argc) {
+                skip_files = std::stoi(argv[i + 1]);
                 i++;
             }
         }

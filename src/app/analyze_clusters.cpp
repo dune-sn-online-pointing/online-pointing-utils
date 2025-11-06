@@ -128,6 +128,8 @@ int main(int argc, char* argv[]){
   clp.addOption("json",    {"-j","--json"}, "JSON file containing the configuration");
   clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
   clp.addOption("outFolder", {"--output-folder"}, "Output folder path (optional)");
+  clp.addOption("max_files", {"-m", "--max-files"}, "Maximum number of files to process (overrides JSON)", -1);
+  clp.addOption("skip_files", {"-s", "--skip-files"}, "Number of files to skip at start (overrides JSON)", 0);
   clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
   clp.addTriggerOption("debugMode", {"-d"}, "Run in debug mode (more detailed than verbose)");
   clp.addDummyOption();
@@ -192,11 +194,37 @@ int main(int argc, char* argv[]){
 
   // Check if we should limit the number of files to process
   int max_files = j.value("max_files", -1);
+  int skip_files = j.value("skip_files", 0);
+  
+  // CLI overrides JSON
+  if (clp.isOptionTriggered("max_files")) {
+    max_files = clp.getOptionVal<int>("max_files");
+  }
+  if (clp.isOptionTriggered("skip_files")) {
+    skip_files = clp.getOptionVal<int>("skip_files");
+  }
+  
+  // Apply skip and max
+  if (skip_files > 0) {
+    if (skip_files >= static_cast<int>(inputs.size())) {
+      LogWarning << "skip_files (" << skip_files << ") >= total files (" << inputs.size() << "), no files to process" << std::endl;
+      inputs.clear();
+    } else {
+      inputs.erase(inputs.begin(), inputs.begin() + skip_files);
+      LogInfo << "Skipped first " << skip_files << " files" << std::endl;
+    }
+  }
+  
+  if (max_files > 0 && max_files < static_cast<int>(inputs.size())) {
+    inputs.resize(max_files);
+  }
+  
   if (max_files > 0) {
     LogInfo << "Max files: " << max_files << std::endl;
   } else {
     LogInfo << "Max files: unlimited" << std::endl;
   }
+  LogInfo << "Processing " << inputs.size() << " files" << std::endl;
 
   // Determine output folder: CLI > reports_folder > outputFolder
   std::string outFolder;

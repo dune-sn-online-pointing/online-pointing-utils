@@ -21,10 +21,16 @@ matplotlib.use('Agg')  # Non-interactive backend
 import matplotlib.pyplot as plt
 
 
-def load_volume_metadata(volume_folder, verbose=False):
+def load_volume_metadata(volume_folder, verbose=False, max_files=None, skip_files=0):
     """
     Load metadata from all volume NPZ files in the folder.
     
+    Args:
+        volume_folder: Path to folder containing volume NPZ files
+        verbose: Enable verbose output
+        max_files: Maximum number of files to process (None = all)
+        skip_files: Number of files to skip from beginning
+        
     Returns:
         list of metadata dictionaries
     """
@@ -33,6 +39,16 @@ def load_volume_metadata(volume_folder, verbose=False):
     if len(volume_files) == 0:
         print(f"No volume files found in {volume_folder}")
         return []
+    
+    # Apply skip and max
+    if skip_files > 0:
+        if verbose:
+            print(f"Skipping first {skip_files} files")
+        volume_files = volume_files[skip_files:]
+    if max_files is not None:
+        if verbose:
+            print(f"Processing at most {max_files} files")
+        volume_files = volume_files[:max_files]
     
     if verbose:
         print(f"Found {len(volume_files)} volume files")
@@ -413,6 +429,18 @@ def main():
         action='store_true',
         help='Skip creating plots'
     )
+    parser.add_argument(
+        '-m', '--max-files',
+        type=int,
+        default=None,
+        help='Maximum number of files to process'
+    )
+    parser.add_argument(
+        '-s', '--skip-files',
+        type=int,
+        default=0,
+        help='Number of files to skip from the beginning'
+    )
     
     args = parser.parse_args()
     
@@ -472,7 +500,12 @@ def main():
     print()
     
     # Load all metadata
-    metadata_list = load_volume_metadata(volumes_folder, verbose=args.verbose)
+    metadata_list = load_volume_metadata(
+        volumes_folder, 
+        verbose=args.verbose,
+        max_files=args.max_files,
+        skip_files=args.skip_files
+    )
     
     if len(metadata_list) == 0:
         print("No volume files to analyze")

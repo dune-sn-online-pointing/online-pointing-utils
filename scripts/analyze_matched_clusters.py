@@ -88,6 +88,7 @@ def main():
     parser = argparse.ArgumentParser(description='Analyze matched clusters')
     parser.add_argument('--sample', default='es_valid', help='Sample name (es_valid or cc_valid)')
     parser.add_argument('--max-files', type=int, default=None, help='Maximum files to analyze')
+    parser.add_argument('--skip-files', type=int, default=0, help='Number of files to skip from beginning')
     args = parser.parse_args()
     
     # Find matched clusters folder
@@ -102,6 +103,8 @@ def main():
     
     # Find all matched files
     matched_files = sorted(list(matched_folder.glob('*_matched.root')))
+    if args.skip_files > 0:
+        matched_files = matched_files[args.skip_files:]
     if args.max_files:
         matched_files = matched_files[:args.max_files]
     
