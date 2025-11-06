@@ -1,6 +1,6 @@
 {
-  "clusters_input_file": "../test_clustering/output/test_es_clusters.root",
-  "outputFolder": "./output/",
+  "clusters_input_file": "test/test_clustering/output/test_es_clusters.root",
+  "outputFolder": "test/test_matching/output/",
   "outputFilename": "test_es",
   "time_tolerance_ticks": 10
 }

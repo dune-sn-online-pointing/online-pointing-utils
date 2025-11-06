@@ -1,6 +1,6 @@
 {
-  "tps_input_file": "../test_backtrack/output/test_es_tps.root",
-  "outputFolder": "./output/",
+  "tps_input_file": "test/test_backtrack/output/test_es_tps.root",
+  "outputFolder": "test/test_clustering/output/",
   "outputFilename": "test_es",
   "tick_limit": 3,
   "channel_limit": 2,

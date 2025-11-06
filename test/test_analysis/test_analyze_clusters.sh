@@ -11,6 +11,9 @@ TEST_DIR="$(dirname "${SCRIPT_DIR}")"
 ROOT_DIR="$(dirname "${TEST_DIR}")"
 BUILD_DIR="${ROOT_DIR}/build"
 
+# Run from ROOT_DIR so parameter files are found
+cd "${ROOT_DIR}"
+
 echo "================================================"
 echo "Testing: analyze_clusters"
 echo "================================================"

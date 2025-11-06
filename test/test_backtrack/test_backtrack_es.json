@@ -1,6 +1,5 @@
 {
-  "tpstream_input_file": "../data/test_es_tpstream.root",
-  "outputFolder": "./output/",
-  "outputFilename": "test_es",
-  "backtracker_error_margin": 50
+  "tpstream_input_file": "test/data/test_es_tpstream.root",
+  "outputFolder": "test/test_backtrack/output/",
+  "outputFilename": "test_es"
 }

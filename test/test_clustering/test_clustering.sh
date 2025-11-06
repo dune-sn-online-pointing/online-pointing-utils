@@ -11,22 +11,28 @@ TEST_DIR="$(dirname "${SCRIPT_DIR}")"
 ROOT_DIR="$(dirname "${TEST_DIR}")"
 BUILD_DIR="${ROOT_DIR}/build"
 
+# Run from ROOT_DIR so parameter files are found
+cd "${ROOT_DIR}"
+
+# Run from ROOT_DIR so parameter files are found
+cd "${ROOT_DIR}"
+
 echo "================================================"
 echo "Testing: make_clusters"
 echo "================================================"
 
 # First ensure we have backtracked files
-if [ ! -f "../test_backtrack/output/test_es_tps.root" ]; then
+if [ ! -f "test/test_backtrack/output/test_es_tps.root" ]; then
     echo "Running backtracking test first..."
-    cd ../test_backtrack && ./test_backtrack.sh && cd - > /dev/null
+    bash test/test_backtrack/test_backtrack.sh
 fi
 
 # Test ES sample
 echo "Testing ES clustering..."
 ${BUILD_DIR}/src/app/make_clusters \
-    -j ${SCRIPT_DIR}/test_clustering_es.json
+    -j test/test_clustering/test_clustering_es.json
 
-if [ -f "${SCRIPT_DIR}/output/test_es_clusters.root" ]; then
+if [ -f "test/test_clustering/output/test_es_clusters.root" ]; then
     echo "✓ ES clustering successful"
 else
     echo "✗ ES clustering failed - output file not found"
@@ -36,9 +42,9 @@ fi
 # Test CC sample
 echo "Testing CC clustering..."
 ${BUILD_DIR}/src/app/make_clusters \
-    -j ${SCRIPT_DIR}/test_clustering_cc.json
+    -j test/test_clustering/test_clustering_cc.json
 
-if [ -f "${SCRIPT_DIR}/output/test_cc_clusters.root" ]; then
+if [ -f "test/test_clustering/output/test_cc_clusters.root" ]; then
     echo "✓ CC clustering successful"
 else
     echo "✗ CC clustering failed - output file not found"
