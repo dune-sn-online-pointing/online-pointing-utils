@@ -906,8 +906,11 @@ if __name__ == '__main__':
         with open(json_path, 'r') as f:
             json_config = json.load(f)
         
-        # Try to use matched clusters folder if it exists
-        matched_clusters_folder = get_matched_clusters_folder(json_path)
+        # Determine clusters folder and file pattern (prefer matched_clusters if available)
+        matched_clusters_folder = get_matched_clusters_folder(json_config)
+        clusters_folder = None
+        file_pattern = "*_clusters.root"
+        
         if matched_clusters_folder and Path(matched_clusters_folder).exists():
             matched_files = list(Path(matched_clusters_folder).glob("*_matched.root"))
             if matched_files:
@@ -915,14 +918,22 @@ if __name__ == '__main__':
                 clusters_folder = matched_clusters_folder
                 file_pattern = "*_matched.root"
             else:
-                clusters_folder = get_clusters_folder(json_path)
-                file_pattern = "*_clusters.root"
+                clusters_folder = get_clusters_folder(json_config)
         else:
-            clusters_folder = get_clusters_folder(json_path)
-            file_pattern = "*_clusters.root"
+            clusters_folder = get_clusters_folder(json_config)
         
-        images_folder = get_images_folder(json_path)
-        output_dir = args.output_dir if args.output_dir else images_folder
+        images_folder = get_images_folder(json_config)
+        
+        # Determine output directory: CLI override (--output-dir) -> JSON field -> auto-generated images_folder
+        if args.output_dir:
+            print("Using output folder from CLI argument")
+            output_dir = args.output_dir
+        elif json_config.get('cluster_images_folder'):
+            print("Using output folder from JSON config")
+            output_dir = json_config['cluster_images_folder']
+        else:
+            print("Using auto-generated images folder as output directory")
+            output_dir = images_folder
         
         # Find cluster files in the computed folder
         cluster_files = list(Path(clusters_folder).glob(file_pattern))
@@ -950,7 +961,7 @@ if __name__ == '__main__':
         
         print(f"[generate_cluster_arrays.py] Using JSON config: {json_path}")
         print(f"[generate_cluster_arrays.py] Computed clusters folder: {clusters_folder}")
-        print(f"[generate_cluster_arrays.py] Computed images folder: {images_folder}")
+        # print(f"[generate_cluster_arrays.py] Computed images folder: {images_folder}")
         print(f"[generate_cluster_arrays.py] Output directory: {output_dir}")
         print(f"[generate_cluster_arrays.py] Processing {len(cluster_files)} cluster file(s)")
         

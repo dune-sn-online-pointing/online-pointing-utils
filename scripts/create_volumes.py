@@ -749,6 +749,7 @@ def main():
     parser = argparse.ArgumentParser(description='Create 1m x 1m volume images for channel tagging')
     parser.add_argument('-j', '--json', required=True, help='JSON configuration file')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+    parser.add_argument('-o', '--output-folder', type=str, default=None, help='Override output folder ')
     parser.add_argument('--skip', type=int, default=None, help='Override JSON skip_files: skip first N files')
     parser.add_argument('--max', type=int, default=None, help='Override JSON max_files: process at most N files')
     parser.add_argument('-f', '--override', action='store_true', help='Force reprocessing (kept for compatibility)')
@@ -770,9 +771,11 @@ def main():
             clusters_folder = matched_clusters_folder
             print(f"Using matched clusters folder: {matched_clusters_folder}")
     
-    # Auto-generate volumes_folder if not explicitly provided
-    if 'volumes_folder' in config and config['volumes_folder']:
-        output_folder = config['volumes_folder']
+    # Auto-generate volume_images_folder if not explicitly provided
+    if args.output_folder is not None:
+        output_folder = args.output_folder
+    elif 'volume_images_folder' in config and config['volume_images_folder']:
+        output_folder = config['volume_images_folder']
     else:
         # Auto-generate from tpstream_folder
         tpstream_folder = config.get('tpstream_folder', '.')

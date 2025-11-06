@@ -26,9 +26,10 @@ delete_root_files=true
 JSON_SETTINGS=""
 which_interaction=""
 tot_files=5000
-max_files=20
+max_files=50
 skip=0
 
+which_sims="-mm -gi -gv"
 
 # parse
 while [[ "$#" -gt 0 ]]; do
@@ -84,7 +85,7 @@ touch $list_of_jobs
 for i in $(seq 1 $max_jobs); do
     skip=$(( (i - 1) * max_files ))
     echo "Adding job $i with skip $skip"
-    echo "-j ${JSON_SETTINGS} --home-dir ${HOME_DIR} --no-compile --all --skip-files $skip --max-files $max_files" >> $list_of_jobs
+    echo "-j ${JSON_SETTINGS} --home-dir ${HOME_DIR} --no-compile $which_sims --skip-files $skip --max-files $max_files" >> $list_of_jobs
 done
 
 echo "List of jobs:"
