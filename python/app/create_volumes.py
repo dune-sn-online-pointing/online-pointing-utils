@@ -61,7 +61,9 @@ sys.path.append(str(Path(__file__).parent.parent / 'lib'))
 
 # Geometry parameters (from parameters/geometry.dat and parameters/timing.dat)
 WIRE_PITCH_COLLECTION_CM = 0.479    # Wire pitch for collection plane (X)
+CHANNEL_PITCH_CM = 0.479             # Channel pitch (same as wire pitch for collection)
 TIME_TICK_CM = 0.0805                # Time tick in cm
+DRIFT_VELOCITY_CM_PER_TICK = 0.0805  # Drift velocity in cm per tick (same as TIME_TICK_CM)
 TDC_TO_TPC_CONVERSION = 32           # Conversion factor from TDC to TPC ticks
 
 # Volume size
@@ -670,6 +672,20 @@ def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
         n_marley_clusters = sum(1 for c in volume_clusters if c['is_marley'])
         n_non_marley_clusters = len(volume_clusters) - n_marley_clusters
         
+        # Calculate distances of MARLEY clusters from main track
+        marley_distances = []
+        for cluster in volume_clusters:
+            if cluster['is_marley'] and cluster['cluster_id'] != main_cluster['cluster_id']:
+                # Calculate Euclidean distance in (channel, time) space
+                # Convert to cm for consistency with volume size
+                channel_dist_cm = abs(cluster['center_channel'] - main_cluster['center_channel']) * CHANNEL_PITCH_CM
+                time_dist_cm = abs(cluster['center_time_tpc'] - main_cluster['center_time_tpc']) * DRIFT_VELOCITY_CM_PER_TICK
+                distance_cm = np.sqrt(channel_dist_cm**2 + time_dist_cm**2)
+                marley_distances.append(distance_cm)
+        
+        avg_marley_distance = np.mean(marley_distances) if len(marley_distances) > 0 else -1.0
+        max_marley_distance = np.max(marley_distances) if len(marley_distances) > 0 else -1.0
+        
         # Calculate momentum magnitude
         mom_x = main_cluster['true_mom_x']
         mom_y = main_cluster['true_mom_y']
@@ -711,6 +727,8 @@ def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
             'n_clusters_in_volume': len(volume_clusters),
             'n_marley_clusters': n_marley_clusters,
             'n_non_marley_clusters': n_non_marley_clusters,
+            'avg_marley_cluster_distance_cm': avg_marley_distance,
+            'max_marley_cluster_distance_cm': max_marley_distance,
             'center_channel': float(main_cluster['center_channel']),
             'center_time_tpc': float(main_cluster['center_time_tpc']),
             'volume_size_cm': VOLUME_SIZE_CM,

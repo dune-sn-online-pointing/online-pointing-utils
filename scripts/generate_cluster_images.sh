@@ -74,6 +74,7 @@ if [[ ! -f "$settingsFile" ]]; then
 fi
 
 # Build command
+<<<<<<< HEAD
 cmd="python3 ${PYTHON_DIR}/app/generate_cluster_arrays.py --json $settingsFile --draw-mode $draw_mode"
 if [[ -n "$skip_files" ]]; then
     cmd+=" --skip-files $skip_files"
