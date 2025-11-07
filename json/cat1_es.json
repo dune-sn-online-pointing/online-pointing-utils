@@ -5,16 +5,11 @@
     "thisIsAlsoAComment3": "bg_folder: pure background TPs (input to add_backgrounds)",
     "thisIsAlsoAComment4": "tps_folder/tps_bg_folder: merged TPs with backgrounds (output of add_backgrounds, input to clustering)",
 
-    "tpstream_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/",
+    "tpstream_folder": "/eos/home-e/evilla/dune/sn-tps/directions/prodmarley_nue_es_gkvm_dune10kt_1x2x2_customDirection_cat1-triggerana_tree_1x2x2_simpleThr_production-40events/",
     "bg_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
-    "clusters_folder_prefix": "cc_prod_main",
-    "reports_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/reports/",
+    "clusters_folder_prefix": "test",
 
-    "matched_clusters_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/matched_clusters_fixed_matching/",
-    "cluster_images_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/cluster_images_fixed_matching/",
-    "volume_images_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/volume_images_fixed_matching/",
-
-    "signal_type": "cc",
+    "signal_type": "es",
     "max_files": -1,
     "skip_files": 0,
 
@@ -27,4 +22,5 @@
     "energy_cut": 2.0,
 
     "time_tolerance_ticks": 10
+
 }

@@ -1,0 +1,19 @@
+{
+    "tpstream_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/",
+    "bg_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
+    "clusters_folder_prefix": "cc_prod_main",
+    
+    "matched_clusters_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/matched_clusters_fixed_matching/",
+    
+    "signal_type": "cc",
+    "max_files": 1,
+    "skip_files": 0,
+
+    "tick_limit": 3,
+    "channel_limit": 2,
+    "min_tps_to_cluster": 2,
+    "tot_cut": 3,
+    "energy_cut": 2.0,
+
+    "time_tolerance_ticks": 10
+}

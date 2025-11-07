@@ -25,11 +25,11 @@ delete_submit_files=false
 delete_root_files=true
 JSON_SETTINGS=""
 which_interaction=""
-tot_files=5000
-max_files=50
+tot_files=4500
+max_files=30
 skip=0
 
-which_sims="-mm -gi -gv"
+which_sims="--all"
 
 # parse
 while [[ "$#" -gt 0 ]]; do

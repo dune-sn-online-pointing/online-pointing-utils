@@ -222,7 +222,6 @@ int main(int argc, char* argv[]) {
     std::map<int, NeutrinoInfo> event_nu_info;
 
     // Check if we should limit the number of files to process
-    int max_files = j.value("max_files", -1);
     if (max_files > 0) {
         LogInfo << "Max files: " << max_files << std::endl;
     } else {
