@@ -366,7 +366,7 @@ def print_summary(metadata_list):
     print("="*80)
 
 
-def create_plots(metadata_list, output_folder):
+def create_plots(metadata_list, output_folder, conditions_name):
     """
     Create visualization plots and save them as a multi-page PDF.
     """
@@ -382,8 +382,8 @@ def create_plots(metadata_list, output_folder):
     interaction_stats = analyze_interaction_types(metadata_list)
     dist_stats = analyze_marley_distances(metadata_list)
     
-    # Create multi-page PDF
-    output_file = output_path / 'volume_analysis.pdf'
+    # Create multi-page PDF with descriptive name
+    output_file = output_path / f'volume_analysis_{conditions_name}.pdf'
     
     with PdfPages(output_file) as pdf:
         # Page 1: Composition and basic statistics
@@ -644,9 +644,20 @@ def main():
     
     # Create plots
     if not args.no_plots:
-        output_folder = volumes_path / 'analysis'
+        # Save to reports/ folder with descriptive name
+        reports_folder = Path('reports')
+        reports_folder.mkdir(parents=True, exist_ok=True)
+        
+        # Extract conditions from volumes_folder name
+        # e.g., "volume_images_es_valid_bg_tick3_ch2_min2_tot3_e2p0" -> "es_valid_bg_tick3_ch2_min2_tot3_e2p0"
+        folder_name = volumes_path.name
+        if folder_name.startswith('volume_images_'):
+            conditions_name = folder_name.replace('volume_images_', '')
+        else:
+            conditions_name = folder_name
+        
         print(f"Creating analysis plots...")
-        create_plots(metadata_list, output_folder)
+        create_plots(metadata_list, reports_folder, conditions_name)
         print()
     
     return 0

@@ -1,0 +1,11 @@
+{
+  "tpstream_folder": "/home/virgolaema/dune/online-pointing-utils/data2/prod_cc/",
+  "clusters_folder_prefix": "cc_valid_bg",
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 2,
+  "energy_cut": 2.0,
+  "max_files": -1,
+  "skip_files": 0
+}
