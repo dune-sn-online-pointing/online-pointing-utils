@@ -57,8 +57,15 @@ def load_volume_metadata(volume_folder, verbose=False, max_files=None, skip_file
     for vol_file in volume_files:
         try:
             npz = np.load(vol_file, allow_pickle=True)
-            metadata = npz['metadata'].item() if npz['metadata'].shape == () else npz['metadata'][0]
-            all_metadata.append(metadata)
+            # Each NPZ file can contain multiple volumes - load all metadata entries
+            metadata_array = npz['metadata']
+            if metadata_array.shape == ():
+                # Single metadata entry (scalar)
+                all_metadata.append(metadata_array.item())
+            else:
+                # Multiple metadata entries (array)
+                for meta in metadata_array:
+                    all_metadata.append(meta)
         except Exception as e:
             print(f"Warning: Could not load {vol_file}: {e}")
             continue
@@ -203,6 +210,48 @@ def analyze_momentum(metadata_list):
     return stats
 
 
+def analyze_marley_distances(metadata_list):
+    """
+    Analyze MARLEY cluster distances from main track.
+    
+    Returns:
+        dict with distance statistics
+    """
+    avg_distances = []
+    max_distances = []
+    
+    for meta in metadata_list:
+        avg_dist = meta.get('avg_marley_cluster_distance_cm', None)
+        max_dist = meta.get('max_marley_cluster_distance_cm', None)
+        
+        # Only include positive distances (valid measurements)
+        if avg_dist is not None and avg_dist > 0:
+            avg_distances.append(avg_dist)
+        if max_dist is not None and max_dist > 0:
+            max_distances.append(max_dist)
+    
+    if len(avg_distances) == 0:
+        return None
+    
+    avg_distances = np.array(avg_distances)
+    max_distances = np.array(max_distances)
+    
+    return {
+        'avg_mean': np.mean(avg_distances),
+        'avg_std': np.std(avg_distances),
+        'avg_median': np.median(avg_distances),
+        'avg_min': np.min(avg_distances),
+        'avg_max': np.max(avg_distances),
+        'avg_values': avg_distances,
+        'max_mean': np.mean(max_distances),
+        'max_std': np.std(max_distances),
+        'max_median': np.median(max_distances),
+        'max_min': np.min(max_distances),
+        'max_max': np.max(max_distances),
+        'max_values': max_distances,
+    }
+
+
 def print_summary(metadata_list):
     """
     Print comprehensive summary statistics.
@@ -292,6 +341,27 @@ def print_summary(metadata_list):
         print("No momentum information available")
     print()
     
+    # MARLEY cluster distance distribution
+    print("-" * 80)
+    print("MARLEY CLUSTER DISTANCES FROM MAIN TRACK")
+    print("-" * 80)
+    dist_stats = analyze_marley_distances(metadata_list)
+    if dist_stats:
+        print("Average distance per volume:")
+        print(f"  Mean:   {dist_stats['avg_mean']:7.2f} cm")
+        print(f"  Median: {dist_stats['avg_median']:7.2f} cm")
+        print(f"  Std:    {dist_stats['avg_std']:7.2f} cm")
+        print(f"  Range:  {dist_stats['avg_min']:7.2f} - {dist_stats['avg_max']:7.2f} cm")
+        print()
+        print("Maximum distance per volume:")
+        print(f"  Mean:   {dist_stats['max_mean']:7.2f} cm")
+        print(f"  Median: {dist_stats['max_median']:7.2f} cm")
+        print(f"  Std:    {dist_stats['max_std']:7.2f} cm")
+        print(f"  Range:  {dist_stats['max_min']:7.2f} - {dist_stats['max_max']:7.2f} cm")
+    else:
+        print("No MARLEY distance information available")
+    print()
+    
     print("="*80)
 
 
@@ -307,12 +377,16 @@ def create_plots(metadata_list, output_folder):
     energy_stats = analyze_energies(metadata_list)
     mom_stats = analyze_momentum(metadata_list)
     interaction_stats = analyze_interaction_types(metadata_list)
+    dist_stats = analyze_marley_distances(metadata_list)
     
-    # Create figure with subplots
-    fig = plt.figure(figsize=(16, 12))
+    # Create figure with subplots - now 4x3 grid to accommodate distance plots
+    fig = plt.figure(figsize=(18, 16))
+    
+    # Create figure with subplots - now 4x3 grid to accommodate distance plots
+    fig = plt.figure(figsize=(18, 16))
     
     # 1. MARLEY fraction distribution
-    ax1 = plt.subplot(3, 3, 1)
+    ax1 = plt.subplot(4, 3, 1)
     if len(comp_stats['marley_fractions']) > 0:
         ax1.hist(comp_stats['marley_fractions'], bins=20, edgecolor='black', alpha=0.7)
         ax1.set_xlabel('MARLEY Fraction per Volume')
@@ -321,7 +395,7 @@ def create_plots(metadata_list, output_folder):
         ax1.grid(True, alpha=0.3)
     
     # 2. Clusters per volume
-    ax2 = plt.subplot(3, 3, 2)
+    ax2 = plt.subplot(4, 3, 2)
     if len(comp_stats['clusters_per_volume']) > 0:
         ax2.hist(comp_stats['clusters_per_volume'], bins=20, edgecolor='black', alpha=0.7)
         ax2.set_xlabel('Number of Clusters')
@@ -330,7 +404,7 @@ def create_plots(metadata_list, output_folder):
         ax2.grid(True, alpha=0.3)
     
     # 3. Volume composition pie chart
-    ax3 = plt.subplot(3, 3, 3)
+    ax3 = plt.subplot(4, 3, 3)
     labels = ['Pure MARLEY', 'Pure Non-MARLEY', 'Mixed']
     sizes = [comp_stats['pure_marley'], comp_stats['pure_non_marley'], comp_stats['mixed']]
     colors = ['#ff9999', '#66b3ff', '#99ff99']
@@ -338,7 +412,7 @@ def create_plots(metadata_list, output_folder):
     ax3.set_title('Volume Composition')
     
     # 4. Energy distribution
-    ax4 = plt.subplot(3, 3, 4)
+    ax4 = plt.subplot(4, 3, 4)
     if energy_stats:
         ax4.hist(energy_stats['values'], bins=30, edgecolor='black', alpha=0.7)
         ax4.set_xlabel('Particle Energy (GeV)')
@@ -347,7 +421,7 @@ def create_plots(metadata_list, output_folder):
         ax4.grid(True, alpha=0.3)
     
     # 5. Momentum distribution
-    ax5 = plt.subplot(3, 3, 5)
+    ax5 = plt.subplot(4, 3, 5)
     if mom_stats:
         ax5.hist(mom_stats['values'], bins=30, edgecolor='black', alpha=0.7)
         ax5.set_xlabel('Main Track Momentum (GeV/c)')
@@ -356,7 +430,7 @@ def create_plots(metadata_list, output_folder):
         ax5.grid(True, alpha=0.3)
     
     # 6. Interaction types bar chart
-    ax6 = plt.subplot(3, 3, 6)
+    ax6 = plt.subplot(4, 3, 6)
     int_types = list(interaction_stats.keys())
     int_counts = list(interaction_stats.values())
     ax6.bar(int_types, int_counts, edgecolor='black', alpha=0.7)
@@ -366,7 +440,7 @@ def create_plots(metadata_list, output_folder):
     ax6.grid(True, alpha=0.3, axis='y')
     
     # 7. MARLEY vs non-MARLEY clusters total
-    ax7 = plt.subplot(3, 3, 7)
+    ax7 = plt.subplot(4, 3, 7)
     cluster_types = ['MARLEY', 'Non-MARLEY']
     cluster_counts = [comp_stats['total_marley_clusters'], comp_stats['total_non_marley_clusters']]
     colors = ['#ff9999', '#66b3ff']
@@ -376,7 +450,7 @@ def create_plots(metadata_list, output_folder):
     ax7.grid(True, alpha=0.3, axis='y')
     
     # 8. Energy vs MARLEY fraction scatter
-    ax8 = plt.subplot(3, 3, 8)
+    ax8 = plt.subplot(4, 3, 8)
     if energy_stats and len(comp_stats['marley_fractions']) > 0:
         marley_fracs = np.array(comp_stats['marley_fractions'])
         valid_mask = np.array([meta.get('particle_energy', 0) > 0 for meta in metadata_list])
@@ -389,7 +463,7 @@ def create_plots(metadata_list, output_folder):
             ax8.grid(True, alpha=0.3)
     
     # 9. Momentum vs number of clusters scatter
-    ax9 = plt.subplot(3, 3, 9)
+    ax9 = plt.subplot(4, 3, 9)
     if mom_stats:
         valid_mask = np.array([meta.get('main_track_momentum', 0) > 0 for meta in metadata_list])
         if np.sum(valid_mask) > 0:
@@ -398,6 +472,48 @@ def create_plots(metadata_list, output_folder):
             ax9.scatter(n_clusters[valid_mask], momenta[valid_mask], alpha=0.6)
             ax9.set_xlabel('Number of Clusters in Volume')
             ax9.set_ylabel('Main Track Momentum (GeV/c)')
+            ax9.set_title('Momentum vs Number of Clusters')
+            ax9.grid(True, alpha=0.3)
+    
+    # 10. Average MARLEY distance distribution
+    ax10 = plt.subplot(4, 3, 10)
+    if dist_stats:
+        ax10.hist(dist_stats['avg_values'], bins=30, edgecolor='black', alpha=0.7, color='orange')
+        ax10.set_xlabel('Average Distance (cm)')
+        ax10.set_ylabel('Count')
+        ax10.set_title('Avg MARLEY Cluster Distance from Main Track')
+        ax10.grid(True, alpha=0.3)
+        ax10.axvline(dist_stats['avg_mean'], color='red', linestyle='--', linewidth=2, label=f'Mean: {dist_stats["avg_mean"]:.1f} cm')
+        ax10.legend()
+    
+    # 11. Maximum MARLEY distance distribution
+    ax11 = plt.subplot(4, 3, 11)
+    if dist_stats:
+        ax11.hist(dist_stats['max_values'], bins=30, edgecolor='black', alpha=0.7, color='red')
+        ax11.set_xlabel('Maximum Distance (cm)')
+        ax11.set_ylabel('Count')
+        ax11.set_title('Max MARLEY Cluster Distance Across Events')
+        ax11.grid(True, alpha=0.3)
+        ax11.axvline(dist_stats['max_mean'], color='darkred', linestyle='--', linewidth=2, label=f'Mean: {dist_stats["max_mean"]:.1f} cm')
+        ax11.legend()
+    
+    # 12. Max distance vs energy scatter
+    ax12 = plt.subplot(4, 3, 12)
+    if dist_stats and energy_stats:
+        max_dists = []
+        energies = []
+        for meta in metadata_list:
+            max_dist = meta.get('max_marley_cluster_distance_cm', -1)
+            energy = meta.get('particle_energy', -1)
+            if max_dist > 0 and energy > 0:
+                max_dists.append(max_dist)
+                energies.append(energy)
+        if len(max_dists) > 0:
+            ax12.scatter(energies, max_dists, alpha=0.6, color='purple')
+            ax12.set_xlabel('Particle Energy (GeV)')
+            ax12.set_ylabel('Max MARLEY Distance (cm)')
+            ax12.set_title('Max MARLEY Distance vs Energy')
+            ax12.grid(True, alpha=0.3)
             ax9.set_title('Momentum vs Number of Clusters')
             ax9.grid(True, alpha=0.3)
     

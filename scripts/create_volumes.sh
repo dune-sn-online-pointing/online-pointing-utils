@@ -76,7 +76,7 @@ echo "=================================================="
 echo ""
 
 # Run the Python script
-python3 "$SCRIPT_DIR/create_volumes.py" -j "$JSON_FILE" $VERBOSE_FLAG $OVERRIDE_FLAG $SKIP_OVERRIDE $MAX_OVERRIDE
+python3 "$PYTHON_DIR/app/create_volumes.py" -j "$JSON_FILE" $VERBOSE_FLAG $OVERRIDE_FLAG $SKIP_OVERRIDE $MAX_OVERRIDE
 
 EXIT_CODE=$?
 
