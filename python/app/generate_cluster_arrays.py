@@ -572,7 +572,7 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
             'event',
             'tp_detector_channel', 'tp_time_start', 'tp_adc_integral',
             'tp_samples_over_threshold', 'tp_samples_to_peak', 'tp_adc_peak',
-            'marley_tp_fraction', 'is_main_cluster',
+            'marley_tp_fraction', 'is_main_cluster', 'match_id',
             'true_pos_x', 'true_pos_y', 'true_pos_z',
             'true_dir_x', 'true_dir_y', 'true_dir_z',
             'true_mom_x', 'true_mom_y', 'true_mom_z',
@@ -599,6 +599,7 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                 # Extract metadata
                 is_marley = data['marley_tp_fraction'][i] > 0.5
                 is_main_track = bool(data['is_main_cluster'][i])
+                match_id = int(data['match_id'][i])  # Links clusters across U, V, X planes (-1 if unmatched)
                 
                 true_pos = np.array([
                     data['true_pos_x'][i],
@@ -643,7 +644,8 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                     true_particle_mom[0], true_particle_mom[1], true_particle_mom[2],
                     np.float32(cluster_energy_mev),
                     np.float32(true_particle_energy),
-                    plane_number
+                    plane_number,
+                    match_id
                 ], dtype=np.float32)
                 
                 images.append(img_array)
@@ -756,7 +758,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
             'tp_samples_over_threshold', 'tp_samples_to_peak',
             'tp_adc_peak',  # Use actual ADC peak from data!
             # Cluster-level metadata
-            'marley_tp_fraction', 'is_main_cluster',
+            'marley_tp_fraction', 'is_main_cluster', 'match_id',
             'true_pos_x', 'true_pos_y', 'true_pos_z',
             'true_dir_x', 'true_dir_y', 'true_dir_z',  # Particle direction (normalized)
             'true_mom_x', 'true_mom_y', 'true_mom_z',  # Particle momentum [GeV/c]
@@ -786,6 +788,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                 # Extract cluster metadata
                 is_marley = data['marley_tp_fraction'][i] > 0.5  # Marley if >50% of TPs are from Marley
                 is_main_track = bool(data['is_main_cluster'][i])
+                match_id = int(data['match_id'][i])  # Links clusters across U, V, X planes (-1 if unmatched)
                 
                 # True position (3D)
                 true_pos = np.array([
@@ -834,7 +837,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                 
                 # Prepare metadata as compact array
                 # Format: [event, is_marley, is_main_track, is_es_interaction, pos(3),
-                #          particle_mom(3), cluster_energy, particle_energy, plane_id]
+                #          particle_mom(3), cluster_energy, particle_energy, plane_id, match_id]
                 # All stored as float32 for efficiency (0.0/1.0 for booleans)
                 # Note: cluster_energy is now ADC-derived, not MC truth neutrino energy
                 plane_id = {'U': 0, 'V': 1, 'X': 2}.get(plane_letter, 0)
@@ -847,7 +850,8 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                     true_particle_mom[0], true_particle_mom[1], true_particle_mom[2],
                     np.float32(cluster_energy_mev),
                     np.float32(true_particle_energy),
-                    plane_id
+                    plane_id,
+                    match_id
                 ], dtype=np.float32)                # Add to plane collection
                 plane_images.append(img_array)
                 plane_metadata.append(metadata_array)
