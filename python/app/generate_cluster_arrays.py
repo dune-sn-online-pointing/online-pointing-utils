@@ -651,6 +651,36 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
     
     plane_map = {'U': 0, 'V': 1, 'X': 2}
     
+    # FIRST PASS: Process X plane to build match_id → (apa_id, x_sign) mapping
+    match_id_to_geometry = {}
+    
+    for tree_name in tree_names:
+        plane_letter = tree_name.split('_')[-1].split(';')[0]
+        
+        if plane_letter == 'X':
+            tree = clusters_dir[tree_name]
+            branches = ['match_id', 'tp_detector', 'tp_detector_channel']
+            data = tree.arrays(branches, library='np')
+            
+            for i in range(len(data['match_id'])):
+                match_id = int(data['match_id'][i])
+                if match_id == -1:  # Skip unmatched clusters
+                    continue
+                    
+                channels = data['tp_detector_channel'][i]
+                detectors = data['tp_detector'][i]
+                
+                if len(channels) == 0:
+                    continue
+                
+                apa_id = int(detectors[0])
+                is_top_apa, x_sign = get_apa_geometry_info(channels, apa_id, 'X')
+                
+                # Store geometry info for this match_id
+                match_id_to_geometry[match_id] = (apa_id, is_top_apa, x_sign)
+            break  # Only need to process X plane once
+    
+    # SECOND PASS: Process all planes using geometry from X plane for U/V
     for tree_name in tree_names:
         # Extract plane letter (handle ROOT versioning like 'clusters_tree_U;1')
         plane_letter = tree_name.split('_')[-1].split(';')[0]  # Get 'U' from 'U;1'
@@ -693,11 +723,26 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                 if len(channels) == 0:
                     continue
                 
-                # Get APA ID (detector is already the APA number 0-3)
+                # Get match_id first
+                match_id = int(data['match_id'][i])
+                
+                # Get APA ID from detector
                 apa_id = int(detectors[0])  # All TPs in cluster should be from same APA
                 
                 # Determine APA geometry for flipping
-                is_top_apa, x_sign = get_apa_geometry_info(channels, apa_id, plane_letter)
+                if plane_letter == 'X':
+                    # For X plane, determine geometry from collection channels
+                    is_top_apa, x_sign = get_apa_geometry_info(channels, apa_id, plane_letter)
+                else:
+                    # For U/V planes, use geometry from matched X plane cluster
+                    if match_id != -1 and match_id in match_id_to_geometry:
+                        _, is_top_apa, x_sign = match_id_to_geometry[match_id]
+                    else:
+                        # Fallback for unmatched clusters: determine from APA only
+                        is_top_apa = (apa_id % 2 == 0)
+                        x_sign = 1  # Default to positive side if no match
+                        if verbose:
+                            print(f"  Warning: Cluster {i} on plane {plane_letter} has no match (match_id={match_id}), using default geometry")
                 
                 # Extract metadata
                 is_marley = data['marley_tp_fraction'][i] > 0.5
@@ -838,6 +883,36 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
     plane_stats = {}  # Track generated clusters per plane
     plane_map = {'U': 0, 'V': 1, 'X': 2}  # Plane names to numbers
     
+    # FIRST PASS: Process X plane to build match_id → (apa_id, x_sign) mapping
+    match_id_to_geometry = {}
+    
+    for tree_name in tree_names:
+        plane_letter = tree_name.split('_')[-1]
+        
+        if plane_letter == 'X':
+            tree = clusters_dir[tree_name]
+            branches = ['match_id', 'tp_detector', 'tp_detector_channel']
+            data = tree.arrays(branches, library='np')
+            
+            for i in range(len(data['match_id'])):
+                match_id = int(data['match_id'][i])
+                if match_id == -1:  # Skip unmatched clusters
+                    continue
+                    
+                channels = data['tp_detector_channel'][i]
+                detectors = data['tp_detector'][i]
+                
+                if len(channels) == 0:
+                    continue
+                
+                apa_id = int(detectors[0])
+                is_top_apa, x_sign = get_apa_geometry_info(channels, apa_id, 'X')
+                
+                # Store geometry info for this match_id
+                match_id_to_geometry[match_id] = (apa_id, is_top_apa, x_sign)
+            break  # Only need to process X plane once
+    
+    # SECOND PASS: Process all planes using geometry from X plane for U/V
     for tree_name in tree_names:
         # Extract plane from tree name (e.g., clusters_tree_U -> U)
         plane_letter = tree_name.split('_')[-1]
@@ -892,11 +967,26 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                 if len(channels) == 0:
                     continue
                 
-                # Get APA ID (detector is already the APA number 0-3)
+                # Get match_id first
+                match_id = int(data['match_id'][i])
+                
+                # Get APA ID from detector
                 apa_id = int(detectors[0])  # All TPs in cluster should be from same APA
                 
                 # Determine APA geometry for flipping
-                is_top_apa, x_sign = get_apa_geometry_info(channels, apa_id, plane_letter)
+                if plane_letter == 'X':
+                    # For X plane, determine geometry from collection channels
+                    is_top_apa, x_sign = get_apa_geometry_info(channels, apa_id, plane_letter)
+                else:
+                    # For U/V planes, use geometry from matched X plane cluster
+                    if match_id != -1 and match_id in match_id_to_geometry:
+                        _, is_top_apa, x_sign = match_id_to_geometry[match_id]
+                    else:
+                        # Fallback for unmatched clusters: determine from APA only
+                        is_top_apa = (apa_id % 2 == 0)
+                        x_sign = 1  # Default to positive side if no match
+                        if verbose:
+                            print(f"  Warning: Cluster {i} on plane {plane_letter} has no match (match_id={match_id}), using default geometry")
                 
                 # Extract cluster metadata
                 is_marley = data['marley_tp_fraction'][i] > 0.5  # Marley if >50% of TPs are from Marley
