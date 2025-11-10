@@ -113,13 +113,17 @@ def get_apa_geometry_info(detector_channels, apa_id, plane_letter):
         Top:    APA 0 (even) | APA 2 (even)
         Bottom: APA 1 (odd)  | APA 3 (odd)
     
-    Collection Plane Channel Mapping (channels 1760-2559 → collection 0-799):
-        Top APAs (0, 2):
-            - Channels 0-399: at -x side, go from +z to -z
-            - Channels 400-799: at +x side, go from -z to +z
-        Bottom APAs (1, 3):
-            - Channels 0-399: at +x side, go from -z to +z
-            - Channels 400-799: at -x side, go from +z to -z
+    Channel Layout per APA (0-2559):
+        - Channels 0-799: U plane (800 induction wires)
+        - Channels 800-1599: V plane (800 induction wires)
+        - Channels 1600-2559: X plane (960 collection wires = 480 per side)
+    
+    Collection Plane (X) subdivision (channels 1600-2559):
+        - Channels 1600-2079: First side (480 wires)
+        - Channels 2080-2559: Second side (480 wires)
+        
+    Top APAs (0, 2): ch < 2080 → x<0, ch >= 2080 → x>0
+    Bottom APAs (1, 3): ch < 2080 → x>0, ch >= 2080 → x<0
     
     Args:
         detector_channels: Array of detector-local channel numbers (already 0-2559 per APA)
@@ -127,24 +131,23 @@ def get_apa_geometry_info(detector_channels, apa_id, plane_letter):
         plane_letter: 'U', 'V', or 'X'
         
     Returns:
-        tuple: (is_top_apa, x_sign, needs_flip_ch, needs_flip_time)
+        tuple: (is_top_apa, x_sign)
     """
     # Determine if top or bottom APA
     is_top_apa = (apa_id % 2 == 0)  # Even APA = Top (0, 2)
     
     # For collection plane, determine x_sign from channel
     if plane_letter == 'X':
-        # Collection channels are 1760-2559, which map to collection 0-799
-        # Get first channel to determine the side
-        first_ch = detector_channels[0] if len(detector_channels) > 0 else 1760
-        coll_ch = first_ch - 1760  # Convert to 0-799 range
+        # Collection channels are 1600-2559 (960 channels = 480 per side)
+        # Threshold at 2080 splits the two sides
+        first_ch = detector_channels[0] if len(detector_channels) > 0 else 1600
         
         if is_top_apa:
-            # Top APA: 0-399 → x<0, 400-799 → x>0
-            x_sign = -1 if coll_ch < 400 else 1
+            # Top APA: channels < 2080 → x<0, channels >= 2080 → x>0
+            x_sign = -1 if first_ch < 2080 else 1
         else:
-            # Bottom APA: 0-399 → x>0, 400-799 → x<0  
-            x_sign = 1 if coll_ch < 400 else -1
+            # Bottom APA: channels < 2080 → x>0, channels >= 2080 → x<0  
+            x_sign = 1 if first_ch < 2080 else -1
     else:
         # For induction planes, use collection plane of same cluster to determine x_sign
         # This will be passed from the X plane determination

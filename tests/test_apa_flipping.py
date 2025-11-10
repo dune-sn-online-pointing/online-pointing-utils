@@ -19,7 +19,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import uproot
 
-sys.path.insert(0, str(Path(__file__).parent / 'app'))
+sys.path.insert(0, str(Path(__file__).parent.parent / 'python' / 'app'))
 from generate_cluster_arrays import extract_clusters_from_file
 
 
