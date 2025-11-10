@@ -624,7 +624,7 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                     channels, times, adc_integrals, adc_peaks,
                     sot_values, stopeak_values,
                     plane_threshold=plane_threshold,
-                    img_width=16, img_height=128
+                    img_width=32, img_height=128
                 )
                 
                 # Calculate cluster energy from ADC sum (instead of using MC truth)
