@@ -16,5 +16,5 @@
   "tot_cut": 3,
   "energy_cut": 2.0,
   "time_tolerance_ticks": 10,
-  "spatial_tolerance_cm": 10000
+  "spatial_tolerance_cm": 100
 }

@@ -100,10 +100,11 @@ void read_tpstream(std::string filename,
     
         // Determine if the channel appears detector-local; if so promote to global numbering
         // Global scheme is: global = detid * APA::total_channels + local
-        uint64_t effective_channel = this_channel;
-        if (this_detid > 0 && this_channel >= 0 && this_channel < APA::total_channels) {
-            effective_channel = (uint64_t)this_detid * APA::total_channels + (uint64_t)this_channel;
-        }
+        // uint64_t effective_channel = this_channel;
+        // THIS IS WRONG
+        // if (this_detid > 0 && this_channel >= 0 && this_channel < APA::total_channels) {
+        //     effective_channel = (uint64_t)this_detid * APA::total_channels + (uint64_t)this_channel;
+        // }
         // Heuristic safeguard: if channel already large (>= total_channels) but detid==0 we assume it's already global and leave unchanged
 
         // Track whether any non-zero ToT is observed; we'll apply the ToT<2 filter only if ToT info is present and non-trivial
@@ -114,8 +115,8 @@ void read_tpstream(std::string filename,
         TriggerPrimitive this_tp = TriggerPrimitive(
             this_version,
             0, // flag
-            this_detid,
-            effective_channel,
+            this_detid, // this is just TPC, always 3
+            this_channel,
             this_samples_over_threshold,
             this_time_start,
             this_samples_to_peak,
