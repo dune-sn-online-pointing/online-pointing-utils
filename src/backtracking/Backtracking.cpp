@@ -70,10 +70,10 @@ void read_tpstream(std::string filename,
 
     UShort_t this_version = 0;
     uint64_t this_time_start = 0;
-    UInt_t this_channel = 0;          // Raw channel read from file (may be detector-local)
+    UInt_t this_channel = 0;          // Raw channel read from file, global
     UInt_t this_adc_integral = 0;
     UShort_t this_adc_peak = 0;
-    UShort_t this_detid = 0;          // Detector (APA) id if present
+    UShort_t this_detid = 0;          // Detector, it's just aleays 3 (TPC)
     UShort_t this_samples_over_threshold = 0;
     UShort_t this_samples_to_peak = 0;
     // int this_event_number = 0;

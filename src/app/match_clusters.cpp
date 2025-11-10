@@ -156,6 +156,8 @@ int main(int argc, char* argv[]) {
     int global_partial_v_matches = 0;
     std::unordered_map<int, int> global_event_delta_hist_u;
     std::unordered_map<int, int> global_event_delta_hist_v;
+
+    std::vector <std::string> output_files;
     
     // Process each cluster file
     for (size_t file_idx = 0; file_idx < cluster_files.size(); file_idx++) {
@@ -169,6 +171,7 @@ int main(int argc, char* argv[]) {
             basename = basename.substr(0, basename.size()-9);
         }
         std::string output_file = joinPath(matched_clusters_folder, basename + "_matched.root");
+        output_files.push_back(output_file);
         
         if (verboseMode) LogInfo << "[" << (file_idx+1) << "/" << cluster_files.size() << "] Processing: " 
                 << std::filesystem::path(input_clusters_file).filename().string() << std::endl;
@@ -632,6 +635,15 @@ int main(int argc, char* argv[]) {
         log_global_deltas("U", global_event_delta_hist_u);
         log_global_deltas("V", global_event_delta_hist_v);
         LogInfo << "=========================================" << std::endl;
+    }
+    
+    // print first 10 output files
+    LogInfo << "Generated output files (showing only first 10):" << std::endl;
+    for (size_t i = 0; i < output_files.size() && i < 10; i++) {
+        LogInfo << "  " << output_files[i] << std::endl;
+    }
+    if (output_files.size() > 10) {
+        LogInfo << "  ..." << std::endl;
     }
     
     return (failed > 0) ? 1 : 0;

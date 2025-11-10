@@ -105,6 +105,102 @@ def load_conversion_factors(repo_root=None):
     return params
 
 
+def get_apa_geometry_info(detector_channels, apa_id, plane_letter):
+    """
+    Determine APA geometry information for image flipping.
+    
+    APA Layout (z vs y plane):
+        Top:    APA 0 (even) | APA 2 (even)
+        Bottom: APA 1 (odd)  | APA 3 (odd)
+    
+    Collection Plane Channel Mapping (channels 1760-2559 → collection 0-799):
+        Top APAs (0, 2):
+            - Channels 0-399: at -x side, go from +z to -z
+            - Channels 400-799: at +x side, go from -z to +z
+        Bottom APAs (1, 3):
+            - Channels 0-399: at +x side, go from -z to +z
+            - Channels 400-799: at -x side, go from +z to -z
+    
+    Args:
+        detector_channels: Array of detector-local channel numbers (already 0-2559 per APA)
+        apa_id: APA number (0, 1, 2, or 3)
+        plane_letter: 'U', 'V', or 'X'
+        
+    Returns:
+        tuple: (is_top_apa, x_sign, needs_flip_ch, needs_flip_time)
+    """
+    # Determine if top or bottom APA
+    is_top_apa = (apa_id % 2 == 0)  # Even APA = Top (0, 2)
+    
+    # For collection plane, determine x_sign from channel
+    if plane_letter == 'X':
+        # Collection channels are 1760-2559, which map to collection 0-799
+        # Get first channel to determine the side
+        first_ch = detector_channels[0] if len(detector_channels) > 0 else 1760
+        coll_ch = first_ch - 1760  # Convert to 0-799 range
+        
+        if is_top_apa:
+            # Top APA: 0-399 → x<0, 400-799 → x>0
+            x_sign = -1 if coll_ch < 400 else 1
+        else:
+            # Bottom APA: 0-399 → x>0, 400-799 → x<0  
+            x_sign = 1 if coll_ch < 400 else -1
+    else:
+        # For induction planes, use collection plane of same cluster to determine x_sign
+        # This will be passed from the X plane determination
+        x_sign = None  # Will be determined from X plane
+    
+    return is_top_apa, x_sign
+
+
+def apply_apa_flipping(img, plane_letter, is_top_apa, x_sign):
+    """
+    Apply APA geometry-based flipping to cluster image.
+    Based on legacy image_creator.py fix_X/U/V_orientation functions.
+    
+    Args:
+        img: numpy array (height, width) representing the cluster
+        plane_letter: 'U', 'V', or 'X'
+        is_top_apa: True if APA 0 or 2 (top), False if APA 1 or 3 (bottom)
+        x_sign: +1 or -1 indicating x side of APA
+        
+    Returns:
+        Flipped image array
+    """
+    img_flipped = img.copy()
+    
+    if plane_letter == 'X':
+        # X plane: flip time axis based on x_sign
+        if x_sign == 1:
+            img_flipped = np.flip(img_flipped, 0)  # Flip time axis
+            
+    elif plane_letter == 'V':
+        # V plane: flip based on APA type and x_sign
+        if is_top_apa:  # Top APA (0, 2)
+            if x_sign == 1:
+                img_flipped = np.flip(img_flipped, 0)  # Flip time
+                img_flipped = np.flip(img_flipped, 1)  # Flip channel
+        else:  # Bottom APA (1, 3)
+            if x_sign == -1:
+                img_flipped = np.flip(img_flipped, 1)  # Flip channel only
+            else:
+                img_flipped = np.flip(img_flipped, 0)  # Flip time only
+                
+    elif plane_letter == 'U':
+        # U plane: flip based on APA type and x_sign
+        if is_top_apa:  # Top APA (0, 2)
+            if x_sign == -1:
+                img_flipped = np.flip(img_flipped, 1)  # Flip channel only
+            else:
+                img_flipped = np.flip(img_flipped, 0)  # Flip time only
+        else:  # Bottom APA (1, 3)
+            if x_sign == 1:
+                img_flipped = np.flip(img_flipped, 0)  # Flip time
+                img_flipped = np.flip(img_flipped, 1)  # Flip channel
+    
+    return img_flipped
+
+
 def get_clusters_folder(json_config):
     """
     Compose clusters folder name from JSON configuration.
@@ -570,7 +666,7 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
         # Read required branches
         branches = [
             'event',
-            'tp_detector_channel', 'tp_time_start', 'tp_adc_integral',
+            'tp_detector', 'tp_detector_channel', 'tp_time_start', 'tp_adc_integral',
             'tp_samples_over_threshold', 'tp_samples_to_peak', 'tp_adc_peak',
             'marley_tp_fraction', 'is_main_cluster', 'match_id',
             'true_pos_x', 'true_pos_y', 'true_pos_z',
@@ -587,6 +683,7 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
             try:
                 # Get TP arrays
                 channels = data['tp_detector_channel'][i]
+                detectors = data['tp_detector'][i]
                 times = data['tp_time_start'][i] / 32
                 adc_integrals = data['tp_adc_integral'][i]
                 adc_peaks = data['tp_adc_peak'][i]
@@ -595,6 +692,12 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                 
                 if len(channels) == 0:
                     continue
+                
+                # Get APA ID (detector is already the APA number 0-3)
+                apa_id = int(detectors[0])  # All TPs in cluster should be from same APA
+                
+                # Determine APA geometry for flipping
+                is_top_apa, x_sign = get_apa_geometry_info(channels, apa_id, plane_letter)
                 
                 # Extract metadata
                 is_marley = data['marley_tp_fraction'][i] > 0.5
@@ -626,6 +729,9 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                     plane_threshold=plane_threshold,
                     img_width=32, img_height=128
                 )
+                
+                # Apply APA geometry-based flipping
+                img_array = apply_apa_flipping(img_array, plane_letter, is_top_apa, x_sign)
                 
                 # Calculate cluster energy from ADC sum (instead of using MC truth)
                 # Use plane-specific conversion factor (ADC per MeV)
@@ -754,7 +860,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
         # Load all data at once for efficiency
         branches = [
             'event',
-            'tp_detector_channel', 'tp_time_start', 'tp_adc_integral',
+            'tp_detector', 'tp_detector_channel', 'tp_time_start', 'tp_adc_integral',
             'tp_samples_over_threshold', 'tp_samples_to_peak',
             'tp_adc_peak',  # Use actual ADC peak from data!
             # Cluster-level metadata
@@ -776,6 +882,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
             try:
                 # Get TP arrays for this cluster
                 channels = data['tp_detector_channel'][i]
+                detectors = data['tp_detector'][i]
                 times = data['tp_time_start'][i] / 32  # Convert to TPC ticks
                 adc_integrals = data['tp_adc_integral'][i]
                 adc_peaks = data['tp_adc_peak'][i]  # Use actual peak values from data
@@ -784,6 +891,12 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                 
                 if len(channels) == 0:
                     continue
+                
+                # Get APA ID (detector is already the APA number 0-3)
+                apa_id = int(detectors[0])  # All TPs in cluster should be from same APA
+                
+                # Determine APA geometry for flipping
+                is_top_apa, x_sign = get_apa_geometry_info(channels, apa_id, plane_letter)
                 
                 # Extract cluster metadata
                 is_marley = data['marley_tp_fraction'][i] > 0.5  # Marley if >50% of TPs are from Marley
@@ -828,6 +941,9 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                     plane_threshold=plane_threshold,
                     img_width=16, img_height=128
                 )
+                
+                # Apply APA geometry-based flipping
+                img_array = apply_apa_flipping(img_array, plane_letter, is_top_apa, x_sign)
                 
                 # Calculate cluster energy from ADC sum (instead of using MC truth)
                 # Use plane-specific conversion factor (ADC per MeV)

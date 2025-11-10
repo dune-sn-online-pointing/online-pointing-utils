@@ -9,7 +9,7 @@
     "bg_folder": "/home/virgolaema/dune/online-pointing-utils/data2/bkgs/",
     "clusters_folder_prefix": "es_valid_bg",
 
-    "max_files": -1,
+    "max_files": 50,
     "skip_files": 0,
 
     "backtracker_error_margin": 10,

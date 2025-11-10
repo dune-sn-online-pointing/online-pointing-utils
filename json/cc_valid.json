@@ -7,7 +7,7 @@
   "tpstream_folder": "/home/virgolaema/dune/online-pointing-utils/data2/prod_cc/",
   "bg_folder": "/home/virgolaema/dune/online-pointing-utils/data2/bkgs/",
   "clusters_folder_prefix": "cc_valid_bg",
-  "max_files": -1,
+  "max_files": 50,
   "skip_files": 0,
   "backtracker_error_margin": 10,
   "tick_limit": 3,

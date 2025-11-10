@@ -834,6 +834,7 @@ std::vector<Cluster> read_clusters(std::string root_filename){
     Bool_t is_main_cluster = false;
     Int_t cluster_id = -1;
     std::vector<int>* tp_channel = nullptr;
+    std::vector<int>* tp_detector = nullptr;
     std::vector<int>* tp_time_start = nullptr;
     std::vector<int>* tp_s_over = nullptr;
     std::vector<int>* tp_adc_integral = nullptr;
@@ -856,6 +857,7 @@ std::vector<Cluster> read_clusters(std::string root_filename){
     if (tree->GetBranch("true_pdg")) tree->SetBranchAddress("true_pdg", &true_pdg);
     if (tree->GetBranch("is_main_cluster")) tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
     if (tree->GetBranch("cluster_id")) tree->SetBranchAddress("cluster_id", &cluster_id);
+    if (tree->GetBranch("tp_detector")) tree->SetBranchAddress("tp_detector", &tp_detector);
     if (tree->GetBranch("tp_detector_channel")) tree->SetBranchAddress("tp_detector_channel", &tp_channel);
     if (tree->GetBranch("tp_time_start")) tree->SetBranchAddress("tp_time_start", &tp_time_start);
     if (tree->GetBranch("tp_samples_over_threshold")) tree->SetBranchAddress("tp_samples_over_threshold", &tp_s_over);
@@ -962,6 +964,7 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
     Int_t true_pdg = 0;
     Int_t cluster_id = -1;
     std::vector<int>* tp_channel = nullptr;
+    std::vector<int>* tp_detector = nullptr;
     std::vector<int>* tp_time_start = nullptr;
     std::vector<int>* tp_s_over = nullptr;
     std::vector<int>* tp_samples_to_peak = nullptr;
@@ -988,6 +991,7 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
     if (tree->GetBranch("is_es_interaction")) tree->SetBranchAddress("is_es_interaction", &is_es_interaction);
     if (tree->GetBranch("true_pdg")) tree->SetBranchAddress("true_pdg", &true_pdg);
     if (tree->GetBranch("cluster_id")) tree->SetBranchAddress("cluster_id", &cluster_id);
+    if (tree->GetBranch("tp_detector")) tree->SetBranchAddress("tp_detector", &tp_detector);
     if (tree->GetBranch("tp_detector_channel")) tree->SetBranchAddress("tp_detector_channel", &tp_channel);
     if (tree->GetBranch("tp_time_start")) tree->SetBranchAddress("tp_time_start", &tp_time_start);
     if (tree->GetBranch("tp_samples_over_threshold")) tree->SetBranchAddress("tp_samples_over_threshold", &tp_s_over);
@@ -1011,6 +1015,7 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
         std::vector<TriggerPrimitive*> tps;
         for (size_t j = 0; j < tp_channel->size(); j++) {
             int channel = (*tp_channel)[j];
+            int detector = (*tp_detector)[j];
             int time_start = (*tp_time_start)[j];
             int s_over_threshold = (*tp_s_over)[j];
             int samples_to_peak = 0;
@@ -1027,6 +1032,7 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
             if (debugMode) {
                 LogDebug << "      TP " << j
                          << " channel=" << channel
+                         << " detector=" << detector
                          << " time_start=" << time_start
                          << " sot=" << s_over_threshold
                          << " samples_to_peak=" << samples_to_peak
@@ -1045,6 +1051,8 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
             
             // IMPORTANT: Set event BEFORE adding to vector to avoid Cluster constructor check failures
             tp->SetEvent(event);
+
+            tp->SetDetector(detector);
             
             // Set view from parameter
             if (view == "X") {
