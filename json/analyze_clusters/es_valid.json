@@ -1,8 +1,0 @@
-{
-  "thisIsAComment": "Code will try first input file from cmd line, then inputFile, then inputFolder + inputList, then inputListFile.",
-  "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
-
-  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
-  
-  "use_simide_energy": true
-}

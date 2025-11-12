@@ -30,12 +30,28 @@ bool ensureDirectoryExists(const std::string& folder) {
 }
 
 std::string getTpstreamBaseFolder(const nlohmann::json& j) {
-    std::string base = j.value("tpstream_folder", std::string("."));
-    if (base.empty()) {
-        base = ".";
+    // Priority 1: Explicit tpstream_folder
+    if (j.contains("tpstream_folder") && !j["tpstream_folder"].get<std::string>().empty()) {
+        std::string folder = j["tpstream_folder"].get<std::string>();
+        return std::filesystem::path(folder).lexically_normal().string();
     }
-    std::filesystem::path base_path(base);
-    return base_path.lexically_normal().string();
+    
+    // Priority 2: Auto-generate from main_folder (new structure)
+    if (j.contains("main_folder") && !j["main_folder"].get<std::string>().empty()) {
+        std::string main_folder = j["main_folder"].get<std::string>();
+        std::filesystem::path tpstream_path = std::filesystem::path(main_folder) / "tpstreams";
+        return tpstream_path.lexically_normal().string();
+    }
+    
+    // Priority 3: Auto-generate from signal_folder (new structure for samples with signal + bg)
+    if (j.contains("signal_folder") && !j["signal_folder"].get<std::string>().empty()) {
+        std::string signal_folder = j["signal_folder"].get<std::string>();
+        std::filesystem::path tpstream_path = std::filesystem::path(signal_folder) / "tpstreams";
+        return tpstream_path.lexically_normal().string();
+    }
+    
+    // Fallback: current directory
+    return ".";
 }
 
 std::string resolveFolderAgainstTpstream(const nlohmann::json& j, const std::string& folder, bool useBaseOnEmpty) {
@@ -63,8 +79,23 @@ void bindBranch(TTree *tree, const char* name, void* address) {
 
 
 std::string getClustersFolder(const nlohmann::json& j) {
-    // Get cluster folder prefix
-    std::string cluster_prefix = j.value("clusters_folder_prefix", std::string("clusters"));
+    // If explicit clusters_folder provided, use it
+    std::string outfolder = j.value("clusters_folder", std::string(""));
+    if (!outfolder.empty()) {
+        return resolveFolderAgainstTpstream(j, outfolder, true);
+    }
+
+    // Get base folder (main_folder or signal_folder or fallback to tpstream)
+    if (j.contains("main_folder") && !j["main_folder"].get<std::string>().empty()) {
+        outfolder = j["main_folder"].get<std::string>();
+    } else if (j.contains("signal_folder") && !j["signal_folder"].get<std::string>().empty()) {
+        outfolder = j["signal_folder"].get<std::string>();
+    } else {
+        outfolder = getTpstreamBaseFolder(j);
+    }
+
+    // Get cluster folder prefix (use products_prefix if clusters_folder_prefix not set)
+    std::string cluster_prefix = j.value("clusters_folder_prefix", j.value("products_prefix", std::string("")));
 
     // Extract clustering parameters from JSON, with defaults if missing
     int tick_limit = j.value("tick_limit", 0);
@@ -79,12 +110,6 @@ std::string getClustersFolder(const nlohmann::json& j) {
             // Fallback: try reading as double and cast to float
             energy_cut = static_cast<float>(j.at("energy_cut").get<double>());
         }
-    }
-    std::string outfolder = j.value("clusters_folder", std::string(""));
-    if (outfolder.empty()) {
-        outfolder = getTpstreamBaseFolder(j);
-    } else {
-        outfolder = resolveFolderAgainstTpstream(j, outfolder, true);
     }
 
     // Build subfolder name with clustering conditions
@@ -101,12 +126,22 @@ std::string getClustersFolder(const nlohmann::json& j) {
         return out;
     };
 
-    std::string clusters_subfolder = "clusters_" + cluster_prefix
-        + "_tick" + sanitize(std::to_string(tick_limit))
-        + "_ch" + sanitize(std::to_string(channel_limit))
-        + "_min" + sanitize(std::to_string(min_tps_to_cluster))
-        + "_tot" + sanitize(std::to_string(tot_cut))
-        + "_e" + sanitize(std::to_string(energy_cut));
+    std::string clusters_subfolder;
+    if (!cluster_prefix.empty()) {
+        clusters_subfolder = "clusters_" + cluster_prefix
+            + "_tick" + sanitize(std::to_string(tick_limit))
+            + "_ch" + sanitize(std::to_string(channel_limit))
+            + "_min" + sanitize(std::to_string(min_tps_to_cluster))
+            + "_tot" + sanitize(std::to_string(tot_cut))
+            + "_e" + sanitize(std::to_string(energy_cut));
+    } else {
+        clusters_subfolder = std::string("clusters")
+            + "_tick" + sanitize(std::to_string(tick_limit))
+            + "_ch" + sanitize(std::to_string(channel_limit))
+            + "_min" + sanitize(std::to_string(min_tps_to_cluster))
+            + "_tot" + sanitize(std::to_string(tot_cut))
+            + "_e" + sanitize(std::to_string(energy_cut));
+    }
     
     std::filesystem::path clusters_folder_path = std::filesystem::path(outfolder) / clusters_subfolder;
     return clusters_folder_path.lexically_normal().string();
@@ -146,32 +181,59 @@ std::string getConditionsString(const nlohmann::json& j) {
 }
 
 // Helper: Get output folder with auto-generation logic
-// Priority: 1) Explicit JSON key, 2) Auto-generate from tpstream_folder
+// Priority: 1) Explicit JSON key, 2) Auto-generate from main_folder/signal_folder
 std::string getOutputFolder(const nlohmann::json& j, const std::string& folder_type, const std::string& json_key) {
     // If explicit path provided in JSON, use it
     if (j.contains(json_key) && !j[json_key].get<std::string>().empty()) {
         return resolveFolderAgainstTpstream(j, j[json_key].get<std::string>(), true);
     }
 
-    // Auto-generate from tpstream_folder
-    std::string base_folder = getTpstreamBaseFolder(j);
+    // Auto-generate from main_folder or signal_folder
+    std::string base_folder;
+    if (j.contains("main_folder") && !j["main_folder"].get<std::string>().empty()) {
+        base_folder = j["main_folder"].get<std::string>();
+    } else if (j.contains("signal_folder") && !j["signal_folder"].get<std::string>().empty()) {
+        base_folder = j["signal_folder"].get<std::string>();
+    } else {
+        // Fallback to tpstream_folder for backward compatibility
+        base_folder = getTpstreamBaseFolder(j);
+    }
+    
     std::filesystem::path base_path(base_folder);
 
-    std::string prefix = j.value("clusters_folder_prefix", std::string(""));
+    std::string prefix = j.value("clusters_folder_prefix", j.value("products_prefix", std::string("")));
     std::string conditions = getConditionsString(j);
 
-    if (folder_type == "tps_bg") {
+    if (folder_type == "tps") {
+        return (base_path / "tps").lexically_normal().string();
+    } else if (folder_type == "tps_bg") {
         return (base_path / "tps_bg").lexically_normal().string();
     } else if (folder_type == "clusters") {
-        return (base_path / ("clusters_" + prefix + "_" + conditions)).lexically_normal().string();
+        std::string clusters_name = "clusters";
+        if (!prefix.empty()) {
+            clusters_name = "clusters_" + prefix + "_" + conditions;
+        }
+        return (base_path / clusters_name).lexically_normal().string();
     } else if (folder_type == "cluster_images") {
-        return (base_path / ("cluster_images_" + prefix + "_" + conditions)).lexically_normal().string();
+        std::string images_name = "cluster_images";
+        if (!prefix.empty()) {
+            images_name = "cluster_images_" + prefix + "_" + conditions;
+        }
+        return (base_path / images_name).lexically_normal().string();
     } else if (folder_type == "volume_images" || folder_type == "volumes") {
-        return (base_path / ("volume_images_" + prefix + "_" + conditions)).lexically_normal().string();
+        std::string volumes_name = "volume_images";
+        if (!prefix.empty()) {
+            volumes_name = "volume_images_" + prefix + "_" + conditions;
+        }
+        return (base_path / volumes_name).lexically_normal().string();
     } else if (folder_type == "reports") {
         return (base_path / "reports").lexically_normal().string();
     } else if (folder_type == "matched_clusters") {
-        return (base_path / ("matched_clusters_" + prefix + "_" + conditions)).lexically_normal().string();
+        std::string matched_name = "matched_clusters";
+        if (!prefix.empty()) {
+            matched_name = "matched_clusters_" + prefix + "_" + conditions;
+        }
+        return (base_path / matched_name).lexically_normal().string();
     }
 
     // Default: return base folder
@@ -516,6 +578,16 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
             return false;
         }
         
+        // Special handling for tps_bg: match files ending with _bg_tps.root
+        if (pattern == "tps_bg") {
+            if (base.size() > 12 && base.substr(base.size() - 12) == "_bg_tps.root") {
+                if (debugMode) LogDebug << "[find_input_files] '" << base << "' matches '*_bg_tps.root' for pattern 'tps_bg'" << std::endl;
+                return true;
+            }
+            if (debugMode) LogDebug << "[find_input_files] '" << base << "' does not match '*_bg_tps.root'" << std::endl;
+            return false;
+        }
+        
         // For other patterns (tpstream, tps, tps_bg, clusters), match the pattern directly
         if (base.size() >= pattern.size() + 5 && base.substr(base.size() - 5) == ".root") {
             // Matches *pattern.root
@@ -577,14 +649,40 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
 
     if (debugMode) LogDebug << "[find_input_files] Keys: folder_key='" << folder_key << "', input_file_key='" << input_file_key << "', input_list_key='" << input_list_key << "'" << std::endl;
 
-    // Auto-generate folder path from tpstream_folder if not explicitly provided
+    // Auto-generate folder path if not explicitly provided
+    // For "bg" pattern, ALWAYS auto-generate (bg_folder is base, we need bg_folder/tps)
     std::string auto_folder;
-    std::string base_folder = getTpstreamBaseFolder(j);
-    if (!j.contains(folder_key)) {
-        if (pattern == "tps") {
-            auto_folder = (std::filesystem::path(base_folder) / "tps_bg").lexically_normal().string();
-        } else if (pattern == "sig" || pattern == "tpstream") {
-            auto_folder = base_folder;
+    bool should_auto_generate = !j.contains(folder_key) || (pattern == "bg" && j.contains("bg_folder"));
+    
+    if (should_auto_generate) {
+        // Get base folder (main_folder or signal_folder or bg_folder)
+        std::string base;
+        if (pattern == "bg") {
+            // For background pattern, use bg_folder as base
+            if (j.contains("bg_folder") && !j["bg_folder"].get<std::string>().empty()) {
+                base = j["bg_folder"].get<std::string>();
+            }
+        } else {
+            // For other patterns, use main_folder or signal_folder
+            if (j.contains("main_folder") && !j["main_folder"].get<std::string>().empty()) {
+                base = j["main_folder"].get<std::string>();
+            } else if (j.contains("signal_folder") && !j["signal_folder"].get<std::string>().empty()) {
+                base = j["signal_folder"].get<std::string>();
+            }
+        }
+        
+        // Auto-generate subfolder based on pattern
+        if (!base.empty()) {
+            if (pattern == "tpstream") {
+                auto_folder = (std::filesystem::path(base) / "tpstreams").lexically_normal().string();
+            } else if (pattern == "tps" || pattern == "sig") {
+                auto_folder = (std::filesystem::path(base) / "tps").lexically_normal().string();
+            } else if (pattern == "tps_bg") {
+                auto_folder = (std::filesystem::path(base) / "tps_bg").lexically_normal().string();
+            } else if (pattern == "bg") {
+                // For background, auto-generate to bg_folder/tps
+                auto_folder = (std::filesystem::path(base) / "tps").lexically_normal().string();
+            }
         }
 
         if (!auto_folder.empty() && verboseMode) {
@@ -609,7 +707,10 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
     // Priority 2: pattern_folder (scan folder for files with pattern)
     if (input_files.empty()) {
         std::string folder;
-        if (j.contains(folder_key)) {
+        // For bg pattern, always use auto_folder (which adds /tps to bg_folder)
+        if (pattern == "bg" && !auto_folder.empty()) {
+            folder = auto_folder;
+        } else if (j.contains(folder_key)) {
             folder = resolveFolderAgainstTpstream(j, j[folder_key].get<std::string>(), pattern == "sig");
         } else if (!auto_folder.empty()) {
             folder = auto_folder;
@@ -618,9 +719,15 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
         if (!folder.empty()) {
             if (!std::filesystem::exists(folder)) {
                 if (pattern == "sig") {
-                    std::string fallback = base_folder;
-                    if (folder != fallback) {
-                        LogWarning << "[find_input_files] Folder '" << folder << "' does not exist. Falling back to tpstream_folder: " << fallback << std::endl;
+                    // Try fallback to tps folder
+                    std::string fallback;
+                    if (j.contains("main_folder")) {
+                        fallback = (std::filesystem::path(j["main_folder"].get<std::string>()) / "tps").string();
+                    } else if (j.contains("signal_folder")) {
+                        fallback = (std::filesystem::path(j["signal_folder"].get<std::string>()) / "tps").string();
+                    }
+                    if (!fallback.empty() && folder != fallback) {
+                        LogWarning << "[find_input_files] Folder '" << folder << "' does not exist. Falling back to tps folder: " << fallback << std::endl;
                         folder = fallback;
                     }
                 }
@@ -633,6 +740,8 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
             std::string find_pattern;
             if (pattern == "sig" || pattern == "bg") {
                 find_pattern = "*_tps.root";
+            } else if (pattern == "tps_bg") {
+                find_pattern = "*_bg_tps.root";
             } else {
                 find_pattern = "*" + pattern + "*.root";
             }

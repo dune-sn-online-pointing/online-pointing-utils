@@ -1,7 +1,0 @@
-{
-  "inputFile": "/eos/user/e/evilla/dune/sn-tps/production_es/bkgs/es_myproc_bg_tick3_ch2_min2_tot2_clusters.root",
-
-  "outputFolder": "/eos/user/e/evilla/dune/sn-tps/production_es/",
-  
-  "use_simide_energy": true
-}

@@ -1,7 +1,0 @@
-{
-    "inputFolder": "/tmp/es_bktr10/",
-    "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/backtracking_last_tests/es_bktr10_reports/",
-    "filePattern": "*.root",
-    "tot_cut": 0,
-    "max_files": 20
-}

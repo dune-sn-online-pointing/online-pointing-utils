@@ -109,19 +109,40 @@ int main(int argc, char* argv[]) {
         LogInfo << "Number of files to skip at start (from JSON): " << skip_files << std::endl;
     }
 
-    // Output folder: CLI outFolder > JSON sig_folder > JSON outputFolder > tpstream_folder
+    // Output folder: CLI outFolder > JSON tps_folder > Auto-generate from main_folder/signal_folder
     std::string outfolder;
-    if (clp.isOptionTriggered("outFolder")) outfolder = clp.getOptionVal<std::string>("outFolder");
-    else if (j.contains("sig_folder")) { try { outfolder = j.at("sig_folder").get<std::string>(); } catch (...) { /* ignore */ }}
-    else if (j.contains("outputFolder")) { try { outfolder = j.at("outputFolder").get<std::string>(); } catch (...) { /* ignore */ }}
+    if (clp.isOptionTriggered("outFolder")) {
+        outfolder = clp.getOptionVal<std::string>("outFolder");
+    } else if (j.contains("tps_folder") && !j["tps_folder"].get<std::string>().empty()) {
+        try { outfolder = j.at("tps_folder").get<std::string>(); } catch (...) { /* ignore */ }
+    } else if (j.contains("sig_folder") && !j["sig_folder"].get<std::string>().empty()) {
+        try { outfolder = j.at("sig_folder").get<std::string>(); } catch (...) { /* ignore */ }
+    } else if (j.contains("outputFolder") && !j["outputFolder"].get<std::string>().empty()) {
+        try { outfolder = j.at("outputFolder").get<std::string>(); } catch (...) { /* ignore */ }
+    }
+    
     if (outfolder.empty()) {
-        // Auto-generate from tpstream_folder
-        outfolder = j.value("tpstream_folder", std::string("."));
-        // Remove trailing slash if present
-        if (!outfolder.empty() && outfolder.back() == '/') {
-            outfolder.pop_back();
+        // Auto-generate from main_folder or signal_folder
+        if (j.contains("main_folder") && !j["main_folder"].get<std::string>().empty()) {
+            outfolder = (std::filesystem::path(j["main_folder"].get<std::string>()) / "tps").string();
+        } else if (j.contains("signal_folder") && !j["signal_folder"].get<std::string>().empty()) {
+            outfolder = (std::filesystem::path(j["signal_folder"].get<std::string>()) / "tps").string();
+        } else {
+            // Fallback to tpstream_folder location
+            outfolder = j.value("tpstream_folder", std::string("."));
+            // Remove trailing slash if present
+            if (!outfolder.empty() && outfolder.back() == '/') {
+                outfolder.pop_back();
+            }
         }
     }
+    
+    // Ensure output folder exists
+    if (!ensureDirectoryExists(outfolder)) {
+        LogError << "Failed to create output folder: " << outfolder << std::endl;
+        return 1;
+    }
+    
     LogInfo << "Output folder (pure signal TPs): " << outfolder << std::endl;
 
     std::vector<std::string> output_files;
@@ -252,27 +273,6 @@ int main(int argc, char* argv[]) {
         write_tps(out_abs, tps, true_particles, neutrinos);
         output_files.push_back(out_abs);
     }
-
-    // also write a filelist for convenience
-    try {
-        std::ostringstream list_name;
-        if (bktr_margin != standard_backtracker_error_margin) {
-            list_name << outfolder << "/test_files_bktr" << bktr_margin << "_tps.txt";
-        } else {
-            list_name << outfolder << "/test_files_tps.txt";
-        }
-        std::string list_out = list_name.str();
-        std::error_code _ec_list_abs;
-        std::filesystem::path list_abs_p = std::filesystem::absolute(std::filesystem::path(list_out), _ec_list_abs);
-        std::string list_out_abs = _ec_list_abs ? list_out : list_abs_p.string();
-        
-        if (verboseMode) LogInfo << "Writing file list to: " << list_out_abs << std::endl;
-        std::ofstream of(list_out_abs);
-        for (const auto& p : output_files) of << p << "\n";
-        of << "\n### This is a break point\n";
-        of.close();
-        if (verboseMode) LogInfo << "Wrote list of TPs files: " << list_out_abs << std::endl;
-    } catch (...) { LogWarning << "Failed to write TPs file list." << std::endl; }
 
     LogInfo << "\nList of output files (" << output_files.size() << "):" << std::endl;
     for (size_t i = 0; i < std::min<size_t>(10, output_files.size()); ++i) {

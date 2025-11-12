@@ -46,7 +46,8 @@ int main(int argc, char* argv[]) {
     }
 
     // Use tpstream-based file tracking for consistent skip/max across pipeline
-    std::vector<std::string> inputs = find_input_files_by_tpstream_basenames(j, "tps", skip_files, max_files);
+    // By default, load tps_bg files (TPs with backgrounds merged)
+    std::vector<std::string> inputs = find_input_files_by_tpstream_basenames(j, "tps_bg", skip_files, max_files);
     
     // Override with CLI input if provided
     if (clp.isOptionTriggered("inputFile")) {
@@ -65,9 +66,16 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    LogInfo << "Found " << inputs.size() << " files matching tpstream basenames" << std::endl;
-    LogThrowIf(inputs.empty(), "No valid input files found in tps_folder.");    LogInfo << "Number of valid files (merged TPs): " << inputs.size() << std::endl;
-    LogThrowIf(inputs.empty(), "No valid input files found in tps_folder.");
+    LogInfo << "Found " << inputs.size() << " files with backgrounds (tps_bg)" << std::endl;
+    LogThrowIf(inputs.empty(), "No tps_bg files found. Please run add_backgrounds step first to merge signal and background TPs.");
+    
+    // Print input folder for debugging
+    if (!inputs.empty()) {
+        std::string first_file = inputs[0];
+        size_t last_slash = first_file.find_last_of("/");
+        std::string input_folder = (last_slash != std::string::npos) ? first_file.substr(0, last_slash) : ".";
+        LogInfo << "Input folder: " << input_folder << std::endl;
+    }
 
     // Get output folder: CLI > clusters_folder > outputFolder > default
     std::string outfolder;
@@ -232,7 +240,9 @@ int main(int argc, char* argv[]) {
 
             std::vector<std::vector<Cluster>> clusters_per_view; 
             clusters_per_view.reserve(APA::views.size());
-            std::vector<int> adc_cut = {adc_integral_cut_ind, adc_integral_cut_ind, adc_integral_cut_col};
+            std::vector<int> adc_cut = {static_cast<int>(adc_integral_cut_ind), 
+                                        static_cast<int>(adc_integral_cut_ind), 
+                                        static_cast<int>(adc_integral_cut_col)};
             
             for (size_t iView=0;iView<APA::views.size();++iView)
                 clusters_per_view.emplace_back(make_cluster(tps_per_view.at(iView), 

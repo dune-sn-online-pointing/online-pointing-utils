@@ -10,8 +10,9 @@ output/
 */*.root
 *.png  
 *.jpg
-data/*
-data2/*
+data/
+data2/
+data3/
 job_output/
 *.cc
 temp/

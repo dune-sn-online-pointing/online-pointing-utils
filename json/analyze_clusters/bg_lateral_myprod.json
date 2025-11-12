@@ -1,7 +1,0 @@
-{
-  "inputFile": "/eos/user/e/evilla/dune/sn-tps/lateral_bkgs/bg_lateral_myprod_tick3_ch2_min2_tot1_ecutI0_ecutC0_clusters_0.root",
-  
-  "outputFolder": "/eos/user/e/evilla/dune/sn-tps/lateral_bkgs/",
-  
-  "use_simide_energy": true
-}

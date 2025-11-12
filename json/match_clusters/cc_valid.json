@@ -1,9 +1,0 @@
-{
-    "comment": "Match clusters configuration for CC validation sample",
-    "clusters_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/clusters_cc_valid_tick3_ch2_min2_tot1_e0p0/",
-    "matched_clusters_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/matched_clusters_cc_valid_tick3_ch2_min2_tot1_e0p0/",
-    "matched_clusters_folder_prefix": "cc_valid",
-    "time_tolerance_ticks": 100,
-    "spatial_tolerance_cm": 5.0,
-    "max_files": 100
-}

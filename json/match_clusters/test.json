@@ -1,4 +1,0 @@
-{
-    "input_clusters_file": "/home/virgolaema/dune/online-pointing-utils/output/prod_es_clustering/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T161136Z_gen_000074_supernova_g4_detsim_ana_2025-10-03T_031722Zbktr10_clusters_tick3_ch1_min1_tot0_en0.root",
-    "output_file": "/home/virgolaema/dune/online-pointing-utils/output/test_matched_clusters.root"
-}

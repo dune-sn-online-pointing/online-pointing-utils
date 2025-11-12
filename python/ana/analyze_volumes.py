@@ -579,12 +579,19 @@ def main():
     # Auto-generate volumes_folder if not explicitly provided
     volumes_folder = config.get('volumes_folder', None)
     if not volumes_folder:
-        # Auto-generate from tpstream_folder (matching create_volumes.py logic)
-        tpstream_folder = config.get('tpstream_folder', '.')
-        if tpstream_folder.endswith('/'):
-            tpstream_folder = tpstream_folder[:-1]
+        # Auto-generate from main_folder or signal_folder (matching create_volumes.py logic)
+        base_folder = ""
+        if "main_folder" in config and config["main_folder"]:
+            base_folder = config["main_folder"]
+        elif "signal_folder" in config and config["signal_folder"]:
+            base_folder = config["signal_folder"]
+        else:
+            base_folder = config.get('tpstream_folder', '.')
         
-        prefix = config.get('clusters_folder_prefix', 'volumes')
+        if base_folder.endswith('/'):
+            base_folder = base_folder[:-1]
+        
+        prefix = config.get('products_prefix', config.get('clusters_folder_prefix', 'volumes'))
         
         # Build conditions string from clustering parameters
         tick_limit = config.get("tick_limit", 0)
@@ -613,7 +620,7 @@ def main():
             f"_e{sanitize(energy_cut)}"
         )
         
-        volumes_folder = f"{tpstream_folder}/volume_images_{prefix}_{conditions}"
+        volumes_folder = f"{base_folder}/volume_images_{prefix}_{conditions}"
     
     volumes_path = Path(volumes_folder)
     if not volumes_path.exists():
@@ -644,8 +651,19 @@ def main():
     
     # Create plots
     if not args.no_plots:
-        # Save to reports/ folder with descriptive name
-        reports_folder = Path('reports')
+        # Save to reports/ folder under base_folder (main_folder or signal_folder)
+        base_folder = ""
+        if "main_folder" in config and config["main_folder"]:
+            base_folder = config["main_folder"]
+        elif "signal_folder" in config and config["signal_folder"]:
+            base_folder = config["signal_folder"]
+        else:
+            base_folder = "."
+        
+        if base_folder.endswith('/'):
+            base_folder = base_folder[:-1]
+        
+        reports_folder = Path(base_folder) / 'reports'
         reports_folder.mkdir(parents=True, exist_ok=True)
         
         # Extract conditions from volumes_folder name

@@ -98,10 +98,10 @@ int main(int argc, char* argv[]) {
         : resolveFolderAgainstTpstream(j, sig_folder_cfg, true);
     LogThrowIf(sig_folder.empty(), "sig_folder is not specified and tpstream_folder is missing.");
     
-    // bg_folder: pure background TPs (input)
+    // bg_folder: base folder for background files (will auto-generate to bg_folder/tps)
+    // Don't need to explicitly resolve here - find_input_files will handle it
     std::string bg_folder_cfg = j.value("bg_folder", std::string(""));
     LogThrowIf(bg_folder_cfg.empty(), "bg_folder is not specified in JSON config.");
-    std::string bg_folder = resolveFolderAgainstTpstream(j, bg_folder_cfg, true);
     
     // tps_bg_folder or tps_folder: merged TPs output
     std::string output_folder = getOutputFolder(j, "tps_bg", "tps_bg_folder");
@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
     LogInfo << "Configuration:" << std::endl;
     LogInfo << " - Signal type: " << signal_type << std::endl;
     LogInfo << " - Signal folder (pure signal TPs): " << sig_folder << std::endl;
-    LogInfo << " - Background folder (pure bg TPs): " << bg_folder << std::endl;
+    LogInfo << " - Background folder (base): " << bg_folder_cfg << std::endl;
     LogInfo << " - Output folder (merged TPs): " << output_folder << std::endl;
     LogInfo << " - Override existing output files: " << (overrideMode ? "YES" : "NO") << std::endl;
     LogInfo << " - Add backgrounds around vertex only: " << (around_vertex_only ? "YES" : "NO") << std::endl;

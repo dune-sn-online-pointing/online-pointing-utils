@@ -1,8 +1,0 @@
-{
-  "thisIsAComment": "Code will try first input file from cmd line, then inputFile, then inputFolder + inputList, then inputListFile.",
-  "inputFile": "/eos/user/e/evilla/dune/sn-tps/production_cc/bkgs//cc_valid_bg_tick3_ch2_min2_tot2_clusters.root",
-
-  "outputFolder": "/eos/user/e/evilla/dune/sn-tps/production_cc/bkgs/",
-  
-  "use_simide_energy": true
-}

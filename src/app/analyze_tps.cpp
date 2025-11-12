@@ -34,16 +34,38 @@ int main(int argc, char* argv[]) {
     nlohmann::json j;
     jf >> j;
 
-    // Determine output folder: CLI > reports_folder > outputFolder > output_folder
+    // Determine output folder: CLI > reports_folder > auto-generate from main_folder/signal_folder
     std::string outFolder;
     if (clp.isOptionTriggered("outFolder")) {
         outFolder = clp.getOptionVal<std::string>("outFolder");
-    } else if (j.contains("reports_folder")) {
+    } else if (j.contains("reports_folder") && !j["reports_folder"].get<std::string>().empty()) {
         outFolder = j.value("reports_folder", std::string(""));
-    } else if (j.contains("outputFolder")) {
-        outFolder = j.value("outputFolder", std::string(""));
-    } else if (j.contains("output_folder")) {
-        outFolder = j.value("output_folder", std::string(""));
+    } else {
+        // Auto-generate from main_folder or signal_folder
+        std::string base_folder;
+        if (j.contains("main_folder") && !j["main_folder"].get<std::string>().empty()) {
+            base_folder = j["main_folder"].get<std::string>();
+        } else if (j.contains("signal_folder") && !j["signal_folder"].get<std::string>().empty()) {
+            base_folder = j["signal_folder"].get<std::string>();
+        } else if (j.contains("outputFolder")) {
+            outFolder = j.value("outputFolder", std::string(""));
+        } else if (j.contains("output_folder")) {
+            outFolder = j.value("output_folder", std::string(""));
+        }
+        
+        // Generate reports folder from base_folder if we have one
+        if (!base_folder.empty()) {
+            // Remove trailing slash if present
+            if (base_folder.back() == '/') {
+                base_folder.pop_back();
+            }
+            outFolder = base_folder + "/reports";
+        }
+    }
+    
+    // Create reports folder if it doesn't exist and we have a folder specified
+    if (!outFolder.empty()) {
+        std::filesystem::create_directories(outFolder);
     }
 
     std::vector<std::string> inputs;

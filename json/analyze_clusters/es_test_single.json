@@ -1,8 +1,0 @@
-{
-  "thisIsAComment": "Test single file analysis with SimIDE energy",
-  "inputFile": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/es_test_single_tick5_ch2_min2_tot1_clusters.root",
-
-  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
-  
-  "use_simide_energy": true
-}

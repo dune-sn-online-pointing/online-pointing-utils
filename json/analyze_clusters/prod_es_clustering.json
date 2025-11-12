@@ -1,9 +1,0 @@
-{
-  "filelist": "data/prod_es_files.txt",
-  "tick_limit": 3,
-  "channel_limit": 1,
-  "min_tps_to_cluster": 1,
-  "adc_integral_cut_induction": 0,
-  "adc_integral_cut_collection": 0,
-  "tot_cut": 0
-}

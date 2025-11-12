@@ -58,6 +58,7 @@ from pathlib import Path
 
 # Add lib directory to path
 sys.path.append(str(Path(__file__).parent.parent / 'lib'))
+from utils import find_files_by_tpstream_basenames
 
 # Geometry parameters (from parameters/geometry.dat and parameters/timing.dat)
 WIRE_PITCH_COLLECTION_CM = 0.479    # Wire pitch for collection plane (X)
@@ -128,17 +129,24 @@ def get_clusters_folder(json_config):
         j = json_config
     
     # Extract parameters with defaults matching C++ code
-    cluster_prefix = j.get("clusters_folder_prefix", "clusters")
+    # Priority: products_prefix > clusters_folder_prefix (legacy)
+    cluster_prefix = j.get("products_prefix", j.get("clusters_folder_prefix", "clusters"))
     tick_limit = j.get("tick_limit", 0)
     channel_limit = j.get("channel_limit", 0)
     min_tps_to_cluster = j.get("min_tps_to_cluster", 0)
     tot_cut = j.get("tot_cut", 0)
     energy_cut = float(j.get("energy_cut", 0.0))
     
-    # Auto-generate from tpstream_folder if clusters_folder not specified
+    # Auto-generate base folder from main_folder or signal_folder
     outfolder = j.get("clusters_folder", "")
     if not outfolder:
-        outfolder = j.get("tpstream_folder", ".")
+        # Priority: main_folder > signal_folder > tpstream_folder (legacy fallback)
+        if "main_folder" in j and j["main_folder"]:
+            outfolder = j["main_folder"]
+        elif "signal_folder" in j and j["signal_folder"]:
+            outfolder = j["signal_folder"]
+        else:
+            outfolder = j.get("tpstream_folder", ".")
         if outfolder.endswith('/'):
             outfolder = outfolder[:-1]
     else:
@@ -715,11 +723,15 @@ def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
             event_energy = -1.0
             interaction_type = "Background"
         
+        # Get the main cluster energy (reconstructed energy of the main track)
+        cluster_energy = main_cluster.get('reco_energy_mev', -1.0)
+        
         metadata = {
             'event': main_cluster['event'],
             'plane': plane,
             'interaction_type': interaction_type,
             'particle_energy': event_energy,  # Electron/particle energy for marley, -1 for background
+            'cluster_energy': cluster_energy,  # Reconstructed energy of the main track cluster
             'main_track_momentum': mom_mag,
             'main_track_momentum_x': mom_x,
             'main_track_momentum_y': mom_y,
@@ -794,13 +806,21 @@ def main():
     elif 'volume_images_folder' in config and config['volume_images_folder']:
         output_folder = config['volume_images_folder']
     else:
-        # Auto-generate from tpstream_folder
-        tpstream_folder = config.get('tpstream_folder', '.')
-        if tpstream_folder.endswith('/'):
-            tpstream_folder = tpstream_folder[:-1]
-        prefix = config.get('clusters_folder_prefix', 'volumes')
+        # Auto-generate from main_folder or signal_folder
+        base_folder = ""
+        if "main_folder" in config and config["main_folder"]:
+            base_folder = config["main_folder"]
+        elif "signal_folder" in config and config["signal_folder"]:
+            base_folder = config["signal_folder"]
+        else:
+            base_folder = config.get('tpstream_folder', '.')
+        
+        if base_folder.endswith('/'):
+            base_folder = base_folder[:-1]
+        
+        prefix = config.get('products_prefix', config.get('clusters_folder_prefix', 'volumes'))
         conditions = get_conditions_string(config)
-        output_folder = f"{tpstream_folder}/volume_images_{prefix}_{conditions}"
+        output_folder = f"{base_folder}/volume_images_{prefix}_{conditions}"
     
     plane = config.get('plane', 'X')  # Default to collection plane
     
@@ -821,16 +841,14 @@ def main():
         print(f"Processing at most {max_files} files")
     print("="*60)
     
-    # Find all cluster files (look for *_clusters.root pattern)
-    cluster_files = sorted(Path(clusters_folder).glob('*_matched.root'))
-    if not cluster_files:
-        cluster_files = sorted(Path(clusters_folder).glob('*_clusters.root'))
+    # Use tpstream-based file discovery for consistent skip/max across pipeline
+    # First try matched files, then fall back to clusters files
+    file_pattern = '*_matched.root'
+    cluster_files = find_files_by_tpstream_basenames(config, clusters_folder, file_pattern, skip_files, max_files)
     
-    # Apply skip and max
-    if skip_files > 0:
-        cluster_files = cluster_files[skip_files:]
-    if max_files is not None:
-        cluster_files = cluster_files[:max_files]
+    if not cluster_files:
+        file_pattern = '*_clusters.root'
+        cluster_files = find_files_by_tpstream_basenames(config, clusters_folder, file_pattern, skip_files, max_files)
     
     if len(cluster_files) == 0:
         print(f"No cluster files found in {clusters_folder}")
@@ -842,10 +860,12 @@ def main():
     # Process each file
     total_volumes = 0
     for i, cluster_file in enumerate(cluster_files):
-        print(f"[{i+1}/{len(cluster_files)}] Processing: {cluster_file.name}")
+        # Handle both Path objects and strings
+        cluster_path = Path(cluster_file) if not isinstance(cluster_file, Path) else cluster_file
+        print(f"[{i+1}/{len(cluster_files)}] Processing: {cluster_path.name}")
         
         n_volumes = process_cluster_file(
-            str(cluster_file),
+            str(cluster_path),
             output_folder,
             plane=plane,
             verbose=args.verbose

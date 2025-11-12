@@ -21,6 +21,10 @@ import uproot
 import numpy as np
 import re
 
+# Add lib directory to path for utility functions
+sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
+from utils import find_files_by_tpstream_basenames
+
 
 def load_display_parameters(repo_root=None):
     """
@@ -223,17 +227,24 @@ def get_clusters_folder(json_config):
         j = json_config
     
     # Extract parameters with defaults matching C++ code
-    cluster_prefix = j.get("clusters_folder_prefix", "clusters")
+    # Priority: products_prefix > clusters_folder_prefix (legacy)
+    cluster_prefix = j.get("products_prefix", j.get("clusters_folder_prefix", "clusters"))
     tick_limit = j.get("tick_limit", 0)
     channel_limit = j.get("channel_limit", 0)
     min_tps_to_cluster = j.get("min_tps_to_cluster", 0)
     tot_cut = j.get("tot_cut", 0)
     energy_cut = float(j.get("energy_cut", 0.0))
     
-    # Auto-generate from tpstream_folder if clusters_folder not specified
+    # Auto-generate base folder from main_folder or signal_folder
     outfolder = j.get("clusters_folder", "")
     if not outfolder:
-        outfolder = j.get("tpstream_folder", ".")
+        # Priority: main_folder > signal_folder > tpstream_folder (legacy fallback)
+        if "main_folder" in j and j["main_folder"]:
+            outfolder = j["main_folder"]
+        elif "signal_folder" in j and j["signal_folder"]:
+            outfolder = j["signal_folder"]
+        else:
+            outfolder = j.get("tpstream_folder", ".")
         if outfolder.endswith('/'):
             outfolder = outfolder[:-1]
     else:
@@ -317,17 +328,24 @@ def get_images_folder(json_config):
         j = json_config
     
     # Extract parameters with defaults matching C++ code
-    cluster_prefix = j.get("clusters_folder_prefix", "clusters")
+    # Priority: products_prefix > clusters_folder_prefix (legacy)
+    cluster_prefix = j.get("products_prefix", j.get("clusters_folder_prefix", "clusters"))
     tick_limit = j.get("tick_limit", 0)
     channel_limit = j.get("channel_limit", 0)
     min_tps_to_cluster = j.get("min_tps_to_cluster", 0)
     tot_cut = j.get("tot_cut", 0)
     energy_cut = float(j.get("energy_cut", 0.0))
     
-    # Auto-generate from tpstream_folder if clusters_folder not specified
+    # Auto-generate base folder from main_folder or signal_folder
     outfolder = j.get("clusters_folder", "")
     if not outfolder:
-        outfolder = j.get("tpstream_folder", ".")
+        # Priority: main_folder > signal_folder > tpstream_folder (legacy fallback)
+        if "main_folder" in j and j["main_folder"]:
+            outfolder = j["main_folder"]
+        elif "signal_folder" in j and j["signal_folder"]:
+            outfolder = j["signal_folder"]
+        else:
+            outfolder = j.get("tpstream_folder", ".")
         if outfolder.endswith('/'):
             outfolder = outfolder[:-1]
     else:
@@ -1077,12 +1095,16 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
         
         # Save all clusters for this plane to a single file
         if len(plane_images) > 0:
-            output_file = output_dir / f"{input_basename}_plane{plane_letter}.npz"
+            # Create plane-specific subfolder
+            plane_output_dir = output_dir / plane_letter
+            plane_output_dir.mkdir(exist_ok=True, parents=True)
+            
+            output_file = plane_output_dir / f"{input_basename}_plane{plane_letter}.npz"
             np.savez(output_file, 
                     images=np.array(plane_images, dtype=np.float32),
                     metadata=np.array(plane_metadata, dtype=np.float32))
             if verbose:
-                print(f"\n[generate_cluster_arrays.py]     Saved {len(plane_images)} clusters to {output_file.name}")
+                print(f"\n[generate_cluster_arrays.py]     Saved {len(plane_images)} clusters to {plane_letter}/{output_file.name}")
         
         plane_stats[plane_letter] = n_generated_plane
 
@@ -1148,27 +1170,15 @@ if __name__ == '__main__':
             print("Using auto-generated images folder as output directory")
             output_dir = images_folder
         
-        # Find cluster files in the computed folder
-        cluster_files = list(Path(clusters_folder).glob(file_pattern))
-        if not cluster_files:
-            print(f"[generate_cluster_arrays.py] Error: No {file_pattern} files found in {clusters_folder}")
-            sys.exit(1)
-        
-        # Sort for consistent ordering
-        cluster_files = sorted(cluster_files)
-        
-        # Read skip_files and max_files from JSON if not provided via CLI
+        # Find cluster files in the computed folder using tpstream-based discovery
         skip_files = args.skip_files if args.skip_files is not None else json_config.get('skip_files', 0)
         max_files = args.max_files if args.max_files is not None else json_config.get('max_files', None)
         
-        # Apply skip and max filters
-        if skip_files > 0:
-            cluster_files = cluster_files[skip_files:]
-            print(f"[generate_cluster_arrays.py] Skipping first {skip_files} files (from {'CLI' if args.skip_files is not None else 'JSON'})")
+        cluster_files = find_files_by_tpstream_basenames(json_config, clusters_folder, file_pattern, skip_files, max_files)
         
-        if max_files is not None:
-            cluster_files = cluster_files[:max_files]
-            print(f"[generate_cluster_arrays.py] Processing at most {max_files} files (from {'CLI' if args.max_files is not None else 'JSON'})")
+        if not cluster_files:
+            print(f"[generate_cluster_arrays.py] Error: No {file_pattern} files found in {clusters_folder}")
+            sys.exit(1)
         
         cluster_files = [str(f) for f in cluster_files]
         
@@ -1211,7 +1221,13 @@ if __name__ == '__main__':
     
     # Check for existing files (but don't delete them yet)
     if not args.override:
-        existing_files = list(output_path.glob('*_plane*.npz'))
+        # Check in plane subfolders (X, U, V)
+        existing_files = []
+        for plane in ['X', 'U', 'V']:
+            plane_dir = output_path / plane
+            if plane_dir.exists():
+                existing_files.extend(list(plane_dir.glob('*_plane*.npz')))
+        
         if existing_files:
             print(f"[generate_cluster_arrays.py] Found {len(existing_files)} existing output file(s)")
             print(f"[generate_cluster_arrays.py] Processing will skip files that already have outputs")
@@ -1236,8 +1252,13 @@ if __name__ == '__main__':
         progress_pct = int((file_idx / len(cluster_files)) * 100)
         print(f"\n[generate_cluster_arrays.py] [{file_idx + 1}/{len(cluster_files)}] ({progress_pct}%) {cluster_file.name}")
         
-        # Check if output already exists
-        expected_outputs = list(output_path.glob(f"{input_basename}_plane*.npz"))
+        # Check if output already exists (check in plane subfolders)
+        expected_outputs = []
+        for plane in ['X', 'U', 'V']:
+            plane_dir = output_path / plane
+            if plane_dir.exists():
+                expected_outputs.extend(list(plane_dir.glob(f"{input_basename}_plane*.npz")))
+        
         output_exists = len(expected_outputs) > 0
         
         if output_exists:

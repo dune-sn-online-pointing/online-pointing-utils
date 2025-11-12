@@ -1,4 +1,0 @@
-{
-    "input_clusters_file": "", // Path to the clusters ROOT file containing U, V, X plane clusters
-    "output_file": "" // Path to output ROOT file for matched multiplane clusters
-}

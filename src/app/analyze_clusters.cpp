@@ -359,8 +359,27 @@ int main(int argc, char* argv[]){
   // Generate combined PDF path from first input file
   std::string combined_pdf;
   
-  // Determine combined PDF output path
-  std::string reports_folder = j.value("reports_folder", "data");
+  // Determine combined PDF output path - auto-generate reports folder
+  std::string reports_folder;
+  if (j.contains("reports_folder") && !j["reports_folder"].get<std::string>().empty()) {
+    reports_folder = j["reports_folder"].get<std::string>();
+  } else {
+    // Auto-generate from main_folder or signal_folder
+    std::string base_folder;
+    if (j.contains("main_folder") && !j["main_folder"].get<std::string>().empty()) {
+      base_folder = j["main_folder"].get<std::string>();
+    } else if (j.contains("signal_folder") && !j["signal_folder"].get<std::string>().empty()) {
+      base_folder = j["signal_folder"].get<std::string>();
+    } else {
+      base_folder = "data";
+    }
+    // Remove trailing slash if present
+    if (!base_folder.empty() && base_folder.back() == '/') {
+      base_folder.pop_back();
+    }
+    reports_folder = base_folder + "/reports";
+  }
+  
   // create reports folder if it does not exist
   std::filesystem::create_directories(reports_folder);
   std::string input_dir_name = "clusters";
