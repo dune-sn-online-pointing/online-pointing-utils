@@ -59,8 +59,8 @@ override=false
 all_steps=false
 debug=false
 verbose=false
-max_files=""
-skip_files=""
+max_files=-1
+skip_files=0
 
 while [[ $# -gt 0 ]]; do
         case $1 in
@@ -140,17 +140,11 @@ echo -e "Override:\t\t$override"
 echo "**************************"
 echo ""
 echo "**************************"
-echo "Sample selected: $sample."
 if [ ! -z "$settingsFile" ]; then
         echo "Global json settings file provided: $settingsFile"
 else
-        echo "The list of jsons to be used is:"
-        echo " Backtrack: $JSON_DIR/backtrack/${sample}.json"
-        echo " Analyze TPS: $JSON_DIR/analyze_tps/${sample}.json"
-        echo " Add backgrounds: $JSON_DIR/add_backgrounds/${sample}.json"
-        echo " Make clusters: $JSON_DIR/make_clusters/${sample}${bg_suffix}.json"
-        echo " Analyze: $JSON_DIR/analyze_clusters/${sample}${bg_suffix}.json"
-        echo " Check it makes sense, waiting 5 seconds..."
+        echo "No global json settings file provided."
+        print_help
 fi
 echo "**************************"
 sleep 5
@@ -182,20 +176,10 @@ echo $compile_command
 
 cd $HOME_DIR
 
-common_options="--no-compile -f $override -v $verbose -d $debug"
+# all handed centrally 
+common_options="--no-compile -f $override -v $verbose -d $debug --max-files $max_files --skip-files $skip_files -j $settingsFile"
 
-if [ ! -z "$settingsFile" ]; then
-        backtrack_json="$settingsFile"
-else
-        backtrack_json="$JSON_DIR/backtrack/${sample}.json"
-fi
-backtrack_command="${HOME_DIR}/scripts/backtrack.sh -j $backtrack_json $common_options"
-if [ -n "$max_files" ]; then
-        backtrack_command="$backtrack_command --max-files $max_files"
-fi
-if [ -n "$skip_files" ]; then
-        backtrack_command="$backtrack_command --skip-files $skip_files"
-fi
+backtrack_command="${HOME_DIR}/scripts/backtrack.sh $common_options"
 if [ "$run_backtrack" = true ]; then
         echo "Running backtrack step with command:"
         echo $backtrack_command
@@ -209,12 +193,7 @@ fi
 
 ####################
 
-if [ ! -z "$settingsFile" ]; then
-        analyze_tps_json="$settingsFile"
-else
-        analyze_tps_json="$JSON_DIR/analyze_tps/${sample}.json"
-fi
-analyze_tps_command="${HOME_DIR}/scripts/analyze_tps.sh -j $analyze_tps_json $common_options"
+analyze_tps_command="${HOME_DIR}/scripts/analyze_tps.sh -j $analyze_tps_json    $common_options"
 if [ "$run_analyze_tps" = true ]; then
         echo "Running analyze_tps step with command:"
         echo $analyze_tps_command
@@ -228,18 +207,7 @@ fi
 
 ####################
 
-if [ ! -z "$settingsFile" ]; then
-        add_backgrounds_json="$settingsFile"
-else
-        add_backgrounds_json="$JSON_DIR/add_backgrounds/${sample}.json"
-fi
-add_backgrounds_command="${HOME_DIR}/scripts/add_backgrounds.sh -j $add_backgrounds_json $common_options"
-if [ -n "$max_files" ]; then
-        add_backgrounds_command="$add_backgrounds_command -m $max_files"
-fi
-if [ -n "$skip_files" ]; then
-        add_backgrounds_command="$add_backgrounds_command -s $skip_files"
-fi
+add_backgrounds_command="${HOME_DIR}/scripts/add_backgrounds.sh $common_options"
 if [ "$run_add_backgrounds" = true ] && [ "$clean_clusters" = false ]; then
         echo "Running add backgrounds step with command:"
         echo $add_backgrounds_command
@@ -253,18 +221,7 @@ fi
 
 ####################
 
-if [ ! -z "$settingsFile" ]; then
-        make_clusters_json="$settingsFile"
-else
-        make_clusters_json="$JSON_DIR/make_clusters/${sample}${bg_suffix}.json"
-fi
-make_clusters_command="${HOME_DIR}/scripts/make_clusters.sh -j $make_clusters_json $common_options"
-if [ -n "$max_files" ]; then
-        make_clusters_command="$make_clusters_command -m $max_files"
-fi
-if [ -n "$skip_files" ]; then
-        make_clusters_command="$make_clusters_command -s $skip_files"
-fi
+make_clusters_command="${HOME_DIR}/scripts/make_clusters.sh $common_options"
 if [ "$run_make_clusters" = true ]; then
         echo "Running make clusters step with command:"
         echo $make_clusters_command
@@ -278,19 +235,7 @@ fi
 
 ####################
 
-# Match clusters step
-if [ ! -z "$settingsFile" ]; then
-        match_clusters_json="$settingsFile"
-else
-        match_clusters_json="$JSON_DIR/match_clusters/${sample}${bg_suffix}.json"
-fi
-match_clusters_command="./scripts/match_clusters.sh -j $match_clusters_json $common_options"
-if [ -n "$max_files" ]; then
-        match_clusters_command="$match_clusters_command --max-files $max_files"
-fi
-if [ -n "$skip_files" ]; then
-        match_clusters_command="$match_clusters_command --skip-files $skip_files"
-fi
+match_clusters_command="./scripts/match_clusters.sh $common_options"
 if [ "$run_match_clusters" = true ]; then
         echo "Running match clusters step with command:"
         echo $match_clusters_command
@@ -304,12 +249,7 @@ fi
 
 ####################
 
-if [ ! -z "$settingsFile" ]; then
-        analyze_clusters_json="$settingsFile"
-else
-        analyze_clusters_json="$JSON_DIR/analyze_clusters/${sample}${bg_suffix}.json"
-fi
-analyze_command="${HOME_DIR}/scripts/analyze_clusters.sh -j $analyze_clusters_json $common_options"
+analyze_command="${HOME_DIR}/scripts/analyze_clusters.sh $common_options"
 if [ "$run_analyze" = true ]; then
         echo "Running analyze step with command: $analyze_command"
         $analyze_command
@@ -359,42 +299,6 @@ if [ "$run_generate_images" = true ]; then
                 echo ""
         fi
 fi
-
-####################
-
-# Analyze images
-# if [ "$run_analyze_images" = true ]; then
-#         if [ ! -z "$settingsFile" ]; then
-#                 analyze_images_json="$settingsFile"
-#         else
-#                 analyze_images_json="$JSON_DIR/${sample}${bg_suffix}.json"
-#         fi
-        
-#         if [ ! -f "$analyze_images_json" ]; then
-#                 echo "Warning: JSON file not found: ${analyze_images_json}"
-#                 echo "Skipping analyze images step."
-#         else
-#                 # Look for a Python analyze_images script
-#                 if [ -f "$HOME_DIR/python/ana/analyze_images.py" ]; then
-#                         analyze_images_command="python3 $HOME_DIR/python/ana/analyze_images.py --json $analyze_images_json"
-#                         if [ "$verbose" = true ]; then
-#                                 analyze_images_command+=" --verbose"
-#                         fi
-                        
-#                         echo "Running analyze images step with command:"
-#                         echo $analyze_images_command
-#                         $analyze_images_command
-#                         if [ $? -ne 0 ]; then
-#                                 echo "Error: Analyze images step failed."
-#                                 exit 1
-#                         fi
-#                         echo ""
-#                 else
-#                         echo "Warning: analyze_images.py script not found in python/ana/"
-#                         echo "Skipping analyze images step."
-#                 fi
-#         fi
-# fi
 
 ####################
 
@@ -470,7 +374,7 @@ if [ "$run_analyze_volumes" = true ]; then
                 fi
         fi
 fi
-
+        
 ################################################
 
 echo "All requested steps completed, hopefully successfully."

@@ -620,7 +620,11 @@ def main():
             f"_e{sanitize(energy_cut)}"
         )
         
-        volumes_folder = f"{base_folder}/volume_images_{prefix}_{conditions}"
+        # Pattern: prefix_volume_images_conditions
+        if prefix:
+            volumes_folder = f"{base_folder}/{prefix}_volume_images_{conditions}"
+        else:
+            volumes_folder = f"{base_folder}/volume_images_{conditions}"
     
     volumes_path = Path(volumes_folder)
     if not volumes_path.exists():
@@ -667,9 +671,12 @@ def main():
         reports_folder.mkdir(parents=True, exist_ok=True)
         
         # Extract conditions from volumes_folder name
-        # e.g., "volume_images_es_valid_bg_tick3_ch2_min2_tot3_e2p0" -> "es_valid_bg_tick3_ch2_min2_tot3_e2p0"
+        # e.g., "es_valid_bg_volume_images_tick3_ch2_min2_tot3_e2p0" -> "es_valid_bg_tick3_ch2_min2_tot3_e2p0"
         folder_name = volumes_path.name
-        if folder_name.startswith('volume_images_'):
+        # Remove the volume_images part to get the full name with prefix
+        if '_volume_images_' in folder_name:
+            conditions_name = folder_name.replace('_volume_images_', '_')
+        elif folder_name.startswith('volume_images_'):
             conditions_name = folder_name.replace('volume_images_', '')
         else:
             conditions_name = folder_name

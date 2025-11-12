@@ -7,7 +7,7 @@
 
     "signal_folder": "/home/virgolaema/dune/online-pointing-utils/data3/prod_es/",
     "bg_folder": "/home/virgolaema/dune/online-pointing-utils/data3/bkgs/",
-    "products_prefix": "es_valid_bg_refactored",
+    "products_prefix": "es_valid_bg",
 
     "max_files": 50,
     "skip_files": 0,

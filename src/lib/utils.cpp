@@ -126,21 +126,18 @@ std::string getClustersFolder(const nlohmann::json& j) {
         return out;
     };
 
+    std::string conditions = "_tick" + sanitize(std::to_string(tick_limit))
+        + "_ch" + sanitize(std::to_string(channel_limit))
+        + "_min" + sanitize(std::to_string(min_tps_to_cluster))
+        + "_tot" + sanitize(std::to_string(tot_cut))
+        + "_e" + sanitize(std::to_string(energy_cut));
+
     std::string clusters_subfolder;
     if (!cluster_prefix.empty()) {
-        clusters_subfolder = "clusters_" + cluster_prefix
-            + "_tick" + sanitize(std::to_string(tick_limit))
-            + "_ch" + sanitize(std::to_string(channel_limit))
-            + "_min" + sanitize(std::to_string(min_tps_to_cluster))
-            + "_tot" + sanitize(std::to_string(tot_cut))
-            + "_e" + sanitize(std::to_string(energy_cut));
+        // Pattern: prefix_clusters_conditions
+        clusters_subfolder = cluster_prefix + "_clusters" + conditions;
     } else {
-        clusters_subfolder = std::string("clusters")
-            + "_tick" + sanitize(std::to_string(tick_limit))
-            + "_ch" + sanitize(std::to_string(channel_limit))
-            + "_min" + sanitize(std::to_string(min_tps_to_cluster))
-            + "_tot" + sanitize(std::to_string(tot_cut))
-            + "_e" + sanitize(std::to_string(energy_cut));
+        clusters_subfolder = "clusters" + conditions;
     }
     
     std::filesystem::path clusters_folder_path = std::filesystem::path(outfolder) / clusters_subfolder;
@@ -209,29 +206,41 @@ std::string getOutputFolder(const nlohmann::json& j, const std::string& folder_t
     } else if (folder_type == "tps_bg") {
         return (base_path / "tps_bg").lexically_normal().string();
     } else if (folder_type == "clusters") {
-        std::string clusters_name = "clusters";
+        std::string clusters_name;
         if (!prefix.empty()) {
-            clusters_name = "clusters_" + prefix + "_" + conditions;
+            // Pattern: prefix_clusters_conditions
+            clusters_name = prefix + "_clusters_" + conditions;
+        } else {
+            clusters_name = "clusters_" + conditions;
         }
         return (base_path / clusters_name).lexically_normal().string();
     } else if (folder_type == "cluster_images") {
-        std::string images_name = "cluster_images";
+        std::string images_name;
         if (!prefix.empty()) {
-            images_name = "cluster_images_" + prefix + "_" + conditions;
+            // Pattern: prefix_cluster_images_conditions
+            images_name = prefix + "_cluster_images_" + conditions;
+        } else {
+            images_name = "cluster_images_" + conditions;
         }
         return (base_path / images_name).lexically_normal().string();
     } else if (folder_type == "volume_images" || folder_type == "volumes") {
-        std::string volumes_name = "volume_images";
+        std::string volumes_name;
         if (!prefix.empty()) {
-            volumes_name = "volume_images_" + prefix + "_" + conditions;
+            // Pattern: prefix_volume_images_conditions
+            volumes_name = prefix + "_volume_images_" + conditions;
+        } else {
+            volumes_name = "volume_images_" + conditions;
         }
         return (base_path / volumes_name).lexically_normal().string();
     } else if (folder_type == "reports") {
         return (base_path / "reports").lexically_normal().string();
     } else if (folder_type == "matched_clusters") {
-        std::string matched_name = "matched_clusters";
+        std::string matched_name;
         if (!prefix.empty()) {
-            matched_name = "matched_clusters_" + prefix + "_" + conditions;
+            // Pattern: prefix_matched_clusters_conditions
+            matched_name = prefix + "_matched_clusters_" + conditions;
+        } else {
+            matched_name = "matched_clusters_" + conditions;
         }
         return (base_path / matched_name).lexically_normal().string();
     }

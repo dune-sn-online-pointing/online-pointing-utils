@@ -278,14 +278,25 @@ def get_clusters_folder(json_config):
         return s
     
     # Build subfolder name matching C++ format
-    clusters_subfolder = (
-        f"clusters_{cluster_prefix}"
-        f"_tick{sanitize(tick_limit)}"
-        f"_ch{sanitize(channel_limit)}"
-        f"_min{sanitize(min_tps_to_cluster)}"
-        f"_tot{sanitize(tot_cut)}"
-        f"_e{sanitize(energy_cut)}"
-    )
+    # Pattern: prefix_clusters_conditions
+    if cluster_prefix:
+        clusters_subfolder = (
+            f"{cluster_prefix}_clusters"
+            f"_tick{sanitize(tick_limit)}"
+            f"_ch{sanitize(channel_limit)}"
+            f"_min{sanitize(min_tps_to_cluster)}"
+            f"_tot{sanitize(tot_cut)}"
+            f"_e{sanitize(energy_cut)}"
+        )
+    else:
+        clusters_subfolder = (
+            f"clusters"
+            f"_tick{sanitize(tick_limit)}"
+            f"_ch{sanitize(channel_limit)}"
+            f"_min{sanitize(min_tps_to_cluster)}"
+            f"_tot{sanitize(tot_cut)}"
+            f"_e{sanitize(energy_cut)}"
+        )
     
     clusters_folder_path = f"{outfolder}/{clusters_subfolder}"
     return clusters_folder_path
@@ -305,7 +316,13 @@ def get_matched_clusters_folder(json_config):
     
     # Auto-generate from clusters_folder
     clusters_folder = get_clusters_folder(json_config)
-    matched_folder = clusters_folder.replace('/clusters_', '/matched_clusters_')
+    # Replace the last part: replace '_clusters_' with '_matched_clusters_'
+    # Works for both "prefix_clusters_conditions" and "clusters_conditions"
+    if '_clusters_' in clusters_folder:
+        matched_folder = clusters_folder.replace('_clusters_', '_matched_clusters_')
+    else:
+        # Fallback for edge cases
+        matched_folder = clusters_folder.replace('clusters', 'matched_clusters')
     return matched_folder
 
 
@@ -379,14 +396,25 @@ def get_images_folder(json_config):
         return s
     
     # Build subfolder name matching C++ format
-    images_subfolder = (
-        f"images_{cluster_prefix}"
-        f"_tick{sanitize(tick_limit)}"
-        f"_ch{sanitize(channel_limit)}"
-        f"_min{sanitize(min_tps_to_cluster)}"
-        f"_tot{sanitize(tot_cut)}"
-        f"_e{sanitize(energy_cut)}"
-    )
+    # Pattern: prefix_cluster_images_conditions
+    if cluster_prefix:
+        images_subfolder = (
+            f"{cluster_prefix}_cluster_images"
+            f"_tick{sanitize(tick_limit)}"
+            f"_ch{sanitize(channel_limit)}"
+            f"_min{sanitize(min_tps_to_cluster)}"
+            f"_tot{sanitize(tot_cut)}"
+            f"_e{sanitize(energy_cut)}"
+        )
+    else:
+        images_subfolder = (
+            f"cluster_images"
+            f"_tick{sanitize(tick_limit)}"
+            f"_ch{sanitize(channel_limit)}"
+            f"_min{sanitize(min_tps_to_cluster)}"
+            f"_tot{sanitize(tot_cut)}"
+            f"_e{sanitize(energy_cut)}"
+        )
     
     images_folder_path = f"{outfolder}/{images_subfolder}"
     return images_folder_path

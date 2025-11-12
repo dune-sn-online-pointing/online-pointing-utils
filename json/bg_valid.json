@@ -6,7 +6,7 @@
 
     "main_folder": "/home/virgolaema/dune/online-pointing-utils/data3/bkgs/",
 
-    "products_prefix": "bg_valid_refactored",
+    "products_prefix": "bg_valid",
 
     "max_files": 10,
     "skip_files": 0,

@@ -171,14 +171,25 @@ def get_clusters_folder(json_config):
         return s
     
     # Build subfolder name matching C++ format
-    clusters_subfolder = (
-        f"clusters_{cluster_prefix}"
-        f"_tick{sanitize(tick_limit)}"
-        f"_ch{sanitize(channel_limit)}"
-        f"_min{sanitize(min_tps_to_cluster)}"
-        f"_tot{sanitize(tot_cut)}"
-        f"_e{sanitize(energy_cut)}"
-    )
+    # Pattern: prefix_clusters_conditions
+    if cluster_prefix:
+        clusters_subfolder = (
+            f"{cluster_prefix}_clusters"
+            f"_tick{sanitize(tick_limit)}"
+            f"_ch{sanitize(channel_limit)}"
+            f"_min{sanitize(min_tps_to_cluster)}"
+            f"_tot{sanitize(tot_cut)}"
+            f"_e{sanitize(energy_cut)}"
+        )
+    else:
+        clusters_subfolder = (
+            f"clusters"
+            f"_tick{sanitize(tick_limit)}"
+            f"_ch{sanitize(channel_limit)}"
+            f"_min{sanitize(min_tps_to_cluster)}"
+            f"_tot{sanitize(tot_cut)}"
+            f"_e{sanitize(energy_cut)}"
+        )
     
     clusters_folder_path = f"{outfolder}/{clusters_subfolder}"
     return clusters_folder_path
@@ -197,7 +208,13 @@ def get_matched_clusters_folder(json_config):
         return matched_folder
     
     clusters_folder = get_clusters_folder(json_config)
-    matched_folder = clusters_folder.replace("/clusters_", "/matched_clusters_")
+    # Replace the last part: replace '_clusters_' with '_matched_clusters_'
+    # Works for both "prefix_clusters_conditions" and "clusters_conditions"
+    if '_clusters_' in clusters_folder:
+        matched_folder = clusters_folder.replace('_clusters_', '_matched_clusters_')
+    else:
+        # Fallback for edge cases
+        matched_folder = clusters_folder.replace('clusters', 'matched_clusters')
     return matched_folder
 
 
@@ -820,7 +837,11 @@ def main():
         
         prefix = config.get('products_prefix', config.get('clusters_folder_prefix', 'volumes'))
         conditions = get_conditions_string(config)
-        output_folder = f"{base_folder}/volume_images_{prefix}_{conditions}"
+        # Pattern: prefix_volume_images_conditions
+        if prefix:
+            output_folder = f"{base_folder}/{prefix}_volume_images_{conditions}"
+        else:
+            output_folder = f"{base_folder}/volume_images_{conditions}"
     
     plane = config.get('plane', 'X')  # Default to collection plane
     
