@@ -79,35 +79,24 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // If no CLI, use utility function for JSON-based file finding
-    if (filenames.empty()) filenames = find_input_files(j, "tpstream");
-
-
-    LogInfo << "Number of valid files: " << filenames.size() << std::endl;
-    LogThrowIf(filenames.empty(), "No valid input files.");
-
-    // Check if we should limit the number of files to process
-    // Priority: CLI --max-files > JSON max_files > unlimited
-    int max_files = j.value("max_files", -1);
-    if (clp.isOptionTriggered("maxFiles")) {
-        max_files = clp.getOptionVal<int>("maxFiles");
-        LogInfo << "Max files (from CLI): " << max_files << std::endl;
-    } else if (max_files > 0) {
-        if (max_files > filenames.size()) max_files = filenames.size();
-        LogInfo << "Max files (from JSON): " << max_files << std::endl;
-    } else {
-        LogInfo << "Max files: unlimited" << std::endl;
-        max_files = filenames.size();
-    }
-
-    // Priority: CLI --skip-files > JSON skip_files > 0
+    // Get skip/max parameters (CLI overrides JSON)
     int skip_files = j.value("skip_files", 0);
+    int max_files = j.value("max_files", -1);
+    
     if (clp.isOptionTriggered("skipFiles")) {
         skip_files = clp.getOptionVal<int>("skipFiles");
-        LogInfo << "Number of files to skip at start (from CLI): " << skip_files << std::endl;
-    } else {
-        LogInfo << "Number of files to skip at start (from JSON): " << skip_files << std::endl;
     }
+    if (clp.isOptionTriggered("maxFiles")) {
+        max_files = clp.getOptionVal<int>("maxFiles");
+    }
+
+    // If no CLI, use utility function for JSON-based file finding with tpstream basename logic
+    if (filenames.empty()) {
+        filenames = find_input_files_by_tpstream_basenames(j, "tpstream", skip_files, max_files);
+    }
+
+    LogInfo << "Number of valid files (after skip/max): " << filenames.size() << std::endl;
+    LogThrowIf(filenames.empty(), "No valid input files.");
 
     // Output folder: CLI outFolder > JSON tps_folder > Auto-generate from main_folder/signal_folder
     std::string outfolder;
@@ -162,23 +151,13 @@ int main(int argc, char* argv[]) {
     }
     LogInfo << "Channel tolerance (channels): " << channel_tolerance << std::endl;
 
-    int count_files = 0, done_files = 0;
+    int done_files = 0;
 
     for (auto& filename : filenames) {
 
-        if (count_files < skip_files) {
-            count_files++;
-            LogInfo << "Skipping file " << count_files << ": " << filename << std::endl;
-            continue;
-        }
-
         done_files++;
-        if (done_files > max_files) {
-            LogInfo << "Reached max_files limit (" << max_files << "), stopping." << std::endl;
-            break;
-        }
 
-        GenericToolbox::displayProgressBar(done_files, max_files, "Processing files...");
+        GenericToolbox::displayProgressBar(done_files, filenames.size(), "Processing files...");
 
         // Compute expected output path early to allow skip-if-exists behavior
         std::string input_basename = filename.substr(filename.find_last_of("/\\") + 1);
