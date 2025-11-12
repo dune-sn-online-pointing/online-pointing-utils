@@ -23,13 +23,11 @@ print_help() {
 # init
 delete_submit_files=false
 delete_root_files=true
-JSON_SETTINGS=""
 which_interaction=""
 tot_files=4500
-max_files=30
+max_files=20
 skip=0
 
-which_sims="--all"
 
 # parse
 while [[ "$#" -gt 0 ]]; do
@@ -46,6 +44,9 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
+JSON_SETTINGS="json/${which_interaction}_tot0.json"
+which_sims="-gi -f"
+
 max_jobs=$(( (tot_files + max_files - 1) / max_files ))
 
 # Validate required parameters
@@ -55,7 +56,6 @@ if [ -z "$which_interaction" ]; then
     print_help
 fi
 
-JSON_SETTINGS="json/${which_interaction}_prod.json"
 
 echo "Looking for settings file $JSON_SETTINGS. If execution stops, it means that the file was not found."
 findSettings_command="$SCRIPTS_DIR/findSettings.sh -j $JSON_SETTINGS"

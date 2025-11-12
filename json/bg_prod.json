@@ -6,7 +6,7 @@
     "thisIsAlsoAComment4": "tps_folder/tps_bg_folder: merged TPs with backgrounds (output of add_backgrounds, input to clustering)",
 
     "tpstream_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
-    "clusters_folder_prefix": "bg_prod",
+    "clusters_folder_prefix": "bg_nov11_prod",
 
     "max_files": -1,
     "skip_files": 0,
@@ -18,6 +18,6 @@
     "min_tps_to_cluster": 2,
     "tot_cut": 3,
     "energy_cut": 0,
-    "time_tolerance_ticks": 500
+    "time_tolerance_ticks": 10
 
 }

@@ -7,12 +7,11 @@
 
     "tpstream_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/",
     "bg_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
-    "clusters_folder_prefix": "cc_prod_main",
+    "clusters_folder_prefix": "cc_prod_nov11",
     "reports_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/reports/",
 
-    "matched_clusters_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/matched_clusters_fixed_matching/",
-    "cluster_images_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/cluster_images_fixed_matching/",
-    "volume_images_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/volume_images_fixed_matching/",
+    "matched_clusters_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/matched_clusters_nov10/",
+    "cluster_images_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/cluster_images_nov11/",
 
     "signal_type": "cc",
     "max_files": -1,

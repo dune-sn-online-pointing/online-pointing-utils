@@ -475,7 +475,7 @@ def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_int
 
 
 def draw_cluster_to_array(channels, times, adc_integrals, adc_peaks, sot_values, stopeak_values,
-                          plane_threshold, img_width=16, img_height=128):
+                          plane_threshold, img_width=32, img_height=128):
     """
     Draw cluster to numpy array with actual ADC values (NOT normalized)
     
@@ -1032,7 +1032,7 @@ def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=No
                     channels, times, adc_integrals, adc_peaks,
                     sot_values, stopeak_values,
                     plane_threshold=plane_threshold,
-                    img_width=16, img_height=128
+                    img_width=32, img_height=128
                 )
                 
                 # Apply APA geometry-based flipping

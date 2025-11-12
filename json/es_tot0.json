@@ -7,11 +7,8 @@
 
     "tpstream_folder": "/eos/user/e/evilla/dune/sn-tps/production_es/",
     "bg_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
-    "clusters_folder_prefix": "es_prod_nov11",
+    "clusters_folder_prefix": "es_tot0",
     "reports_folder": "/eos/user/e/evilla/dune/sn-tps/production_es/reports/",
-    
-    "matched_clusters_folder": "/eos/user/e/evilla/dune/sn-tps/production_es/matched_clusters_nov10/",
-    "cluster_images_folder": "/eos/user/e/evilla/dune/sn-tps/production_es/cluster_images_nov11/",
 
     "signal_type": "es",
     "max_files": -1,
@@ -22,7 +19,7 @@
     "tick_limit": 3,
     "channel_limit": 2,
     "min_tps_to_cluster": 2,
-    "tot_cut": 3,
+    "tot_cut": 0,
     "energy_cut": 2.0,
 
     "time_tolerance_ticks": 10
