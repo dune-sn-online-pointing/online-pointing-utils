@@ -256,12 +256,27 @@ int main(int argc, char* argv[]) {
                 auto& clusters = clusters_per_view.at(iView);
                 if (clusters.empty()) continue;
                 
-                // Find cluster with highest true particle energy
+                // Find cluster with highest reconstructed energy (not true particle energy)
                 Cluster* main_cluster = nullptr;
                 float max_energy = -1.0f;
+                
+                if (debugMode) {
+                    LogInfo << "Event " << event << " View " << APA::views.at(iView) 
+                            << " - Selecting main cluster from " << clusters.size() << " clusters" << std::endl;
+                }
+                
                 for (auto& cluster : clusters) {
                     if (cluster.get_true_label() != "marley") continue; // only consider marley clusters
-                    float energy = cluster.get_true_particle_energy();
+                    float energy = cluster.get_total_energy();
+                    
+                    if (debugMode) {
+                        LogInfo << "  Candidate cluster: reco_energy=" << energy << " MeV"
+                                << ", true_particle_energy=" << cluster.get_true_particle_energy() << " MeV"
+                                << ", true_pdg=" << cluster.get_true_pdg()
+                                << ", n_tps=" << cluster.get_size()
+                                << ", true_label=" << cluster.get_true_label() << std::endl;
+                    }
+                    
                     if (energy > max_energy) {
                         max_energy = energy;
                         main_cluster = &cluster;
@@ -271,6 +286,14 @@ int main(int argc, char* argv[]) {
                 // Mark the main cluster
                 if (main_cluster != nullptr) {
                     main_cluster->set_is_main_cluster(true);
+                    
+                    if (debugMode) {
+                        LogInfo << "  SELECTED as main cluster: reco_energy=" << main_cluster->get_total_energy() << " MeV"
+                                << ", true_particle_energy=" << main_cluster->get_true_particle_energy() << " MeV"
+                                << ", true_pdg=" << main_cluster->get_true_pdg()
+                                << ", n_tps=" << main_cluster->get_size()
+                                << ", is_electron=" << (main_cluster->get_true_pdg() == 11 ? "YES" : "NO") << std::endl;
+                    }
                 }
             }
 

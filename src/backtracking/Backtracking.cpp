@@ -24,13 +24,13 @@ void read_tpstream(std::string filename,
     std::string this_interaction = "UNKNOWN";
     // Extract interaction type from filename by looking for exact _cc_ or _es_ patterns
     // Check _cc_ first to avoid false matches with substrings
-    if (filename.find("_cc_") != std::string::npos) {
+    if (filename.find("cc_") != std::string::npos) {
         this_interaction = "CC";
-    } else if (filename.find("_CC_") != std::string::npos) {
+    } else if (filename.find("CC_") != std::string::npos) {
         this_interaction = "CC";
-    } else if (filename.find("_es_") != std::string::npos) {
+    } else if (filename.find("es_") != std::string::npos) {
         this_interaction = "ES";
-    } else if (filename.find("_ES_") != std::string::npos) {
+    } else if (filename.find("ES_") != std::string::npos) {
         this_interaction = "ES";
     } else {
         this_interaction = "UNKNOWN";

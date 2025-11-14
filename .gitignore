@@ -3,6 +3,7 @@ build/*
 lists/
 *.o
 *.exe
+json/cats/*
 */__pycache__/
 condor_test/
 app/plots/
@@ -16,3 +17,4 @@ data3/
 job_output/
 *.cc
 temp/
+condor/evilla/*

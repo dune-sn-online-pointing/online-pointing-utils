@@ -10,8 +10,8 @@ source $HOME_DIR/scripts/init.sh
 # parser
 print_help() {
     echo "Usage: $0 -w <which-interaction> -f <first-job> -l <last-job> [OPTIONS]"
-    echo " -j, --json-config          Path to the JSON configuration file"
-    echo "  -w, --which                 Which interaction (es or cc)"
+    # echo " -j, --json-config          Path to the JSON configuration file"
+    echo "  -w, --which                 Which cat (number)"
     echo "  --tot-files                 Total number of files to process (default: 5000)"
     echo "  --max-files                 Maximum number of files to process per job (default: 100)"
     echo "  -d, --delete-submit-files   Delete submit files after submission (default: false)"
@@ -24,15 +24,17 @@ print_help() {
 # init
 delete_submit_files=false
 delete_root_files=true
-tot_files=5000
-max_files=25
+which_cat=""
+tot_files=110
+max_files=10    
 skip=0
 
 
 # parse
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        -j|--json-config) JSON_SETTINGS="$2"; shift ;;
+        # -j|--json-config) JSON_SETTINGS="$2"; shift ;;
+        -w|--which) which_cat="$2"; shift ;;
         --tot-files) tot_files="$2"; shift ;;
         --max-files) max_files="$2"; shift ;;
         -d|--delete-submit-files) delete_submit_files="$2"; shift ;;
@@ -44,17 +46,44 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-which_sims="-mc -mm -gi -gv -f"
+which_sims="--all -f"
 
 max_jobs=$(( (tot_files + max_files - 1) / max_files ))
 
 # Validate required parameters
-if [ -z "$JSON_SETTINGS" ]; then
+if [ -z "$which_cat" ]; then
     echo "Error: Missing required parameters!"
-    echo "  -j/--json-config is required"
+    echo "  -w/--which is required"
     print_help
 fi
 
+# create a json file for this cat
+which_cat=$(printf "%06d" "$which_cat")
+JSON_SETTINGS=$HOME_DIR/json/cats/cat_${which_cat}.json
+ 
+cat > $JSON_SETTINGS << EOL
+{
+    "signal_folder": "/eos/project-e/ep-nu/public/sn-pointing/cat${which_cat}/",
+    "bg_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
+    "products_prefix": "cat${which_cat}",
+
+    "max_files": -1,
+    "skip_files": 0,
+
+    "backtracker_error_margin": 10,
+
+    "tick_limit": 3,
+    "channel_limit": 2,
+    "min_tps_to_cluster": 2,
+    "tot_cut": 3,
+    "energy_cut": 2.0,
+
+    "time_tolerance_ticks": 10
+
+}
+EOL
+
+echo "Created JSON settings file at $JSON_SETTINGS"
 
 echo "Looking for settings file $JSON_SETTINGS. If execution stops, it means that the file was not found."
 findSettings_command="$SCRIPTS_DIR/findSettings.sh -j $JSON_SETTINGS"
@@ -62,7 +91,6 @@ echo "Using command: $findSettings_command"
 # last line of the output of findSettings.sh is the full path of the settings file
 JSON_SETTINGS=$( $findSettings_command | tail -n 1)
 echo -e "Settings file found, full path is: $JSON_SETTINGS \n"
-
 
 username=$(whoami | cut -d' ' -f1)
 user_email="$username@cern.ch"
@@ -83,7 +111,7 @@ rm -f $list_of_jobs
 touch $list_of_jobs
 for i in $(seq 1 $max_jobs); do
     skip=$(( (i - 1) * max_files ))
-    echo "Adding job $i with skip $skip"
+    # echo "Adding job $i with skip $skip"
     echo "-j ${JSON_SETTINGS} --home-dir ${HOME_DIR} --no-compile $which_sims --skip-files $skip --max-files $max_files" >> $list_of_jobs
 done
 
@@ -124,7 +152,7 @@ if [ "$print_only" = true ]; then
     cat $list_of_jobs
     exit 0
 else 
-    echo "Submitting all jobs from ${skip} to $((skip + max_files)) for ${JSON_SETTINGS}"
+    echo "Submitting all jobs from ${skip} to $((skip + max_files)) for ${which_cat} interaction"
     condor_submit $submit_file
     if [ "$delete_submit_files" = true ]; then
         rm $submit_file

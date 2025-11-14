@@ -1,19 +1,13 @@
 {
-    "thisIsAComment": "This file contains all steps of sequence.sh",
-    "thisIsAlsoAComment": "tpstream_folder: raw tpstream files (input to backtracking)",
-    "thisIsAlsoAComment2": "sig_folder: pure signal TPs (output of backtracking, input to add_backgrounds)",
-    "thisIsAlsoAComment3": "bg_folder: pure background TPs (input to add_backgrounds)",
-    "thisIsAlsoAComment4": "tps_folder/tps_bg_folder: merged TPs with backgrounds (output of add_backgrounds, input to clustering)",
+    "thisIsAComment": "This file contains all keys for all steps of sequence.sh",
+    "thisIsAlsoAComment1": "main_folder: home of where all subfolders are located for signal sample, es or cc",
+    "thisIsAlsoAComment2": "bg_folder: pure background TPs (input to add_backgrounds)",
+    "thisIsAlsoAComment3": "All subfolders are determined automatically and will start with 'products_prefix', but can be overriden here with keys tps_folder/tps_bg_folder",
 
-    "tpstream_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/",
+    "signal_folder": "/eos/user/e/evilla/dune/sn-tps/prod_cc/",
     "bg_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
-    "clusters_folder_prefix": "cc_prod_nov11",
-    "reports_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/reports/",
+    "products_prefix": "cc_prod",
 
-    "matched_clusters_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/matched_clusters_nov10/",
-    "cluster_images_folder": "/eos/user/e/evilla/dune/sn-tps/production_cc/cluster_images_nov11/",
-
-    "signal_type": "cc",
     "max_files": -1,
     "skip_files": 0,
 
@@ -25,5 +19,7 @@
     "tot_cut": 3,
     "energy_cut": 2.0,
 
-    "time_tolerance_ticks": 10
+    "time_tolerance_ticks": 10,
+    "spatial_tolerance_cm": 100
+
 }
