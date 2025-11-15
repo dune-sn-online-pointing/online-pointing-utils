@@ -1,0 +1,22 @@
+{
+        "thisIsAComment": "This file contains all keys for all steps of sequence.sh",
+    "thisIsAlsoAComment1": "main_folder: home of where all subfolders are located for signal sample, bg, es or cc",
+    "thisIsAlsoAComment2": "DONT USE FOR THIS JSON bg_folder: pure background TPs (input to add_backgrounds)",
+    "thisIsAlsoAComment3": "All subfolders are determined automatically, but can be overriden here with keys tps_folder/",
+
+    "main_folder": "/home/virgolaema/dune/online-pointing-utils/data3/bkgs/",
+
+    "products_prefix": "bg_valid",
+
+    "max_files": 10,
+    "skip_files": 0,
+
+    "backtracker_error_margin": 10,
+
+    "tick_limit": 3,
+    "channel_limit": 2,
+    "min_tps_to_cluster": 2,
+    "tot_cut": 0,
+    "energy_cut": 0
+
+}

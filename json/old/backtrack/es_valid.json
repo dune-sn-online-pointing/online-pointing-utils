@@ -1,0 +1,22 @@
+{
+  "thisIsAComment": "Code will try first input file from cmd line, then inputFile, then inputFolder + inputList, then inputListFile.",
+  "inputFile": "",
+  "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+  "inputList": [
+    "prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T165634Z_gen_001381_supernova_g4_detsim_ana_2025-10-03T_044524Z_tpstream.root",
+    "prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T165639Z_gen_001389_supernova_g4_detsim_ana_2025-10-03T_045255Z_tpstream.root",
+    "prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T165644Z_gen_001396_supernova_g4_detsim_ana_2025-10-03T_023823Z_tpstream.root",
+    "prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T165652Z_gen_001402_supernova_g4_detsim_ana_2025-10-03T_044237Z_tpstream.root"
+  
+  ],
+
+  "max_files": 20,
+  "skip_files": 0,
+  
+  "inputListFile": "/path/list_of_files.txt",
+
+  "tps_folder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+  
+  "backtracker_error_margin": 10
+
+}

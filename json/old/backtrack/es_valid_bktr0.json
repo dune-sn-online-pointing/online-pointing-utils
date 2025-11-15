@@ -1,0 +1,13 @@
+{
+  "thisIsAComment": "Code will try first input file from cmd line, then inputFile, then inputFolder + inputList, then inputListFile.",
+  "inputFile": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T165652Z_gen_001402_supernova_g4_detsim_ana_2025-10-03T_044237Z_tpstream.root",
+  "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/",
+  "inputList": [
+  ],
+  "inputListFile": "/path/list_of_files.txt",
+
+  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_es/bktr0/",
+  
+  "backtracker_error_margin": 0
+
+}

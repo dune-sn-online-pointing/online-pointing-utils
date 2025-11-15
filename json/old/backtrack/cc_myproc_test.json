@@ -1,0 +1,10 @@
+{
+  "inputFolder": "/eos/user/e/evilla/dune/sn-tps/production_cc/",
+
+  "outputFolder": "/eos/user/e/evilla/dune/sn-tps/production_cc/",
+
+  "max_files": 20,
+  
+  "backtracker_error_margin": 10
+
+}

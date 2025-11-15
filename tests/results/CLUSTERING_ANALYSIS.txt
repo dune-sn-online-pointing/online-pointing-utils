@@ -1,0 +1,38 @@
+=================================================================================
+ANALYSIS: Why Marley+Background Clusters Are Rare
+=================================================================================
+
+CLUSTERING ALGORITHM (from Clustering.cpp):
+-------------------------------------------
+The clustering uses a spatiotemporal proximity algorithm with two criteria:
+
+1. TIME TOLERANCE: TPs must be within 'ticks_limit' (e.g., 3 TPC ticks)
+   - Measures the non-overlapping time gap between TP intervals
+   - Accounts for the duration (samples_over_threshold) of each TP
+
+2. CHANNEL TOLERANCE: TPs must be within 'channel_limit' (e.g., 2 channels)
+   - Uses periodic boundary conditions (PBC) for wrapping
+
+KEY INSIGHT - WHY MARLEY+BACKGROUND MIXING IS RARE:
+----------------------------------------------------
+
+1. MARLEY TIMESTAMPS are LOCALIZED in time (supernova event window)
+   - TPs from the same Marley particle are temporally correlated
+   
+2. BACKGROUND TIMESTAMPS are UNIFORMLY DISTRIBUTED across readout
+   - Random in both space and time across the full window
+   
+3. MIXING PROBABILITY is very low:
+   - Background TP must be within 3 ticks of Marley TP
+   - Time window = 3 ticks = ~1.5 microseconds
+   - If readout is 5000 ticks, probability ~ 3/5000 = 0.06%
+
+CONCLUSION:
+-----------
+The rarity of Marley+Background clusters is CORRECT behavior given:
+  - Tight spatiotemporal clustering (3 ticks, 2 channels)
+  - Different time distributions (Marley=localized, Background=uniform)
+  - Low probability of random coincidence
+
+This is expected physics, not a bug!
+=================================================================================

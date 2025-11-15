@@ -1,0 +1,5 @@
+{
+  "filelist": "data/v9/tpstream_one.txt",
+  "outputFolder": "data/backtrack_test",
+  "backtracker_error_margin": 10
+}

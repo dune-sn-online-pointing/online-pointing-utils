@@ -1,0 +1,371 @@
+#include "Backtracking.h"
+#include "Clustering.h"
+#include <random>
+
+LoggerInit([]{
+  Logger::getUserHeader() << "[" << FILENAME << "]";
+});
+
+// Helper function to find files in a folder matching a pattern
+std::vector<std::string> find_files_in_folder(const std::string& folder, const std::string& pattern = "", const std::string& suffix = ".root") {
+    std::vector<std::string> files;
+    
+    if (!std::filesystem::exists(folder) || !std::filesystem::is_directory(folder)) {
+        LogWarning << "Folder does not exist or is not a directory: " << folder << std::endl;
+        return files;
+    }
+    
+    for (const auto& entry : std::filesystem::directory_iterator(folder)) {
+        if (entry.is_regular_file()) {
+            std::string filename = entry.path().string();
+            
+            // Check if filename contains the pattern (if specified)
+            if (!pattern.empty() && filename.find(pattern) == std::string::npos) {
+                continue;
+            }
+            
+            // Check if filename ends with the suffix
+            if (!suffix.empty() && filename.find(suffix) == std::string::npos) {
+                continue;
+            }
+            
+            files.push_back(filename);
+        }
+    }
+    
+    // Sort files for consistent ordering
+    std::sort(files.begin(), files.end());
+    
+    return files;
+}
+
+int main(int argc, char* argv[]) {
+    CmdLineParser clp;
+    clp.getDescription() << "> add_backgrounds app - Merge signal TPs with random background events, writing *_tps_bg.root files." << std::endl;
+    clp.addDummyOption("Main options");
+    clp.addOption("json",    {"-j", "--json"}, "JSON file containing the configuration");
+    clp.addOption("skip_files", {"-s", "--skip", "--skip-files"}, "Number of files to skip at start (overrides JSON)", -1);
+    clp.addOption("max_files", {"-m", "--max", "--max-files"}, "Maximum number of files to process (overrides JSON)", -1);
+    clp.addTriggerOption("verboseMode", {"-v", "--verbose"}, "Run in verbose mode");
+    clp.addTriggerOption("debugMode", {"-d", "--debug"}, "Run in debug mode (more detailed than verbose)");
+    clp.addTriggerOption("override", {"-f", "--override"}, "Override existing output files");
+    clp.addDummyOption();
+    
+    LogInfo << clp.getDescription().str() << std::endl;
+    LogInfo << "Usage: " << std::endl;
+    LogInfo << clp.getConfigSummary() << std::endl << std::endl;
+    
+    clp.parseCmdLine(argc, argv);
+    LogThrowIf( clp.isNoOptionTriggered(), "No option was provided." );
+    
+    verboseMode = clp.isOptionTriggered("verboseMode");
+    debugMode = clp.isOptionTriggered("debugMode");
+    bool overrideMode = clp.isOptionTriggered("override");
+    if (debugMode) verboseMode = true;
+    
+    // Load parameters
+    ParametersManager::getInstance().loadParameters();
+    
+    std::string json = clp.getOptionVal<std::string>("json");
+    std::ifstream i(json);
+    LogThrowIf(!i.good(), "Failed to open JSON config: " << json);
+    nlohmann::json j;
+    i >> j;
+
+    // Parse JSON configuration
+    std::string signal_type = j.value("signal_type", std::string("cc")); // "cc" or "es", just in case...
+    bool around_vertex_only = j.value("around_vertex_only", false);
+    double vertex_radius = j.value("vertex_radius", 100.0); // cm, used if around_vertex_only=true
+    int max_files = j.value("max_files", -1); // -1 means no limit
+    int skip_files = j.value("skip_files", 0); // number of files to skip at start
+    
+    // CLI overrides JSON
+    if (clp.isOptionTriggered("skip_files")) {
+        skip_files = clp.getOptionVal<int>("skip_files");
+    }
+    if (clp.isOptionTriggered("max_files")) {
+        max_files = clp.getOptionVal<int>("max_files");
+    }
+
+    LogInfo << "Number of files to skip at start: " << skip_files << std::endl;
+
+    std::string base_folder = getTpstreamBaseFolder(j);
+
+    // sig_folder: pure signal TPs (input) - default to tpstream_folder
+    std::string sig_folder_cfg = j.value("sig_folder", std::string(""));
+    std::string sig_folder = sig_folder_cfg.empty()
+        ? base_folder
+        : resolveFolderAgainstTpstream(j, sig_folder_cfg, true);
+    LogThrowIf(sig_folder.empty(), "sig_folder is not specified and tpstream_folder is missing.");
+    
+    // bg_folder: base folder for background files (will auto-generate to bg_folder/tps)
+    // Don't need to explicitly resolve here - find_input_files will handle it
+    std::string bg_folder_cfg = j.value("bg_folder", std::string(""));
+    LogThrowIf(bg_folder_cfg.empty(), "bg_folder is not specified in JSON config.");
+    
+    // tps_bg_folder or tps_folder: merged TPs output
+    std::string output_folder = getOutputFolder(j, "tps_bg", "tps_bg_folder");
+    LogThrowIf(output_folder.empty(), "tps_bg_folder (or tps_folder) is not specified and could not be auto-generated.");
+    LogThrowIf(!ensureDirectoryExists(output_folder), "Unable to create output folder '" << output_folder << "'.");
+
+    LogInfo << "Configuration:" << std::endl;
+    LogInfo << " - Signal type: " << signal_type << std::endl;
+    LogInfo << " - Signal folder (pure signal TPs): " << sig_folder << std::endl;
+    LogInfo << " - Background folder (base): " << bg_folder_cfg << std::endl;
+    LogInfo << " - Output folder (merged TPs): " << output_folder << std::endl;
+    LogInfo << " - Override existing output files: " << (overrideMode ? "YES" : "NO") << std::endl;
+    LogInfo << " - Add backgrounds around vertex only: " << (around_vertex_only ? "YES" : "NO") << std::endl;
+    if (around_vertex_only) {
+        LogInfo << " - Vertex radius: " << vertex_radius << " cm" << std::endl;
+    }
+    if (max_files > 0) {
+        LogInfo << " - Max files to process: " << max_files << std::endl;
+    } else {
+        LogInfo << " - Max files to process: unlimited" << std::endl;
+    }
+
+    // Find signal files in sig_folder (looking for *_tps.root)
+    // Use tpstream-based file tracking for consistent skip/max across pipeline
+    std::vector<std::string> signal_files = find_input_files_by_tpstream_basenames(j, "sig", skip_files, max_files);
+    LogInfo << "Found " << signal_files.size() << " signal files matching tpstream basenames" << std::endl;
+    LogThrowIf(signal_files.empty(), "No signal files found matching tpstream basenames.");
+    // Find background files in bg_folder (looking for *_tps.root)
+    std::vector<std::string> bkg_files = find_input_files(j, "bg");
+    LogInfo << "Found " << bkg_files.size() << " background files" << std::endl;
+    LogThrowIf(bkg_files.empty(), "No background files found in bg_folder.");
+
+    // Random starting point for background files, then sequential access
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<size_t> file_dist(0, bkg_files.size() - 1);
+    size_t bkg_file_idx = file_dist(rng);  // Random starting file
+    size_t bkg_event_idx = 0;
+    
+    // Current background file data (cached)
+    std::map<int, std::vector<TriggerPrimitive>> current_bkg_tps;
+    std::map<int, std::vector<TrueParticle>> current_bkg_true;
+    std::map<int, std::vector<Neutrino>> current_bkg_nu;
+    std::vector<int> current_event_ids;
+    
+    // Load first background file
+    read_tps(bkg_files[bkg_file_idx], current_bkg_tps, current_bkg_true, current_bkg_nu);
+    for (const auto& kv : current_bkg_tps) {
+        current_event_ids.push_back(kv.first);
+    }
+    
+    if (verboseMode) {
+        LogInfo << "Starting with random background file " << (bkg_file_idx + 1) << "/" << bkg_files.size()
+                << ": " << std::filesystem::path(bkg_files[bkg_file_idx]).filename().string() << std::endl;
+    }
+    
+    // Lambda to get next sequential background event (cycling through files)
+    auto get_next_bkg_event = [&]() -> std::tuple<int, std::vector<TriggerPrimitive>> {
+        // Check if we need to load next background file
+        if (bkg_event_idx >= current_event_ids.size()) {
+            bkg_event_idx = 0;
+            bkg_file_idx = (bkg_file_idx + 1) % bkg_files.size();  // Wrap around
+            
+            current_bkg_tps.clear();
+            current_bkg_true.clear();
+            current_bkg_nu.clear();
+            current_event_ids.clear();
+            
+            read_tps(bkg_files[bkg_file_idx], current_bkg_tps, current_bkg_true, current_bkg_nu);
+            for (const auto& kv : current_bkg_tps) {
+                current_event_ids.push_back(kv.first);
+            }
+            
+            if (current_bkg_tps.empty()) {
+                LogWarning << "Background file " << bkg_files[bkg_file_idx] << " has no events!" << std::endl;
+                return {-1, {}};
+            }
+        }
+        
+        int event_id = current_event_ids[bkg_event_idx];
+        auto bkg_tps = current_bkg_tps.at(event_id);
+        
+        if (verboseMode) {
+            LogInfo << "Using background: file " << std::filesystem::path(bkg_files[bkg_file_idx]).filename().string()
+                    << " event " << event_id << " (file " << (bkg_file_idx + 1) << "/" << bkg_files.size()
+                    << ", event " << (bkg_event_idx + 1) << "/" << current_event_ids.size() << ")" << std::endl;
+        }
+        
+        bkg_event_idx++;
+        return {event_id, bkg_tps};
+    };
+
+    // Process signal files (skip/max already applied via tpstream basenames)
+    int done_files = 0;
+    std::vector<std::string> output_files;
+    
+    for (const auto& signal_file : signal_files) {
+        done_files++;
+        if (!verboseMode) {
+            GenericToolbox::displayProgressBar(done_files, (int)signal_files.size(), "Adding backgrounds...");
+        }
+        if (verboseMode) LogInfo << "\nProcessing signal file: " << signal_file << std::endl;
+        
+        // Read signal TPs
+        std::map<int, std::vector<TriggerPrimitive>> signal_tps_by_event;
+        std::map<int, std::vector<TrueParticle>> signal_true_by_event;
+        std::map<int, std::vector<Neutrino>> signal_nu_by_event;
+        read_tps(signal_file, signal_tps_by_event, signal_true_by_event, signal_nu_by_event);
+        
+        // Prepare output file name
+        std::filesystem::path signal_path(signal_file);
+        
+        // Get base filename without _tps.root suffix
+        std::string base_name = signal_path.stem().string();
+        if (base_name.size() > 4 && base_name.substr(base_name.size() - 4) == "_tps") {
+            base_name = base_name.substr(0, base_name.size() - 4);
+        }
+        
+        std::string output_filename = output_folder + "/" + base_name;
+        if (around_vertex_only) {
+            output_filename += "_bg_vtx" + std::to_string((int)vertex_radius) + "_tps.root";
+        } else {
+            output_filename += "_bg_tps.root";
+        }
+        if (verboseMode) LogInfo << "Output file: " << output_filename << std::endl;
+        
+        // Check if output file already exists
+        if (std::filesystem::exists(output_filename) && !overrideMode) {
+            done_files--;
+            if (verboseMode) LogInfo << "Output file already exists, skipping (use --override to overwrite)" << std::endl;
+            continue;
+        }
+        
+        // Prepare merged data structures
+        std::vector<std::vector<TriggerPrimitive>> merged_tps_vec;
+        std::vector<std::vector<TrueParticle>> merged_true_vec;
+        std::vector<std::vector<Neutrino>> merged_nu_vec;
+        
+        // Track signal TP counts for each event (for diagnostics)
+        std::vector<int> signal_tp_counts;
+        
+        // Process each event in the signal file
+        for (const auto& kv : signal_tps_by_event) {
+            int event_id = kv.first;
+            const auto& signal_tps = kv.second;
+            
+            // Get neutrino vertex position if around_vertex_only is enabled
+            TVector3 vertex_pos(0, 0, 0);
+            bool has_vertex = false;
+            if (around_vertex_only && signal_nu_by_event.count(event_id) > 0) {
+                const auto& neutrinos = signal_nu_by_event.at(event_id);
+                if (!neutrinos.empty()) {
+                    vertex_pos.SetXYZ(neutrinos[0].GetX(), neutrinos[0].GetY(), neutrinos[0].GetZ());
+                    has_vertex = true;
+                    if (debugMode) {
+                        LogInfo << "Event " << event_id << " vertex at ("
+                                << vertex_pos.X() << ", " << vertex_pos.Y() << ", " << vertex_pos.Z() << ")" << std::endl;
+                    }
+                }
+            }
+            
+            // Start with signal TPs
+            std::vector<TriggerPrimitive> merged_tps = signal_tps;
+            
+            // Vectors to hold merged truth info for this event (kept for backward compatibility)
+            std::vector<TrueParticle> merged_true;
+            std::vector<Neutrino> merged_nu;
+            
+            // Get random background event
+            auto [bkg_event_id, bkg_tps] = get_next_bkg_event();
+            
+            if (bkg_event_id >= 0 && !bkg_tps.empty()) {
+                int bkg_added = 0;
+                int bkg_truth_linked = 0;
+                int bkg_unknown_filtered = 0;
+                
+                // Add background TPs, copying embedded truth directly
+                for (const auto& bkg_tp : bkg_tps) {
+                    // Filter out UNKNOWN background TPs (noise already present in signal files)
+                    std::string gen_name = bkg_tp.GetGeneratorName();
+                    if (gen_name == "UNKNOWN") {
+                        bkg_unknown_filtered++;
+                        continue;  // Skip UNKNOWN TPs from background
+                    }
+                    
+                    TriggerPrimitive tp = bkg_tp;
+                    
+                    // Update the event number to match the signal event (CRITICAL BUG FIX)
+                    tp.SetEvent(event_id);
+                    
+                    // Truth is already embedded in the TP - no pointer relinking needed
+                    bkg_truth_linked++;  // Count as linked since truth is embedded
+                    
+                    merged_tps.push_back(tp);
+                    bkg_added++;
+                }
+                
+                if (around_vertex_only && has_vertex) {
+                    LogWarning << "around_vertex_only is enabled but TP position filtering not yet implemented. Adding all background TPs." << std::endl;
+                }
+                
+                if (verboseMode) {
+                    LogInfo << "Signal event " << event_id << ": " << signal_tps.size() << " signal TPs + "
+                            << bkg_added << " background TPs (truth linked: " << bkg_truth_linked
+                            << ", filtered UNKNOWN: " << bkg_unknown_filtered << ") = "
+                            << merged_tps.size() << " total TPs" << std::endl;
+                }
+                
+                // Merge truth information from signal (kept for backward compatibility with write function)
+                if (signal_true_by_event.count(event_id) > 0) {
+                    merged_true = signal_true_by_event.at(event_id);
+                }
+                if (signal_nu_by_event.count(event_id) > 0) {
+                    merged_nu = signal_nu_by_event.at(event_id);
+                }
+                
+            } else {
+                // No background TPs available, just use signal truth
+                if (signal_true_by_event.count(event_id) > 0) {
+                    merged_true = signal_true_by_event.at(event_id);
+                }
+                if (signal_nu_by_event.count(event_id) > 0) {
+                    merged_nu = signal_nu_by_event.at(event_id);
+                }
+            }
+            
+            // CRITICAL FIX: Sort merged TPs by time to ensure consistent clustering
+            // Background TPs were appended after signal TPs, which can cause different
+            // clustering behavior compared to background-only files
+            std::sort(merged_tps.begin(), merged_tps.end(),
+                [](const TriggerPrimitive& a, const TriggerPrimitive& b) {
+                    return a.GetTimeStart() < b.GetTimeStart();
+                });
+            
+            merged_tps_vec.push_back(merged_tps);
+            merged_true_vec.push_back(merged_true);
+            merged_nu_vec.push_back(merged_nu);
+            signal_tp_counts.push_back(signal_tps.size());
+        }
+        
+        // Write output file with merged TPs
+        try {
+            write_tps(output_filename, merged_tps_vec, merged_true_vec, merged_nu_vec);
+            output_files.push_back(output_filename);
+            if (verboseMode) LogInfo << "Wrote: " << output_filename << std::endl;
+        } catch (const std::exception& e) {
+            LogError << "Error writing output file " << output_filename << ": " << e.what() << std::endl;
+            LogError << "Skipping this file and continuing..." << std::endl;
+        }
+    }
+    
+    LogInfo << "\n\nProcessed " << done_files << " files successfully." << std::endl;
+    LogInfo << "Output files are in the same directories as input files with '_bkg' suffix." << std::endl;
+    LogInfo << "\nNote: In the output files, background TPs have their original generator labels," << std::endl;
+    LogInfo << "      allowing you to distinguish signal (MARLEY) from background (e.g., radiological)." << std::endl;
+    
+    // Print summary of output files
+    LogInfo << "\nOutput files (" << output_files.size() << "):" << std::endl;
+    for (size_t i = 0; i < std::min<size_t>(5, output_files.size()); i++) {
+        LogInfo << " - " << output_files[i] << std::endl;
+    }
+    if (output_files.size() > 5) {
+        LogInfo << " ... (" << output_files.size() - 5 << " more files)" << std::endl;
+    }
+    
+    return 0;
+}

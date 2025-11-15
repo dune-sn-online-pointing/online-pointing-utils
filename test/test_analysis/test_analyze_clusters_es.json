@@ -1,0 +1,4 @@
+{
+  "clusters_input_file": "clusters__tick3_ch2_min2_tot1_e0p0/test_es_clusters.root",
+  "reports_folder": "test/test_analysis/output/"
+}

@@ -1,0 +1,9 @@
+{
+    "datasets_img": "", // Path to the file containing the list of paths to the image datasets
+    "datasets_process_label": "", // Path to the file containing the list of paths to the process label datasets
+    "datasets_true_dir_label": "", // Path to the file containing the list of paths to the true direction label datasets
+    "remove_process_labels": [99], // List of process labels to be removed
+    "shuffle": 1, // Flag indicating whether to shuffle the datasets
+    "balance": 1, // Flag indicating whether to balance the datasets
+    "balance_across_files": 1 // Flag indicating whether to balance the datasets across files. This is useful to balance blips and background events, since they are stored in different files but will get the same label
+}

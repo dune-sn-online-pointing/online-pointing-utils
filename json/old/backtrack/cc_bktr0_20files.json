@@ -1,0 +1,14 @@
+{
+  "thisIsAComment": "Backtracking with margin 0 on 20 CC files",
+  "inputFile": "",
+  "inputFolder": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/",
+  "inputList": [
+  ],
+  "inputListFile": "",
+
+  "outputFolder": "/home/virgolaema/dune/online-pointing-utils/data/backtracking_last_tests/",
+  
+  "backtracker_error_margin": 0,
+  
+  "max_files": 20
+}

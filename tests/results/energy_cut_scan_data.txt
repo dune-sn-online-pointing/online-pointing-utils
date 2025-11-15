@@ -1,0 +1,22 @@
+# Energy Cut Scan Results
+# Format: energy_cut marley_viewX background_viewX main_track_viewX total_viewX found
+
+# CC Results
+CC_DATA:
+0 686 21556 199 22242 1
+0.5 637 7853 197 8490 1
+1 562 4592 192 5154 1
+1.5 479 2428 187 2907 1
+2 430 1024 185 1454 1
+2.5 381 183 182 564 1
+3 351 40 180 391 1
+
+# ES Results
+ES_DATA:
+0 353 20780 190 21133 1
+0.5 341 7432 190 7773 1
+1 327 4500 190 4827 1
+1.5 300 2418 188 2718 1
+2 279 710 181 989 1
+2.5 265 90 177 355 1
+3 250 17 171 267 1

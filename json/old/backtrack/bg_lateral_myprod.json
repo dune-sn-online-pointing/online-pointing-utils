@@ -1,0 +1,10 @@
+{
+  "inputFolder": "/eos/user/e/evilla/dune/sn-tps/lateral_bkgs/",
+
+  "outputFolder": "/eos/user/e/evilla/dune/sn-tps/lateral_bkgs/",
+
+  "max_files": 2,
+  
+  "backtracker_error_margin": 10
+
+}

@@ -1,23 +1,43 @@
-#!bin/bash
-INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/create_volume_clusters/standard.json
+#!/bin/bash
+
 REPO_HOME=$(git rev-parse --show-toplevel)
+current_dir=$(pwd)
+
+# init
+json_settings=""
+verbose=false
+
+print_help() {
+    echo "*****************************************************************************"
+    echo "Usage: ./create_volume_clusters.sh --json-settings <settings.json>"
+    echo "  --json-settings  json input file to run this app"
+    echo "  -v|--verbose     enable verbose mode"
+    echo "  -h | --help   print this help message"
+    echo "*****************************************************************************"
+    exit 0
+}
 
 # parse the input
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --input_file)
-            INPUT_JSON="$2"
-            shift 2
-            ;;
-        -h|--help)
-            echo "Usage: ./create_volume_clusters.sh --input_file <input_json>"
-            exit 0
-            ;;  
-        *)
-            shift
-            ;;
+        --json-settings) json_settings="$2"; shift 2 ;;
+        -v|--verbose) verbose=true; shift ;;
+        -h|--help) print_help ;;
+        *) shift ;;
     esac
 done
+
+# check that json config has been selected
+if [ -z "$json_settings" ]; then
+    echo "Please provide a json input file"
+    print_help
+fi
+
+# check that the json file exists
+if [ ! -f ${REPO_HOME}/json/create_volume_clusters/${json_settings} ]; then
+    echo "Json file does not exist"
+    print_help
+fi
 
 echo "REPO_HOME: ${REPO_HOME}"
 # compile
@@ -31,5 +51,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # Run the app
-./app/create_volume_clusters -j $INPUT_JSON
-cd ${REPO_HOME}/scripts/
+command_to_run="./app/create_volume_clusters -j $json_settings"
+if [ "$verbose" = true ]; then
+    command_to_run="$command_to_run -v"
+fi
+echo "Running: ${command_to_run}"
+${command_to_run}
+
+cd ${current_dir}

@@ -1,0 +1,1 @@
+Jsons are global, valid for all apps. 

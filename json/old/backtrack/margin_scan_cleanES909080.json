@@ -1,0 +1,6 @@
+{
+  "filename": "data/test_files_tps_cleanES909080.txt",
+  "output_folder": "data",
+  "backtracker_error_margin": 10,
+  "comment": "Base config for cleanES909080 margin scan - will be modified for different margins"
+}

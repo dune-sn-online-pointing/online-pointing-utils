@@ -1,0 +1,1329 @@
+#!/usr/bin/env python3
+"""
+Batch cluster array generator for neural network input
+
+Generates 16x128 numpy arrays from cluster ROOT files:
+- X axis: Channel (detector channels)
+- Y axis: Time (detector ticks)
+- Pixel values: Raw ADC intensity (physical units, NOT normalized)
+- Pentagon interpolation for ADC values over time
+
+IMPORTANT: Arrays contain actual ADC counts with physical meaning!
+Use these raw values for training to preserve energy information.
+"""
+
+import sys
+import os
+import json
+from pathlib import Path
+import argparse
+import uproot
+import numpy as np
+import re
+
+# Add lib directory to path for utility functions
+sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
+from utils import find_files_by_tpstream_basenames
+
+
+def load_display_parameters(repo_root=None):
+    """
+    Load display parameters from parameters/display.dat
+    Returns dict with threshold_adc_x, threshold_adc_u, threshold_adc_v
+    """
+    if repo_root is None:
+        repo_root = Path(__file__).parent.parent
+    else:
+        repo_root = Path(repo_root)
+    
+    display_dat = repo_root / "parameters" / "display.dat"
+    
+    if not display_dat.exists():
+        # Return defaults if file not found
+        return {
+            'threshold_adc_x': 60.0,
+            'threshold_adc_u': 70.0,
+            'threshold_adc_v': 70.0
+        }
+    
+    params = {}
+    with open(display_dat, 'r') as f:
+        for line in f:
+            line = line.strip()
+            # Parse lines like: < display.threshold_adc_x = 60 >
+            match = re.match(r'<\s*display\.(\w+)\s*=\s*([^>]+?)\s*>', line)
+            if match:
+                key = match.group(1)
+                value_str = match.group(2).strip().strip('"')
+                # Try to convert to float, fallback to string
+                try:
+                    value = float(value_str)
+                except ValueError:
+                    value = value_str
+                params[key] = value
+    
+    # Ensure we have all required parameters with defaults
+    params.setdefault('threshold_adc_x', 60.0)
+    params.setdefault('threshold_adc_u', 70.0)
+    params.setdefault('threshold_adc_v', 70.0)
+    
+    return params
+
+
+def load_conversion_factors(repo_root=None):
+    """
+    Load ADC to energy conversion factors from parameters/conversion.dat
+    Returns dict with adc_to_mev_collection and adc_to_mev_induction
+    """
+    if repo_root is None:
+        repo_root = Path(__file__).parent.parent
+    else:
+        repo_root = Path(repo_root)
+    
+    conversion_dat = repo_root / "parameters" / "conversion.dat"
+    
+    if not conversion_dat.exists():
+        # Return defaults if file not found (typical DUNE values)
+        return {
+            'adc_to_mev_collection': 3600.0,  # ADC per MeV for collection (X) plane
+            'adc_to_mev_induction': 900.0      # ADC per MeV for induction (U, V) planes
+        }
+    
+    params = {}
+    with open(conversion_dat, 'r') as f:
+        for line in f:
+            line = line.strip()
+            # Parse lines like: < conversion.adc_to_energy_factor_collection = 3600.0 >
+            match_collection = re.match(r'<\s*conversion\.adc_to_energy_factor_collection\s*=\s*([^>]+?)\s*>', line)
+            match_induction = re.match(r'<\s*conversion\.adc_to_energy_factor_induction\s*=\s*([^>]+?)\s*>', line)
+            
+            if match_collection:
+                params['adc_to_mev_collection'] = float(match_collection.group(1).strip())
+            elif match_induction:
+                params['adc_to_mev_induction'] = float(match_induction.group(1).strip())
+    
+    # Ensure we have both parameters with defaults
+    params.setdefault('adc_to_mev_collection', 3600.0)
+    params.setdefault('adc_to_mev_induction', 900.0)
+    
+    return params
+
+
+def get_apa_geometry_info(detector_channels, apa_id, plane_letter):
+    """
+    Determine APA geometry information for image flipping.
+    
+    APA Layout (z vs y plane):
+        Top:    APA 0 (even) | APA 2 (even)
+        Bottom: APA 1 (odd)  | APA 3 (odd)
+    
+    Channel Layout per APA (0-2559):
+        - Channels 0-799: U plane (800 induction wires)
+        - Channels 800-1599: V plane (800 induction wires)
+        - Channels 1600-2559: X plane (960 collection wires = 480 per side)
+    
+    Collection Plane (X) subdivision (channels 1600-2559):
+        - Channels 1600-2079: First side (480 wires)
+        - Channels 2080-2559: Second side (480 wires)
+        
+    Top APAs (0, 2): ch < 2080 → x<0, ch >= 2080 → x>0
+    Bottom APAs (1, 3): ch < 2080 → x>0, ch >= 2080 → x<0
+    
+    Args:
+        detector_channels: Array of detector-local channel numbers (already 0-2559 per APA)
+        apa_id: APA number (0, 1, 2, or 3)
+        plane_letter: 'U', 'V', or 'X'
+        
+    Returns:
+        tuple: (is_top_apa, x_sign)
+    """
+    # Determine if top or bottom APA
+    is_top_apa = (apa_id % 2 == 0)  # Even APA = Top (0, 2)
+    
+    # For collection plane, determine x_sign from channel
+    if plane_letter == 'X':
+        # Collection channels are 1600-2559 (960 channels = 480 per side)
+        # Threshold at 2080 splits the two sides
+        first_ch = detector_channels[0] if len(detector_channels) > 0 else 1600
+        
+        if is_top_apa:
+            # Top APA: channels < 2080 → x<0, channels >= 2080 → x>0
+            x_sign = -1 if first_ch < 2080 else 1
+        else:
+            # Bottom APA: channels < 2080 → x>0, channels >= 2080 → x<0  
+            x_sign = 1 if first_ch < 2080 else -1
+    else:
+        # For induction planes, use collection plane of same cluster to determine x_sign
+        # This will be passed from the X plane determination
+        x_sign = None  # Will be determined from X plane
+    
+    return is_top_apa, x_sign
+
+
+def apply_apa_flipping(img, plane_letter, is_top_apa, x_sign):
+    """
+    Apply APA geometry-based flipping to cluster image.
+    Based on legacy image_creator.py fix_X/U/V_orientation functions.
+    
+    Args:
+        img: numpy array (height, width) representing the cluster
+        plane_letter: 'U', 'V', or 'X'
+        is_top_apa: True if APA 0 or 2 (top), False if APA 1 or 3 (bottom)
+        x_sign: +1 or -1 indicating x side of APA
+        
+    Returns:
+        Flipped image array
+    """
+    img_flipped = img.copy()
+    
+    if plane_letter == 'X':
+        # X plane: flip time axis based on x_sign
+        if x_sign == 1:
+            img_flipped = np.flip(img_flipped, 0)  # Flip time axis
+            
+    elif plane_letter == 'V':
+        # V plane: flip based on APA type and x_sign
+        if is_top_apa:  # Top APA (0, 2)
+            if x_sign == 1:
+                img_flipped = np.flip(img_flipped, 0)  # Flip time
+                img_flipped = np.flip(img_flipped, 1)  # Flip channel
+        else:  # Bottom APA (1, 3)
+            if x_sign == -1:
+                img_flipped = np.flip(img_flipped, 1)  # Flip channel only
+            else:
+                img_flipped = np.flip(img_flipped, 0)  # Flip time only
+                
+    elif plane_letter == 'U':
+        # U plane: flip based on APA type and x_sign
+        if is_top_apa:  # Top APA (0, 2)
+            if x_sign == -1:
+                img_flipped = np.flip(img_flipped, 1)  # Flip channel only
+            else:
+                img_flipped = np.flip(img_flipped, 0)  # Flip time only
+        else:  # Bottom APA (1, 3)
+            if x_sign == 1:
+                img_flipped = np.flip(img_flipped, 0)  # Flip time
+                img_flipped = np.flip(img_flipped, 1)  # Flip channel
+    
+    return img_flipped
+
+
+def get_clusters_folder(json_config):
+    """
+    Compose clusters folder name from JSON configuration.
+    Matches the logic in src/lib/utils.cpp::getClustersFolder()
+    
+    Args:
+        json_config: Dict with clustering parameters or path to JSON file
+        
+    Returns:
+        str: Full path to clusters folder
+    """
+    # Load JSON if path provided
+    if isinstance(json_config, (str, Path)):
+        with open(json_config, 'r') as f:
+            j = json.load(f)
+    else:
+        j = json_config
+    
+    # Extract parameters with defaults matching C++ code
+    # Priority: products_prefix > clusters_folder_prefix (legacy)
+    cluster_prefix = j.get("products_prefix", j.get("clusters_folder_prefix", "clusters"))
+    tick_limit = j.get("tick_limit", 0)
+    channel_limit = j.get("channel_limit", 0)
+    min_tps_to_cluster = j.get("min_tps_to_cluster", 0)
+    tot_cut = j.get("tot_cut", 0)
+    energy_cut = float(j.get("energy_cut", 0.0))
+    
+    # Auto-generate base folder from main_folder or signal_folder
+    outfolder = j.get("clusters_folder", "")
+    if not outfolder:
+        # Priority: main_folder > signal_folder > tpstream_folder (legacy fallback)
+        if "main_folder" in j and j["main_folder"]:
+            outfolder = j["main_folder"]
+        elif "signal_folder" in j and j["signal_folder"]:
+            outfolder = j["signal_folder"]
+        else:
+            outfolder = j.get("tpstream_folder", ".")
+        if outfolder.endswith('/'):
+            outfolder = outfolder[:-1]
+    else:
+        outfolder = outfolder.rstrip('/')
+    
+    def sanitize(value):
+        """
+        Sanitize numeric value for filesystem.
+        Keeps at most 1 digit after decimal, replaces '.' with 'p'
+        Matches C++ logic: std::to_string() then sanitize
+        
+        IMPORTANT: C++ std::to_string always includes decimals for floats,
+        so we must match that behavior. E.g., 2.0 -> "2p0" not "2"
+        """
+        # Convert to string (for floats, Python shows minimal representation)
+        # but we need to match C++ which always shows decimal for float types
+        if isinstance(value, float):
+            # Format with at least 1 decimal place to match C++ std::to_string behavior
+            s = f"{value:.6f}"  # C++ typically gives 6 decimals
+        else:
+            s = str(value)
+        
+        # Keep at most one digit after decimal point
+        if '.' in s:
+            parts = s.split('.')
+            if len(parts[1]) > 1:
+                s = f"{parts[0]}.{parts[1][0]}"
+        
+        # Replace '.' with 'p' for filesystem safety
+        s = s.replace('.', 'p')
+        return s
+    
+    # Build subfolder name matching C++ format
+    # Pattern: prefix_clusters_conditions
+    if cluster_prefix:
+        clusters_subfolder = (
+            f"{cluster_prefix}_clusters"
+            f"_tick{sanitize(tick_limit)}"
+            f"_ch{sanitize(channel_limit)}"
+            f"_min{sanitize(min_tps_to_cluster)}"
+            f"_tot{sanitize(tot_cut)}"
+            f"_e{sanitize(energy_cut)}"
+        )
+    else:
+        clusters_subfolder = (
+            f"clusters"
+            f"_tick{sanitize(tick_limit)}"
+            f"_ch{sanitize(channel_limit)}"
+            f"_min{sanitize(min_tps_to_cluster)}"
+            f"_tot{sanitize(tot_cut)}"
+            f"_e{sanitize(energy_cut)}"
+        )
+    
+    clusters_folder_path = f"{outfolder}/{clusters_subfolder}"
+    return clusters_folder_path
+
+
+def get_matched_clusters_folder(json_config):
+    """Get the matched_clusters folder path from JSON config."""
+    if isinstance(json_config, (str, Path)):
+        with open(json_config, 'r') as f:
+            j = json.load(f)
+    else:
+        j = json_config
+    
+    # Get matched_clusters_folder from JSON
+    if 'matched_clusters_folder' in j and j['matched_clusters_folder']:
+        return j['matched_clusters_folder']
+    
+    # Auto-generate from clusters_folder
+    clusters_folder = get_clusters_folder(json_config)
+    # Replace the last part: replace '_clusters_' with '_matched_clusters_'
+    # Works for both "prefix_clusters_conditions" and "clusters_conditions"
+    if '_clusters_' in clusters_folder:
+        matched_folder = clusters_folder.replace('_clusters_', '_matched_clusters_')
+    else:
+        # Fallback for edge cases
+        matched_folder = clusters_folder.replace('clusters', 'matched_clusters')
+    return matched_folder
+
+
+def get_images_folder(json_config):
+    """
+    Compose images folder name from JSON configuration.
+    Mirrors get_clusters_folder but for images output.
+    
+    Args:
+        json_config: Dict with clustering parameters or path to JSON file
+        
+    Returns:
+        str: Full path to images folder
+    """
+    # Load JSON if path provided
+    if isinstance(json_config, (str, Path)):
+        with open(json_config, 'r') as f:
+            j = json.load(f)
+    else:
+        j = json_config
+    
+    # Extract parameters with defaults matching C++ code
+    # Priority: products_prefix > clusters_folder_prefix (legacy)
+    cluster_prefix = j.get("products_prefix", j.get("clusters_folder_prefix", "clusters"))
+    tick_limit = j.get("tick_limit", 0)
+    channel_limit = j.get("channel_limit", 0)
+    min_tps_to_cluster = j.get("min_tps_to_cluster", 0)
+    tot_cut = j.get("tot_cut", 0)
+    energy_cut = float(j.get("energy_cut", 0.0))
+    
+    # Auto-generate base folder from main_folder or signal_folder
+    outfolder = j.get("clusters_folder", "")
+    if not outfolder:
+        # Priority: main_folder > signal_folder > tpstream_folder (legacy fallback)
+        if "main_folder" in j and j["main_folder"]:
+            outfolder = j["main_folder"]
+        elif "signal_folder" in j and j["signal_folder"]:
+            outfolder = j["signal_folder"]
+        else:
+            outfolder = j.get("tpstream_folder", ".")
+        if outfolder.endswith('/'):
+            outfolder = outfolder[:-1]
+    else:
+        outfolder = outfolder.rstrip('/')
+    
+    def sanitize(value):
+        """
+        Sanitize numeric value for filesystem.
+        Keeps at most 1 digit after decimal, replaces '.' with 'p'
+        Matches C++ logic: std::to_string() then sanitize
+        
+        IMPORTANT: C++ std::to_string always includes decimals for floats,
+        so we must match that behavior. E.g., 2.0 -> "2p0" not "2"
+        """
+        # Convert to string (for floats, Python shows minimal representation)
+        # but we need to match C++ which always shows decimal for float types
+        if isinstance(value, float):
+            # Format with at least 1 decimal place to match C++ std::to_string behavior
+            s = f"{value:.6f}"  # C++ typically gives 6 decimals
+        else:
+            s = str(value)
+        
+        # Keep at most one digit after decimal point
+        if '.' in s:
+            parts = s.split('.')
+            if len(parts[1]) > 1:
+                s = f"{parts[0]}.{parts[1][0]}"
+        
+        # Replace '.' with 'p' for filesystem safety
+        s = s.replace('.', 'p')
+        return s
+    
+    # Build subfolder name matching C++ format
+    # Pattern: prefix_cluster_images_conditions
+    if cluster_prefix:
+        images_subfolder = (
+            f"{cluster_prefix}_cluster_images"
+            f"_tick{sanitize(tick_limit)}"
+            f"_ch{sanitize(channel_limit)}"
+            f"_min{sanitize(min_tps_to_cluster)}"
+            f"_tot{sanitize(tot_cut)}"
+            f"_e{sanitize(energy_cut)}"
+        )
+    else:
+        images_subfolder = (
+            f"cluster_images"
+            f"_tick{sanitize(tick_limit)}"
+            f"_ch{sanitize(channel_limit)}"
+            f"_min{sanitize(min_tps_to_cluster)}"
+            f"_tot{sanitize(tot_cut)}"
+            f"_e{sanitize(energy_cut)}"
+        )
+    
+    images_folder_path = f"{outfolder}/{images_subfolder}"
+    return images_folder_path
+
+
+def _polygon_area(vertices):
+    """Compute polygon area via Shoelace formula."""
+    area = 0.0
+    n = len(vertices)
+    for i in range(n):
+        x1, y1 = vertices[i]
+        x2, y2 = vertices[(i + 1) % n]
+        area += x1 * y2 - x2 * y1
+    return abs(area) * 0.5
+
+
+def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_integral, threshold_adc, frac=0.5, _depth=0):
+    """
+    Calculate pentagon parameters mirroring Display.cpp behaviour.
+    
+    CORRECT LOGIC:
+    1. Subtract threshold*samples_over_threshold from adc_integral to get residual area
+    2. Place vertices at midpoints: between (start, peak) and (peak, end)
+    3. Find vertex heights that minimize difference with residual area
+    
+    Returns: (time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, valid)
+    """
+    if time_end <= time_start:
+        return (0, 0, 0, 0, 0, False)
+
+    threshold = threshold_adc
+    adc_peak = max(float(adc_peak), 0.0)
+    time_start = float(time_start)
+    time_peak = float(time_peak)
+    time_end = float(time_end)
+
+    # Clamp peak into waveform window
+    if time_peak < time_start:
+        time_peak = time_start
+    if time_peak > time_end:
+        time_peak = time_end
+
+    # Calculate residual area above threshold
+    samples_over_threshold = time_end - time_start
+    threshold_area = threshold * samples_over_threshold
+    residual_area = adc_integral - threshold_area
+    
+    # If residual is negative or zero, degenerate to threshold
+    if residual_area <= 0:
+        t1 = (time_start + time_peak) / 2.0
+        t2 = (time_peak + time_end) / 2.0
+        return (int(round(t1)), int(round(t2)), float(threshold), float(threshold), threshold, True)
+    
+    # Vertex time positions at midpoints
+    t1 = (time_start + time_peak) / 2.0
+    t2 = (time_peak + time_end) / 2.0
+    
+    # Pentagon vertices (above threshold baseline):
+    # (time_start, 0), (t1, h1), (time_peak, peak_height), (t2, h2), (time_end, 0)
+    # where heights are relative to threshold
+    peak_height_above_threshold = adc_peak - threshold
+    
+    # Scan for best vertex heights
+    best_diff = float('inf')
+    best_h1 = 0.0
+    best_h2 = 0.0
+    
+    n_samples = 20  # number of candidate heights to try
+    for i in range(n_samples + 1):
+        frac_h = i / n_samples
+        h1 = frac_h * peak_height_above_threshold
+        
+        for j in range(n_samples + 1):
+            frac_h2 = j / n_samples
+            h2 = frac_h2 * peak_height_above_threshold
+            
+            # Calculate pentagon area (above threshold baseline)
+            vertices = [
+                (time_start, 0.0),
+                (t1, h1),
+                (time_peak, peak_height_above_threshold),
+                (t2, h2),
+                (time_end, 0.0)
+            ]
+            
+            area = _polygon_area(vertices)
+            diff = abs(area - residual_area)
+            
+            if diff < best_diff:
+                best_diff = diff
+                best_h1 = h1
+                best_h2 = h2
+    
+    # Convert heights back to absolute values (add threshold)
+    return (
+        int(round(t1)),
+        int(round(t2)),
+        float(threshold + best_h1),
+        float(threshold + best_h2),
+        threshold,
+        True
+    )
+
+
+
+def draw_cluster_to_array(channels, times, adc_integrals, adc_peaks, sot_values, stopeak_values,
+                          plane_threshold, img_width=32, img_height=128):
+    """
+    Draw cluster to numpy array with actual ADC values (NOT normalized)
+    
+    - X axis: Channel (consecutive, no artificial spacing)
+    - Y axis: Time (consecutive ticks)
+    - Pixel values: Raw ADC intensity (physical units, NOT normalized to [0,1])
+    - Pentagon interpolation for ADC values over time
+    - Padding added around cluster if smaller than image size
+    - Image size: 16 (channels) x 128 (time ticks) to match typical cluster topology
+    
+    IMPORTANT: Pixel values represent actual ADC counts and have physical meaning!
+    
+    Args:
+        adc_peaks: Actual ADC peak values from detector data (NOT estimated)
+        plane_threshold: The ADC threshold for this plane (60 for X, 70 for U/V) - the plateau baseline
+    """
+    if len(channels) == 0:
+        return np.zeros((img_height, img_width), dtype=np.float32)
+    
+    channels = np.array(channels, dtype=np.int32)
+    times = np.array(times, dtype=np.float64)
+    adc_integrals = np.array(adc_integrals, dtype=np.float64)
+    adc_peaks = np.array(adc_peaks, dtype=np.float64)  # Use actual peaks from data
+    sot_values = np.array(sot_values, dtype=np.int32) if len(sot_values) > 0 else np.ones(len(times), dtype=np.int32) * 10
+    stopeak_values = np.array(stopeak_values, dtype=np.int32) if len(stopeak_values) > 0 else (sot_values // 2)
+    
+    # Get actual bounds (no artificial scaling)
+    ch_min, ch_max = channels.min(), channels.max()
+    time_min = times.min()
+    time_ends = times + sot_values
+    time_max = time_ends.max()
+    
+    # Calculate actual cluster size in detector units
+    n_channels_actual = ch_max - ch_min + 1
+    n_ticks_actual = int(time_max - time_min + 1)
+    
+    # Map channels to consecutive indices (0, 1, 2, ...)
+    unique_channels = np.sort(np.unique(channels))
+    ch_to_idx = {ch: idx for idx, ch in enumerate(unique_channels)}
+    n_channels = len(unique_channels)
+    
+    # Calculate padding to center the cluster in the image
+    pad_x = max(0, (img_width - n_channels) // 2)
+    pad_y = max(0, (img_height - n_ticks_actual) // 2)
+    
+    # Create empty image (Y=time, X=channel like in display.cpp)
+    img = np.zeros((img_height, img_width), dtype=np.float32)
+    
+    # Draw each TP
+    for i in range(len(channels)):
+        ch = channels[i]
+        ch_idx = ch_to_idx[ch]
+        time_start = times[i]
+        sot = sot_values[i]
+        time_end = time_start + sot
+        stopeak = stopeak_values[i]
+        time_peak = time_start + stopeak
+        adc_peak = adc_peaks[i]  # Use actual peak from detector data!
+        adc_integral = adc_integrals[i]
+        
+        # Calculate pentagon parameters first
+        params = calculate_pentagon_params(time_start, time_peak, time_end, 
+                                           adc_peak, adc_integral, plane_threshold)
+        if not params[5]:  # Check valid flag
+            continue
+        
+        time_int_rise, time_int_fall, h_int_rise, h_int_fall, threshold, _ = params
+        
+        # Fill pentagon with padding offsets - match C++ Display.cpp logic exactly
+        # Pentagon goes from threshold at edges, NOT from 0
+        t_min = int(time_start)
+        t_max = int(time_end)
+        
+        for t in range(t_min, t_max):
+            # Calculate position with padding
+            x = ch_idx + pad_x
+            y = int(t - time_min) + pad_y
+            
+            if x < 0 or x >= img_width or y < 0 or y >= img_height:
+                continue
+            
+            # Pentagon interpolation matching C++ Display.cpp fillHistogramPentagon
+            # Pentagon starts and ends at threshold, NOT at 0
+            intensity = threshold
+            
+            if t < time_int_rise:
+                # Segment 1: rising from threshold to h_int_rise
+                span = time_int_rise - time_start
+                if span > 0:
+                    frac = (t - time_start) / span
+                    intensity = threshold + frac * (h_int_rise - threshold)
+                else:
+                    intensity = h_int_rise
+            elif t < time_peak:
+                # Segment 2: rising from h_int_rise to peak
+                span = time_peak - time_int_rise
+                if span > 0:
+                    frac = (t - time_int_rise) / span
+                    intensity = h_int_rise + frac * (adc_peak - h_int_rise)
+                else:
+                    intensity = adc_peak
+            elif t == time_peak:
+                # Peak
+                intensity = adc_peak
+            elif t <= time_int_fall:
+                # Segment 3: falling from peak to h_int_fall
+                span = time_int_fall - time_peak
+                if span > 0:
+                    frac = (t - time_peak) / span
+                    intensity = adc_peak - frac * (adc_peak - h_int_fall)
+                else:
+                    intensity = h_int_fall
+            else:
+                # Segment 4: falling from h_int_fall to threshold
+                span = time_end - time_int_fall
+                if span > 0:
+                    frac = (t - time_int_fall) / span
+                    intensity = h_int_fall - frac * (h_int_fall - threshold)
+                else:
+                    intensity = threshold
+            
+            # Use max() like C++ to keep highest value per pixel
+            img[y, x] = max(img[y, x], intensity)
+    
+    return img
+    
+    # Keep raw ADC values - DO NOT normalize!
+    # The pixel values represent actual ADC intensities and have physical meaning
+    return img
+
+def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
+    """
+    Extract all clusters from a single ROOT file, organized by plane.
+    
+    Returns:
+        dict: {plane_letter: {'images': [...], 'metadata': [...]}}
+    """
+    cluster_file = Path(cluster_file)
+    
+    # Load display parameters
+    display_params = load_display_parameters(repo_root)
+    
+    # Load conversion factors
+    conversion_factors = load_conversion_factors(repo_root)
+    
+    threshold_map = {
+        'U': display_params['threshold_adc_u'],
+        'V': display_params['threshold_adc_v'],
+        'X': display_params['threshold_adc_x']
+    }
+    
+    result = {}
+    
+    # Open ROOT file
+    try:
+        file = uproot.open(cluster_file)
+    except Exception as e:
+        if verbose:
+            print(f"  Error opening file: {e}")
+        return result
+    
+    # Access clusters directory
+    try:
+        clusters_dir = file['clusters']
+    except KeyError:
+        if verbose:
+            print(f"  No 'clusters' directory found")
+        return result
+    
+    # Find cluster trees
+    tree_names = [k for k in clusters_dir.keys() if 'clusters_tree_' in k]
+    if not tree_names:
+        if verbose:
+            print(f"  No cluster trees found")
+        return result
+    
+    plane_map = {'U': 0, 'V': 1, 'X': 2}
+    
+    # FIRST PASS: Process X plane to build match_id → (apa_id, x_sign) mapping
+    match_id_to_geometry = {}
+    
+    for tree_name in tree_names:
+        plane_letter = tree_name.split('_')[-1].split(';')[0]
+        
+        if plane_letter == 'X':
+            tree = clusters_dir[tree_name]
+            branches = ['match_id', 'tp_detector', 'tp_detector_channel']
+            data = tree.arrays(branches, library='np')
+            
+            for i in range(len(data['match_id'])):
+                match_id = int(data['match_id'][i])
+                if match_id == -1:  # Skip unmatched clusters
+                    continue
+                    
+                channels = data['tp_detector_channel'][i]
+                detectors = data['tp_detector'][i]
+                
+                if len(channels) == 0:
+                    continue
+                
+                apa_id = int(detectors[0])
+                is_top_apa, x_sign = get_apa_geometry_info(channels, apa_id, 'X')
+                
+                # Store geometry info for this match_id
+                match_id_to_geometry[match_id] = (apa_id, is_top_apa, x_sign)
+            break  # Only need to process X plane once
+    
+    # SECOND PASS: Process all planes using geometry from X plane for U/V
+    for tree_name in tree_names:
+        # Extract plane letter (handle ROOT versioning like 'clusters_tree_U;1')
+        plane_letter = tree_name.split('_')[-1].split(';')[0]  # Get 'U' from 'U;1'
+        plane_number = plane_map.get(plane_letter, 0)
+        plane_threshold = threshold_map.get(plane_letter, 60.0)
+        
+        tree = clusters_dir[tree_name]
+        n_entries = tree.num_entries
+        
+        if n_entries == 0:
+            continue
+        
+        # Read required branches
+        branches = [
+            'event',
+            'tp_detector', 'tp_detector_channel', 'tp_time_start', 'tp_adc_integral',
+            'tp_samples_over_threshold', 'tp_samples_to_peak', 'tp_adc_peak',
+            'marley_tp_fraction', 'is_main_cluster', 'match_id',
+            'true_pos_x', 'true_pos_y', 'true_pos_z',
+            'true_dir_x', 'true_dir_y', 'true_dir_z',
+            'true_mom_x', 'true_mom_y', 'true_mom_z',
+            'true_neutrino_energy', 'true_particle_energy', 'is_es_interaction'
+        ]
+        data = tree.arrays(branches, library='np')
+        
+        images = []
+        metadata = []
+        
+        for i in range(n_entries):
+            try:
+                # Get TP arrays
+                channels = data['tp_detector_channel'][i]
+                detectors = data['tp_detector'][i]
+                times = data['tp_time_start'][i] / 32
+                adc_integrals = data['tp_adc_integral'][i]
+                adc_peaks = data['tp_adc_peak'][i]
+                sot_values = data['tp_samples_over_threshold'][i]
+                stopeak_values = data['tp_samples_to_peak'][i]
+                
+                if len(channels) == 0:
+                    continue
+                
+                # Get match_id first
+                match_id = int(data['match_id'][i])
+                
+                # Get APA ID from detector
+                apa_id = int(detectors[0])  # All TPs in cluster should be from same APA
+                
+                # Determine APA geometry for flipping
+                if plane_letter == 'X':
+                    # For X plane, determine geometry from collection channels
+                    is_top_apa, x_sign = get_apa_geometry_info(channels, apa_id, plane_letter)
+                else:
+                    # For U/V planes, use geometry from matched X plane cluster
+                    if match_id != -1 and match_id in match_id_to_geometry:
+                        _, is_top_apa, x_sign = match_id_to_geometry[match_id]
+                    else:
+                        # Fallback for unmatched clusters: determine from APA only
+                        is_top_apa = (apa_id % 2 == 0)
+                        x_sign = 1  # Default to positive side if no match
+                        if verbose:
+                            print(f"  Warning: Cluster {i} on plane {plane_letter} has no match (match_id={match_id}), using default geometry")
+                
+                # Extract metadata
+                is_marley = data['marley_tp_fraction'][i] > 0.5
+                is_main_track = bool(data['is_main_cluster'][i])
+                match_id = int(data['match_id'][i])  # Links clusters across U, V, X planes (-1 if unmatched)
+                
+                true_pos = np.array([
+                    data['true_pos_x'][i],
+                    data['true_pos_y'][i],
+                    data['true_pos_z'][i]
+                ], dtype=np.float32)
+                
+                true_particle_mom = np.array([
+                    data['true_mom_x'][i],
+                    data['true_mom_y'][i],
+                    data['true_mom_z'][i]
+                ], dtype=np.float32)
+                
+                true_nu_energy = float(data['true_neutrino_energy'][i])
+                true_particle_energy = float(data['true_particle_energy'][i])
+                
+                # Read boolean directly
+                is_es_interaction = 1.0 if bool(data['is_es_interaction'][i]) else 0.0
+                
+                # Generate image
+                img_array = draw_cluster_to_array(
+                    channels, times, adc_integrals, adc_peaks,
+                    sot_values, stopeak_values,
+                    plane_threshold=plane_threshold,
+                    img_width=32, img_height=128
+                )
+                
+                # Apply APA geometry-based flipping
+                img_array = apply_apa_flipping(img_array, plane_letter, is_top_apa, x_sign)
+                
+                # Calculate cluster energy from ADC sum (instead of using MC truth)
+                # Use plane-specific conversion factor (ADC per MeV)
+                total_adc = float(np.sum(img_array))
+                conversion_factor = conversion_factors['adc_to_mev_collection'] if plane_letter == 'X' else conversion_factors['adc_to_mev_induction']
+                cluster_energy_mev = total_adc / conversion_factor  # MeV
+                
+                # Prepare metadata
+                # Note: cluster_energy is now ADC-derived, not MC truth neutrino energy
+                metadata_array = np.array([
+                    int(data['event'][i]),
+                    int(is_marley),
+                    int(is_main_track),
+                    is_es_interaction,
+                    true_pos[0], true_pos[1], true_pos[2],
+                    true_particle_mom[0], true_particle_mom[1], true_particle_mom[2],
+                    np.float32(cluster_energy_mev),
+                    np.float32(true_particle_energy),
+                    plane_number,
+                    match_id
+                ], dtype=np.float32)
+                
+                images.append(img_array)
+                metadata.append(metadata_array)
+                
+            except Exception as e:
+                if verbose:
+                    print(f"  Warning: Failed cluster {i} on plane {plane_letter}: {e}")
+                continue
+        
+        if len(images) > 0:
+            result[plane_letter] = {
+                'images': images,
+                'metadata': metadata
+            }
+            if verbose:
+                print(f"    Plane {plane_letter}: {len(images)} clusters")
+    
+    return result
+
+def generate_images(cluster_file, output_dir, draw_mode='pentagon', repo_root=None, verbose=False):
+    """
+    Generate images for all clusters in a ROOT file and save one NPZ per plane.
+    
+    Args:
+        cluster_file: Path to ROOT file with clusters
+        output_dir: Directory to save NPZ files
+        draw_mode: Drawing mode for cluster visualization (default: 'pentagon')
+        repo_root: Optional repository root path
+        verbose: Enable verbose output (default: False)
+        
+    Returns:
+        dict: Statistics about generated arrays per plane {plane: count}
+    """
+    
+    cluster_file = Path(cluster_file)
+    output_dir = Path(output_dir)
+    output_dir.mkdir(exist_ok=True, parents=True)
+    
+    # Extract base name without path and _clusters.root suffix
+    input_basename = cluster_file.stem.replace('_clusters', '')
+    
+    # Load display parameters from parameters/display.dat
+    display_params = load_display_parameters(repo_root)
+    
+    # Load conversion factors from parameters/conversion.dat
+    conversion_factors = load_conversion_factors(repo_root)
+    
+    # Thresholds per plane (U, V, X/Collection)
+    threshold_map = {
+        'U': display_params['threshold_adc_u'],
+        'V': display_params['threshold_adc_v'],
+        'X': display_params['threshold_adc_x']
+    }
+    
+    if verbose:
+        print(f"[generate_cluster_arrays.py]   Processing: {cluster_file.name}")
+        print(f"[generate_cluster_arrays.py]   Thresholds: U={threshold_map['U']}, V={threshold_map['V']}, X={threshold_map['X']}")
+    
+    # Open ROOT file
+    try:
+        file = uproot.open(cluster_file)
+    except Exception as e:
+        print(f"[generate_cluster_arrays.py]   Error opening file: {e}")
+        return {}
+    
+    # Get clusters directory
+    if 'clusters' not in file:
+        print(f"[generate_cluster_arrays.py]   No 'clusters' directory found")
+        return {}
+    
+    clusters_dir = file['clusters']
+    
+    # Find all cluster trees (one per plane: U, V, X)
+    tree_names = [k.split(';')[0] for k in clusters_dir.keys() if 'clusters_tree_' in k]
+    
+    if not tree_names:
+        print(f"[generate_cluster_arrays.py]   No cluster trees found")
+        return {}
+
+    if verbose:
+        print(f"[generate_cluster_arrays.py]   Found {len(tree_names)} planes with clusters")
+
+    plane_stats = {}  # Track generated clusters per plane
+    plane_map = {'U': 0, 'V': 1, 'X': 2}  # Plane names to numbers
+    
+    # FIRST PASS: Process X plane to build match_id → (apa_id, x_sign) mapping
+    match_id_to_geometry = {}
+    
+    for tree_name in tree_names:
+        plane_letter = tree_name.split('_')[-1]
+        
+        if plane_letter == 'X':
+            tree = clusters_dir[tree_name]
+            branches = ['match_id', 'tp_detector', 'tp_detector_channel']
+            data = tree.arrays(branches, library='np')
+            
+            for i in range(len(data['match_id'])):
+                match_id = int(data['match_id'][i])
+                if match_id == -1:  # Skip unmatched clusters
+                    continue
+                    
+                channels = data['tp_detector_channel'][i]
+                detectors = data['tp_detector'][i]
+                
+                if len(channels) == 0:
+                    continue
+                
+                apa_id = int(detectors[0])
+                is_top_apa, x_sign = get_apa_geometry_info(channels, apa_id, 'X')
+                
+                # Store geometry info for this match_id
+                match_id_to_geometry[match_id] = (apa_id, is_top_apa, x_sign)
+            break  # Only need to process X plane once
+    
+    # SECOND PASS: Process all planes using geometry from X plane for U/V
+    for tree_name in tree_names:
+        # Extract plane from tree name (e.g., clusters_tree_U -> U)
+        plane_letter = tree_name.split('_')[-1]
+        plane_number = plane_map.get(plane_letter, 0)
+        
+        tree = clusters_dir[tree_name]
+        n_entries = tree.num_entries
+        
+        if n_entries == 0:
+            continue
+        
+        if verbose:
+            print(f"[generate_cluster_arrays.py]   Processing plane {plane_letter}: {n_entries} clusters...")
+        
+        # Get threshold for this plane
+        plane_threshold = threshold_map.get(plane_letter, 60.0)
+        if verbose:
+            print(f"[generate_cluster_arrays.py]     Using threshold = {plane_threshold} ADC for plane {plane_letter}")
+        
+        # Load all data at once for efficiency
+        branches = [
+            'event',
+            'tp_detector', 'tp_detector_channel', 'tp_time_start', 'tp_adc_integral',
+            'tp_samples_over_threshold', 'tp_samples_to_peak',
+            'tp_adc_peak',  # Use actual ADC peak from data!
+            # Cluster-level metadata
+            'marley_tp_fraction', 'is_main_cluster', 'match_id',
+            'true_pos_x', 'true_pos_y', 'true_pos_z',
+            'true_dir_x', 'true_dir_y', 'true_dir_z',  # Particle direction (normalized)
+            'true_mom_x', 'true_mom_y', 'true_mom_z',  # Particle momentum [GeV/c]
+            'true_neutrino_energy', 'true_particle_energy',
+            'is_es_interaction'  # Interaction type: boolean (True=ES, False=CC)
+        ]
+        data = tree.arrays(branches, library='np')
+        
+        # Collect all images and metadata for this plane
+        plane_images = []
+        plane_metadata = []
+        n_generated_plane = 0  # Track for this plane
+        
+        for i in range(n_entries):
+            try:
+                # Get TP arrays for this cluster
+                channels = data['tp_detector_channel'][i]
+                detectors = data['tp_detector'][i]
+                times = data['tp_time_start'][i] / 32  # Convert to TPC ticks
+                adc_integrals = data['tp_adc_integral'][i]
+                adc_peaks = data['tp_adc_peak'][i]  # Use actual peak values from data
+                sot_values = data['tp_samples_over_threshold'][i]
+                stopeak_values = data['tp_samples_to_peak'][i]
+                
+                if len(channels) == 0:
+                    continue
+                
+                # Get match_id first
+                match_id = int(data['match_id'][i])
+                
+                # Get APA ID from detector
+                apa_id = int(detectors[0])  # All TPs in cluster should be from same APA
+                
+                # Determine APA geometry for flipping
+                if plane_letter == 'X':
+                    # For X plane, determine geometry from collection channels
+                    is_top_apa, x_sign = get_apa_geometry_info(channels, apa_id, plane_letter)
+                else:
+                    # For U/V planes, use geometry from matched X plane cluster
+                    if match_id != -1 and match_id in match_id_to_geometry:
+                        _, is_top_apa, x_sign = match_id_to_geometry[match_id]
+                    else:
+                        # Fallback for unmatched clusters: determine from APA only
+                        is_top_apa = (apa_id % 2 == 0)
+                        x_sign = 1  # Default to positive side if no match
+                        if verbose:
+                            print(f"  Warning: Cluster {i} on plane {plane_letter} has no match (match_id={match_id}), using default geometry")
+                
+                # Extract cluster metadata
+                is_marley = data['marley_tp_fraction'][i] > 0.5  # Marley if >50% of TPs are from Marley
+                is_main_track = bool(data['is_main_cluster'][i])
+                match_id = int(data['match_id'][i])  # Links clusters across U, V, X planes (-1 if unmatched)
+                
+                # True position (3D)
+                true_pos = np.array([
+                    data['true_pos_x'][i],
+                    data['true_pos_y'][i],
+                    data['true_pos_z'][i]
+                ], dtype=np.float32)
+                
+                # Particle direction (3D, normalized)
+                true_dir = np.array([
+                    data['true_dir_x'][i],
+                    data['true_dir_y'][i],
+                    data['true_dir_z'][i]
+                ], dtype=np.float32)
+                
+                # Particle momentum (3D) [GeV/c]
+                true_particle_mom = np.array([
+                    data['true_mom_x'][i],
+                    data['true_mom_y'][i],
+                    data['true_mom_z'][i]
+                ], dtype=np.float32)
+                
+                # Energy information
+                true_nu_energy = float(data['true_neutrino_energy'][i])
+                true_particle_energy = float(data['true_particle_energy'][i])
+                
+                # Interaction type: ES (1) or CC (0)
+                is_es_interaction = 1.0 if bool(data['is_es_interaction'][i]) else 0.0
+                
+                # Generate 16x128 numpy array with RAW ADC values (not normalized)
+                # X=channel (16 pixels), Y=time (128 pixels)
+                # Pixel values = actual ADC intensity with physical meaning
+                # Use plane-specific threshold (60 for X, 70 for U/V)
+                img_array = draw_cluster_to_array(
+                    channels, times, adc_integrals, adc_peaks,
+                    sot_values, stopeak_values,
+                    plane_threshold=plane_threshold,
+                    img_width=32, img_height=128
+                )
+                
+                # Apply APA geometry-based flipping
+                img_array = apply_apa_flipping(img_array, plane_letter, is_top_apa, x_sign)
+                
+                # Calculate cluster energy from ADC sum (instead of using MC truth)
+                # Use plane-specific conversion factor (ADC per MeV)
+                total_adc = float(np.sum(img_array))
+                conversion_factor = conversion_factors['adc_to_mev_collection'] if plane_letter == 'X' else conversion_factors['adc_to_mev_induction']
+                cluster_energy_mev = total_adc / conversion_factor  # MeV
+                
+                # Prepare metadata as compact array
+                # Format: [event, is_marley, is_main_track, is_es_interaction, pos(3),
+                #          particle_mom(3), cluster_energy, particle_energy, plane_id, match_id]
+                # All stored as float32 for efficiency (0.0/1.0 for booleans)
+                # Note: cluster_energy is now ADC-derived, not MC truth neutrino energy
+                plane_id = {'U': 0, 'V': 1, 'X': 2}.get(plane_letter, 0)
+                metadata_array = np.array([
+                    int(data['event'][i]),
+                    int(is_marley),
+                    int(is_main_track),
+                    is_es_interaction,
+                    true_pos[0], true_pos[1], true_pos[2],
+                    true_particle_mom[0], true_particle_mom[1], true_particle_mom[2],
+                    np.float32(cluster_energy_mev),
+                    np.float32(true_particle_energy),
+                    plane_id,
+                    match_id
+                ], dtype=np.float32)                # Add to plane collection
+                plane_images.append(img_array)
+                plane_metadata.append(metadata_array)
+                n_generated_plane += 1
+                
+                # Progress indicator
+                if verbose:
+                    if (n_generated_plane % 100) == 0 or (i + 1) == n_entries:
+                        print(f"[generate_cluster_arrays.py]     Generated {n_generated_plane} arrays...", end='\r')
+                    
+            except Exception as e:
+                print(f"\n[generate_cluster_arrays.py]   Warning: Failed cluster {i} on plane {plane_letter}: {e}")
+                continue
+        
+        # Save all clusters for this plane to a single file
+        if len(plane_images) > 0:
+            # Create plane-specific subfolder
+            plane_output_dir = output_dir / plane_letter
+            plane_output_dir.mkdir(exist_ok=True, parents=True)
+            
+            output_file = plane_output_dir / f"{input_basename}_plane{plane_letter}.npz"
+            np.savez(output_file, 
+                    images=np.array(plane_images, dtype=np.float32),
+                    metadata=np.array(plane_metadata, dtype=np.float32))
+            if verbose:
+                print(f"\n[generate_cluster_arrays.py]     Saved {len(plane_images)} clusters to {plane_letter}/{output_file.name}")
+        
+        plane_stats[plane_letter] = n_generated_plane
+
+    if verbose:
+        total_generated = sum(plane_stats.values())
+        print(f"\n[generate_cluster_arrays.py]   Successfully generated {total_generated} arrays")
+    return plane_stats
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Generate cluster numpy arrays (16x128) for NN input with 1:1 file mapping')
+    parser.add_argument('cluster_files', nargs='*', help='Cluster ROOT files (or use --json)')
+    parser.add_argument('--output-dir', help='Output directory for numpy arrays')
+    parser.add_argument('--draw-mode', default='pentagon', 
+                       choices=['pentagon', 'triangle', 'rectangle'],
+                       help='Drawing mode (kept for compatibility, not used)')
+    parser.add_argument('--root-dir', help='Repository root directory')
+    parser.add_argument('--json', '-j', help='JSON config file (auto-detects clusters folder)')
+    parser.add_argument('--skip-files', type=int, help='Skip first N cluster files (overrides JSON)')
+    parser.add_argument('--max-files', type=int, help='Process at most N cluster files (overrides JSON)')
+    parser.add_argument('-f', '--override', action='store_true', help='Force reprocessing even if output files already exist')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
+    
+    args = parser.parse_args()
+    
+    # Determine output directory
+    if args.json:
+        # Use JSON to determine clusters folder and images folder
+        json_path = Path(args.json)
+        if not json_path.exists():
+            print(f"[generate_cluster_arrays.py] Error: JSON file not found: {json_path}")
+            sys.exit(1)
+        
+        # Load JSON configuration
+        with open(json_path, 'r') as f:
+            json_config = json.load(f)
+        
+        # Determine clusters folder and file pattern (prefer matched_clusters if available)
+        matched_clusters_folder = get_matched_clusters_folder(json_config)
+        clusters_folder = None
+        file_pattern = "*_clusters.root"
+        
+        if matched_clusters_folder and Path(matched_clusters_folder).exists():
+            matched_files = list(Path(matched_clusters_folder).glob("*_matched.root"))
+            if matched_files:
+                print(f"[generate_cluster_arrays.py] Using matched clusters folder: {matched_clusters_folder}")
+                clusters_folder = matched_clusters_folder
+                file_pattern = "*_matched.root"
+            else:
+                clusters_folder = get_clusters_folder(json_config)
+        else:
+            clusters_folder = get_clusters_folder(json_config)
+        
+        images_folder = get_images_folder(json_config)
+        
+        # Determine output directory: CLI override (--output-dir) -> JSON field -> auto-generated images_folder
+        if args.output_dir:
+            print("Using output folder from CLI argument")
+            output_dir = args.output_dir
+        elif json_config.get('cluster_images_folder'):
+            print("Using output folder from JSON config")
+            output_dir = json_config['cluster_images_folder']
+        else:
+            print("Using auto-generated images folder as output directory")
+            output_dir = images_folder
+        
+        # Find cluster files in the computed folder using tpstream-based discovery
+        skip_files = args.skip_files if args.skip_files is not None else json_config.get('skip_files', 0)
+        max_files = args.max_files if args.max_files is not None else json_config.get('max_files', None)
+        
+        cluster_files = find_files_by_tpstream_basenames(json_config, clusters_folder, file_pattern, skip_files, max_files)
+        
+        if not cluster_files:
+            print(f"[generate_cluster_arrays.py] Error: No {file_pattern} files found in {clusters_folder}")
+            sys.exit(1)
+        
+        cluster_files = [str(f) for f in cluster_files]
+        
+        print(f"[generate_cluster_arrays.py] Using JSON config: {json_path}")
+        print(f"[generate_cluster_arrays.py] Computed clusters folder: {clusters_folder}")
+        # print(f"[generate_cluster_arrays.py] Computed images folder: {images_folder}")
+        print(f"[generate_cluster_arrays.py] Output directory: {output_dir}")
+        print(f"[generate_cluster_arrays.py] Processing {len(cluster_files)} cluster file(s)")
+        
+    else:
+        # Use command-line arguments
+        if not args.cluster_files:
+            print("[generate_cluster_arrays.py] Error: Must provide cluster_files or --json")
+            parser.print_help()
+            sys.exit(1)
+        
+        if not args.output_dir:
+            print("[generate_cluster_arrays.py] Error: --output-dir required when not using --json")
+            parser.print_help()
+            sys.exit(1)
+        
+        cluster_files = args.cluster_files
+        output_dir = args.output_dir
+        
+        # Apply skip and max filters from CLI
+        skip_files = args.skip_files if args.skip_files is not None else 0
+        max_files = args.max_files
+        
+        if skip_files > 0:
+            cluster_files = cluster_files[skip_files:]
+            print(f"[generate_cluster_arrays.py] Skipping first {skip_files} files")
+        
+        if max_files is not None:
+            cluster_files = cluster_files[:max_files]
+            print(f"[generate_cluster_arrays.py] Processing at most {max_files} files")
+    
+    # Ensure output directory exists
+    output_path = Path(output_dir)
+    output_path.mkdir(exist_ok=True, parents=True)
+    
+    # Check for existing files (but don't delete them yet)
+    if not args.override:
+        # Check in plane subfolders (X, U, V)
+        existing_files = []
+        for plane in ['X', 'U', 'V']:
+            plane_dir = output_path / plane
+            if plane_dir.exists():
+                existing_files.extend(list(plane_dir.glob('*_plane*.npz')))
+        
+        if existing_files:
+            print(f"[generate_cluster_arrays.py] Found {len(existing_files)} existing output file(s)")
+            print(f"[generate_cluster_arrays.py] Processing will skip files that already have outputs")
+            print(f"[generate_cluster_arrays.py] Use --override/-f to force reprocessing\n")
+    
+    # Set repo root (optional)
+    repo_root = Path(args.root_dir) if args.root_dir else None
+    
+    # Process files one at a time (1:1 mapping)
+    total_generated = 0
+    plane_totals = {}
+    processed_count = 0
+    skipped_count = 0
+    
+    print(f"\n[generate_cluster_arrays.py] Starting batch processing of {len(cluster_files)} file(s)...")
+    
+    for file_idx, cluster_file in enumerate(cluster_files):
+        cluster_file = Path(cluster_file)
+        input_basename = cluster_file.stem.replace('_clusters', '').replace('_matched', '')
+        
+        # Progress indicator
+        progress_pct = int((file_idx / len(cluster_files)) * 100)
+        print(f"\n[generate_cluster_arrays.py] [{file_idx + 1}/{len(cluster_files)}] ({progress_pct}%) {cluster_file.name}")
+        
+        # Check if output already exists (check in plane subfolders)
+        expected_outputs = []
+        for plane in ['X', 'U', 'V']:
+            plane_dir = output_path / plane
+            if plane_dir.exists():
+                expected_outputs.extend(list(plane_dir.glob(f"{input_basename}_plane*.npz")))
+        
+        output_exists = len(expected_outputs) > 0
+        
+        if output_exists:
+            if args.override:
+                # Override mode: delete existing outputs for THIS file only
+                print(f"[generate_cluster_arrays.py]   Override mode: Deleting {len(expected_outputs)} existing output file(s)")
+                for output_file in expected_outputs:
+                    output_file.unlink()
+            else:
+                # Skip if output exists
+                if args.verbose:
+                    print(f"[generate_cluster_arrays.py]   Skipping (output already exists)")
+                skipped_count += 1
+                continue
+        
+        # Generate images for this file
+        plane_stats = generate_images(
+            cluster_file=cluster_file,
+            output_dir=output_path,
+            draw_mode='pentagon',
+            repo_root=repo_root,
+            verbose=args.verbose
+        )
+        
+        # Update totals
+        for plane, count in plane_stats.items():
+            plane_totals[plane] = plane_totals.get(plane, 0) + count
+            total_generated += count
+        
+        processed_count += 1
+    
+    print(f"\n[generate_cluster_arrays.py] Processing complete:")
+    print(f"[generate_cluster_arrays.py]   Files processed: {processed_count}")
+    if skipped_count > 0:
+        print(f"[generate_cluster_arrays.py]   Files skipped (already exist): {skipped_count}")
+    print(f"[generate_cluster_arrays.py]   Total clusters converted: {total_generated}")
+    if plane_totals:
+        print(f"[generate_cluster_arrays.py]   Per plane: {dict(plane_totals)}")
+    print(f"[generate_cluster_arrays.py] Output directory: {output_dir}")
+

@@ -1,0 +1,210 @@
+MARLEY presence per file (events with MARLEY-labeled TPs after ToT cut) and UNKNOWN totals:
+
+bktr0 (baseline, from earlier run):
+
+bkgCC60: 0/10 (UNKNOWN 0)
+bkgCC909080: 0/10 (UNKNOWN 0)
+bkgES60: 0/10 (UNKNOWN 0)
+bkgES909080: 0/10 (UNKNOWN 0)
+cleanCC60: 10/10
+cleanCC909080: 0/10 (UNKNOWN 240)
+cleanES60: 10/10
+cleanES909080: 1/10 (UNKNOWN 127)
+bktr5:
+
+bkgCC60: 0/10 (UNKNOWN 0)
+bkgCC909080: 0/10 (UNKNOWN 0)
+bkgES60: 0/10 (UNKNOWN 0)
+bkgES909080: 0/10 (UNKNOWN 0)
+cleanCC60: 10/10
+cleanCC909080: 2/10 (UNKNOWN 186)
+cleanES60: 10/10
+cleanES909080: 1/10 (UNKNOWN 127)
+bktr10:
+
+Same as bktr5.
+bktr15:
+
+Same as bktr5.
+Key takeaway:
+
+Increasing backtracker_error_margin from 0 to 5 improved cleanCC909080 from 0/10 to 2/10 MARLEY events and reduced UNKNOWN from 240 to 186. Larger margins (10, 15) did not yield further gains on this dataset. All other files unchanged across margins.
+files produced
+8 PDFs per margin written to:
+/home/virgolaema/dune/online-pointing-utils/data
+Filenames follow input base, e.g.:
+.../bkgCC60_tps_bktr5.pdf, .../bkgCC60_tps_bktr10.pdf, .../bkgCC60_tps_bktr15.pdf
+Same pattern for all 8 inputs.
+next steps
+If you want, I can open the PDFs in the editor for a quick visual scan.
+We can try an intermediate margin (e.g., 7–8) or tweak the association logic to see if cleanCC909080 improves further without inflating UNKNOWN.
+Requirements coverage:
+
+Run backtracking/analyzer for margins 0/5/10/15 and compare MARLEY label presence: Done (analyzer completed for 5/10/15; comparison against 0 reported).
+
+
+
+
+-----
+
+ctions taken
+Built analyze_tps with the new “Backtracking diagnostics: tail composition” page. Build PASS.
+Ran on:
+clean bktr5: example_bktr5_clean.json
+bktr0/10/15: json/analyze_tps/example_bktr{0,10,15}.json
+Produced PDFs in data/, e.g.:
+cleanCC60_tps_bktr{0,5,10,15}_tot0.pdf
+cleanES60_tps_bktr{0,5,10,15}_tot0.pdf
+cleanCC909080_tps_bktr{0,5,10,15}_tot0.pdf
+cleanES909080_tps_bktr{0,5,10,15}_tot0.pdf
+Each report includes: ADC peak pages (coarse+zoomed) with MARLEY overlays, ToT, ADC vs ToT, ADC integral, MARLEY per-plane percentages, MARLEY-only ADC zoom, and the new backtracking tail composition page.
+key findings
+clean 60-sample datasets (cleanCC60, cleanES60):
+
+Many UNKNOWN TPs, almost all outside the union of truth channels (likely noise).
+cleanCC60 bktr5: UNKNOWN total=75018, in-union(ch)=876, not-in-union=74142
+cleanES60 bktr5: UNKNOWN total=74841, in-union(ch)=480, not-in-union=74361
+Sweeping backtracker margin 0 → 15 barely changes this (UNKNOWN totals stay ~74–75k, in-union stays a few hundred).
+Interpretation: tails dominated by noise TPs on channels with no truth occupancy; MARLEY overlays won’t dominate tails here.
+clean 90/90/80 datasets (cleanCC909080, cleanES909080):
+
+Far fewer UNKNOWNs, but most of them fall inside the union of truth channels:
+CC909080 bktr5: UNKNOWN=238, in-union=193
+ES909080 bktr5: UNKNOWN=130, in-union=96
+Sweeping margin 0/10/15 yields similar UNKNOWN and in-union numbers (changes are negligible).
+MARLEY per-plane presence remains low for 909080 (e.g., X=10%, U=10%, V=0 or 10%), consistent with the earlier observation that MARLEY isn’t dominating tails in these runs.
+Interpretation: these UNKNOWNs are on truth-occupied channels but aren’t getting linked. Since widening the time margin doesn’t resolve it, the issue is likely not the simple window size; it points to a timing/units mismatch or a linking condition mismatch.
+Backtracking tail page:
+
+The PDFs include the page and a bar chart for the ADC 99% tail composition. Based on the logs and overall counts, for 60-sample runs the tail composition should skew heavily to UNKNOWN-outside-union; for 909080 runs it should skew to UNKNOWN-inside-union or KNOWN!=MARLEY.
+what this suggests
+Two regimes:
+60-sample: genuine noise dominates the distributions (UNKNOWN out-of-union). MARLEY won’t dominate tails here; normalization overlays (shape-only) could be more informative than raw counts.
+909080: linking misses on truth-occupied channels. Increasing backtracker_error_margin doesn’t help → likely:
+Unit mismatch between TP time and truth time windows (ticks vs samples vs ns).
+Edge-case in isTimeCompatible (window derived from conversion_tdc_to_tpc=32, TPC_sample_length=512 ns) vs actual dataset units.
+Minor mismatch in channel compatibility is less likely since many UNKNOWNs are “in-union,” but worth double-checking.
+next steps
+Quick checks (low-risk, high value):
+
+Add console summary of tail composition counts to accompany the bar chart (MARLEY vs KNOWN!=MARLEY vs UNKNOWN-in-union vs UNKNOWN-out). I can wire this into analyze_tps to print explicit numbers. Want me to add that?
+Add an optional “normalize overlays” flag so MARLEY/global histos can be compared by shape, not count (avoids noise-dominance masking shapes).
+Targeted debugging for 909080:
+
+Dump a small CSV of a sample of UNKNOWN-in-union TPs with:
+event, channel, tp_time, nearest truth_id, truth_start/end, Δt to window edges, plane
+This will immediately reveal if we’re off by a constant factor/offset in time units.
+If a mismatch is confirmed, adjust conversion_tdc_to_tpc or the effective_time_window in backtrack, and re-run a small sample.
+If needed, align with LArSoft online backtracking module time-unit conventions. I can do a quick cross-check and propose exact constants once we confirm Δt patterns.
+
+quality gates
+Build: PASS
+Runs: PASS (all PDFs generated)
+Requirements coverage:
+Build and run with backtracking diagnostics: Done
+Compare across backtracker settings: Done
+Provide interpretation and next steps: Done
+Want me to add the tail-composition console print and the small UNKNOWN-in-union CSV dump next?
+
+
+
+Need to put conditions on the events included in training, like the distance from edges and the time distance from 0.
+
+
+
+NEW GPT 
+
+Kicking off the next round: I’ve rerun the backtracking with the updated tolerances and compared outcomes, then checked the code paths to confirm exactly which knobs are in play.
+
+actions taken
+Ran backtracking with your broadened JSON tolerances (backtracker_error_margin=200, backtracker_channel_tolerance=100).
+Ran another pass with a smaller time window (backtracker_error_margin=150) to gauge sensitivity.
+Verified config parsing and matching logic in backtrack.cpp and cluster_to_root_libs.cpp to ensure the intended tolerances are applied.
+results
+With margin 200 (effective tick tolerance ≈ 201×32 = 6432 ticks, channel tolerance 100):
+
+Event 10: Direct TP↔SimIDE matching within APA/time windows: 35/141 matched (24.82%), skipped 7459 outside APA/time windows.
+Overall printed for event 10: Matched 35/7600 TPs to true particles via SimIDE association.
+Output produced: cleanES60_tps_bktr200.root
+File list: test_files_tps_bktr200.txt
+With margin 150 (effective tick tolerance ≈ 4832 ticks, channel tolerance 100):
+
+Event 10: 27/115 matched (23.48%), skipped 7485 outside APA/time windows.
+Output produced: cleanES60_tps_bktr150.root
+File list: test_files_tps_bktr150.txt
+Diagnostics remained consistent with prior observations:
+
+Event time-offset correction applied: 40224 ticks.
+SimIDE coverage in event 10: time [73088, 74240], channels [5526, 7181], APAs {2}; we correctly restrict TP candidates to overlapping APA/time windows.
+Many matched TPs cluster in expected channel neighborhoods around 5527–6069, 5880–6069, 7176; several have Δt of a few thousand ticks and Δch tens of wires, as permitted by the looser tolerances.
+notes
+The looser window (200) does increase absolute matches from earlier iterations (3) to 35 within the candidate set. Tightening to 150 reduces matches slightly, as expected.
+Because channel tolerance=100 is quite permissive, we should expect some non-local pairings when the time window is also broad; APA/time-window filtering helps but doesn’t fully disambiguate.
+what’s next
+Add an optional “plane-consistency” requirement during matching:
+Infer the local plane from channel (0–799 U, 800–1599 V, ≥1600 X).
+Require TP plane to match SimIDE plane for a match, or use a stronger score bonus for plane-consistent pairs.
+This is low-risk and should reduce spurious matches while preserving true ones.
+Slight scoring tweak to favor tight time matches more strongly:
+Current score = Δt + 10·Δch; consider increasing the weight on channel or adding a small penalty if Δt > 2–3k ticks.
+Run across a few more events (event 10 diagnostics are enabled; others are already matched silently) and capture simple histograms of Δt and Δch for matched pairs to tune tolerances quantitatively.
+If you’d like, I can implement the plane-consistency check and the scoring tweak now and re-run with margin 150–200 for comparison.
+
+
+TODO
+- remove calibration stuff
+
+
+
+ Extended Clustering Parameter Scan Complete!
+Key Findings:
+1. Progressive Channel Tolerance Effect (ch1 → ch2 → ch3, with tick=3):
+
+CC Sample:
+
+ch1→ch2: -12% clusters, +12% charge (most dramatic change)
+ch2→ch3: -2% clusters, +2% charge (diminishing returns)
+Total: -14% clusters, +15% charge
+ES Sample:
+
+ch1→ch2: -14% clusters, +16% charge (most dramatic change)
+ch2→ch3: -3% clusters, +3% charge (diminishing returns)
+Total: -17% clusters, +19% charge
+Critical Insight: The biggest consolidation happens at ch1→ch2. Going from ch2→ch3 adds only marginal benefit (2-3%).
+
+2. Time Tolerance Effect (tick3 vs tick4):
+
+ch2_tick3 → ch2_tick4: -0.4% change (negligible!)
+ch3_tick3 → ch3_tick4: -0.4% change (negligible!)
+Critical Insight: Time tolerance beyond 3 ticks is completely irrelevant. Channel proximity dominates the clustering behavior.
+
+3. What This Means for Your Concern (blips + tracks merging):
+
+Looking at ch3 configurations:
+
+CC: 3,867 clusters (620 fewer than ch1's 4,487)
+ES: 1,863 clusters (372 fewer than ch1's 2,235)
+The question: Are those missing clusters due to:
+
+✅ Good merging (fragmented pieces of same track)
+❌ Bad merging (distinct blips + tracks)
+Evidence points to ch2 as safer:
+
+ch2 captures 85-90% of the consolidation benefit (545/620 fewer CC clusters)
+ch3 only adds 2-3% more consolidation but spans 3 channels = 1.5 cm
+At 3 channels, risk of merging spatially distinct features increases
+My Strong Recommendation: ch2_tick3
+Reasons:
+
+Captures most benefit: Gets 85-90% of consolidation with lower risk
+Diminishing returns: ch2→ch3 adds only 2-3% improvement
+Safety margin: 2 channels = 1.0 cm (reasonable for track width), 3 channels = 1.5 cm (risky)
+Universally stable: Works similarly for both CC and ES
+Time insensitive: tick3 vs tick4 makes no difference, so tick3 is fine
+What to check in the reports:
+
+Compare "Cluster size distribution" histograms: Does ch3 have a long tail of huge clusters?
+Check "Total length" plots: Are ch3 clusters unreasonably long?
+Look at "Clusters by Marley TP content": More "partial Marley" in ch3 suggests signal+background merging
+Calibration plots: Is scatter worse in ch3?
+All reports are now open in VS Code, plus a visual comparison plot showing the trends!

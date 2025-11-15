@@ -1,0 +1,6 @@
+*******************************************************************************
+Conversion parameters
+*******************************************************************************
+
+< conversion.adc_to_energy_factor_collection = 3600.0 >     ADC to MeV conversion factor for collection planes
+< conversion.adc_to_energy_factor_induction = 900.0 >     ADC to MeV conversion factor for induction planes
