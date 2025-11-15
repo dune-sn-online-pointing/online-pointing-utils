@@ -6,7 +6,7 @@
 
     "signal_folder": "/eos/user/e/evilla/dune/sn-tps/prod_cc/",
     "bg_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
-    "products_prefix": "cc_prod",
+    "products_prefix": "cc_production",
 
     "max_files": -1,
     "skip_files": 0,
