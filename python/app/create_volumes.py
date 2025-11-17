@@ -636,159 +636,159 @@ def create_volume_image(volume_clusters, center_channel, center_time_tpc, volume
     return image
 
 
-def process_cluster_file(cluster_file, output_folder, plane='X', verbose=False):
+def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], verbose=False):
     """
-    Process a single cluster file and create volume images for all main tracks.
-    All volumes from one input file are saved into a single output NPZ file.
+    Process a single cluster file and create volume images for all main tracks on specified planes.
+    All volumes from one input file are saved into separate NPZ files per plane in U/V/X subfolders.
+    
+    Args:
+        cluster_file: Path to cluster ROOT file
+        output_folder: Base output folder
+        planes: List of planes to process (default: ['U', 'V', 'X'])
+        verbose: Verbose output
     
     Returns:
-        Number of volumes created
+        Total number of volumes created across all planes
     """
-    # Load all clusters
-    clusters = load_clusters_from_file(cluster_file, plane=plane, verbose=verbose)
+    total_volumes = 0
     
-    if len(clusters) == 0:
-        if verbose:
-            print(f"  No clusters found in {cluster_file}")
-        return 0
-    
-    # Get main track clusters
-    main_clusters = [c for c in clusters if c['is_main_cluster']]
-    
-    if len(main_clusters) == 0:
-        if verbose:
-            print(f"  No main track clusters found")
-        return 0
-    
-    # Create output folder if needed
-    os.makedirs(output_folder, exist_ok=True)
-    
-    # Get base filename for output (e.g., 'clusters_0' from 'clusters_0_clusters.root')
-    base_name = Path(cluster_file).stem.replace('_clusters', '')
-    
-    # Collect all volumes and metadata
-    all_images = []
-    all_metadata = []
-    
-    # Process each main track
-    for idx, main_cluster in enumerate(main_clusters):
-        # Get clusters in volume around this main track (only from same event)
-        volume_clusters = get_clusters_in_volume(
-            clusters,
-            main_cluster['center_channel'],
-            main_cluster['center_time_tpc'],
-            VOLUME_SIZE_CM,
-            event=main_cluster['event']  # Only include clusters from the same event
-        )
+    for plane in planes:
+        # Load clusters for this plane
+        clusters = load_clusters_from_file(cluster_file, plane=plane, verbose=verbose)
         
-        if len(volume_clusters) == 0:
+        if len(clusters) == 0:
+            if verbose:
+                print(f"  No clusters found in plane {plane}")
             continue
         
-        # Create volume image
-        image = create_volume_image(
-            volume_clusters,
-            main_cluster['center_channel'],
-            main_cluster['center_time_tpc'],
-            VOLUME_SIZE_CM,
-            plane
-        )
+        # Get main track clusters
+        main_clusters = [c for c in clusters if c['is_main_cluster']]
         
-        # Calculate metadata
-        n_marley_clusters = sum(1 for c in volume_clusters if c['is_marley'])
-        n_non_marley_clusters = len(volume_clusters) - n_marley_clusters
+        if len(main_clusters) == 0:
+            if verbose:
+                print(f"  No main track clusters found in plane {plane}")
+            continue
         
-        # Calculate distances of MARLEY clusters from main track
-        marley_distances = []
-        for cluster in volume_clusters:
-            if cluster['is_marley'] and cluster['cluster_id'] != main_cluster['cluster_id']:
-                # Calculate Euclidean distance in (channel, time) space
-                # Convert to cm for consistency with volume size
-                channel_dist_cm = abs(cluster['center_channel'] - main_cluster['center_channel']) * CHANNEL_PITCH_CM
-                time_dist_cm = abs(cluster['center_time_tpc'] - main_cluster['center_time_tpc']) * DRIFT_VELOCITY_CM_PER_TICK
-                distance_cm = np.sqrt(channel_dist_cm**2 + time_dist_cm**2)
-                marley_distances.append(distance_cm)
+        # Create output subfolder for this plane
+        plane_output_folder = os.path.join(output_folder, plane)
+        os.makedirs(plane_output_folder, exist_ok=True)
         
-        avg_marley_distance = np.mean(marley_distances) if len(marley_distances) > 0 else -1.0
-        max_marley_distance = np.max(marley_distances) if len(marley_distances) > 0 else -1.0
+        # Get base filename for output
+        base_name = Path(cluster_file).stem.replace('_clusters', '').replace('_matched', '')
         
-        # Calculate momentum magnitude
-        mom_x = main_cluster['true_mom_x']
-        mom_y = main_cluster['true_mom_y']
-        mom_z = main_cluster['true_mom_z']
-        mom_mag = np.sqrt(mom_x**2 + mom_y**2 + mom_z**2)
+        # Collect all volumes and metadata for this plane
+        all_images = []
+        all_metadata = []
         
-        # If momentum is 0 but we have particle energy, estimate momentum for electrons
-        # For relativistic electrons: p ≈ sqrt(E^2 - m_e^2) ≈ E for E >> 0.511 MeV
-        if mom_mag == 0 and main_cluster['is_marley']:
-            particle_energy_mev = main_cluster['true_particle_energy']
-            if particle_energy_mev > 1.0:  # Only if we have meaningful energy
-                # Electron mass: 0.511 MeV/c^2
-                me_mev = 0.511
-                mom_mag = np.sqrt(max(0, particle_energy_mev**2 - me_mev**2))
+        # Process each main track
+        for idx, main_cluster in enumerate(main_clusters):
+            # Get clusters in volume around this main track (only from same event)
+            volume_clusters = get_clusters_in_volume(
+                clusters,
+                main_cluster['center_channel'],
+                main_cluster['center_time_tpc'],
+                VOLUME_SIZE_CM,
+                event=main_cluster['event']
+            )
+            
+            if len(volume_clusters) == 0:
+                continue
+            
+            # Create volume image
+            image = create_volume_image(
+                volume_clusters,
+                main_cluster['center_channel'],
+                main_cluster['center_time_tpc'],
+                VOLUME_SIZE_CM,
+                plane
+            )
+            
+            # Calculate metadata
+            n_marley_clusters = sum(1 for c in volume_clusters if c['is_marley'])
+            n_non_marley_clusters = len(volume_clusters) - n_marley_clusters
+            
+            # Calculate distances of MARLEY clusters from main track
+            marley_distances = []
+            for cluster in volume_clusters:
+                if cluster['is_marley'] and cluster['cluster_id'] != main_cluster['cluster_id']:
+                    channel_dist_cm = abs(cluster['center_channel'] - main_cluster['center_channel']) * CHANNEL_PITCH_CM
+                    time_dist_cm = abs(cluster['center_time_tpc'] - main_cluster['center_time_tpc']) * DRIFT_VELOCITY_CM_PER_TICK
+                    distance_cm = np.sqrt(channel_dist_cm**2 + time_dist_cm**2)
+                    marley_distances.append(distance_cm)
+            
+            avg_marley_distance = np.mean(marley_distances) if len(marley_distances) > 0 else -1.0
+            max_marley_distance = np.max(marley_distances) if len(marley_distances) > 0 else -1.0
+            
+            # Calculate momentum magnitude
+            mom_x = main_cluster['true_mom_x']
+            mom_y = main_cluster['true_mom_y']
+            mom_z = main_cluster['true_mom_z']
+            mom_mag = np.sqrt(mom_x**2 + mom_y**2 + mom_z**2)
+            
+            if mom_mag == 0 and main_cluster['is_marley']:
+                particle_energy_mev = main_cluster['true_particle_energy']
+                if particle_energy_mev > 1.0:
+                    me_mev = 0.511
+                    mom_mag = np.sqrt(max(0, particle_energy_mev**2 - me_mev**2))
+            
+            # Determine energy and interaction type
+            is_es = main_cluster['is_es_interaction']
+            if main_cluster['is_marley']:
+                event_energy = main_cluster.get('reco_energy_mev', -1.0)
+                interaction_type = "ES" if is_es else "CC"
+            else:
+                event_energy = -1.0
+                interaction_type = "Background"
+            
+            cluster_energy = main_cluster.get('reco_energy_mev', -1.0)
+            
+            metadata = {
+                'event': main_cluster['event'],  # position 0
+                'plane': plane,  # position 1
+                'interaction_type': interaction_type,  # position 2
+                'particle_energy': event_energy,  # position 3
+                'cluster_energy': cluster_energy,  # position 4
+                'main_track_momentum': mom_mag,  # position 5
+                'main_track_momentum_x': mom_x,  # position 6
+                'main_track_momentum_y': mom_y,  # position 7
+                'main_track_momentum_z': mom_z,  # position 8
+                'n_clusters_in_volume': len(volume_clusters),  # position 9
+                'n_marley_clusters': n_marley_clusters,  # position 10
+                'n_non_marley_clusters': n_non_marley_clusters,  # position 11
+                'avg_marley_cluster_distance_cm': avg_marley_distance,  # position 12
+                'max_marley_cluster_distance_cm': max_marley_distance,  # position 13
+                'center_channel': float(main_cluster['center_channel']),  # position 14
+                'center_time_tpc': float(main_cluster['center_time_tpc']),  # position 15
+                'volume_size_cm': VOLUME_SIZE_CM,  # position 16
+                'image_shape': image.shape,  # position 17
+                'main_cluster_id': main_cluster['cluster_id'],  # position 18
+                'main_cluster_match_id': main_cluster.get('match_id', -1),  # position 19
+                'volume_index': idx,  # position 20
+                'source_root_file': os.path.abspath(cluster_file)  # position 21
+            }
+            
+            all_images.append(image)
+            all_metadata.append(metadata)
+            
+            if verbose:
+                interaction_str = "ES" if main_cluster['is_es_interaction'] else "CC" if main_cluster['is_marley'] else "Background"
+                print(f"  Plane {plane} Volume {idx}: {len(volume_clusters)} clusters "
+                      f"({n_marley_clusters} marley, {n_non_marley_clusters} non-marley), "
+                      f"event {main_cluster['event']}, {interaction_str}")
         
-        # Determine energy and interaction type
-        # For marley clusters, use true_particle_energy (actual track energy)
-        # For background clusters, neutrino_energy will be -1.0
-        is_es = main_cluster['is_es_interaction']
-        if main_cluster['is_marley']:
-            # Use reconstructed cluster energy (from total_charge) instead of true energy
-            event_energy = main_cluster.get('reco_energy_mev', -1.0)
-            # Use the is_es_interaction flag directly from cluster truth
-            interaction_type = "ES" if is_es else "CC"
-        else:
-            # Background clusters
-            event_energy = -1.0
-            interaction_type = "Background"
-        
-        # Get the main cluster energy (reconstructed energy of the main track)
-        cluster_energy = main_cluster.get('reco_energy_mev', -1.0)
-        
-        metadata = {
-            'event': main_cluster['event'],
-            'plane': plane,
-            'interaction_type': interaction_type,
-            'particle_energy': event_energy,  # Electron/particle energy for marley, -1 for background
-            'cluster_energy': cluster_energy,  # Reconstructed energy of the main track cluster
-            'main_track_momentum': mom_mag,
-            'main_track_momentum_x': mom_x,
-            'main_track_momentum_y': mom_y,
-            'main_track_momentum_z': mom_z,
-            'n_clusters_in_volume': len(volume_clusters),
-            'n_marley_clusters': n_marley_clusters,
-            'n_non_marley_clusters': n_non_marley_clusters,
-            'avg_marley_cluster_distance_cm': avg_marley_distance,
-            'max_marley_cluster_distance_cm': max_marley_distance,
-            'center_channel': float(main_cluster['center_channel']),
-            'center_time_tpc': float(main_cluster['center_time_tpc']),
-            'volume_size_cm': VOLUME_SIZE_CM,
-            'image_shape': image.shape,
-            'main_cluster_id': main_cluster['cluster_id'],
-            'volume_index': idx,  # Add volume index within this file
-            'source_root_file': os.path.abspath(cluster_file)
-        }
-        
-        # Add to collections
-        all_images.append(image)
-        all_metadata.append(metadata)
-        
-        if verbose:
-            interaction_str = "ES" if main_cluster['is_es_interaction'] else "CC" if main_cluster['is_marley'] else "Background"
-            print(f"  Volume {idx}: {len(volume_clusters)} clusters "
-                  f"({n_marley_clusters} marley, {n_non_marley_clusters} non-marley), "
-                  f"event {main_cluster['event']}, {interaction_str}")
+        # Save all volumes for this plane
+        if len(all_images) > 0:
+            output_file = os.path.join(plane_output_folder, f"{base_name}_plane{plane}.npz")
+            np.savez_compressed(output_file, 
+                               images=np.array(all_images, dtype=object),
+                               metadata=np.array(all_metadata, dtype=object))
+            
+            if verbose:
+                print(f"  Saved {len(all_images)} volumes for plane {plane} to {output_file}")
+            
+            total_volumes += len(all_images)
     
-    # Save all volumes from this file into a single NPZ
-    if len(all_images) > 0:
-        output_file = os.path.join(output_folder, f"{base_name}_plane{plane}.npz")
-        # Save as arrays - images as a list of arrays (variable size), metadata as object array
-        np.savez_compressed(output_file, 
-                           images=np.array(all_images, dtype=object),  # Object array to handle variable shapes
-                           metadata=np.array(all_metadata, dtype=object))
-        
-        if verbose:
-            print(f"  Saved {len(all_images)} volumes to {output_file}")
-    
-    return len(all_images)
+    return total_volumes
 
 
 def main():
@@ -843,7 +843,8 @@ def main():
         else:
             output_folder = f"{base_folder}/volume_images_{conditions}"
     
-    plane = config.get('plane', 'X')  # Default to collection plane
+    # Process all three planes
+    planes = ['U', 'V', 'X']
     
     # CLI overrides JSON settings
     skip_files = args.skip if args.skip is not None else config.get('skip_files', 0)
@@ -854,7 +855,7 @@ def main():
     print("="*60)
     print(f"Clusters folder: {clusters_folder}")
     print(f"Output folder: {output_folder}")
-    print(f"Plane: {plane}")
+    print(f"Planes: {', '.join(planes)}")
     print(f"Volume size: {VOLUME_SIZE_CM} cm x {VOLUME_SIZE_CM} cm")
     if skip_files > 0:
         print(f"Skipping first {skip_files} files")
@@ -888,7 +889,7 @@ def main():
         n_volumes = process_cluster_file(
             str(cluster_path),
             output_folder,
-            plane=plane,
+            planes=planes,
             verbose=args.verbose
         )
         

@@ -44,7 +44,7 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-which_sims="--all -f"
+which_sims="-gv -f"
 
 max_jobs=$(( (tot_files + max_files - 1) / max_files ))
 

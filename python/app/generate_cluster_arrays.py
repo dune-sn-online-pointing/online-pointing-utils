@@ -836,16 +836,16 @@ def extract_clusters_from_file(cluster_file, repo_root=None, verbose=False):
                 # Prepare metadata
                 # Note: cluster_energy is now ADC-derived, not MC truth neutrino energy
                 metadata_array = np.array([
-                    int(data['event'][i]),
-                    int(is_marley),
-                    int(is_main_track),
-                    is_es_interaction,
-                    true_pos[0], true_pos[1], true_pos[2],
-                    true_particle_mom[0], true_particle_mom[1], true_particle_mom[2],
-                    np.float32(cluster_energy_mev),
-                    np.float32(true_particle_energy),
-                    plane_number,
-                    match_id
+                    int(data['event'][i]), # position 0
+                    int(is_marley), # position 1
+                    int(is_main_track), # position 2
+                    is_es_interaction, # position 3
+                    true_pos[0], true_pos[1], true_pos[2], # positions 4,5,6
+                    true_particle_mom[0], true_particle_mom[1], true_particle_mom[2], # positions 7,8,9
+                    np.float32(cluster_energy_mev), # position 10
+                    np.float32(true_particle_energy), # position 11
+                    plane_number, # position 12
+                    match_id # position 13
                 ], dtype=np.float32)
                 
                 images.append(img_array)
