@@ -4,7 +4,7 @@
     "thisIsAlsoAComment2": "bg_folder: DONT USE IN THIS ONE pure background TPs (input to add_backgrounds)",
     "thisIsAlsoAComment3": "All subfolders are determined automatically and will start with 'products_prefix', but can be overriden here with keys tps_folder/tps_bg_folder",
 
-    "signal_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
+    "signal_folder": "/eos/project-e/ep-nu/public/sn-pointing/backgrounds/",
 
     "max_files": -1,
     "skip_files": 0,

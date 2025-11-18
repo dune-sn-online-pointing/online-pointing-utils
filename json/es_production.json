@@ -1,6 +1,6 @@
 {
     "thisIsAComment": "This file contains all keys for all steps of sequence.sh",
-    "thisIsAlsoAComment1": "main_folder: home of where all subfolders are located for signal sample, es or cc",
+    "thisIsAlsoAComment1": "signal_folder: home of where all subfolders are located for signal sample, es or cc",
     "thisIsAlsoAComment2": "bg_folder: pure background TPs (input to add_backgrounds)",
     "thisIsAlsoAComment3": "All subfolders are determined automatically and will start with 'products_prefix', but can be overriden here with keys tps_folder/tps_bg_folder",
 

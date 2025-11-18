@@ -1,6 +1,6 @@
 #!bin/bash
 
-INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/cluster_pos/cluster_pos.json
+INPUT_JSON=/afs/cern.ch/work/d/dapullia/evilla/dune/online-pointing-utils/json/cluster_pos/cluster_pos.json
 OUTPUT_FOLDER=/eos/user/d/dapullia/dune/cluster_positions/eliminami/
 REPO_HOME=$(git rev-parse --show-toplevel)
 

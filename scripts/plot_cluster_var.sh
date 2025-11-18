@@ -1,6 +1,6 @@
 #!bin/bash
 
-INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/plot_var.json
+INPUT_JSON=/afs/cern.ch/work/d/dapullia/evilla/dune/online-pointing-utils/json/plot_var.json
 OUTPUT_FOLDER=/eos/user/d/dapullia/dune/cluster_variables/eliminami/
 REPO_HOME=$(git rev-parse --show-toplevel)
 

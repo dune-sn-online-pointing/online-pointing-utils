@@ -240,9 +240,11 @@ void Cluster::update_cluster_info() {
         if (neutrino_info_map.count(dominant_key) > 0) {
             const auto& nu_info = neutrino_info_map[dominant_key];
             true_neutrino_energy_ = nu_info.energy;
+            true_neutrino_momentum_ = {nu_info.px, nu_info.py, nu_info.pz};
             is_es_interaction_ = (nu_info.interaction == "ES");
         } else {
             true_neutrino_energy_ = -1.0f;
+            true_neutrino_momentum_ = {0.0f, 0.0f, 0.0f};
             is_es_interaction_ = false;
         }
 
@@ -262,6 +264,7 @@ void Cluster::update_cluster_info() {
         true_pos_ = {0.0f, 0.0f, 0.0f};
         true_dir_ = {0.0f, 0.0f, 0.0f};
         true_momentum_ = {0.0f, 0.0f, 0.0f};
+        true_neutrino_momentum_ = {0.0f, 0.0f, 0.0f};
         true_particle_energy_ = -1.0f;
         true_label_ = "UNKNOWN";
         true_neutrino_energy_ = -1.0f;

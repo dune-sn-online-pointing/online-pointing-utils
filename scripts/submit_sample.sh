@@ -24,10 +24,11 @@ print_help() {
 # init
 delete_submit_files=false
 delete_root_files=true
-tot_files=5000
-max_files=10
+tot_files=180
+max_files=5
 skip=0
 
+which_sims="-bt -f"
 
 # parse
 while [[ "$#" -gt 0 ]]; do
@@ -44,7 +45,6 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-which_sims="-gv -f"
 
 max_jobs=$(( (tot_files + max_files - 1) / max_files ))
 

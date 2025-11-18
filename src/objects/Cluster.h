@@ -22,6 +22,7 @@ class Cluster {
         std::vector<float> get_true_pos() { return true_pos_; }
         std::vector<float> get_true_momentum() { return true_momentum_; }
         std::vector<float> get_true_dir() { return true_dir_; }
+        std::vector<float> get_true_neutrino_momentum() { return true_neutrino_momentum_; }
         float get_true_neutrino_energy() { return true_neutrino_energy_; }
         float get_true_particle_energy() { return true_particle_energy_; }
         std::string get_true_label() { return true_label_; }
@@ -47,7 +48,8 @@ class Cluster {
         void set_true_neutrino_energy(float energy) { true_neutrino_energy_ = energy; }
         void set_true_particle_energy(float energy) { true_particle_energy_ = energy; }
         void set_true_dir(std::vector<float> dir) { true_dir_ = dir; }
-        void set_min_distance_from_true_pos(float min_distance) { min_distance_from_true_pos_ = min_distance; }
+        void set_true_neutrino_momentum(std::vector<float> momentum) { true_neutrino_momentum_ = momentum; }
+        void set_min_distance_from_true_pos(float distance) { min_distance_from_true_pos_ = distance; }
         void set_supernova_tp_fraction(float fraction) { supernova_tp_fraction_ = fraction; }
         void set_generator_tp_fraction(float fraction) { generator_tp_fraction_ = fraction; }
         void set_is_es_interaction(bool is_es) { is_es_interaction_ = is_es; }
@@ -66,6 +68,7 @@ class Cluster {
         std::vector<float> true_pos_ {0.0f, 0.0f, 0.0f};    
         std::vector<float> true_momentum_ {0.0f, 0.0f, 0.0f};
         std::vector<float> true_dir_ {0.0f, 0.0f, 0.0f};
+        std::vector<float> true_neutrino_momentum_ {0.0f, 0.0f, 0.0f};
         bool is_es_interaction_ {false}; // true if ES, false if CC or unknown
         float min_distance_from_true_pos_ {0.0f};
         float true_neutrino_energy_ {-1.0f};

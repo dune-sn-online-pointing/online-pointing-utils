@@ -11,5 +11,5 @@ for cat in $(seq $first $last); do
     echo "Submitting cat${cat} jobs..."
     ${SCRIPTS_DIR}/submit_cats.sh -w "${cat}" 
     echo ""
-    sleep 100;
+    sleep 60;
 done

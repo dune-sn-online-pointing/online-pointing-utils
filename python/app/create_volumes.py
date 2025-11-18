@@ -45,6 +45,7 @@ Outputs .npz files with image arrays and metadata including:
 - Interaction type
 - Neutrino energy  
 - Main track particle momentum
+- Main track neutrino momentum
 - Number of marley vs non-marley clusters in volume
 """
 
@@ -379,6 +380,7 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
             'event', 'n_tps', 'is_main_cluster',
             'is_es_interaction', 'true_neutrino_energy', 'true_particle_energy',
             'true_mom_x', 'true_mom_y', 'true_mom_z',
+            'true_neutrino_mom_x', 'true_neutrino_mom_y', 'true_neutrino_mom_z',
             'true_label', 'marley_tp_fraction',
             'tp_detector_channel', 'tp_time_start',
             'tp_adc_integral', 'tp_adc_peak', 
@@ -462,6 +464,9 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
                 'true_mom_x': float(arrays['true_mom_x'][i]),
                 'true_mom_y': float(arrays['true_mom_y'][i]),
                 'true_mom_z': float(arrays['true_mom_z'][i]),
+                'true_neutrino_mom_x': float(arrays['true_neutrino_mom_x'][i]),
+                'true_neutrino_mom_y': float(arrays['true_neutrino_mom_y'][i]),
+                'true_neutrino_mom_z': float(arrays['true_neutrino_mom_z'][i]),
                 'is_marley': is_marley,
                 'marley_tp_fraction': float(arrays['marley_tp_fraction'][i]),
                 'cluster_id': int(arrays['cluster_id'][i]),
@@ -719,11 +724,17 @@ def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], ve
             avg_marley_distance = np.mean(marley_distances) if len(marley_distances) > 0 else -1.0
             max_marley_distance = np.max(marley_distances) if len(marley_distances) > 0 else -1.0
             
-            # Calculate momentum magnitude
+            # Calculate particle momentum magnitude
             mom_x = main_cluster['true_mom_x']
             mom_y = main_cluster['true_mom_y']
             mom_z = main_cluster['true_mom_z']
             mom_mag = np.sqrt(mom_x**2 + mom_y**2 + mom_z**2)
+            
+            # Get neutrino momentum
+            nu_mom_x = main_cluster['true_neutrino_mom_x']
+            nu_mom_y = main_cluster['true_neutrino_mom_y']
+            nu_mom_z = main_cluster['true_neutrino_mom_z']
+            nu_mom_mag = np.sqrt(nu_mom_x**2 + nu_mom_y**2 + nu_mom_z**2)
             
             if mom_mag == 0 and main_cluster['is_marley']:
                 particle_energy_mev = main_cluster['true_particle_energy']
@@ -752,16 +763,20 @@ def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], ve
                 'main_track_momentum_x': mom_x,  # position 6
                 'main_track_momentum_y': mom_y,  # position 7
                 'main_track_momentum_z': mom_z,  # position 8
-                'n_clusters_in_volume': len(volume_clusters),  # position 9
-                'n_marley_clusters': n_marley_clusters,  # position 10
-                'n_non_marley_clusters': n_non_marley_clusters,  # position 11
-                'avg_marley_cluster_distance_cm': avg_marley_distance,  # position 12
-                'max_marley_cluster_distance_cm': max_marley_distance,  # position 13
-                'center_channel': float(main_cluster['center_channel']),  # position 14
-                'center_time_tpc': float(main_cluster['center_time_tpc']),  # position 15
-                'volume_size_cm': VOLUME_SIZE_CM,  # position 16
-                'image_shape': image.shape,  # position 17
-                'main_cluster_id': main_cluster['cluster_id'],  # position 18
+                'main_track_neutrino_momentum': nu_mom_mag,  # position 9
+                'main_track_neutrino_momentum_x': nu_mom_x,  # position 10
+                'main_track_neutrino_momentum_y': nu_mom_y,  # position 11
+                'main_track_neutrino_momentum_z': nu_mom_z,  # position 12
+                'n_clusters_in_volume': len(volume_clusters),  # position 13
+                'n_marley_clusters': n_marley_clusters,  # position 14
+                'n_non_marley_clusters': n_non_marley_clusters,  # position 15
+                'avg_marley_cluster_distance_cm': avg_marley_distance,  # position 16
+                'max_marley_cluster_distance_cm': max_marley_distance,  # position 17
+                'center_channel': float(main_cluster['center_channel']),  # position 18
+                'center_time_tpc': float(main_cluster['center_time_tpc']),  # position 19
+                'volume_size_cm': VOLUME_SIZE_CM,  # position 20
+                'image_shape': image.shape,  # position 21
+                'main_cluster_id': main_cluster['cluster_id'],  # position 22
                 'main_cluster_match_id': main_cluster.get('match_id', -1),  # position 19
                 'volume_index': idx,  # position 20
                 'source_root_file': os.path.abspath(cluster_file)  # position 21

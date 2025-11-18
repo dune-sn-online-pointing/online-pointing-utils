@@ -23,12 +23,12 @@ print_help() {
 
 # init
 delete_submit_files=false
-delete_root_files=true
 which_cat=""
 tot_files=110
-max_files=10    
+max_files=5    
 skip=0
 
+which_sims="--all"
 
 # parse
 while [[ "$#" -gt 0 ]]; do
@@ -38,15 +38,12 @@ while [[ "$#" -gt 0 ]]; do
         --tot-files) tot_files="$2"; shift ;;
         --max-files) max_files="$2"; shift ;;
         -d|--delete-submit-files) delete_submit_files="$2"; shift ;;
-        --delete-root) delete_root_files="$2"; shift ;;
         -p|--print-only) print_only=true ;;
         -h|--help) print_help ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
 done
-
-which_sims="--all -f"
 
 max_jobs=$(( (tot_files + max_files - 1) / max_files ))
 
@@ -63,8 +60,8 @@ JSON_SETTINGS=$HOME_DIR/json/cats/cat_${which_cat}.json
  
 cat > $JSON_SETTINGS << EOL
 {
-    "signal_folder": "/eos/project-e/ep-nu/public/sn-pointing/cat${which_cat}/",
-    "bg_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
+    "signal_folder": "/eos/project-e/ep-nu/evilla/sn-pointing/cat${which_cat}/",
+    "bg_folder": "/eos/project-e/ep-nu/evilla/sn-pointing/backgrounds/",
     "products_prefix": "cat${which_cat}",
 
     "max_files": -1,
@@ -76,7 +73,7 @@ cat > $JSON_SETTINGS << EOL
     "channel_limit": 2,
     "min_tps_to_cluster": 2,
     "tot_cut": 3,
-    "energy_cut": 2.0,
+    "energy_cut": 3.0,
 
     "time_tolerance_ticks": 10
 
