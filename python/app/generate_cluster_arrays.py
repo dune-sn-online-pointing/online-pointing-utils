@@ -1169,6 +1169,10 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
+    overrideMode=args.override
+    
+    print("Override mode:", overrideMode)
+    
     # Determine output directory
     if args.json:
         # Use JSON to determine clusters folder and images folder
@@ -1260,7 +1264,7 @@ if __name__ == '__main__':
     output_path.mkdir(exist_ok=True, parents=True)
     
     # Check for existing files (but don't delete them yet)
-    if not args.override:
+    if not overrideMode:
         # Check in plane subfolders (X, U, V)
         existing_files = []
         for plane in ['X', 'U', 'V']:
@@ -1286,23 +1290,26 @@ if __name__ == '__main__':
     
     for file_idx, cluster_file in enumerate(cluster_files):
         cluster_file = Path(cluster_file)
-        input_basename = cluster_file.stem.replace('_clusters', '').replace('_matched', '')
+        # Extract basename: remove _clusters.root or _matched.root suffix
+        # Input: cc_000000_bg_matched.root -> cc_000000_bg_matched
+        input_basename = cluster_file.stem
         
         # Progress indicator
         progress_pct = int((file_idx / len(cluster_files)) * 100)
         print(f"\n[generate_cluster_arrays.py] [{file_idx + 1}/{len(cluster_files)}] ({progress_pct}%) {cluster_file.name}")
         
         # Check if output already exists (check in plane subfolders)
+        # Output files are named like: cc_000000_bg_matched_planeU.npz
         expected_outputs = []
         for plane in ['X', 'U', 'V']:
             plane_dir = output_path / plane
             if plane_dir.exists():
-                expected_outputs.extend(list(plane_dir.glob(f"{input_basename}_plane*.npz")))
+                expected_outputs.extend(list(plane_dir.glob(f"{input_basename}_plane{plane}.npz")))
         
         output_exists = len(expected_outputs) > 0
         
         if output_exists:
-            if args.override:
+            if overrideMode:
                 # Override mode: delete existing outputs for THIS file only
                 print(f"[generate_cluster_arrays.py]   Override mode: Deleting {len(expected_outputs)} existing output file(s)")
                 for output_file in expected_outputs:

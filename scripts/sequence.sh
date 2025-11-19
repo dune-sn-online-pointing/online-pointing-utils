@@ -147,7 +147,7 @@ else
         print_help
 fi
 echo "**************************"
-sleep 5
+# sleep 5
 
 ################################################
 # If global json file was given, use that for all steps

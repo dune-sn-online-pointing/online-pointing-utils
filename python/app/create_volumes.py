@@ -813,7 +813,7 @@ def main():
     parser.add_argument('-o', '--output-folder', type=str, default=None, help='Override output folder ')
     parser.add_argument('--skip', type=int, default=None, help='Override JSON skip_files: skip first N files')
     parser.add_argument('--max', type=int, default=None, help='Override JSON max_files: process at most N files')
-    parser.add_argument('-f', '--override', action='store_true', help='Force reprocessing (kept for compatibility)')
+    parser.add_argument('-f', '--override', action='store_true', help='Force reprocessing even if output files already exist')
     
     args = parser.parse_args()
     
@@ -896,10 +896,36 @@ def main():
     
     # Process each file
     total_volumes = 0
+    skipped_count = 0
+    processed_count = 0
+    
     for i, cluster_file in enumerate(cluster_files):
         # Handle both Path objects and strings
         cluster_path = Path(cluster_file) if not isinstance(cluster_file, Path) else cluster_file
         print(f"[{i+1}/{len(cluster_files)}] Processing: {cluster_path.name}")
+        
+        # Check if output already exists (check in plane subfolders)
+        base_name = cluster_path.stem.replace('_clusters', '').replace('_matched', '')
+        expected_outputs = []
+        for plane in planes:
+            plane_dir = Path(output_folder) / plane
+            if plane_dir.exists():
+                expected_outputs.extend(list(plane_dir.glob(f"{base_name}_plane{plane}.npz")))
+        
+        output_exists = len(expected_outputs) > 0
+        
+        if output_exists:
+            if args.override:
+                # Override mode: delete existing outputs for THIS file only
+                print(f"  Override mode: Deleting {len(expected_outputs)} existing output file(s)")
+                for output_file in expected_outputs:
+                    output_file.unlink()
+            else:
+                # Skip if output exists
+                if args.verbose:
+                    print(f"  Skipping (output already exists)")
+                skipped_count += 1
+                continue
         
         n_volumes = process_cluster_file(
             str(cluster_path),
@@ -909,11 +935,15 @@ def main():
         )
         
         total_volumes += n_volumes
+        processed_count += 1
         print(f"  Created {n_volumes} volume images")
     
     print()
     print("="*60)
     print(f"DONE: Created {total_volumes} total volume images")
+    print(f"Files processed: {processed_count}")
+    if skipped_count > 0:
+        print(f"Files skipped (already exist): {skipped_count}")
     print(f"Output saved to: {output_folder}")
     print("="*60)
     

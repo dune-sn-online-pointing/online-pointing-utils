@@ -25,7 +25,7 @@ print_help() {
 delete_submit_files=false
 which_cat=""
 tot_files=110
-max_files=5    
+max_files=110    
 skip=0
 
 which_sims="--all"
