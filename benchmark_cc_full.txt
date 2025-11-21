@@ -1,0 +1,99 @@
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
+
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: Usage: 
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: skip_files {-s,--skip,--skip-files}: Number of files to skip at start (overrides JSON) (expected: N values)
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: max_files {-m,--max,--max-files}: Maximum number of files to process (overrides JSON) (expected: N values)
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: override {-f,--override}: Override existing output files (default: false) (trigger)
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
+
+
+21/11/2025 03:10:38 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tpstream
+21/11/2025 03:10:38 [32m[utils.cpp][0m: [find_input_files_by_tpstream_basenames] Using 20 basenames from tpstream files (skip=0, max=20)
+21/11/2025 03:10:38 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps_bg
+21/11/2025 03:10:38 [32m[utils.cpp][0m: [find_input_files_by_tpstream_basenames] Found 19 files matching basenames for pattern 'tps_bg'
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: Found 19 files with backgrounds (tps_bg)
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: Input folder: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/tps_bg
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m: Settings from json file:
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m:  - Clusters output path: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m:  - Tick limit: 3
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m:  - Channel limit: 2
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m:  - Energy cut: 3
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 2700
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 10800
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m:  - ToT cut: 3
+21/11/2025 03:10:38 [32m[make_clusters.cpp][0m:  - Files to process (after skip/max): 19
+Making clusters...   5% (  105 it/s)
+[1F[1K21/11/2025 03:10:55 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  11% (    0 it/s)
+[1F[1K21/11/2025 03:11:10 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  16% (    0 it/s)
+[1F[1K21/11/2025 03:11:21 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  21% (    0 it/s)
+[1F[1K21/11/2025 03:11:33 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  26% (    0 it/s)
+[1F[1K21/11/2025 03:11:45 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  32% (    0 it/s)
+[1F[1K21/11/2025 03:12:09 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  37% (    0 it/s)
+[1F[1K21/11/2025 03:12:18 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  42% (    0 it/s)
+[1F[1K21/11/2025 03:12:27 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  47% (    0 it/s)
+[1F[1K21/11/2025 03:12:36 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  53% (    0 it/s)
+[1F[1K21/11/2025 03:12:45 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  58% (    0 it/s)
+[1F[1K21/11/2025 03:12:59 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  63% (    0 it/s)
+[1F[1K21/11/2025 03:13:08 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  68% (    0 it/s)
+[1F[1K21/11/2025 03:13:17 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  74% (    0 it/s)
+[1F[1K21/11/2025 03:13:26 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  79% (    0 it/s)
+[1F[1K21/11/2025 03:13:35 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  84% (    0 it/s)
+[1F[1K21/11/2025 03:13:44 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  89% (    0 it/s)
+[1F[1K21/11/2025 03:13:57 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters...  95% (    0 it/s)
+[1F[1K21/11/2025 03:14:06 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+Making clusters... 100% (    0 it/s)
+21/11/2025 03:14:16 [32m[make_clusters.cpp][0m: Writing clustering metadata...
+21/11/2025 03:14:16 [32m[make_clusters.cpp][0m: 
+21/11/2025 03:14:16 [32m[make_clusters.cpp][0m: Clustering complete! Generated 19 output file(s):
+21/11/2025 03:14:16 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003440_supernova_g4_detsim_ana_2025-10-21T_090230Z_bg_clusters.root
+21/11/2025 03:14:16 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003442_supernova_g4_detsim_ana_2025-10-21T_093312Z_bg_clusters.root
+21/11/2025 03:14:16 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003443_supernova_g4_detsim_ana_2025-10-21T_090642Z_bg_clusters.root
+21/11/2025 03:14:16 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003444_supernova_g4_detsim_ana_2025-10-21T_093351Z_bg_clusters.root
+21/11/2025 03:14:16 [32m[make_clusters.cpp][0m:   - /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003445_supernova_g4_detsim_ana_2025-10-21T_095615Z_bg_clusters.root
+21/11/2025 03:14:16 [32m[make_clusters.cpp][0m:   ... and 14 more
+	Command being timed: "./build/src/app/make_clusters -j json/cc_valid.json --max-files 20 -f"
+	User time (seconds): 147.21
+	System time (seconds): 2.46
+	Percent of CPU this job got: 68%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:38.75
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 412964
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 4188
+	Minor (reclaiming a frame) page faults: 48386
+	Voluntary context switches: 17743
+	Involuntary context switches: 329
+	Swaps: 0
+	File system inputs: 748312
+	File system outputs: 262192
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

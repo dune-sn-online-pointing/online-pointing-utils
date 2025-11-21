@@ -121,20 +121,14 @@ def create_apa_json_config(input_file, output_dir, apa_id, tick_limit, channel_l
     apa_input_dir = os.path.join(os.path.dirname(input_file), f"apa{apa_id}")
     os.makedirs(apa_input_dir, exist_ok=True)
     
-    # Rename the file to include _tps_bg pattern that make_clusters expects
-    # Change apa0_tps.root -> apa0_tps_bg.root
-    original_basename = os.path.basename(input_file)
-    new_basename = original_basename.replace('_tps.root', '_tps_bg.root')
-    
-    # Copy or symlink the APA file to its own directory with tps_bg name
-    apa_input_file = os.path.join(apa_input_dir, new_basename)
-    if os.path.exists(apa_input_file) or os.path.islink(apa_input_file):
-        os.remove(apa_input_file)
-    os.symlink(input_file, apa_input_file)
+    # Copy or symlink the APA file to its own directory
+    apa_input_file = os.path.join(apa_input_dir, os.path.basename(input_file))
+    if not os.path.exists(apa_input_file):
+        os.symlink(input_file, apa_input_file)
     
     config = {
         "tps_folder": apa_input_dir,  # APA-specific directory
-        "tps_files": [new_basename],  # Use the renamed filename with _tps_bg
+        "tps_files": [os.path.basename(input_file)],  # Just the filename
         "outputFolder": output_dir,
         "outputFilename": f"apa{apa_id}_clusters",
         "tick_limit": tick_limit,

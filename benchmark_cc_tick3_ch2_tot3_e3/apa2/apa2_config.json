@@ -1,0 +1,13 @@
+{
+  "tps_folder": "benchmark_cc_tick3_ch2_tot3_e3/split/apa2",
+  "tps_files": [
+    "apa2_tps_bg.root"
+  ],
+  "outputFolder": "benchmark_cc_tick3_ch2_tot3_e3/apa2",
+  "outputFilename": "apa2_clusters",
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 3,
+  "energy_cut": 3
+}
