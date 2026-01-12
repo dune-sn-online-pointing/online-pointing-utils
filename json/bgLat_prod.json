@@ -5,10 +5,10 @@
     "thisIsAlsoAComment3": "bg_folder: pure background TPs (input to add_backgrounds)",
     "thisIsAlsoAComment4": "tps_folder/tps_bg_folder: merged TPs with backgrounds (output of add_backgrounds, input to clustering)",
 
-    "tpstream_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs_lateral/",
-    "clusters_folder_prefix": "bgLat_prod",
+    "signal_folder": "/eos/user/e/evilla/dune/sn-tps/lateral_bkgs/",
+    "products_prefix": "bgLat_prod",
 
-    "max_files": -1,
+    "max_files": 30,
     "skip_files": 0,
 
     "backtracker_error_margin": 10,
@@ -16,7 +16,7 @@
     "tick_limit": 3,
     "channel_limit": 2,
     "min_tps_to_cluster": 2,
-    "tot_cut": 3,
+    "tot_cut": 0,
     "energy_cut": 0,
     "time_tolerance_ticks": 500
 
