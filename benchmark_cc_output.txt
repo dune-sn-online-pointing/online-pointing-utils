@@ -1,0 +1,32 @@
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: > Cluster app - build clusters from *_tps.root files.
+
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: Usage: 
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: ──────────── Main options ────────────
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: inputFile {-i,--input-file}: Input file with list OR single ROOT file path (overrides JSON inputs) (expected: 1 value)
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: skip_files {-s,--skip,--skip-files}: Number of files to skip at start (overrides JSON) (expected: N values)
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: max_files {-m,--max,--max-files}: Maximum number of files to process (overrides JSON) (expected: N values)
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: override {-f,--override}: Override existing output files (default: false) (trigger)
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: outFolder {--output-folder}: Output folder path (default: data) (expected: 1 value)
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: debugMode {-d}: Run in debug mode (more detailed than verbose) (trigger)
+
+
+21/11/2025 02:56:36 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tpstream
+21/11/2025 02:56:36 [32m[utils.cpp][0m: [find_input_files_by_tpstream_basenames] Using 20 basenames from tpstream files (skip=0, max=20)
+21/11/2025 02:56:36 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tps_bg
+21/11/2025 02:56:36 [32m[utils.cpp][0m: [find_input_files_by_tpstream_basenames] Found 19 files matching basenames for pattern 'tps_bg'
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: Found 19 files with backgrounds (tps_bg)
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: Input folder: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/tps_bg
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m: Settings from json file:
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m:  - Clusters output path: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m:  - Tick limit: 3
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m:  - Channel limit: 2
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m:  - Minimum TPs to form a cluster: 2
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m:  - Energy cut: 3
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m:     - ADC integral cut (induction): 2700
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m:     - ADC integral cut (collection): 10800
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m:  - ToT cut: 3
+21/11/2025 02:56:36 [32m[make_clusters.cpp][0m:  - Files to process (after skip/max): 19
+Making clusters...   5% (   76 it/s)
+[1F[1K
