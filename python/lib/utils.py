@@ -110,6 +110,10 @@ def find_files_by_tpstream_basenames(json_config, folder, file_pattern, skip_fil
         List of file paths matching basenames
     """
     from pathlib import Path
+
+    # Previous pipeline uses -1 for None. Let's accept both
+    if max_files == -1:
+        max_files = None
     
     # Get tpstream folder
     signal_folder = json_config.get('signal_folder', '')
