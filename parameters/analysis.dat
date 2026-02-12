@@ -1,6 +1,8 @@
 *******************************************************************************
-Analysis parameters
+Analysis parameters (deprecated)
 *******************************************************************************
 
-     < something = 0 >        	Something
+This file is currently unused by the codebase.
+Kept as a placeholder for older workflows.
+See parameters/README.md for active headers.
 

@@ -1,0 +1,18 @@
+{
+  "thisIsAComment": "Example clean ES config for sequence.sh",
+  "signal_folder": "data/prod_es/",
+  "products_prefix": "example_es_clean",
+
+  "max_files": 10,
+  "skip_files": 0,
+  
+  "backtracker_error_margin": 10,
+  
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 1,
+  "energy_cut": 0.0,
+  "time_tolerance_ticks": 10,
+  "spatial_tolerance_cm": 100
+}

@@ -23,7 +23,10 @@ from scipy.stats import chisquare
 import random
 
 import sys
-sys.path.append('../python/') 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+LIB_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "lib"))
+if LIB_DIR not in sys.path:
+    sys.path.insert(0, LIB_DIR)
 # from utils import save_tps_array, create_channel_map_array
 # from hdf5_converter import convert_tpstream_to_numpy 
 # from image_creator import save_image, show_image

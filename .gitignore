@@ -1,4 +1,9 @@
-json/*/*
+json/**
+!json/
+!json/README.md
+!json/example_es_clean.json
+!json/example_es_bg.json
+!json/example_bg.json
 build/*
 lists/
 *.o

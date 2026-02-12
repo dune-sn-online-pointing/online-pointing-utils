@@ -3,6 +3,11 @@ import matplotlib.pyplot as plt
 import os
 import sys
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+LIB_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "lib"))
+if LIB_DIR not in sys.path:
+    sys.path.insert(0, LIB_DIR)
+
 from image_creator import *
 from utils import *
 from cluster import *
