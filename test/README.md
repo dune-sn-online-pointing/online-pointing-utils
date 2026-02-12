@@ -37,7 +37,8 @@ Helper lists for backtracking:
    - Outputs: *_clusters_tick*_tot*.root files in test/test_clustering/output
 
 3. Matching (match_clusters)
-   - Currently disabled on this branch (app not ported)
+   - Inputs: cluster ROOT file from clustering stage
+   - Outputs: multiplane clusters in test/test_matching/output
 
 4. Analysis
    - analyze_tps produces PDFs in test/test_analysis/output

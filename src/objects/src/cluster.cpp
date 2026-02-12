@@ -342,6 +342,20 @@ float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive> tps, float z, float
     return Y_pred_mean;
 }
 
+float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign) {
+    std::vector<TriggerPrimitive> copy;
+    copy.reserve(tps.size());
+    for (auto* tp : tps) {
+        if (tp != nullptr) {
+            copy.push_back(*tp);
+        }
+    }
+    if (copy.empty()) {
+        return 0.0f;
+    }
+    return eval_y_knowing_z_U_plane(copy, z, x_sign);
+}
+
 
 float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign) {
     

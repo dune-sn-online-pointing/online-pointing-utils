@@ -62,8 +62,7 @@ echo -e "${BLUE}Running test suites...${NC}"
 
 run_test_suite "Backtracking" "${SCRIPT_DIR}/test_backtrack/test_backtrack.sh" || true
 run_test_suite "Clustering" "${SCRIPT_DIR}/test_clustering/test_clustering.sh" || true
-# run_test_suite "Matching" "${SCRIPT_DIR}/test_matching/test_matching.sh" || true
-# Note: match_clusters app is currently not built on this branch.
+run_test_suite "Matching" "${SCRIPT_DIR}/test_matching/test_matching.sh" || true
 run_test_suite "Analysis (clusters)" "${SCRIPT_DIR}/test_analysis/test_analyze_clusters.sh" || true
 run_test_suite "Analysis (TPs)" "${SCRIPT_DIR}/test_analysis/test_analyze_tps.sh" || true
 # run_test_suite "Analysis (matching)" "${SCRIPT_DIR}/test_analysis/test_analyze_matching.sh" || true

@@ -48,8 +48,10 @@ install( TARGETS cluster_to_root DESTINATION bin )
 # target_link_libraries( createVolume clusteringLibs )
 # install( TARGETS createVolume DESTINATION bin )
 
-## match_clusters is currently incompatible with the updated clustering libs
-## and should be rebuilt once the app is ported.
+cmessage( STATUS "Creating match_clusters app..." )
+add_executable( match_clusters ${CMAKE_CURRENT_SOURCE_DIR}/src/match_clusters.cpp )
+target_link_libraries( match_clusters planesMatchingLibs )
+install( TARGETS match_clusters DESTINATION bin )
 
 
 # cmessage( STATUS "Creating superimposeBackground app..." )
