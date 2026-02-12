@@ -1,0 +1,45 @@
+{
+  "_comment": "========================================",
+  "_comment_1": "NEW FOLDER STRUCTURE TEMPLATE",
+  "_comment_2": "This JSON shows all new folder naming options",
+  "_comment_3": "========================================",
+
+  "_section_input_files": "Input file discovery (priority: inputFile > inputFolder+inputList > inputListFile)",
+  "inputFile": "",
+  "inputFolder": "/path/to/input/folder/",
+  "inputList": [
+    "file1.root",
+    "file2.root"
+  ],
+  "inputListFile": "/path/to/list_of_files.txt",
+  
+  "_section_output_folders": "Output folders for different stages",
+  "tpstream_folder": "/path/to/tpstreams/",
+  "tps_folder": "/path/to/tps/",
+  "tps_bg_folder": "/path/to/tps_with_backgrounds/",
+  "clusters_folder": "/path/to/clusters/base/",
+  "reports_folder": "/path/to/reports/",
+  
+  "_comment_clusters": "For clustering, a subfolder will be created inside clusters_folder with pattern:",
+  "_comment_clusters_pattern": "clusters_<clusters_folder_prefix>_tick<X>_ch<Y>_min<Z>_tot<T>_e<E>/",
+  "_comment_clusters_files": "Inside that subfolder, files will be named: clusters_0.root, clusters_1.root, etc.",
+  "clusters_folder_prefix": "es_valid",
+  
+  "_section_processing": "Processing options",
+  "max_files": 20,
+  "skip_files": 0,
+  
+  "_section_backtracking": "Backtracking specific",
+  "backtracker_error_margin": 10,
+  
+  "_section_clustering": "Clustering parameters",
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 1,
+  "energy_cut": 0,
+  
+  "_section_legacy": "Legacy folder options (still supported for backward compatibility)",
+  "outputFolder": "/path/to/output/",
+  "outputFilename": "prefix_name"
+}

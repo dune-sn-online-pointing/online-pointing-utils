@@ -1,0 +1,5 @@
+{
+  "inputFile": "/home/virgolaema/dune/online-pointing-utils/data/prod_cc/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T185934Z_gen_001428_supernova_g4_detsim_ana_2025-10-03T_051123Z_tpstream.root",
+  "backtracker_error_margin": 2,
+  "outputFolder": "data"
+}

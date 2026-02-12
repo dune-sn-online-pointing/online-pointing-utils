@@ -1,0 +1,1 @@
+{"inputFile": "data/prod_cc/test_tps.root", "outputFolder": "data/prod_cc", "tick_limit": 3, "channel_limit": 1, "min_tps_to_cluster": 3}

@@ -1,0 +1,19 @@
+Loading channel map...
+
+Creating 32x32 dataset from /eos/user/e/evilla/dune/sn-tps/production_es/bkgs/es_myproc_bg_tick3_ch2_min2_tot2_clusters.root...
+
+Reading clusters from: /eos/user/e/evilla/dune/sn-tps/production_es/bkgs/es_myproc_bg_tick3_ch2_min2_tot2_clusters.root
+Searching in directory: clusters
+Found tree in directory: clusters_tree_U
+Reading 190756 clusters from tree...
+Loaded 4 clusters with >= 5 TPs
+Traceback (most recent call last):
+  File "/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/python/create_nn_dataset.py", line 363, in <module>
+    sys.exit(main())
+  File "/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/python/create_nn_dataset.py", line 293, in main
+    result = create_dataset_32x32(
+  File "/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/python/create_nn_dataset.py", line 54, in create_dataset_32x32
+    img_u, img_v, img_x = create_images(
+  File "/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/python/image_creator.py", line 192, in create_images
+    x_sign = 1 if tps_x[0]['channel'] % 2560 - 2080 > 0 else -1
+IndexError: index 0 is out of bounds for axis 0 with size 0
