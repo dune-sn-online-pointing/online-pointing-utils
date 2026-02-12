@@ -27,7 +27,8 @@ fi
 # Test ES sample
 echo "Testing ES clustering..."
 ${BUILD_DIR}/src/app/make_clusters \
-    -j test/test_clustering/test_clustering_es.json
+    -j test/test_clustering/test_clustering_es.json \
+    -i test/test_backtrack/output/test_es_tps.root
 
 # The app creates a folder based on parameters, so we need to check there
 CLUSTERS_FOLDER="clusters__tick3_ch2_min2_tot1_e0p0"
@@ -44,7 +45,8 @@ fi
 # Test CC sample
 echo "Testing CC clustering..."
 ${BUILD_DIR}/src/app/make_clusters \
-    -j test/test_clustering/test_clustering_cc.json
+    -j test/test_clustering/test_clustering_cc.json \
+    -i test/test_backtrack/output/test_cc_tps.root
 
 if [ -f "${CLUSTERS_FOLDER}/test_cc_clusters.root" ]; then
     echo "✓ CC clustering successful"
