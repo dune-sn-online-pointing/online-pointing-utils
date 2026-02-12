@@ -16,7 +16,7 @@ last=$2
 
 for cat in $(seq $first $last); do
     echo "Submitting cat$(printf "%06d" $cat) jobs..."
-    ${SCRIPTS_DIR}/sequence.sh -j "/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cats/cat_$(printf "%06d" $cat).json" --home-dir /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils --no-compile -gv -gi
+    ${SCRIPTS_DIR}/sequence.sh -j "/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/json/cats/cat_$(printf "%06d" $cat).json" --home-dir /afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils --no-compile --all
     echo ""
     # sleep 3;
 done
