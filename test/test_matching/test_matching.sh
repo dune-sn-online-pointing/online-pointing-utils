@@ -29,7 +29,7 @@ echo "Testing ES matching..."
 ${BUILD_DIR}/src/app/match_clusters \
     -f -j test/test_matching/test_matching_es.json
 
-if [ -f "matched_clusters__tick3_ch2_min2_tot1_e0p0/test_es_matched.root" ]; then
+if [ -f "matched_clusters_tick3_ch2_min2_tot1_e0p0/test_es_matched.root" ]; then
     echo "✓ ES matching successful"
 else
     echo "✗ ES matching failed - output file not found"
@@ -41,7 +41,7 @@ echo "Testing CC matching..."
 ${BUILD_DIR}/src/app/match_clusters \
     -f -j test/test_matching/test_matching_cc.json
 
-if [ -f "matched_clusters__tick3_ch2_min2_tot1_e0p0/test_cc_matched.root" ]; then
+if [ -f "matched_clusters_tick3_ch2_min2_tot1_e0p0/test_cc_matched.root" ]; then
     echo "✓ CC matching successful"
 else
     echo "✗ CC matching failed - output file not found"

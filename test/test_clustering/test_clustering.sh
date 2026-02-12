@@ -31,7 +31,7 @@ ${BUILD_DIR}/src/app/make_clusters \
     -i test/test_backtrack/output/test_es_tps.root
 
 # The app creates a folder based on parameters, so we need to check there
-CLUSTERS_FOLDER="clusters__tick3_ch2_min2_tot1_e0p0"
+CLUSTERS_FOLDER="clusters_tick3_ch2_min2_tot1_e0p0"
 if [ -f "${CLUSTERS_FOLDER}/test_es_clusters.root" ]; then
     echo "✓ ES clustering successful"
     # Create a symlink in the expected test output location for downstream tests
