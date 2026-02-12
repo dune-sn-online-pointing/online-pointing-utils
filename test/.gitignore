@@ -1,0 +1,14 @@
+# Test output directories
+test_backtrack/output/
+test_clustering/output/
+test_matching/output/
+test_analysis/output/
+
+# Old test files (to be removed)
+test_bg_tps.root
+test_es_file_tpstream.root
+configs/
+test_output/
+full_test.log
+test_run.log
+run_tests.sh

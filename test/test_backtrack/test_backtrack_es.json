@@ -1,0 +1,5 @@
+{
+  "filename": "test/data/test_es_tpstreams.txt",
+  "backtracker_error_margin": 0,
+  "max_events_per_filename": 3
+}

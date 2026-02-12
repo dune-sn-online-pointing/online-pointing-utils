@@ -1,0 +1,9 @@
+{
+  "filename": "test/test_backtrack/output/test_cc_tps_bktr0.root",
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "adc_integral_cut_induction": 0,
+  "adc_integral_cut_collection": 0,
+  "tot_cut": 1
+}

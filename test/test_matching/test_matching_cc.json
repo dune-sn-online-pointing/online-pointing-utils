@@ -1,0 +1,15 @@
+{
+  "input_file": "test/data/test_cc_tpstreams.txt",
+  "output_folder": "test/test_matching/output",
+  "clusters_u": "test/test_matching/output/test_cc_clusters_u.root",
+  "clusters_v": "test/test_matching/output/test_cc_clusters_v.root",
+  "clusters_x": "test/test_matching/output/test_cc_clusters_x.root",
+  "create_clusters_from_file": 1,
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "supernova_option": 0,
+  "main_track_option": 0,
+  "max_events_per_filename": 200,
+  "adc_integral_cut": 0
+}
