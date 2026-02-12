@@ -223,17 +223,16 @@ int main(int argc, char* argv[]) {
             continue; // process next file
         }
 
-    // Open the TPs tree inside the "tps" directory
+    // Open the TPs tree inside the "tps" directory, or fall back to top-level
     TDirectory* tpsDir = file->GetDirectory("tps");
-    if (tpsDir == nullptr) {
-        LogError << "Directory 'tps' not found in file: " << inFile << std::endl;
-        file->Close();
-        delete file;
-        continue;
-    }
-    TTree *tpTree = dynamic_cast<TTree*>(tpsDir->Get("tps"));
+    TDirectory* tpsBase = tpsDir ? tpsDir : static_cast<TDirectory*>(file);
+    TTree *tpTree = dynamic_cast<TTree*>(tpsBase->Get("tps"));
     if (!tpTree) {
-        LogError << "Tree 'tps' not found in directory 'tps' for file: " << inFile << std::endl;
+        if (tpsDir == nullptr) {
+            LogError << "Directory 'tps' not found in file: " << inFile << " and no top-level 'tps' tree exists." << std::endl;
+        } else {
+            LogError << "Tree 'tps' not found in directory 'tps' for file: " << inFile << std::endl;
+        }
         file->Close();
         delete file;
         continue;
@@ -249,7 +248,7 @@ int main(int argc, char* argv[]) {
     std::unordered_map<int, std::unordered_set<int>> event_union_channels; // event -> set of channels from truth
     auto makeTruthKey = [](int evt, int tid) -> long long { return ( (static_cast<long long>(evt) << 32) | (static_cast<unsigned int>(tid)) ); };
     std::unordered_map<long long, std::pair<double,double>> truth_time_window; // (evt,truth_id) -> [tmin,tmax]
-    if (auto* tTreeTruth = dynamic_cast<TTree*>(tpsDir->Get("true_particles"))) {
+    if (auto* tTreeTruth = dynamic_cast<TTree*>(tpsBase->Get("true_particles"))) {
         int tevt = 0; std::string* tgen = nullptr; double tstart=0.0, tend=0.0; std::vector<int>* channels=nullptr; int ttruth=0;
         tTreeTruth->SetBranchAddress("event", &tevt);
         tTreeTruth->SetBranchAddress("generator_name", &tgen);
@@ -268,7 +267,7 @@ int main(int argc, char* argv[]) {
         }
     }
     // Read neutrino energies per event if the 'neutrinos' tree exists
-    if (auto* nuTree = dynamic_cast<TTree*>(tpsDir->Get("neutrinos"))) {
+    if (auto* nuTree = dynamic_cast<TTree*>(tpsBase->Get("neutrinos"))) {
         int nevt = 0; int nen = 0; float nux=0.f, nuy=0.f, nuz=0.f, nut=0.f; // use float to match typical branch types
         nuTree->SetBranchAddress("event", &nevt);
         if (nuTree->GetBranch("en")) nuTree->SetBranchAddress("en", &nen);
@@ -1200,15 +1199,15 @@ int main(int argc, char* argv[]) {
         TH1F *h_offset = new TH1F("h_time_offset", "Time Offset Corrections per Event;Time Offset [TPC ticks];Events", nbins, bin_lo, bin_hi);
         h_offset->SetLineColor(kBlue+1);
         h_offset->SetFillColorAlpha(kBlue+1, 0.3);
-        h_offset->SetStats(1);
+        h_offset->SetStats(0);
         
         for (const auto &kv : event_time_offsets) {
             h_offset->Fill(kv.second);
         }
         
         c_offset->cd();
+        c_offset->SetGrid();
         h_offset->Draw("HIST");
-        // Remove grid as requested
         
         // Add text summary
         TLatex latex; latex.SetNDC(); latex.SetTextFont(42); latex.SetTextSize(0.03);

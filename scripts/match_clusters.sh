@@ -1,36 +1,29 @@
-#!bin/bash
-INPUT_JSON=/afs/cern.ch/work/d/dapullia/public/dune/online-pointing-utils/json/match_clusters/pointing_high_E_3d_dir.json
-REPO_HOME=$(git rev-parse --show-toplevel)
+#!/bin/bash
+set -e
+export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source $SCRIPTS_DIR/init.sh
 
-# parse the input
+print_help(){
+    echo "Usage: $0 -j <json> [--no-compile] [--clean-compile]"; exit 0;
+}
+
+settingsFile="json/match_clusters/example.json"
+cleanCompile=false
+noCompile=false
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --input_file)
-            INPUT_JSON="$2"
-            shift 2
-            ;;
-        -h|--help)
-            echo "Usage: ./match_clusters.sh --input_file <input_json>"
-            exit 0
-            ;;  
-        *)
-            shift
-            ;;
+        -j|--json) settingsFile="$2"; shift 2;;
+        --no-compile) noCompile=true; shift;;
+        --clean-compile) cleanCompile=true; shift;;
+        -h|--help) print_help;;
+        *) shift;;
     esac
 done
 
-echo "REPO_HOME: ${REPO_HOME}"
-# compile
-echo "Compiling..."
-cd ${REPO_HOME}/build/
-cmake ..
-make -j $(nproc)
-# if successful, run the app
-if [ $? -ne 0 ]; then
-    echo "Compilation failed"
-    # exit 1
-fi
+settingsFile=$($SCRIPTS_DIR/findSettings.sh -j $settingsFile | tail -n 1)
+. $SCRIPTS_DIR/compile.sh -p $HOME_DIR --no-compile $noCompile --clean-compile $cleanCompile
 
-# Run the app
-./app/match_clusters -j $INPUT_JSON
-cd ${REPO_HOME}/scripts/
+cmd="$BUILD_DIR/src/app/match_clusters -j $settingsFile"
+echo "Running: $cmd"
+exec $cmd

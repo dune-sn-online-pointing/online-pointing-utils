@@ -12,8 +12,19 @@ source $SCRIPTS_DIR/init.sh
 cleanCompile=false
 noCompile=false
 pwd=$PWD
-nproc=$(nproc)
+if command -v nproc >/dev/null 2>&1; then
+    nproc=$(nproc)
+elif command -v getconf >/dev/null 2>&1; then
+    nproc=$(getconf _NPROCESSORS_ONLN)
+elif command -v sysctl >/dev/null 2>&1; then
+    nproc=$(sysctl -n hw.ncpu)
+else
+    nproc=2
+fi
 nproc_to_use=$((nproc-2))
+if [ $nproc_to_use -lt 1 ]; then
+    nproc_to_use=1
+fi
 
 # Function to print help message
 print_help() {

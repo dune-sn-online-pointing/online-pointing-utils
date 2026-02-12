@@ -54,6 +54,11 @@ int main(int argc, char* argv[]) {
     std::string list_file = j["filename"]; // text file with tpstream list
     LogInfo << "File with list of tpstreams: " << list_file << std::endl;
 
+    int max_events_per_filename = j.value("max_events_per_filename", -1);
+    if (max_events_per_filename > 0) {
+        LogInfo << "Max events per filename: " << max_events_per_filename << std::endl;
+    }
+
     std::string outfolder = clp.isOptionTriggered("outFolder") ? clp.getOptionVal<std::string>("outFolder") : std::string("data");
     LogInfo << "Output folder: " << outfolder << std::endl;
 
@@ -96,7 +101,12 @@ int main(int argc, char* argv[]) {
         tps.clear(); true_particles.clear(); neutrinos.clear();
         tps.resize(n_events+1); true_particles.resize(n_events+1); neutrinos.resize(n_events+1);
 
-        for (int iEvent = 1; iEvent <= n_events; ++iEvent) {
+        int last_event = n_events;
+        if (max_events_per_filename > 0 && max_events_per_filename < last_event) {
+            last_event = max_events_per_filename;
+        }
+
+        for (int iEvent = 1; iEvent <= last_event; ++iEvent) {
             LogInfo << "Reading event " << iEvent << std::endl;
             file_reader(filename, tps.at(iEvent), true_particles.at(iEvent), neutrinos.at(iEvent), /*supernova_option*/0, iEvent);
 
