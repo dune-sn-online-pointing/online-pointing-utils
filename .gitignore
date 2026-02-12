@@ -1,6 +1,7 @@
 #json/*/*
 build/*
 lists/
+benchmark/
 *.o
 *.exe
 json/cats/*
