@@ -1,0 +1,310 @@
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: > match_clusters batch processing app.
+
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: Usage: 
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: ──────────── Main options ────────────
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: json {-j,--json}: JSON file containing the configuration (expected: 1 value)
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: skip_files {-s,--skip,--skip-files}: Number of files to skip at start (overrides JSON) (expected: N values)
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: max_files {-m,--max,--max-files}: Maximum number of files to process (overrides JSON) (expected: N values)
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: outFolder {--outFolder,--output-folder}: Output folder path (overrides JSON) (expected: 1 value)
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: ──────────── Triggers ────────────
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: override {-f,--override}: Override existing output files (trigger)
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: verboseMode {-v}: RunVerboseMode, bool (trigger)
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: debugMode {-d}: RunDebugMode, bool (trigger)
+
+
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: Provided arguments: 
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: json: { "json/cc_valid.json" }
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: max_files: { "20" }
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: override: true
+
+21/11/2025 05:41:46 [32m[utils.cpp][0m: [find_input_files] Called with pattern: tpstream
+21/11/2025 05:41:46 [32m[utils.cpp][0m: [find_input_files_by_tpstream_basenames] Using 20 basenames from tpstream files (skip=0, max=20)
+21/11/2025 05:41:46 [32m[utils.cpp][0m: [find_input_files] Called with pattern: clusters
+21/11/2025 05:41:46 [32m[utils.cpp][0m: [find_input_files] clusters_folder_path: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0
+21/11/2025 05:41:46 [32m[utils.cpp][0m: [find_input_files_by_tpstream_basenames] Found 19 files matching basenames for pattern 'clusters'
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: =========================================
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: Processing clusters from folder: 
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: Output will be written to: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_matched_clusters_tick3_ch2_min2_tot3_e3p0
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: Maximum files to process: 20
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: Skip files: 0
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: Found 19 cluster files to process
+21/11/2025 05:41:46 [32m[match_clusters.cpp][0m: =========================================
+21/11/2025 05:41:46 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003440_supernova_g4_detsim_ana_2025-10-21T_090230Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:48 [33m[Clustering.cpp][0m: TriggerPrimitive version is not 2, be sure to have converted time_peak to samples_to_peak
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m:   Loaded 93 U clusters
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003440_supernova_g4_detsim_ana_2025-10-21T_090230Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m:   Loaded 105 V clusters
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003440_supernova_g4_detsim_ana_2025-10-21T_090230Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m:   Loaded 93 X clusters
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003440_supernova_g4_detsim_ana_2025-10-21T_090230Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m:   Loaded 453 U clusters
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003440_supernova_g4_detsim_ana_2025-10-21T_090230Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m:   Loaded 523 V clusters
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003440_supernova_g4_detsim_ana_2025-10-21T_090230Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m:   Loaded 2857 X clusters
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003442_supernova_g4_detsim_ana_2025-10-21T_093312Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m:   Loaded 112 U clusters
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003442_supernova_g4_detsim_ana_2025-10-21T_093312Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m:   Loaded 129 V clusters
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003442_supernova_g4_detsim_ana_2025-10-21T_093312Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m:   Loaded 111 X clusters
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003442_supernova_g4_detsim_ana_2025-10-21T_093312Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m:   Loaded 476 U clusters
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003442_supernova_g4_detsim_ana_2025-10-21T_093312Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m:   Loaded 576 V clusters
+21/11/2025 05:41:48 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003442_supernova_g4_detsim_ana_2025-10-21T_093312Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 2855 X clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003443_supernova_g4_detsim_ana_2025-10-21T_090642Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 105 U clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003443_supernova_g4_detsim_ana_2025-10-21T_090642Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 121 V clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003443_supernova_g4_detsim_ana_2025-10-21T_090642Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 104 X clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003443_supernova_g4_detsim_ana_2025-10-21T_090642Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 471 U clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003443_supernova_g4_detsim_ana_2025-10-21T_090642Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 575 V clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003443_supernova_g4_detsim_ana_2025-10-21T_090642Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 2864 X clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003444_supernova_g4_detsim_ana_2025-10-21T_093351Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 89 U clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003444_supernova_g4_detsim_ana_2025-10-21T_093351Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 101 V clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003444_supernova_g4_detsim_ana_2025-10-21T_093351Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 90 X clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003444_supernova_g4_detsim_ana_2025-10-21T_093351Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 444 U clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003444_supernova_g4_detsim_ana_2025-10-21T_093351Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 546 V clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003444_supernova_g4_detsim_ana_2025-10-21T_093351Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m:   Loaded 2858 X clusters
+21/11/2025 05:41:49 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003445_supernova_g4_detsim_ana_2025-10-21T_095615Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 102 U clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003445_supernova_g4_detsim_ana_2025-10-21T_095615Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 117 V clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003445_supernova_g4_detsim_ana_2025-10-21T_095615Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 95 X clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003445_supernova_g4_detsim_ana_2025-10-21T_095615Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 451 U clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003445_supernova_g4_detsim_ana_2025-10-21T_095615Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 539 V clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003445_supernova_g4_detsim_ana_2025-10-21T_095615Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 2824 X clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003446_supernova_g4_detsim_ana_2025-10-21T_095538Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 92 U clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003446_supernova_g4_detsim_ana_2025-10-21T_095538Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 110 V clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003446_supernova_g4_detsim_ana_2025-10-21T_095538Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 86 X clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003446_supernova_g4_detsim_ana_2025-10-21T_095538Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 442 U clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003446_supernova_g4_detsim_ana_2025-10-21T_095538Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 544 V clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003446_supernova_g4_detsim_ana_2025-10-21T_095538Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 2917 X clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003447_supernova_g4_detsim_ana_2025-10-21T_090515Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 114 U clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003447_supernova_g4_detsim_ana_2025-10-21T_090515Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 121 V clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003447_supernova_g4_detsim_ana_2025-10-21T_090515Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 104 X clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003447_supernova_g4_detsim_ana_2025-10-21T_090515Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 473 U clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003447_supernova_g4_detsim_ana_2025-10-21T_090515Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 529 V clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003447_supernova_g4_detsim_ana_2025-10-21T_090515Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 2849 X clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003448_supernova_g4_detsim_ana_2025-10-21T_092229Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m:   Loaded 94 U clusters
+21/11/2025 05:41:50 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003448_supernova_g4_detsim_ana_2025-10-21T_092229Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 111 V clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003448_supernova_g4_detsim_ana_2025-10-21T_092229Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 102 X clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003448_supernova_g4_detsim_ana_2025-10-21T_092229Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 472 U clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003448_supernova_g4_detsim_ana_2025-10-21T_092229Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 587 V clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003448_supernova_g4_detsim_ana_2025-10-21T_092229Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 2836 X clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003449_supernova_g4_detsim_ana_2025-10-21T_091534Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 85 U clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003449_supernova_g4_detsim_ana_2025-10-21T_091534Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 102 V clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003449_supernova_g4_detsim_ana_2025-10-21T_091534Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 96 X clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003449_supernova_g4_detsim_ana_2025-10-21T_091534Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 449 U clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003449_supernova_g4_detsim_ana_2025-10-21T_091534Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 527 V clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003449_supernova_g4_detsim_ana_2025-10-21T_091534Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 2869 X clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003450_supernova_g4_detsim_ana_2025-10-21T_094640Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 97 U clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003450_supernova_g4_detsim_ana_2025-10-21T_094640Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 111 V clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003450_supernova_g4_detsim_ana_2025-10-21T_094640Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 104 X clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003450_supernova_g4_detsim_ana_2025-10-21T_094640Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 464 U clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003450_supernova_g4_detsim_ana_2025-10-21T_094640Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 563 V clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003450_supernova_g4_detsim_ana_2025-10-21T_094640Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 2845 X clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003451_supernova_g4_detsim_ana_2025-10-21T_093630Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 99 U clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003451_supernova_g4_detsim_ana_2025-10-21T_093630Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 101 V clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003451_supernova_g4_detsim_ana_2025-10-21T_093630Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 82 X clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003451_supernova_g4_detsim_ana_2025-10-21T_093630Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 447 U clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003451_supernova_g4_detsim_ana_2025-10-21T_093630Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 556 V clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003451_supernova_g4_detsim_ana_2025-10-21T_093630Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m:   Loaded 2865 X clusters
+21/11/2025 05:41:51 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003452_supernova_g4_detsim_ana_2025-10-21T_092208Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 99 U clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003452_supernova_g4_detsim_ana_2025-10-21T_092208Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 106 V clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003452_supernova_g4_detsim_ana_2025-10-21T_092208Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 99 X clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003452_supernova_g4_detsim_ana_2025-10-21T_092208Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 451 U clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003452_supernova_g4_detsim_ana_2025-10-21T_092208Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 520 V clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003452_supernova_g4_detsim_ana_2025-10-21T_092208Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 2855 X clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003454_supernova_g4_detsim_ana_2025-10-21T_092242Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 103 U clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003454_supernova_g4_detsim_ana_2025-10-21T_092242Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 113 V clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003454_supernova_g4_detsim_ana_2025-10-21T_092242Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 98 X clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003454_supernova_g4_detsim_ana_2025-10-21T_092242Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 448 U clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003454_supernova_g4_detsim_ana_2025-10-21T_092242Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 559 V clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003454_supernova_g4_detsim_ana_2025-10-21T_092242Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 2883 X clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003455_supernova_g4_detsim_ana_2025-10-21T_095657Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 87 U clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003455_supernova_g4_detsim_ana_2025-10-21T_095657Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 112 V clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003455_supernova_g4_detsim_ana_2025-10-21T_095657Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 88 X clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003455_supernova_g4_detsim_ana_2025-10-21T_095657Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 450 U clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003455_supernova_g4_detsim_ana_2025-10-21T_095657Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 528 V clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003455_supernova_g4_detsim_ana_2025-10-21T_095657Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 2845 X clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003457_supernova_g4_detsim_ana_2025-10-21T_092048Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 107 U clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003457_supernova_g4_detsim_ana_2025-10-21T_092048Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 119 V clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003457_supernova_g4_detsim_ana_2025-10-21T_092048Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 108 X clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003457_supernova_g4_detsim_ana_2025-10-21T_092048Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 470 U clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003457_supernova_g4_detsim_ana_2025-10-21T_092048Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m:   Loaded 578 V clusters
+21/11/2025 05:41:52 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003457_supernova_g4_detsim_ana_2025-10-21T_092048Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 2861 X clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003458_supernova_g4_detsim_ana_2025-10-21T_090449Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 90 U clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003458_supernova_g4_detsim_ana_2025-10-21T_090449Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 91 V clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003458_supernova_g4_detsim_ana_2025-10-21T_090449Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 88 X clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003458_supernova_g4_detsim_ana_2025-10-21T_090449Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 445 U clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003458_supernova_g4_detsim_ana_2025-10-21T_090449Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 542 V clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003458_supernova_g4_detsim_ana_2025-10-21T_090449Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 2849 X clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003459_supernova_g4_detsim_ana_2025-10-21T_094635Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 98 U clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003459_supernova_g4_detsim_ana_2025-10-21T_094635Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 111 V clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003459_supernova_g4_detsim_ana_2025-10-21T_094635Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 102 X clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003459_supernova_g4_detsim_ana_2025-10-21T_094635Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 454 U clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003459_supernova_g4_detsim_ana_2025-10-21T_094635Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 538 V clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003459_supernova_g4_detsim_ana_2025-10-21T_094635Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m:   Loaded 2808 X clusters
+21/11/2025 05:41:53 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003460_supernova_g4_detsim_ana_2025-10-21T_094344Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m:   Loaded 98 U clusters
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003460_supernova_g4_detsim_ana_2025-10-21T_094344Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m:   Loaded 109 V clusters
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003460_supernova_g4_detsim_ana_2025-10-21T_094344Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m:   Loaded 93 X clusters
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003460_supernova_g4_detsim_ana_2025-10-21T_094344Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m:   Loaded 436 U clusters
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003460_supernova_g4_detsim_ana_2025-10-21T_094344Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m:   Loaded 535 V clusters
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003460_supernova_g4_detsim_ana_2025-10-21T_094344Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m:   Loaded 2929 X clusters
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003461_supernova_g4_detsim_ana_2025-10-21T_092443Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m:   Loaded 82 U clusters
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003461_supernova_g4_detsim_ana_2025-10-21T_092443Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m:   Loaded 99 V clusters
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003461_supernova_g4_detsim_ana_2025-10-21T_092443Z_bg_clusters.root (directory: clusters)
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m:   Loaded 85 X clusters
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m: Reading U clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003461_supernova_g4_detsim_ana_2025-10-21T_092443Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m:   Loaded 471 U clusters
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m: Reading V clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003461_supernova_g4_detsim_ana_2025-10-21T_092443Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m:   Loaded 532 V clusters
+21/11/2025 05:41:54 [32m[Clustering.cpp][0m: Reading X clusters from: /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003461_supernova_g4_detsim_ana_2025-10-21T_092443Z_bg_clusters.root (directory: discarded)
+21/11/2025 05:41:55 [32m[Clustering.cpp][0m:   Loaded 2836 X clusters
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: =========================================
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: Batch processing complete!
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: Processed: 19 files
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: Failed: 0 files
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: =========================================
+
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: =========================================
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: GLOBAL MATCHING STATISTICS
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: =========================================
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: Total main X clusters: 857
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: Complete matches (X+U+V): 787 (91.832%)
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: Partial matches (X+U only): 16 (1.86698%)
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: Partial matches (X+V only): 21 (2.45041%)
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: Total matched: 824 (96.1494%)
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: Unmatched: 33 (3.85064%)
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: Top global event deltas U (candidate - X):
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=-2 count=33
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=6 count=32
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=2 count=29
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=8 count=29
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=3 count=28
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=-14 count=27
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=-3 count=27
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=5 count=26
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=-10 count=25
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=-5 count=24
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: Top global event deltas V (candidate - X):
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=6 count=34
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=8 count=33
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=-2 count=31
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=10 count=31
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=2 count=29
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=-6 count=28
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=-8 count=28
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=-10 count=27
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=-3 count=27
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   delta=-18 count=27
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: =========================================
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m: Generated output files (showing only first 10):
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_matched_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003440_supernova_g4_detsim_ana_2025-10-21T_090230Z_bg_matched.root
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_matched_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003442_supernova_g4_detsim_ana_2025-10-21T_093312Z_bg_matched.root
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_matched_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003443_supernova_g4_detsim_ana_2025-10-21T_090642Z_bg_matched.root
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_matched_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003444_supernova_g4_detsim_ana_2025-10-21T_093351Z_bg_matched.root
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_matched_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003445_supernova_g4_detsim_ana_2025-10-21T_095615Z_bg_matched.root
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_matched_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003446_supernova_g4_detsim_ana_2025-10-21T_095538Z_bg_matched.root
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_matched_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003447_supernova_g4_detsim_ana_2025-10-21T_090515Z_bg_matched.root
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_matched_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003448_supernova_g4_detsim_ana_2025-10-21T_092229Z_bg_matched.root
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_matched_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003449_supernova_g4_detsim_ana_2025-10-21T_091534Z_bg_matched.root
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   /home/virgolaema/dune/online-pointing-utils/data3/prod_cc/cc_valid_bg_matched_clusters_tick3_ch2_min2_tot3_e3p0/prodmarley_nue_flat_cc_dune10kt_1x2x2_20250926T194911Z_gen_003450_supernova_g4_detsim_ana_2025-10-21T_094640Z_bg_matched.root
+21/11/2025 05:41:55 [32m[match_clusters.cpp][0m:   ...
