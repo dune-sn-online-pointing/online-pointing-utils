@@ -76,6 +76,11 @@ THRESHOLD_ADC_X = 60   # Collection plane
 THRESHOLD_ADC_U = 70   # Induction plane U
 THRESHOLD_ADC_V = 70   # Induction plane V
 
+# APA mapping for global channel indexing (collection plane)
+APA_CHANNELS_TOTAL = 2560
+APA_COLLECTION_CHANNELS = 960
+APA_GAP_CHANNELS = 5
+
 
 def _read_conversion_factors():
     """Read ADC->MeV conversion factors from parameters/conversion.dat if available.
@@ -346,7 +351,16 @@ def calculate_pentagon_params(time_start, time_peak, time_end, adc_peak, adc_int
     )
 
 
-def load_clusters_from_file(cluster_file, plane='X', verbose=False):
+def _compute_global_channels(channels, detectors):
+    """Compute global channel indices with APA gaps for collection plane."""
+    global_channels = []
+    for ch, det in zip(channels, detectors):
+        local = (int(ch) % APA_CHANNELS_TOTAL) - 1600
+        global_channels.append(local + int(det) * (APA_COLLECTION_CHANNELS + APA_GAP_CHANNELS))
+    return np.array(global_channels, dtype=float)
+
+
+def load_clusters_from_file(cluster_file, plane='X', verbose=False, use_global_channels=False):
     """
     Load clusters from ROOT file for specified plane.
     
@@ -387,6 +401,8 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
             'tp_samples_over_threshold', 'tp_samples_to_peak',
             'cluster_id'
         ]
+        if 'tp_detector' in tree.keys():
+            branches.append('tp_detector')
         # total_charge is written by clustering (reconstructed charge for the cluster)
         if 'total_charge' in tree.keys():
             branches.append('total_charge')
@@ -423,6 +439,13 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
             # Calculate cluster center in detector units
             center_channel = np.mean(channels)
             center_time_tpc = np.mean(times_tpc)
+
+            detectors = arrays['tp_detector'][i] if 'tp_detector' in arrays else None
+            channels_global = None
+            center_channel_global = None
+            if use_global_channels and plane == 'X' and detectors is not None:
+                channels_global = _compute_global_channels(channels, detectors)
+                center_channel_global = float(np.mean(channels_global))
             
             # Check if it's a marley cluster
             # Use marley_tp_fraction as primary indicator since true_label may be 'UNKNOWN' in matched files
@@ -457,6 +480,8 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
                 'samples_over_threshold': samples_over_threshold,
                 'samples_to_peak': samples_to_peak,
                 'center_channel': center_channel,
+                'center_channel_global': center_channel_global,
+                'channels_global': channels_global,
                 'center_time_tpc': center_time_tpc,
                 'is_es_interaction': bool(arrays['is_es_interaction'][i]),
                 'true_neutrino_energy': float(arrays['true_neutrino_energy'][i]),
@@ -488,7 +513,7 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False):
     return all_clusters
 
 
-def get_clusters_in_volume(all_clusters, center_channel, center_time_tpc, volume_size_cm=100.0, event=None):
+def get_clusters_in_volume(all_clusters, center_channel, center_time_tpc, volume_size_cm=100.0, event=None, channel_key='center_channel'):
     """
     Get all clusters within a volume around the center point.
     
@@ -519,14 +544,14 @@ def get_clusters_in_volume(all_clusters, center_channel, center_time_tpc, volume
         if event is not None and cluster['event'] != event:
             continue
         
-        if (min_channel <= cluster['center_channel'] <= max_channel and
+        if (min_channel <= cluster[channel_key] <= max_channel and
             min_time <= cluster['center_time_tpc'] <= max_time):
             volume_clusters.append(cluster)
     
     return volume_clusters
 
 
-def create_volume_image(volume_clusters, center_channel, center_time_tpc, volume_size_cm=100.0, plane='X'):
+def create_volume_image(volume_clusters, center_channel, center_time_tpc, volume_size_cm=100.0, plane='X', channel_key='channels'):
     """
     Create a 2D image array from clusters in the volume using pentagon interpolation.
     
@@ -549,7 +574,7 @@ def create_volume_image(volume_clusters, center_channel, center_time_tpc, volume
     
     # Fill image with TPs from all clusters in volume using pentagon interpolation
     for cluster in volume_clusters:
-        channels = cluster['channels']
+        channels = cluster[channel_key]
         times_start = cluster['times_tpc']
         times_end = cluster['times_end_tpc']
         times_peak = cluster['times_peak_tpc']
@@ -659,7 +684,13 @@ def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], ve
     
     for plane in planes:
         # Load clusters for this plane
-        clusters = load_clusters_from_file(cluster_file, plane=plane, verbose=verbose)
+        use_global_channels = (plane == 'X')
+        clusters = load_clusters_from_file(
+            cluster_file,
+            plane=plane,
+            verbose=verbose,
+            use_global_channels=use_global_channels
+        )
         
         if len(clusters) == 0:
             if verbose:
@@ -686,14 +717,21 @@ def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], ve
         all_metadata = []
         
         # Process each main track
+        channel_key = 'channels'
+        center_key = 'center_channel'
+        if use_global_channels and clusters and clusters[0].get('channels_global') is not None:
+            channel_key = 'channels_global'
+            center_key = 'center_channel_global'
+
         for idx, main_cluster in enumerate(main_clusters):
             # Get clusters in volume around this main track (only from same event)
             volume_clusters = get_clusters_in_volume(
                 clusters,
-                main_cluster['center_channel'],
+                main_cluster[center_key],
                 main_cluster['center_time_tpc'],
                 VOLUME_SIZE_CM,
-                event=main_cluster['event']
+                event=main_cluster['event'],
+                channel_key=center_key
             )
             
             if len(volume_clusters) == 0:
@@ -702,10 +740,11 @@ def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], ve
             # Create volume image
             image = create_volume_image(
                 volume_clusters,
-                main_cluster['center_channel'],
+                main_cluster[center_key],
                 main_cluster['center_time_tpc'],
                 VOLUME_SIZE_CM,
-                plane
+                plane,
+                channel_key=channel_key
             )
             
             # Calculate metadata
@@ -716,7 +755,7 @@ def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], ve
             marley_distances = []
             for cluster in volume_clusters:
                 if cluster['is_marley'] and cluster['cluster_id'] != main_cluster['cluster_id']:
-                    channel_dist_cm = abs(cluster['center_channel'] - main_cluster['center_channel']) * CHANNEL_PITCH_CM
+                    channel_dist_cm = abs(cluster[center_key] - main_cluster[center_key]) * CHANNEL_PITCH_CM
                     time_dist_cm = abs(cluster['center_time_tpc'] - main_cluster['center_time_tpc']) * DRIFT_VELOCITY_CM_PER_TICK
                     distance_cm = np.sqrt(channel_dist_cm**2 + time_dist_cm**2)
                     marley_distances.append(distance_cm)
@@ -772,7 +811,7 @@ def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], ve
                 'n_non_marley_clusters': n_non_marley_clusters,  # position 15
                 'avg_marley_cluster_distance_cm': avg_marley_distance,  # position 16
                 'max_marley_cluster_distance_cm': max_marley_distance,  # position 17
-                'center_channel': float(main_cluster['center_channel']),  # position 18
+                'center_channel': float(main_cluster[center_key]),  # position 18
                 'center_time_tpc': float(main_cluster['center_time_tpc']),  # position 19
                 'volume_size_cm': VOLUME_SIZE_CM,  # position 20
                 'image_shape': image.shape,  # position 21
