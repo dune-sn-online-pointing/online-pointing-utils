@@ -18,4 +18,9 @@ data3/
 job_output/
 *.cc
 temp/
+# Local data directories (not tracked)
+Benchmark/
+Data/
+Output/
+Reports/
 condor/evilla/*
