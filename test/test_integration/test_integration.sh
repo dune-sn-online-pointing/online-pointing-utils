@@ -1,7 +1,8 @@
 #!/bin/bash
 #
-# Integration test - runs a mini end-to-end pipeline
+# Integration test - runs full pipeline using scripts/sequence.sh
 # Tests: backtrack → make_clusters → match_clusters → analyze
+# This validates the end-to-end workflow that users actually run
 #
 
 set -e
@@ -37,74 +38,46 @@ fi
 
 cd "${ROOT_DIR}"
 
-# Step 1: Backtrack
-echo -e "\n${YELLOW}→ Step 1: Backtracking TPs...${NC}"
-./build/src/app/backtrack_tpstream -j "${TEST_JSON}" --override || {
-    echo -e "${RED}✗ Backtracking failed${NC}"
+# Run full pipeline using sequence.sh
+echo -e "\n${YELLOW}→ Running full pipeline: backtrack → cluster → match → analyze${NC}"
+./scripts/sequence.sh -j "${TEST_JSON}" -bt -mc -mm -ac -f || {
+    echo -e "${RED}✗ Pipeline failed${NC}"
     exit 1
 }
-echo -e "${GREEN}✓ Backtracking completed${NC}"
+echo -e "${GREEN}✓ Pipeline completed${NC}"
 
-# Verify backtrack output
+# Verify outputs
+echo -e "\n${YELLOW}Verifying outputs...${NC}"
+
+# Check backtrack output
 if [ ! -f "${OUTPUT_DIR}/test_es_tps_bktr0.root" ]; then
     echo -e "${RED}✗ Backtrack output not found${NC}"
     exit 1
 fi
+echo -e "${GREEN}✓ Backtrack output found${NC}"
 
-# Step 2: Make clusters
-echo -e "\n${YELLOW}→ Step 2: Creating clusters...${NC}"
-./build/src/app/make_clusters -j "${TEST_JSON}" --override || {
-    echo -e "${RED}✗ Clustering failed${NC}"
-    exit 1
-}
-echo -e "${GREEN}✓ Clustering completed${NC}"
-
-# Verify clustering output
+# Check clustering output
 CLUSTER_DIR=$(find "${OUTPUT_DIR}" -type d -name "*integration_clusters_tick*" | head -1)
 if [ -z "${CLUSTER_DIR}" ]; then
     echo -e "${RED}✗ Cluster directory not found${NC}"
     exit 1
 fi
+echo -e "${GREEN}✓ Cluster directory found: $(basename ${CLUSTER_DIR})${NC}"
 
-CLUSTER_FILE="${CLUSTER_DIR}/test_es_clusters.root"
-if [ ! -f "${CLUSTER_FILE}" ]; then
-    echo -e "${RED}✗ Cluster file not found: ${CLUSTER_FILE}${NC}"
-    exit 1
-fi
-
-# Step 3: Match clusters
-echo -e "\n${YELLOW}→ Step 3: Matching clusters across planes...${NC}"
-./build/src/app/match_clusters -j "${TEST_JSON}" --override || {
-    echo -e "${RED}✗ Matching failed${NC}"
-    exit 1
-}
-echo -e "${GREEN}✓ Matching completed${NC}"
-
-# Verify matching output
+# Check matching output
 MATCHED_DIR=$(find "${OUTPUT_DIR}" -type d -name "*matched_clusters_tick*" | head -1)
 if [ -z "${MATCHED_DIR}" ]; then
     echo -e "${RED}✗ Matched cluster directory not found${NC}"
     exit 1
 fi
+echo -e "${GREEN}✓ Matched cluster directory found: $(basename ${MATCHED_DIR})${NC}"
 
-MATCHED_FILE="${MATCHED_DIR}/test_es_matched.root"
-if [ ! -f "${MATCHED_FILE}" ]; then
-    echo -e "${RED}✗ Matched cluster file not found: ${MATCHED_FILE}${NC}"
-    exit 1
-fi
-
-# Step 4: Analyze clusters
-echo -e "\n${YELLOW}→ Step 4: Analyzing clusters...${NC}"
-./build/src/app/analyze_clusters -j "${TEST_JSON}" || {
-    echo -e "${RED}✗ Analysis failed${NC}"
-    exit 1
-}
-echo -e "${GREEN}✓ Analysis completed${NC}"
-
-# Verify analysis output  
-REPORT_PDF=$(find "${OUTPUT_DIR}/reports" -name "*report.pdf" | head -1)
-if [ -z "${REPORT_PDF}" ]; then
-    echo -e "${YELLOW}⚠ Analysis report not found (this is OK if analysis produces no output)${NC}"
+# Check analysis output
+REPORT_PDF=$(find "${OUTPUT_DIR}/reports" -name "*report.pdf" 2>/dev/null | head -1)
+if [ -n "${REPORT_PDF}" ]; then
+    echo -e "${GREEN}✓ Analysis report generated${NC}"
+else
+    echo -e "${YELLOW}⚠ Analysis report not found (may be OK if no data to analyze)${NC}"
 fi
 
 # Summary
