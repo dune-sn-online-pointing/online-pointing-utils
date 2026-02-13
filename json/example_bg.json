@@ -1,0 +1,20 @@
+{
+  "comment": "Example configuration for background-only analysis",
+  
+  "main_folder": "/path/to/your/background/data",
+  "products_prefix": "bg_only",
+  "max_files": 10,
+  
+  "backtracker_error_margin": 0,
+  "time_tolerance_ticks": 10,
+  "spatial_tolerance_cm": 100,
+  
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 0,
+  "energy_cut": 0.0,
+  
+  "reports_folder": "reports/",
+  "outputFolder": "data/"
+}
