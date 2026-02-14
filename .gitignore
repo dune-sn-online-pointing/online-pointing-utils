@@ -8,6 +8,7 @@ benchmark_cc_tick3_ch2_tot3_e3/
 json/cats/*
 */__pycache__/
 condor_test/
+condor/
 app/plots/
 output/
 */*.root
