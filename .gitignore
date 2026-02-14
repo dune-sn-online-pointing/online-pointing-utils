@@ -2,6 +2,7 @@
 build/*
 lists/
 benchmark/
+benchmark_cc_tick3_ch2_tot3_e3/
 *.o
 *.exe
 json/cats/*
@@ -12,12 +13,17 @@ output/
 */*.root
 *.png  
 *.jpg
+results/
+Results/
 data/
 data2/
 data3/
 job_output/
 *.cc
 temp/
+Temp/
+tests/
+Tests/
 # Local data directories (not tracked)
 Benchmark/
 Data/
@@ -26,4 +32,3 @@ Reports/
 condor/evilla/*
 Benchmark_cc_tick3_ch2_tot3_e3/
 Temp/
-Tests/
