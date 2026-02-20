@@ -4,41 +4,16 @@
 
 #include <nlohmann/json.hpp>
 
+#include "../io/InputOutput.h"
 #include "ParametersManager.h"
 #include "root.h"
 
-// File utility functions
-// std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& file_suffix = "_tpstream.root");
-std::vector<std::string> find_input_files(const nlohmann::json& j, const std::vector<std::string>& file_suffixes);
-std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& pattern);
-
-
-// Basename tracking for consistent skip/max across pipeline stages
-std::string extractBasename(const std::string& filepath);
-std::vector<std::string> findFilesMatchingBasenames(const std::vector<std::string>& basenames, const std::vector<std::string>& candidate_files);
-std::vector<std::string> find_input_files_by_tpstream_basenames(const nlohmann::json& j, const std::string& pattern, int skip_files, int max_files);
+// Utility helpers not covered by io/InputOutput
 std::string toLower(std::string s);
-
-bool ensureDirectoryExists(const std::string& folder);
-
-// Path helpers
-std::string getTpstreamBaseFolder(const nlohmann::json& j);
-std::string resolveFolderAgainstTpstream(const nlohmann::json& j, const std::string& folder, bool useBaseOnEmpty = false);
 
 // Time conversion utilities (declared here, defined in utils.cpp to avoid circular dependency)
 int toTPCticks(int tdcTicks);
-
 int toTDCticks(int tpcTicks);
-
-void bindBranch(TTree* tree, const char* name, void* address);
-
-std::string getClustersFolder(const nlohmann::json& j);
-
-// New folder structure helpers
-std::string getConditionsString(const nlohmann::json& j);
-std::string getOutputFolder(const nlohmann::json& j, const std::string& folder_type, const std::string& json_key);
-
-template <typename T> bool SetBranchWithFallback(TTree* , std::initializer_list<const char*>, T*, const std::string& );
 
 
 // APAs

@@ -1,158 +1,83 @@
 # Configuration Guide
 
-This guide provides comprehensive information about configuring the online-pointing-utils project.
+How to configure and run the current pipeline (matches the wrappers and tracked examples).
 
-## Configuration Overview
+## Layers
 
-The project uses multiple configuration layers:
+1) Parameters (`parameters/*.dat`)
+- Geometry: `geometry.dat`
+- Timing: `timing.dat`
+- Conversions: `conversion.dat`
+- Detector: `detector.dat`
+- Analysis/thresholds: `analysis.dat`, `display.dat`
+- Format: `< key = value >    # comment` (see [parameters/PARAMETERS.md](parameters/PARAMETERS.md))
 
-1. **[Parameter System](parameters/PARAMETERS.md)** - Core constants and geometry
-2. **[JSON Configurations](json/README.md)** - Algorithm parameters and workflows
-3. **Environment Variables** - Runtime paths and options
-4. **Build/Run Scripts** - Orchestration and compilation (`scripts/`)
+2) JSON settings (`json/*.json`)
+- Only example configs + `test_settings.json` are tracked; personal/production configs stay untracked.
+- Keys cover inputs, folder auto-generation, clustering/matching knobs, and step toggles. See [json/README.md](json/README.md).
 
-## Parameter System Configuration
+3) Environment
+- Sourced automatically by `scripts/init.sh` (called by every wrapper):
+  - `HOME_DIR`: repo root
+  - `SCRIPTS_DIR`: scripts directory
+  - `BUILD_DIR`: build directory (default `build/`)
+  - `PARAMETERS_DIR`: defaults to `parameters/` in the repo; override if needed
 
-### Setting Up Parameters
-```bash
-# Set parameter directory
-export PARAMETERS_DIR=/path/to/online-pointing-utils/parameters
-```
+4) Orchestration
+- Use `scripts/sequence.sh -j <json> --all` for the full chain or per-step flags for subsets.
+- Use `scripts/compile.sh` for builds (handles macOS/Linux core detection).
 
-### Parameter Files
-- **[geometry.dat](../parameters/geometry.dat)** - Detector geometry constants
-- **[timing.dat](../parameters/timing.dat)** - Time-related parameters
-- **[conversion.dat](../parameters/conversion.dat)** - Unit conversion factors
-- **[detector.dat](../parameters/detector.dat)** - Detector-specific settings
-- **[analysis.dat](../parameters/analysis.dat)** - Analysis parameters
+## JSON essentials
 
-**Format Example:**
-```
-< geometry.apa_length_cm = 230.0 >    APA length in cm
-< timing.time_tick_cm = 0.0805 >      Time tick in cm
-```
-
-Note: the parameter documentation itself lives under `docs/`, but the `.dat` files remain under `parameters/`.
-
-**Detailed Documentation**: [parameters/PARAMETERS.md](parameters/PARAMETERS.md)
-
-## JSON Configuration Files
-
-### Where JSON settings live
-
-JSON settings are typically stored under the repository `json/` directory. The wrapper scripts locate them via `scripts/findSettings.sh`.
-
-Documentation: [json/README.md](json/README.md)
-
-### JSON Configuration Structure
+Typical minimal config
 ```json
 {
-  "filename": "input_file.root",
-  "filelist": "list_of_files.txt", 
+  "signal_folder": "/data/prod_es",
+  "clusters_folder_prefix": "es_valid",
   "tick_limit": 3,
-  "channel_limit": 1,
-  "min_tps_to_cluster": 1,
-  "adc_integral_cut_induction": 0,
-  "adc_integral_cut_collection": 0
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 1,
+  "energy_cut": 0.0,
+  "max_files": 10
 }
 ```
 
-## Environment Variables
+Folder auto-generation (if you do not override explicit paths)
+- `tpstreams/` under `signal_folder` or `main_folder`
+- `tps/`, `tps_bg/`, `clusters_<prefix>_<conds>/`, `matched_clusters_<prefix>_<conds>/`, `volume_images_<prefix>_<conds>/`, `reports/`
+- Conditions string: `tick{N}_ch{N}_min{N}_tot{N}_e{X}` (decimal → `p`)
 
-### Required Variables
-- **`PARAMETERS_DIR`** - Path to parameter files directory
-- **`HOME_DIR`** - Repository root directory (set by `scripts/init.sh`)
-- **`SCRIPTS_DIR`** - Scripts directory path (set by `scripts/init.sh`)
+Discovery logic
+- Prefer explicit keys (`tpstream_input_file`, `tps_bg_folder`, `clusters_folder`, etc.).
+- Otherwise auto-generate from `signal_folder` / `main_folder` using the rules above.
 
-### Optional Variables
-- **`BUILD_DIR`** - Build directory path (default: `build/`)
-- **`INIT_DONE`** - Environment initialization flag
+## Environment setup
 
-### Setting Up Environment
+Automatic (recommended)
 ```bash
-# Automatic setup
 source scripts/init.sh
-
-# Manual setup
-export PARAMETERS_DIR=/path/to/parameters
-export HOME_DIR=/path/to/online-pointing-utils
 ```
 
-## Build Configuration
-
-### CMake Options
-- **`USE_STATIC_LINKS`** - Enable static library linking
-- **`CMAKE_BUILD_TYPE`** - Debug/Release build type
-
-### Compilation Scripts
-- **[compile.sh](../scripts/README.md)** - Main compilation script
-- **Options**: `--no-compile`, `--clean-compile`
-
-## Workflow Configuration
-
-### Analysis Workflows
-Each step has its own script, but the recommended entrypoint is the orchestrator `scripts/sequence.sh`.
-
+Manual override example
 ```bash
-# Trigger primitive analysis
-./scripts/analyze_tps.sh -j json/analyze_tps/config.json
-
-# Clustering workflow  
-./scripts/cluster.sh -j json/cluster/config.json
-
-# Backtracking analysis
-./scripts/backtrack.sh -j json/backtrack/config.json
+export PARAMETERS_DIR=/path/to/params
+export BUILD_DIR=/scratch/build
 ```
 
-### Configuration File Discovery
-Scripts automatically locate configuration files:
-```bash
-# Searches multiple locations for config.json
-./scripts/cluster.sh -j config.json
-```
+## Build and run
 
-## Advanced Configuration
+- Build: `./scripts/compile.sh [-c|--clean-compile] [-n|--no-compile] [-j N]`
+- Full chain: `./scripts/sequence.sh -s <sample> -j json/example_es_clean.json --all`
+- Single step example: `./scripts/make_clusters.sh -j json/example_es_clean.json --max-files 5`
 
-### Custom Parameter Files
-Create custom parameter files following the format:
-```
-*******************************************************************************
-Custom Parameters
-*******************************************************************************
+## Validation / troubleshooting
 
-< custom.parameter = value >    Description
-```
+- Smoke test: `./test/run_all_tests.sh --clean`
+- Check params in use: `echo $PARAMETERS_DIR && ls $PARAMETERS_DIR`
+- Verbose script output: add `-v` to the bash wrappers
 
-### Configuration Validation
-The system provides validation for:
-- Missing parameter files (warnings)
-- Missing parameters (runtime exceptions)  
-- Invalid JSON syntax (parse errors)
-- Required vs optional configuration fields
+## Compatibility notes
 
-### Debugging Configuration
-```bash
-# Enable verbose mode in scripts
-./scripts/cluster.sh -j config.json -v
-
-# Check parameter loading
-echo $PARAMETERS_DIR
-ls -la $PARAMETERS_DIR/*.dat
-```
-
-## Migration and Compatibility
-
-### Legacy Configuration
-- Old hardcoded constants are still supported via compatibility macros
-- Gradual migration path from `.h` files to `.dat` files
-- Backward compatibility maintained for existing code
-
-### Upgrading Configuration
-1. Replace hardcoded constants with parameter file values
-2. Update JSON configurations for new algorithm parameters  
-3. Set environment variables in deployment scripts
-4. Test configuration loading with validation tools
-
----
-
-For specific configuration examples and troubleshooting, see the linked README files and parameter documentation.
+- Basenames are preserved across stages to keep skip/max consistent.
+- Legacy, per-app JSONs are untracked; prefer the single settings file per run and pass it through `sequence.sh`.

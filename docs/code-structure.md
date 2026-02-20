@@ -1,402 +1,67 @@
-# Code Structure and Architecture Guide
-
-**Last Updated**: November 2025  
-**Repository**: online-pointing-utils  
-**Purpose**: Comprehensive technical documentation for developers
-
----
-
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Core Components](#core-components)
-4. [Data Flow](#data-flow)
-5. [Module Reference](#module-reference)
-6. [Python Integration](#python-integration)
-7. [Configuration System](#configuration-system)
-8. [Testing Framework](#testing-framework)
-9. [Performance Considerations](#performance-considerations)
-10. [Development Workflow](#development-workflow)
-
----
-
-## Overview
-
-The online-pointing-utils repository implements a complete pipeline for processing DUNE detector Trigger Primitives (TPs) to enable real-time supernova neutrino pointing. The system combines C++ applications for performance-critical operations with Python tools for analysis and visualization.
-
-### Design Principles
-
-- **Modularity**: Distinct libraries for backtracking, clustering, matching, and analysis
-- **Performance**: C++ for compute-intensive tasks, Python for flexible analysis
-- **Configurability**: JSON-driven workflows with auto-generated folder structures
-- **Truth Integration**: Monte Carlo truth embedded throughout for validation
-- **Reproducibility**: Condition-encoded output names ensure traceability
-
----
-
-## Architecture
-
-### High-Level System Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         INPUT DATA                              │
-│  TPStream ROOT files (*_tpstream.root) + Truth information      │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    BACKTRACKING STAGE                           │
-│  C++ App: backtrack_tpstream                                    │
-│  - Extract signal TPs from full stream                          │
-│  - Embed truth: particle ID, energy, position, direction        │
-│  - Output: *_tps.root (signal only)                             │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  BACKGROUND ADDITION                            │
-│  C++ App: add_backgrounds                                       │
-│  - Overlay realistic detector noise                             │
-│  - Preserve truth information                                   │
-│  - Output: tps_bg/*_tps_bg.root                                 │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    CLUSTERING STAGE                             │
-│  C++ App: make_clusters                                         │
-│  - Group TPs by spatial-temporal proximity                      │
-│  - Apply ToT and energy filters                                 │
-│  - Identify main tracks vs. blips                               │
-│  - Output: clusters_<conditions>/*_clusters.root                │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ├───────────────┬─────────────────┐
-                           ▼               ▼                 ▼
-                  ┌────────────────┐  ┌─────────────┐  ┌─────────────┐
-                  │ 3-Plane Match  │  │   Volume    │  │   Cluster   │
-                  │ (match_clusters)│  │  Analysis   │  │   Analysis  │
-                  │                │  │  (Python)   │  │   (C++/Py)  │
-                  └────────────────┘  └─────────────┘  └─────────────┘
-```
-
-### Component Layers
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    APPLICATION LAYER                        │
-│  Executables: make_clusters, backtrack_tpstream, etc.      │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-┌───────────────────────────┴─────────────────────────────────┐
-│                     LIBRARY LAYER                           │
-│  - clustering/: Clustering algorithms                       │
-│  - backtracking/: Truth matching and position calculation   │
-│  - planesMatching/: 3-plane geometric reconstruction        │
-│  - lib/: Utilities (IO, parameters, geometry)               │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-┌───────────────────────────┴─────────────────────────────────┐
-│                    OBJECT LAYER                             │
-│  Data Structures: TriggerPrimitive, Cluster, TrueParticle   │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-┌───────────────────────────┴─────────────────────────────────┐
-│                  EXTERNAL DEPENDENCIES                      │
-│  ROOT (I/O), nlohmann/json, simple-cpp-logger, C++17 STL    │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Core Components
-
-### 1. Data Structures (`src/objects/`)
-
-#### TriggerPrimitive (`TriggerPrimitive.hpp`)
-Represents a single hit in the detector.
-
-```cpp
-class TriggerPrimitive {
-    // Core properties
-    int time_start_;           // Start time (ticks since trigger)
-    int time_over_threshold_;  // Pulse width (ticks)
-    int channel_;              // Detector channel ID
-    int adc_integral_;         // Integrated charge (ADC counts)
-    int view_;                 // Plane: 0=U, 1=V, 2=X
-    
-    // Truth information (from backtracking)
-    float true_x_, true_y_, true_z_;  // True 3D position (cm)
-    int true_pdg_;                     // Particle type (PDG code)
-    float true_energy_;                // Deposited energy (MeV)
-    int file_number_;                  // Event index
-    std::string label_;                // "MARLEY" or "BKG"
-};
-```
-
-**Key Methods**:
-- `GetTimeStart()`, `GetChannel()`, `GetAdcIntegral()`, `GetView()`
-- `GetTruePos()`, `GetTrueEnergy()`, `GetLabel()`
-- `SetTruth(...)` - Embed Monte Carlo information
-
-#### Cluster (`Cluster.h`)
-Collection of TPs forming a reconstructed object.
-
-```cpp
-class Cluster {
-    std::vector<TriggerPrimitive> tps_;  // Constituent TPs
-    
-    // Reconstructed properties
-    std::vector<float> reco_pos_;        // 3D position [x, y, z] (cm)
-    std::vector<float> reco_dir_;        // Direction [dx, dy, dz]
-    float total_charge_;                 // Sum of ADC integrals
-    int size_;                           // Number of TPs
-    
-    // Classification
-    int label_;                          // 77=main track, others=blips
-    float supernova_tp_fraction_;        // Purity: MARLEY TPs / total TPs
-    
-    // Truth (for validation)
-    std::vector<float> true_pos_;
-    std::vector<float> true_dir_;
-    float true_energy_;
-    int true_interaction_;               // 0=CC, 1=ES
-};
-```
-
-**Key Methods**:
-- `get_tps()`, `get_reco_pos()`, `get_reco_dir()`
-- `get_total_charge()`, `get_size()`
-- `set_label(int)` - Mark as main track (77) or blip
-- `get_supernova_tp_fraction()` - Signal purity metric
-
-#### TrueParticle (`TrueParticle.h`)
-Monte Carlo truth for validation.
-
-```cpp
-class TrueParticle {
-    int pdg_code_;                    // Particle type (11=e-, 13=mu-, etc.)
-    float energy_;                    // Initial kinetic energy (MeV)
-    float momentum_[3];               // [px, py, pz] (GeV/c)
-    float position_[3];               // Vertex [x, y, z] (cm)
-    float direction_[3];              // Unit vector [dx, dy, dz]
-    int interaction_type_;            // 0=CC, 1=ES
-};
-```
-
-### 2. Clustering Algorithms (`src/clustering/`)
-
-#### Main Clustering Function
-Located in `cluster_to_root_libs.h`:
-
-```cpp
-std::vector<Cluster> cluster_maker(
-    std::vector<std::vector<double>>& all_tps,
-    int tick_limit = 3,          // Time proximity (ticks)
-    int channel_limit = 2,       // Channel proximity
-    int min_tps_to_cluster = 2,  // Minimum size
-    int tot_cut = 0,             // Time-over-threshold filter
-    int adc_integral_cut = 0     // Energy threshold
-);
-```
-
-**Algorithm Steps**:
-1. **Sorting**: TPs sorted by (channel, time) for efficient neighbor search
-2. **Seeding**: Each TP starts as a potential cluster seed
-3. **Growing**: 
-   ```cpp
-   for each TP in sorted order:
-       if TP already clustered: continue
-       create new cluster with TP as seed
-       for each subsequent TP:
-           if |Δchannel| <= channel_limit AND 
-              |Δtime| <= tick_limit AND
-              not already clustered:
-               add TP to cluster
-   ```
-4. **Filtering**: Remove clusters with `size < min_tps_to_cluster`
-5. **Post-processing**: Calculate reco_pos (centroid), total_charge
-
-**Periodic Boundary Conditions** (`channel_condition_with_pbc`):
-- Handles wrap-around at channel boundaries
-- Relevant for modular detector geometry
-
-#### Main Track Identification
-
-```cpp
-std::vector<Cluster> filter_main_tracks(std::vector<Cluster>& clusters);
-```
-
-Criteria for main track:
-- `size >= threshold` (typically 20-50 TPs)
-- High `total_charge` (strong signal)
-- Extended spatial structure (not a point-like blip)
-
-Identified main tracks get `label = 77` for easy filtering.
-
-### 3. Backtracking (`src/backtracking/`)
-
-#### Position Calculation (`Backtracking.h`)
-
-```cpp
-std::vector<float> calculate_position(
-    int channel,
-    int time_start,
-    int view,        // 0=U, 1=V, 2=X
-    float drift_velocity = 0.16  // cm/tick
-);
-```
-
-**Geometry** (from `parameters/geometry.json`):
-- **Channel spacing**: 0.479 cm
-- **Drift velocity**: 0.0805 cm/tick (default), 0.16 cm/tick (alternative)
-- **Plane angles**: U=+35.7°, V=-35.7°, X=0° (horizontal)
-
-**Position Calculation**:
-1. **Drift coordinate**: `x = time_start * drift_velocity`
-2. **Transverse coordinates**: 
-   - X-plane: `y = channel * pitch`, `z` from geometry
-   - U/V-planes: Solve 2-plane intersection using trigonometry
-
-Functions:
-- `eval_y_knowing_z_U_plane(channel, z)` - U-plane transverse position
-- `eval_y_knowing_z_V_plane(channel, z)` - V-plane transverse position
-
-#### Truth Embedding
-
-When backtracking TPStreams:
-1. Read truth tree (`ana_tree`) with `TrueParticle` branches
-2. For each TP, find nearest true energy deposition
-3. Assign truth label: "MARLEY" (supernova signal) or "BKG" (noise/other)
-4. Embed: `true_pos`, `true_energy`, `true_pdg`, `file_number`
-
-### 4. 3-Plane Matching (`src/planesMatching/`)
-
-#### Pentagon Algorithm
-
-**Purpose**: Combine clusters from U, V, X planes into 3D objects.
-
-**Matching Criteria** (from `MATCHING_CRITERIA_AND_HANDLING.md`):
-1. **Geometric consistency**: 
-   - Reconstructed 3D positions from U+V, U+X, V+X must agree within tolerance
-   - Pentagon vertices (5 possible 2-plane combinations) form a compact structure
-2. **Time window**: Clusters must overlap in drift time
-3. **Charge consistency**: Total charge across planes should be consistent
-
-**Implementation** (`PentagonMatching.h`):
-```cpp
-std::vector<MatchedCluster> match_clusters_pentagon(
-    std::vector<Cluster>& u_clusters,
-    std::vector<Cluster>& v_clusters,
-    std::vector<Cluster>& x_clusters,
-    float max_distance = 5.0  // cm tolerance
-);
-```
-
-**Output**: `MatchedCluster` containing references to clusters from all 3 planes with reconstructed 3D position and direction.
-
-### 5. Volume Analysis (`python/app/create_volumes.py`, `python/ana/analyze_volumes.py`)
-
-#### Volume Creation
-
-**Purpose**: Build 1m × 1m detector volumes around main tracks for ML training.
-
-**Workflow**:
-1. Load clusters from ROOT file
-2. Identify main tracks (`label == 77`)
-3. For each main track:
-   - Define volume: `[x-50cm, x+50cm] × [y-50cm, y+50cm]`
-   - Find all clusters within volume
-   - Create 2D projection image (channel vs. time)
-   - Save metadata: cluster count, MARLEY fraction, distances
-
-**Distance Metrics**:
-```python
-# Geometry constants
-CHANNEL_PITCH_CM = 0.479
-DRIFT_VELOCITY_CM_PER_TICK = 0.0805
-
-# Distance in (channel, time) space
-def cluster_distance(cluster1, cluster2):
-    Δch = cluster2.channel_mean - cluster1.channel_mean
-    Δt = cluster2.time_mean - cluster1.time_mean
-    return sqrt((Δch * CHANNEL_PITCH_CM)**2 + 
-                (Δt * DRIFT_VELOCITY_CM_PER_TICK)**2)
-```
-
-**Output**: `.npz` files with:
-- `image`: 2D array (channel × time)
-- `metadata`: dict with cluster properties, MARLEY distances
-
-#### Volume Analysis
-
-**Purpose**: Generate statistical reports and visualizations.
-
-**Metrics** (from `analyze_volumes.py`):
-- **Composition**: Pure MARLEY, pure background, mixed volumes
-- **MARLEY fraction**: Percentage of signal clusters per volume
-- **Energy distribution**: Particle energies (MeV)
-- **Momentum distribution**: Main track momentum (GeV/c)
-- **Distance statistics**:
-  - Average distance of MARLEY clusters from main track
-  - Maximum distance per volume
-
-**Output**: Multi-page PDF with histograms, scatter plots, and summary tables.
-
----
-
-## Data Flow
-
-### Complete Pipeline Example (CC Interaction)
-
-```
-INPUT: prodmarley_nue_flat_cc_..._tpstream.root
-  ├─ TPs (all): ~50k TPs per 10ms readout window
-  ├─ Truth tree: particle IDs, energies, positions
-  └─ Geometry: channel maps, detector coordinates
-
-STEP 1: Backtracking (backtrack_tpstream)
-  ├─ Read TPStream + truth tree
-  ├─ Match TPs to true energy depositions
-  ├─ Filter: Keep only MARLEY signal TPs
-  └─ Output: prodmarley_..._tps.root (~5k TPs)
-
-STEP 2: Background Addition (add_backgrounds)
-  ├─ Load signal TPs
-  ├─ Overlay detector noise TPs (from background samples)
-  ├─ Maintain truth labels
-  └─ Output: tps_bg/prodmarley_..._tps_bg.root (~15k TPs)
-
-STEP 3: Clustering (make_clusters)
-  ├─ Load TPs with backgrounds
-  ├─ Apply filters: ToT >= 2, energy >= 2 MeV
-  ├─ Group TPs: tick_limit=3, channel_limit=2
-  ├─ Identify main tracks (label=77)
-  ├─ Calculate: reco_pos, total_charge, supernova_tp_fraction
-  └─ Output: clusters_.../prodmarley_..._clusters.root
-      (~200 clusters: 1 main track + 50 MARLEY blips + 150 BKG blips)
-
-STEP 4a: 3-Plane Matching (match_clusters)
-  ├─ Load clusters from U, V, X planes
-  ├─ Pentagon matching algorithm
-  └─ Output: matched_clusters_.../prodmarley_..._matched.root
-
-STEP 4b: Volume Creation (create_volumes.py)
-  ├─ Load clusters
-  ├─ Find main track
-  ├─ Create 1m × 1m volume
-  ├─ Compute MARLEY distances
-  ├─ Generate 2D image
-  └─ Output: volume_images_.../event_12345.npz
-
-STEP 5: Analysis (analyze_volumes.py)
-  ├─ Load all .npz files
-  ├─ Aggregate statistics
-  ├─ Generate plots
-  └─ Output: reports/volume_analysis_..._e2p0.pdf
-```
+# Code Structure (current)
+
+Short overview of how the code is organized today. Use this as a map while browsing the tree.
+
+## Top-level layout
+
+- `src/app/`      – C++ executables (pipeline steps and diagnostics)
+- `src/lib/`      – shared utilities: parameters, geometry, folder logic, general helpers
+- `src/backtracking/` – truth/position handling
+- `src/clusters/` – clustering logic and ROOT IO for clusters
+- `src/planes-matching/` – 3-plane matching (Pentagon)
+- `src/objects/`  – core structs/classes (`TriggerPrimitive`, `Cluster`, etc.)
+- `src/io/`       – declarations for file discovery/folder helpers (implemented in `src/lib`)
+- `python/`       – Python utilities (volumes, displays, legacy analysis)
+- `scripts/`      – orchestration wrappers (build + run steps)
+- `parameters/`   – `.dat` parameter files
+- `json/`         – example JSON configs + test settings (all other JSONs are gitignored)
+
+## Data flow (current pipeline)
+
+1) `backtrack_tpstream` → `_tps.root` (signal-only with truth)
+2) `add_backgrounds` → `tps_bg/*_tps_bg.root`
+3) `make_clusters` → `clusters_<prefix>_<conds>/*_clusters.root`
+4) `match_clusters` → `matched_clusters_<prefix>_<conds>/*_matched.root`
+5) Optional Python volumes → `volume_images_<prefix>_<conds>/*.npz`
+
+`scripts/sequence.sh` drives these steps and recompiles once at the start.
+
+## Key libraries
+
+- `src/lib/utils.*`
+  - File discovery and folder auto-generation (`find_input_files`, `getOutputFolder`, basename tracking)
+  - Path helpers (`getTpstreamBaseFolder`, `resolveFolderAgainstTpstream`, `ensureDirectoryExists`)
+  - Parameter accessors (`GET_PARAM_*` helpers and geometry/timing accessors)
+  - Branch binding helpers for ROOT (`bindBranch`, `SetBranchWithFallback`)
+
+- `src/lib/geometry.*`
+  - Geometry constants and helper functions fed by `parameters/geometry.dat`
+
+- `src/lib/ParametersManager.*`
+  - Loads `.dat` files, provides `GET_PARAM_*` macros
+
+- `src/clusters/`
+  - Cluster creation/IO, main-track tagging, truth fraction preservation
+
+- `src/planes-matching/`
+  - Pentagon matching, matched cluster structures
+
+- `src/backtracking/`
+  - Truth association and position calculations
+
+## Event displays
+
+- C++ display: `display` (ROOT) via `scripts/display.sh`
+- Python display: `python/cluster_display.py` (matplotlib) with settings in `json/display/example.json`
+
+## Notes on Python layout
+
+- Maintained tools: `python/app/create_volumes.py`, `python/ana/analyze_volumes.py`, `python/ana/view_volume_quick.py`, `python/cluster_display.py`
+- Legacy/analysis helpers: other scripts under `python/ana/` and `python/clusters/`; keep them out of automated pipelines unless needed.
+
+## Testing hook
+
+- `test/run_all_tests.sh` runs the smoke pipeline on `json/test_settings.json` (one file, full chain).
 
 ---
 
