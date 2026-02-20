@@ -793,9 +793,9 @@ Or set debug flag in JSON:
 
 ## Further Reading
 
+- **[APPS.md](APPS.md)**: Overview of apps/scripts and typical workflows
 - **[API_REFERENCE.md](API_REFERENCE.md)**: Detailed function signatures
 - **[CONFIGURATION.md](CONFIGURATION.md)**: Complete JSON parameter reference
-- **[TOT_CHOICE.md](TOT_CHOICE.md)**: Performance optimization study
 - **[MATCHING_CRITERIA_AND_HANDLING.md](MATCHING_CRITERIA_AND_HANDLING.md)**: 3-plane matching details
 - **[VOLUME_IMAGES.md](VOLUME_IMAGES.md)**: Volume analysis methodology
 

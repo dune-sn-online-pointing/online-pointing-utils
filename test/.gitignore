@@ -1,4 +1,5 @@
 # Test output directories
+output/
 test_backtrack/output/
 test_clustering/output/
 test_matching/output/
@@ -11,4 +12,5 @@ configs/
 test_output/
 full_test.log
 test_run.log
+test_run_output.log
 run_tests.sh

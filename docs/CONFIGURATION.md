@@ -6,10 +6,10 @@ This guide provides comprehensive information about configuring the online-point
 
 The project uses multiple configuration layers:
 
-1. **[Parameter System](../parameters/PARAMETERS.md)** - Core constants and geometry
-2. **[JSON Configurations](../json/README.md)** - Algorithm parameters and workflows  
+1. **[Parameter System](parameters/PARAMETERS.md)** - Core constants and geometry
+2. **[JSON Configurations](json/README.md)** - Algorithm parameters and workflows
 3. **Environment Variables** - Runtime paths and options
-4. **[Build Scripts](../scripts/README.md)** - Compilation and execution settings
+4. **Build/Run Scripts** - Orchestration and compilation (`scripts/`)
 
 ## Parameter System Configuration
 
@@ -17,9 +17,6 @@ The project uses multiple configuration layers:
 ```bash
 # Set parameter directory
 export PARAMETERS_DIR=/path/to/online-pointing-utils/parameters
-
-# Or use the setup script
-source setup_parameters.sh
 ```
 
 ### Parameter Files
@@ -35,27 +32,17 @@ source setup_parameters.sh
 < timing.time_tick_cm = 0.0805 >      Time tick in cm
 ```
 
-**Detailed Documentation**: [parameters/PARAMETERS.md](../parameters/PARAMETERS.md)
+Note: the parameter documentation itself lives under `docs/`, but the `.dat` files remain under `parameters/`.
+
+**Detailed Documentation**: [parameters/PARAMETERS.md](parameters/PARAMETERS.md)
 
 ## JSON Configuration Files
 
-### Main Configuration Categories
+### Where JSON settings live
 
-#### Clustering Configurations
-- **Location**: `json/cluster/`
-- **Purpose**: Control clustering algorithm parameters
-- **Example**: [json/cluster/example.json](../json/cluster/example.json)
-- **Documentation**: [json/README.md](../json/README.md)
+JSON settings are typically stored under the repository `json/` directory. The wrapper scripts locate them via `scripts/findSettings.sh`.
 
-#### Analysis Configurations  
-- **Location**: `json/analyze_tps/`, `json/analyze_clusters/`
-- **Purpose**: Configure analysis workflows and cuts
-- **Examples**: Various JSON files for different analysis scenarios
-
-#### Data Conversion Configurations
-- **Location**: `json/cluster_to_root/`, `json/clusters_to_dataset/`
-- **Purpose**: Control data format conversion and output
-- **Documentation**: [json/cluster_to_root/README.md](../json/cluster_to_root/README.md)
+Documentation: [json/README.md](json/README.md)
 
 ### JSON Configuration Structure
 ```json
@@ -74,8 +61,8 @@ source setup_parameters.sh
 
 ### Required Variables
 - **`PARAMETERS_DIR`** - Path to parameter files directory
-- **`HOME_DIR`** - Repository root directory (set by init.sh)
-- **`SCRIPTS_DIR`** - Scripts directory path (set by init.sh)
+- **`HOME_DIR`** - Repository root directory (set by `scripts/init.sh`)
+- **`SCRIPTS_DIR`** - Scripts directory path (set by `scripts/init.sh`)
 
 ### Optional Variables
 - **`BUILD_DIR`** - Build directory path (default: `build/`)
@@ -104,7 +91,7 @@ export HOME_DIR=/path/to/online-pointing-utils
 ## Workflow Configuration
 
 ### Analysis Workflows
-Each analysis type has its own script and configuration:
+Each step has its own script, but the recommended entrypoint is the orchestrator `scripts/sequence.sh`.
 
 ```bash
 # Trigger primitive analysis

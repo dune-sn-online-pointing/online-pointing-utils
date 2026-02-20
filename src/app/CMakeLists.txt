@@ -52,7 +52,7 @@ install( TARGETS extract_energy_cut_stats DESTINATION bin )
 
 cmessage( STATUS "Creating split_by_apa app..." )
 add_executable( split_by_apa ${CMAKE_CURRENT_SOURCE_DIR}/split_by_apa.cpp )
-target_link_libraries( split_by_apa ${ROOT_LIBRARIES} )
+target_link_libraries( split_by_apa globalLib ${ROOT_LIBRARIES} )
 install( TARGETS split_by_apa DESTINATION bin )
 
 # Temporarily 

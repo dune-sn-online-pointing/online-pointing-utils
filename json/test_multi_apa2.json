@@ -1,9 +1,0 @@
-{
-    "clusters_folder": "/afs/cern.ch/work/e/evilla/private/dune/online-pointing-utils/data/test_root",
-    "max_files": 1,
-    "tick_limit": 3,
-    "channel_limit": 2,
-    "min_tps_to_cluster": 2,
-    "tot_cut": 2,
-    "energy_cut": 3.0
-}

@@ -7,9 +7,10 @@
 #include "TTree.h"
 #include "TBranch.h"
 
+#include "ParametersManager.h"
+
 // APA configuration for 1x2x2 detector
 const int CHANNELS_PER_APA = 2560;
-const int N_APAS = 4;
 
 // Structure matching the ROOT file format (same as in Clustering.cpp)
 struct TPBranches {
@@ -56,8 +57,8 @@ int main(int argc, char* argv[]) {
     if (argc < 3) {
         std::cerr << "Usage: " << argv[0] << " <input_file.root> <output_directory>" << std::endl;
         std::cerr << std::endl;
-        std::cerr << "Splits TriggerPrimitive data by APA (4 APAs, 2560 channels each)" << std::endl;
-        std::cerr << "Creates 4 output files: <output_dir>/apa0.root, apa1.root, etc." << std::endl;
+        std::cerr << "Splits TriggerPrimitive data by APA (N APAs, 2560 channels each)" << std::endl;
+        std::cerr << "Creates N output files: <output_dir>/apa0_tps.root, apa1_tps.root, etc." << std::endl;
         return 1;
     }
 
@@ -69,13 +70,31 @@ int main(int argc, char* argv[]) {
         output_dir += "/";
     }
 
+    // Load detector configuration (optional; defaults preserve old behavior)
+    int n_apas = 4;
+    std::string detector_name;
+    try {
+        ParametersManager::getInstance().loadParameters();
+        if (ParametersManager::getInstance().hasParameter("detector.n_apas")) {
+            n_apas = ParametersManager::getInstance().getInt("detector.n_apas");
+        }
+        if (ParametersManager::getInstance().hasParameter("detector.name")) {
+            detector_name = ParametersManager::getInstance().getString("detector.name");
+        }
+    } catch (const std::exception&) {
+        // Keep defaults if parameter loading fails
+    }
+
     std::cout << "======================================" << std::endl;
     std::cout << "APA Splitter for TriggerPrimitive Data" << std::endl;
     std::cout << "======================================" << std::endl;
     std::cout << "Input file: " << input_filename << std::endl;
     std::cout << "Output directory: " << output_dir << std::endl;
+    if (!detector_name.empty()) {
+        std::cout << "Detector: " << detector_name << std::endl;
+    }
     std::cout << "Configuration:" << std::endl;
-    std::cout << "  - APAs: " << N_APAS << std::endl;
+    std::cout << "  - APAs: " << n_apas << std::endl;
     std::cout << "  - Channels per APA: " << CHANNELS_PER_APA << std::endl;
     std::cout << "======================================" << std::endl;
 
@@ -112,12 +131,12 @@ int main(int argc, char* argv[]) {
     setupInputBranches(input_tree, tp_in);
 
     // Create output files and trees for each APA
-    std::vector<TFile*> output_files(N_APAS);
-    std::vector<TTree*> output_trees(N_APAS);
-    std::vector<TPBranches> tp_out(N_APAS);
-    std::vector<Long64_t> apa_counters(N_APAS, 0);
+    std::vector<TFile*> output_files(n_apas);
+    std::vector<TTree*> output_trees(n_apas);
+    std::vector<TPBranches> tp_out(n_apas);
+    std::vector<Long64_t> apa_counters(n_apas, 0);
 
-    for (int apa = 0; apa < N_APAS; apa++) {
+    for (int apa = 0; apa < n_apas; apa++) {
         std::string output_filename = output_dir + "apa" + std::to_string(apa) + "_tps.root";
         output_files[apa] = new TFile(output_filename.c_str(), "RECREATE");
         if (!output_files[apa] || output_files[apa]->IsZombie()) {
@@ -146,7 +165,7 @@ int main(int argc, char* argv[]) {
         int apa_id = getAPA(tp_in.channel);
 
         // Validate APA ID
-        if (apa_id < 0 || apa_id >= N_APAS) {
+        if (apa_id < 0 || apa_id >= n_apas) {
             std::cerr << "WARNING: Invalid channel " << tp_in.channel 
                       << " maps to APA " << apa_id << " (entry " << i << ")" << std::endl;
             continue;
@@ -177,7 +196,7 @@ int main(int argc, char* argv[]) {
     std::cout << "TPs per APA:" << std::endl;
 
     // Write and close output files
-    for (int apa = 0; apa < N_APAS; apa++) {
+    for (int apa = 0; apa < n_apas; apa++) {
         // Navigate to tps directory and write tree there
         TDirectory* tps_dir = (TDirectory*)output_files[apa]->Get("tps");
         if (tps_dir) {
@@ -196,7 +215,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "======================================" << std::endl;
     std::cout << "Split complete! Output files:" << std::endl;
-    for (int apa = 0; apa < N_APAS; apa++) {
+    for (int apa = 0; apa < n_apas; apa++) {
         std::string output_filename = output_dir + "apa" + std::to_string(apa) + "_tps.root";
         std::cout << "  " << output_filename << std::endl;
     }

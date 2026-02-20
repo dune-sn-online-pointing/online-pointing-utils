@@ -6,18 +6,7 @@ Added secondary X and Y axes to the cluster display showing physical dimensions 
 
 ## Changes Made
 
-### 1. Added Drift Time Parameter
-
-**File**: `parameters/timing.dat`
-
-Added new parameter:
-```
-< timing.drift_time_ms = 3.25 >                  Maximum drift time in ms
-```
-
-This parameter represents the maximum drift time for electrons in the TPC (3.25 ms).
-
-### 2. Updated Display Code
+### 1. Updated Display Code
 
 **File**: `src/app/cluster_display.cpp`
 
@@ -87,8 +76,7 @@ For a cluster spanning:
   - Y: 100 × 0.0805 cm ≈ **8.05 cm** drift distance
 
 ## Notes
-
-- The drift time parameter (3.25 ms) is available for future enhancements
 - TGaxis is already included in the ROOT headers via `src/lib/root.h`
 - The secondary axes automatically scale with zoom and pan operations
 - Axes labels are centered and sized for readability
+

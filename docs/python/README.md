@@ -113,8 +113,8 @@ Example JSON format:
 
 The application reads parameters from `.dat` files in the `parameters/` directory:
 
-- `display.dat`: Thresholds and drawing parameters
-- `timing.dat`: Time tick conversions and drift velocity
+- `display.dat`: ADC thresholds
+- `timing.dat`: Time tick conversions
 - `geometry.dat`: Wire pitch and detector dimensions
 
 Key parameters:
@@ -122,7 +122,6 @@ Key parameters:
 display.threshold_adc_u = 70.0    # ADC threshold for U plane
 display.threshold_adc_v = 70.0    # ADC threshold for V plane
 display.threshold_adc_x = 60.0    # ADC threshold for X plane
-display.pentagon_offset = 120.0   # Pentagon area offset
 timing.time_tick_cm = 0.0805      # Time tick in cm
 geometry.wire_pitch_collection_cm = 0.479  # Wire pitch (collection)
 ```

@@ -1,6 +1,0 @@
-{
-  "filename": "data/test_files_tps_bkgES909080.txt",
-  "output_folder": "data",
-  "backtracker_error_margin": 10,
-  "comment": "Base config for bkgES909080 margin scan"
-}

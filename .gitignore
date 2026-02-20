@@ -1,3 +1,9 @@
+# JSON configs (keep only examples tracked)
+json/**/*.json
+!json/example*.json
+!json/display/example.json
+!json/test_settings.json
+
 #json/*/*
 build/*
 lists/

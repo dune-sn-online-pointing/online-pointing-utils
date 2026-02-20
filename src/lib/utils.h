@@ -91,15 +91,10 @@ inline double get_apa_angular_coeff() { return GET_PARAM_DOUBLE("geometry.apa_an
 
 // Timing parameters - accessed via ParametersManager
 inline double get_time_tick_cm() { return GET_PARAM_DOUBLE("timing.time_tick_cm"); }
-inline double get_drift_speed() { return GET_PARAM_DOUBLE("timing.drift_speed"); }
 inline int get_conversion_tdc_to_tpc() { return GET_PARAM_INT("timing.conversion_tdc_to_tpc"); }
 inline double get_clock_tick_ns() { return GET_PARAM_DOUBLE("timing.clock_tick_ns"); }
 inline double get_tpc_sample_length_ns() { return GET_PARAM_DOUBLE("timing.tpc_sample_length_ns"); }
-inline int get_time_window() { return GET_PARAM_INT("timing.time_window"); }
 inline int get_backtracker_error_margin() { return GET_PARAM_INT("timing.backtracker_error_margin"); }
-
-// Conversion parameters - accessed via ParametersManager
-inline double get_adc_to_energy_factor() { return GET_PARAM_DOUBLE("conversion.adc_to_energy_factor"); }
 
 // Legacy constants for backward compatibility (deprecated - use get_* functions instead)
 #define apa_lenght_in_cm get_apa_length_cm()
@@ -110,12 +105,9 @@ inline double get_adc_to_energy_factor() { return GET_PARAM_DOUBLE("conversion.a
 #define apa_width_in_cm get_apa_width_cm()
 #define apa_angular_coeff get_apa_angular_coeff()
 #define time_tick_in_cm get_time_tick_cm()
-#define drift_speed get_drift_speed()
 #define conversion_tdc_to_tpc get_conversion_tdc_to_tpc()
 #define clock_tick get_clock_tick_ns()
 #define TPC_sample_length get_tpc_sample_length_ns()
-#define time_window get_time_window()
 #define backtracker_error_margin get_backtracker_error_margin()
-#define adc_to_energy_conversion_factor get_adc_to_energy_factor()
 
 #endif // UTILS_H

@@ -9,6 +9,8 @@ The following example configurations are tracked in git to help you get started:
 - **example_es_clean.json**: Electron-scattering signal without backgrounds  
 - **example_es_bg.json**: ES signal with background mixing (higher cuts)  
 - **example_bg.json**: Background-only analysis
+- **test_settings.json**: Minimal settings used by `test/run_all_tests.sh`
+- **display/example.json**: Minimal settings used by the `display` script/app
 
 All other JSON files in this directory are **gitignored** to avoid tracking your personal configurations or production settings.
 
@@ -26,12 +28,12 @@ All other JSON files in this directory are **gitignored** to avoid tracking your
 
 3. **Run the pipeline**:
    ```bash
-   ./scripts/sequence.sh --json json/my_analysis.json --all
+   ./scripts/sequence.sh -j json/my_analysis.json --all
    ```
 
 ## Base Folder Structure
 
-Your data folders **must** contain a `tpstreams/` subfolder:
+If you use folder-based discovery (instead of explicit `*_input_file` keys), your signal folder is expected to contain a `tpstreams/` subfolder:
 
 ```
 /path/to/your/signal/data/
@@ -48,9 +50,9 @@ The pipeline automatically discovers files within `tpstreams/` based on the base
 You can override specific input paths instead of using folder discovery:
 
 - `tpstream_input_file`: Direct path to a single tpstream ROOT file or list file
-- `tps_input_file`: Direct path to backtracked TPs file
-- `tps_bg_folder` or `tps_bg_input_file`: Override background TPs location
-- `clusters_input_file` or `clusters_folder`: Override clustered data location
+- `sig_folder`: Folder containing pure-signal `*_tps.root` files (used by `add_backgrounds`)
+- `tps_bg_folder` or `tps_bg_input_file`: Override merged-TPs-with-backgrounds location (`*_bg_tps.root`)
+- `clusters_folder`: Override clusters output folder (or where to read clusters from)
 
 ## Common Configuration Knobs
 

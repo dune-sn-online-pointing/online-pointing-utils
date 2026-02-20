@@ -49,7 +49,7 @@ The `init.sh` script automatically sets `PARAMETERS_DIR` when initializing the e
 ```cpp
 // Direct access via ParametersManager
 double apa_length = GET_PARAM_DOUBLE("geometry.apa_length_cm");
-int time_window = GET_PARAM_INT("timing.time_window");
+double time_tick_cm = GET_PARAM_DOUBLE("timing.time_tick_cm");
 std::string detector_name = GET_PARAM_STRING("detector.name");
 
 // Legacy compatibility macros (deprecated)
@@ -68,7 +68,7 @@ ParametersManager::getInstance().loadParameters();
 - Detector geometry constants
 
 ### timing.dat  
-- Time-related constants (ticks, drift speed, etc.)
+- Time-related constants (ticks, clock, conversions)
 - Clock and conversion factors
 
 ### conversion.dat

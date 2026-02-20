@@ -6,4 +6,4 @@ Timing parameters
 < timing.conversion_tdc_to_tpc = 32 >             Conversion factor TDC to TPC
 < timing.clock_tick_ns = 16.0 >                  Clock tick in ns
 < timing.backtracker_error_margin = 0 >         Backtracker error margin
-< timing.drift_time_ms = 3.25 >                  Maximum drift time in ms
+
