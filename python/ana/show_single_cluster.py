@@ -2,7 +2,7 @@
 """
 Load a single cluster .npy file and save a PNG for inspection.
 Usage:
-  python3 python/clusters/show_single_cluster.py <input.npy> <output.png>
+    python3 python/ana/show_single_cluster.py <input.npy> <output.png>
 """
 import sys
 from pathlib import Path

@@ -218,7 +218,7 @@ This Python application replaces:
 
 With:
 ```bash
-python python/cluster_display.py \
+python python/ana/cluster_display.py \
   --clusters-file <file.root> \
   --draw-mode pentagon \
   --mode clusters

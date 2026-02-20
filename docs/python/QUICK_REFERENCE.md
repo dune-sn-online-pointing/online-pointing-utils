@@ -6,7 +6,7 @@ Your Python cluster display application has been **successfully updated** with t
 
 ## 🎯 What Changed
 
-### Core Algorithm (`python/cluster_display.py`)
+### Core Algorithm (`python/ana/cluster_display.py`)
 - **Replaced grid search** with scipy-based optimization
 - **Added plateau baseline**: Rectangle from 0 to threshold (excluded from optimization)
 - **Optimizes single variable**: Height `h` above threshold
@@ -24,7 +24,7 @@ Your Python cluster display application has been **successfully updated** with t
 ## 📦 Files Created/Modified
 
 ### Modified
-- ✅ `python/cluster_display.py` - Updated pentagon algorithm
+- ✅ `python/ana/cluster_display.py` - Updated pentagon algorithm
 - ✅ `python/requirements.txt` - Added scipy>=1.7.0
 - ✅ `python/test_cluster_display.py` - Updated tests
 - ✅ `python/README.md` - Added scipy to installation, updated pentagon description
@@ -59,12 +59,12 @@ pip install -r python/requirements.txt
 ### 2. Run the application
 ```bash
 # Basic usage with pentagon mode
-python3 python/cluster_display.py \
+python3 python/ana/cluster_display.py \
   --clusters-file data/your_clusters.root \
   --draw-mode pentagon
 
 # Compare with triangle mode
-python3 python/cluster_display.py \
+python3 python/ana/cluster_display.py \
   --clusters-file data/your_clusters.root \
   --draw-mode triangle
 ```

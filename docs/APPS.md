@@ -48,9 +48,9 @@ Maintained
 - `python/app/create_volumes.py`: build per-cluster volume windows (NPZ, optional PNG overlays)
 - `python/ana/analyze_volumes.py`: summarize NPZ outputs
 - `python/ana/view_volume_quick.py`: inspect one volume NPZ
-- `python/cluster_display.py`: matplotlib display of clusters/events (see [python/README.md](python/README.md))
+- `python/ana/cluster_display.py`: matplotlib display of clusters/events (see [python/README.md](python/README.md))
 
 Legacy / ad-hoc analysis
-- Scripts under `python/ana/` and `python/clusters/` beyond the three above are older analysis helpers; keep them out of production pipelines unless explicitly needed.
+- Additional scripts under `python/ana/` are older analysis helpers; keep them out of production pipelines unless explicitly needed.
 
 Python dependencies live in `python/requirements.txt`.

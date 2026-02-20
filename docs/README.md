@@ -63,8 +63,8 @@ The `scripts/sequence.sh` wrapper runs the steps above in order and recompiles o
 ## 6) Python Utilities (maintained set)
 
 - Volume workflow: `python/app/create_volumes.py`, `python/ana/analyze_volumes.py`, `python/ana/view_volume_quick.py`
-- Displays: `python/cluster_display.py` (see [python/README.md](python/README.md))
-- Other scripts under `python/ana/` and `python/clusters/` are legacy/analysis helpers; keep them out of automated pipelines unless you know they are needed.
+- Displays: `python/ana/cluster_display.py` (see [python/README.md](python/README.md))
+- Other scripts under `python/ana/` are legacy/analysis helpers; keep them out of automated pipelines unless you know they are needed.
 
 Install deps (isolated env recommended)
 ```bash

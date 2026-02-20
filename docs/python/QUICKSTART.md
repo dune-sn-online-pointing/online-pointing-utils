@@ -30,7 +30,7 @@ sudo pip3 install -r python/requirements.txt
 ### Direct Python invocation
 
 ```bash
-python3 python/cluster_display.py --clusters-file <file.root> --draw-mode pentagon
+python3 python/ana/cluster_display.py --clusters-file <file.root> --draw-mode pentagon
 ```
 
 ## Usage Examples
@@ -236,7 +236,7 @@ viewer.run()
 ./scripts/cluster_display_py.sh --help
 
 # Or
-python3 python/cluster_display.py --help
+python3 python/ana/cluster_display.py --help
 ```
 
 For more details, see `python/README.md`.

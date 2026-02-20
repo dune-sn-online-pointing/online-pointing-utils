@@ -52,12 +52,12 @@ Short overview of how the code is organized today. Use this as a map while brows
 ## Event displays
 
 - C++ display: `display` (ROOT) via `scripts/display.sh`
-- Python display: `python/cluster_display.py` (matplotlib) with settings in `json/display/example.json`
+- Python display: `python/ana/cluster_display.py` (matplotlib) with settings in `json/display/example.json`
 
 ## Notes on Python layout
 
-- Maintained tools: `python/app/create_volumes.py`, `python/ana/analyze_volumes.py`, `python/ana/view_volume_quick.py`, `python/cluster_display.py`
-- Legacy/analysis helpers: other scripts under `python/ana/` and `python/clusters/`; keep them out of automated pipelines unless needed.
+- Maintained tools: `python/app/create_volumes.py`, `python/ana/analyze_volumes.py`, `python/ana/view_volume_quick.py`, `python/ana/cluster_display.py`
+- Legacy/analysis helpers: other scripts under `python/ana/`; keep them out of automated pipelines unless needed.
 
 ## Testing hook
 

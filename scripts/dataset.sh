@@ -6,6 +6,7 @@ current_dir=$(pwd)
 # Initialize variables
 input_folder=""
 output_folder=""
+json_settings=""
 
 print_help() {
     echo "*****************************************************************************"
@@ -32,13 +33,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 # check that json config has been selected
-if [ -z "$INPUT_JSON" ]; then
+if [ -z "$json_settings" ]; then
     echo "Please provide a json input file"
     print_help
 fi
 
 # check that the json file exists
-if [ ! -f ${REPO_HOME}/json/create_volume_clusters/${INPUT_JSON} ]; then
+if [ ! -f ${REPO_HOME}/json/${json_settings} ]; then
     echo "Json file does not exist"
     print_help
 fi
@@ -56,7 +57,7 @@ output_folder=${output_folder}/${type}/${cut}
 # python clusters_to_dataset.py --input_json ${REPO_HOME}/json/clusters_to_dataset/ctds_blips.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/es-cc_lab/adc_80000/blips/X/
 # python clusters_to_dataset.py --input_json ${REPO_HOME}/json/clusters_to_dataset/ctds_main_tracks.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/es-cc_lab/adc_80000/main_tracks/X/
 
-python clusters_to_dataset.py --input_json ${REPO_HOME}/json/${json_settings} --output_folder 
+python3 ${REPO_HOME}/python/app/clusters_to_dataset.py --input_json ${REPO_HOME}/json/${json_settings} --output_folder ${output_folder}
 # python clusters_to_dataset.py --input_json ${REPO_HOME}/json/clusters_to_dataset/ctds_cc-lab_volume.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/superimposed_files/cc-lab_volume/
 
 # python clusters_to_dataset.py --input_json ${REPO_HOME}/json/clusters_to_dataset/ctds_main_tracks_direction_multiplane_clusters.json --output_folder /eos/user/d/dapullia/dune/npy_datasets/ctds_main_tracks_direction_multiplane_clusters-3d/
