@@ -475,6 +475,7 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False, use_global_c
                 'event': int(arrays['event'][i]),
                 'n_tps': int(arrays['n_tps'][i]),
                 'is_main_cluster': bool(arrays['is_main_cluster'][i]),
+                'is_discarded': (directory == 'discarded'),
                 'channels': channels,
                 'times_tpc': times_tpc,
                 'times_end_tpc': times_end_tpc,
