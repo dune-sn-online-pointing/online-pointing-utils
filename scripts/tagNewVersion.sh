@@ -29,11 +29,6 @@ then
     print_help
 fi
 
-# Update docs/tof-reco-version.dat
-version_file="${REPO_HOME}/docs/version.txt"
-echo "$versionNumber" > $version_file
-git add $version_file; git commit -m "Update version number to $versionNumber"; git push
-
 # If not in the main branch, print a warning TODO add more severe handling, require input to continue
 currentBranch=$(git branch --show-current)
 if [ "$currentBranch" != "main" ]
@@ -44,7 +39,23 @@ fi
 # pull, just to make sure to have all remote changes
 git pull
 
-# TODO add tests here?
+# Run smoke tests before any version/tag changes
+echo "Running smoke tests before tagging..."
+test_command="${REPO_HOME}/test/run_all_tests.sh --clean"
+echo "$test_command"
+$test_command
+if [ $? -ne 0 ]
+then
+    echo "ERROR: tests failed. Aborting tagging workflow."
+    exit 1
+fi
+
+# Update docs/version.txt after tests pass
+version_file="${REPO_HOME}/docs/version.txt"
+echo "$versionNumber" > $version_file
+git add $version_file
+git commit -m "Update version number to $versionNumber"
+git push
 
 # Tag the new version
 git tag -a $versionNumber
