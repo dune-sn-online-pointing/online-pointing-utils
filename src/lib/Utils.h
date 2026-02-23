@@ -11,7 +11,7 @@
 // Utility helpers not covered by io/InputOutput
 std::string toLower(std::string s);
 
-// Time conversion utilities (declared here, defined in utils.cpp to avoid circular dependency)
+// Time conversion utilities (declared here, defined in Utils.cpp to avoid circular dependency)
 int toTPCticks(int tdcTicks);
 int toTDCticks(int tpcTicks);
 

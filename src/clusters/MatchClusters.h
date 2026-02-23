@@ -2,7 +2,7 @@
 #define MATCH_CLUSTERS_LIBS_HD
 #include <vector>
 #include "Cluster.h"
-// #include "position_calculator.h"
+// #include "PositionCalculator.h"
 
 bool are_compatibles(Cluster& c_u, Cluster& c_v, Cluster& c_x, float radius);
 bool match_with_true_pos(Cluster& c_u, Cluster& c_v, Cluster& c_x, float radius);

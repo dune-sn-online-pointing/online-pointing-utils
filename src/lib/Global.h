@@ -8,11 +8,11 @@
 #include <nlohmann/json.hpp>
 #include <regex>
 
-#include "utils.h"
+#include "Utils.h"
 #include "verbosity.h"
 #include "root.h" //includes std libs
 
-// This is a header guard for global.cpp, which includes most common includes of the project
+// Shared global includes and symbols used across the project
 
 static int standard_backtracker_error_margin = 10; // TPC ticks
 

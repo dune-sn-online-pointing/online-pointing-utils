@@ -1,6 +1,6 @@
-#include "geometry.h"
-#include "global.h"
-#include "utils.h"
+#include "Geometry.h"
+#include "Global.h"
+#include "Utils.h"
 
 float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign) {
     z = z - int(tps.at(0)->GetDetectorChannel()) / (APA::total_channels*2) * (apa_lenght_in_cm + offset_between_apa_in_cm); // not sure about the 0 TODO

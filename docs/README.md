@@ -54,6 +54,8 @@ The `scripts/sequence.sh` wrapper runs the steps above in order and recompiles o
 ## 5) Folder and Naming Conventions
 
 - Basenames are preserved across stages for traceability.
+- In `src/`, library units use `ThisCase.cpp/.h` (for example `src/lib/Global.h`, `src/clusters/MatchClusters.cpp`).
+- In `src/app/`, executable sources use `this_case.cpp` (for example `make_clusters.cpp`, `match_clusters.cpp`).
 - Default layout under your `tpstream_folder` (or `signal_folder`):
 	- `tpstreams/` → inputs
 	- `tps/` → backtracked signal
@@ -63,6 +65,7 @@ The `scripts/sequence.sh` wrapper runs the steps above in order and recompiles o
 	- `volume_images_<prefix>_<conds>/` and `cluster_images_.../` → Python/plot products
 	- `reports/` → analysis summaries
 - The conditions string is `tick{N}_ch{N}_min{N}_tot{N}_e{X}` (e.g., `tick3_ch2_min2_tot1_e0p0`).
+- Displays in use: C++ `display` (via `scripts/display.sh`) and Python `python/ana/cluster_display.py` (via `scripts/display_py.sh`).
 
 ## 6) Python Utilities (maintained set)
 

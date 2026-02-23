@@ -1,9 +1,11 @@
 set( LIB_NAME "clustersLibs" )
 
 set( SRC_FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/aggregate_clusters_within_volume_libs.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/create_volume_clusters_libs.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/superimpose_root_files_libs.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/AggregateClustersWithinVolume.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/CreateVolumeClusters.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/SuperimposeRootFiles.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/MatchClusters.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/PositionCalculator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Clustering.cpp
 )
 

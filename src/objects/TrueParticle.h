@@ -2,7 +2,7 @@
 #define TRUEPARTICLE_H
 
 #include <Neutrino.h>
-#include "global.h"
+#include "Global.h"
 
 class TrueParticle {
     

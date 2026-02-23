@@ -1,4 +1,4 @@
-#include "global.h"
+#include "Global.h"
 
 // Definition of global verbosity and debug variables
 bool verboseMode = false;

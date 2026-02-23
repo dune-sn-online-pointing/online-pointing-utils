@@ -1,6 +1,6 @@
 # Python Cluster Display
 
-Python port of the C++ `cluster_display` application for interactive visualization of MARLEY trigger primitive (TP) clusters.
+Python port of the C++ `display` application for interactive visualization of MARLEY trigger primitive (TP) clusters.
 
 ## Features
 
@@ -210,7 +210,7 @@ The code is structured in classes:
 
 This Python application replaces:
 ```bash
-./build/src/app/cluster_display \
+./build/src/app/display \
   --clusters-file <file.root> \
   --draw-mode pentagon \
   --mode clusters

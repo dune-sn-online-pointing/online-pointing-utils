@@ -1,7 +1,7 @@
 #include "Clustering.h"
 #include "Cluster.h"
 #include "ParametersManager.h"
-#include "utils.h"
+#include "Utils.h"
 #include "verbosity.h"
 
 #include <algorithm>

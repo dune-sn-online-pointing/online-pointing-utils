@@ -1,9 +1,9 @@
-// #include "position_calculator.h"
+// #include "PositionCalculator.h"
 #include "Clustering.h"
 #include "Cluster.h"
-#include "functions.h"
+#include "Functions.h"
 #include "ParametersManager.h"
-#include "global.h"
+#include "Global.h"
 #include "Backtracking.h"
 
 

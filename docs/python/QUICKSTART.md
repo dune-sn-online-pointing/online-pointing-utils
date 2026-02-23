@@ -18,13 +18,13 @@ sudo pip3 install -r python/requirements.txt
 
 ```bash
 # Pentagon mode (default)
-./scripts/cluster_display_py.sh --clusters-file data/prod_cc/cc_valid_tick5_ch2_min2_tot1_clusters.root
+./scripts/display_py.sh --clusters-file data/prod_cc/cc_valid_tick5_ch2_min2_tot1_clusters.root
 
 # Triangle mode
-./scripts/cluster_display_py.sh --clusters-file data/prod_cc/cc_valid_tick5_ch2_min2_tot1_clusters.root --draw-mode triangle
+./scripts/display_py.sh --clusters-file data/prod_cc/cc_valid_tick5_ch2_min2_tot1_clusters.root --draw-mode triangle
 
 # Rectangle mode
-./scripts/cluster_display_py.sh --clusters-file data/prod_cc/cc_valid_tick5_ch2_min2_tot1_clusters.root --draw-mode rectangle
+./scripts/display_py.sh --clusters-file data/prod_cc/cc_valid_tick5_ch2_min2_tot1_clusters.root --draw-mode rectangle
 ```
 
 ### Direct Python invocation
@@ -44,14 +44,14 @@ python3 python/ana/cluster_display.py --clusters-file <file.root> --draw-mode pe
 
 **Python version (equivalent):**
 ```bash
-./scripts/cluster_display_py.sh -j json/display/example.json --draw-mode pentagon
+./scripts/display_py.sh -j json/display/example.json --draw-mode pentagon
 ```
 
 ### 2. Browse Individual Clusters
 
 ```bash
 # Pentagon mode - most accurate
-./scripts/cluster_display_py.sh \
+./scripts/display_py.sh \
   --clusters-file data/prod_cc/cc_valid_tick5_ch2_min2_tot1_clusters.root \
   --mode clusters \
   --draw-mode pentagon
@@ -63,12 +63,12 @@ Use the Prev/Next buttons in the matplotlib window to navigate.
 
 ```bash
 # Show all clusters per event
-./scripts/cluster_display_py.sh \
+./scripts/display_py.sh \
   --clusters-file data/prod_cc/cc_valid_tick5_ch2_min2_tot1_clusters.root \
   --mode events
 
 # Show only MARLEY clusters per event
-./scripts/cluster_display_py.sh \
+./scripts/display_py.sh \
   --clusters-file data/prod_cc/cc_valid_tick5_ch2_min2_tot1_clusters.root \
   --mode events \
   --only-marley
@@ -78,17 +78,17 @@ Use the Prev/Next buttons in the matplotlib window to navigate.
 
 **Pentagon (default)** - Most accurate, extended boundaries:
 ```bash
-./scripts/cluster_display_py.sh --clusters-file <file.root> --draw-mode pentagon
+./scripts/display_py.sh --clusters-file <file.root> --draw-mode pentagon
 ```
 
 **Triangle** - Linear approximation:
 ```bash
-./scripts/cluster_display_py.sh --clusters-file <file.root> --draw-mode triangle
+./scripts/display_py.sh --clusters-file <file.root> --draw-mode triangle
 ```
 
 **Rectangle** - Uniform intensity, fastest:
 ```bash
-./scripts/cluster_display_py.sh --clusters-file <file.root> --draw-mode rectangle
+./scripts/display_py.sh --clusters-file <file.root> --draw-mode rectangle
 ```
 
 ## Features
@@ -126,7 +126,7 @@ parameters/
 
 To use alternative parameters:
 ```bash
-./scripts/cluster_display_py.sh \
+./scripts/display_py.sh \
   --clusters-file <file.root> \
   --params-dir /path/to/custom/parameters
 ```
@@ -145,12 +145,12 @@ pip3 install --user uproot matplotlib numpy
 Check that your ROOT file contains MARLEY clusters:
 ```bash
 # Use C++ version to verify
-./build/src/app/cluster_display --clusters-file <file.root>
+./build/src/app/display --clusters-file <file.root>
 ```
 
 Or try events mode:
 ```bash
-./scripts/cluster_display_py.sh --clusters-file <file.root> --mode events
+./scripts/display_py.sh --clusters-file <file.root> --mode events
 ```
 
 ### Display window doesn't appear
@@ -166,7 +166,7 @@ If empty, you need X11 forwarding or a local display.
 
 Use rectangle mode for faster visualization:
 ```bash
-./scripts/cluster_display_py.sh --clusters-file <file.root> --draw-mode rectangle
+./scripts/display_py.sh --clusters-file <file.root> --draw-mode rectangle
 ```
 
 ## Comparison with C++ Version
@@ -211,7 +211,7 @@ Create a JSON file with custom settings:
 
 Then use:
 ```bash
-./scripts/cluster_display_py.sh -j my_config.json
+./scripts/display_py.sh -j my_config.json
 ```
 
 ### Programmatic Usage
@@ -233,7 +233,7 @@ viewer.run()
 
 ```bash
 # Command-line help
-./scripts/cluster_display_py.sh --help
+./scripts/display_py.sh --help
 
 # Or
 python3 python/ana/cluster_display.py --help

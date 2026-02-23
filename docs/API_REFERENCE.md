@@ -36,10 +36,10 @@ This document provides quick reference links to key APIs and interfaces in the o
   - `write_clusters()` / `write_clusters_with_match_id()` - ROOT output
 
 ### Volume Operations
-- **Location**: `src/clusters/aggregate_clusters_within_volume_libs.h`
+- **Location**: `src/clusters/AggregateClustersWithinVolume.h`
 - **Key Functions**:
   - `aggregate_clusters_within_volume()` - Spatial cluster aggregation
-  - **Location**: `src/clusters/create_volume_clusters_libs.h`
+  - **Location**: `src/clusters/CreateVolumeClusters.h`
   - `get_tps_around_cluster()` - Find trigger primitives near cluster
 
 ## Parameter System
@@ -55,18 +55,18 @@ This document provides quick reference links to key APIs and interfaces in the o
 - **Documentation**: parameter files under `parameters/*.dat`
 
 ### Legacy Constants
-- **Location**: `src/lib/utils.h`
+- **Location**: `src/lib/Utils.h`
 - **Description**: Backward-compatible access to parameters
 - **Usage**: Direct constants like `apa_lenght_in_cm`, `wire_pitch_in_cm_collection`
 
 ## Utility Functions
 
 ### Global Utilities
-- **Location**: `src/lib/global.h`
+- **Location**: `src/lib/Global.h`
 - **Functions**: General utility functions used across the project
 
 ### Geometry Constants
-- **Location**: `src/lib/utils.h`
+- **Location**: `src/lib/Utils.h`
 - **Namespaces**: `APA::` (detector configuration), `PDG::` (particle codes)
 
 ## Application Interfaces
@@ -82,7 +82,7 @@ Located in `src/app/`:
 
 ### Script Interfaces
 Located in `scripts/`:
-- **cluster.sh** - Clustering workflow script
+- **make_clusters.sh** - Clustering workflow script
 - **backtrack.sh** - Backtracking workflow script
 - **analyze_tps.sh** - TP analysis workflow script
 

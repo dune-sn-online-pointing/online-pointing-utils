@@ -63,7 +63,7 @@ install( TARGETS split_by_apa DESTINATION bin )
 
 cmessage( STATUS "Creating match_clusters app..." )
 add_executable( match_clusters ${CMAKE_CURRENT_SOURCE_DIR}/match_clusters.cpp )
-target_link_libraries( match_clusters planesMatchingLibs )
+target_link_libraries( match_clusters clustersLibs )
 install( TARGETS match_clusters DESTINATION bin )
 
 cmessage( STATUS "Creating match_clusters_truth app..." )

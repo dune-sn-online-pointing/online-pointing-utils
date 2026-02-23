@@ -1,7 +1,7 @@
 #ifndef PLOTTING_H
 #define PLOTTING_H
 
-#include  "global.h"
+#include  "Global.h"
 
 // Helper function to add page number to canvas
 void addPageNumber(TCanvas* canvas, int pageNum, int totalPages);
