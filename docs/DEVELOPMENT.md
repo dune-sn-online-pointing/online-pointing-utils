@@ -5,7 +5,7 @@ This guide covers development workflows, coding standards, and contribution guid
 ## Quick Links to Key Documentation
 
 - **[Main README](../README.md)** - Project overview and basic usage
-- **[Parameter System](../parameters/PARAMETERS.md)** - Configuration and parameter management
+- **Parameter System (`parameters/*.dat`)** - Configuration and parameter management
 - **[Build Scripts](../scripts/README.md)** - Compilation and execution workflows
 - **[Analysis Documentation](../MARGIN_SCAN_ANALYSIS.md)** - Analysis procedures and workflows
 
@@ -13,7 +13,7 @@ This guide covers development workflows, coding standards, and contribution guid
 
 ### Setting Up the Environment
 1. Follow the setup instructions in [README.md](../README.md)
-2. Configure parameters using [PARAMETERS.md](../parameters/PARAMETERS.md)
+2. Configure parameters in `parameters/*.dat`
 3. Build the project using scripts documented in [scripts/README.md](../scripts/README.md)
 
 ### Code Organization
@@ -27,7 +27,7 @@ The project is organized into several key libraries:
 
 ### Parameter System
 
-The project uses a flexible parameter system documented in [parameters/PARAMETERS.md](../parameters/PARAMETERS.md). Key points:
+The project uses a flexible parameter system based on `parameters/*.dat`. Key points:
 - Parameters are stored in `.dat` files with structured format
 - Runtime configuration without recompilation
 - Environment variable support via `PARAMETERS_DIR`
@@ -35,7 +35,7 @@ The project uses a flexible parameter system documented in [parameters/PARAMETER
 
 ### Configuration Management
 
-JSON configuration files are documented in [json/README.md](../json/README.md) and provide:
+JSON configuration files are documented in [../json/README.md](../json/README.md) and provide:
 - Algorithm tuning parameters
 - Input/output file specifications
 - Processing workflows
@@ -75,5 +75,5 @@ JSON configuration files are documented in [json/README.md](../json/README.md) a
 
 ### Getting Help
 - Check component-specific README files first
-- Review parameter configuration in [PARAMETERS.md](../parameters/PARAMETERS.md)
+- Review parameter configuration in `parameters/*.dat`
 - Look at example configurations in `json/` directories

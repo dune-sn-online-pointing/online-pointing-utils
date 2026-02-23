@@ -31,14 +31,17 @@ Smoke test (what CI uses locally)
 2. Add backgrounds → `tps_bg/*_tps_bg.root`
 3. Make clusters → `clusters_<prefix>_<conds>/*_clusters.root`
 4. Match clusters (3-plane) → `matched_clusters_<prefix>_<conds>/*_matched.root`
-5. Optional Python volumes → `volume_images_<prefix>_<conds>/*.npz`
+5. Python image products and volume analysis:
+	- Cluster image arrays (optional): `cluster_images_<prefix>_<conds>/cluster_plane*.npy` via `scripts/generate_cluster_images.sh` (`python/app/generate_cluster_arrays.py`)
+	- Volume images (optional): `volume_images_<prefix>_<conds>/*.npz` via `scripts/create_volumes.sh` (`python/app/create_volumes.py`)
+	- Volume summary analysis (optional): reports/plots via `python/ana/analyze_volumes.py` (also callable from `scripts/sequence.sh`)
 
 The `scripts/sequence.sh` wrapper runs the steps above in order and recompiles once at the start. Use `--all` for the full chain or the per-step flags (`-bt`, `-ab`, `-mc`, `-mm`, `-vi`).
 
 ## 3) Configuration
 
-- **JSON settings**: keep user configs under `json/` (only the examples + `test_settings.json` are tracked). See [json/README.md](json/README.md) for allowed keys and folder auto-generation.
-- **Parameters**: `.dat` files in `parameters/` (documented in [parameters/PARAMETERS.md](parameters/PARAMETERS.md)). Set `PARAMETERS_DIR` if you keep them elsewhere.
+- **JSON settings**: keep user configs under `json/` (only the examples + `test_settings.json` are tracked). See [../json/README.md](../json/README.md) for allowed keys and folder auto-generation.
+- **Parameters**: `.dat` files in `parameters/` are the single source of runtime constants. Set `PARAMETERS_DIR` if you keep them elsewhere.
 - **Environment**: source `scripts/init.sh` (done automatically by the wrappers) to define `HOME_DIR`, `SCRIPTS_DIR`, and `BUILD_DIR`.
 
 ## 4) Apps and Scripts
@@ -46,6 +49,7 @@ The `scripts/sequence.sh` wrapper runs the steps above in order and recompiles o
 - C++ executables live in `src/app/` and are built to `build/src/app/` (or `bin/` if installed). See [APPS.md](APPS.md) for the full per-app rundown.
 - Primary wrappers (in `scripts/`): `sequence.sh`, `compile.sh`, `backtrack.sh`, `add_backgrounds.sh`, `make_clusters.sh`, `match_clusters.sh`, `display.sh`, `create_volumes.sh`, `view_volumes.sh`.
 - Event displays: `display` (C++) via `scripts/display.sh` and the Python `cluster_display.py` (see [python/README.md](python/README.md) for options).
+- Analysis scripts: C++ analysis wrappers (`scripts/analyze_tps.sh`, `scripts/analyze_clusters.sh`, `scripts/analyze_matching.sh`) and Python `python/ana/analyze_volumes.py`.
 
 ## 5) Folder and Naming Conventions
 
@@ -80,8 +84,7 @@ pip install -r python/requirements.txt
 
 - [APPS.md](APPS.md): per-app and per-script details
 - [CONFIGURATION.md](CONFIGURATION.md): environment + JSON + parameters (current keys)
-- [json/README.md](json/README.md): JSON conventions and examples
-- [parameters/PARAMETERS.md](parameters/PARAMETERS.md): parameter files/keys
+- [../json/README.md](../json/README.md): JSON conventions and examples
 - [code-structure.md](code-structure.md): concise architecture and folder map
 
 Part of the DUNE DAQ Application Framework. See COPYING for licensing details.

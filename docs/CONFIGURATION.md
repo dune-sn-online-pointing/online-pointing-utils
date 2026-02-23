@@ -10,11 +10,11 @@ How to configure and run the current pipeline (matches the wrappers and tracked 
 - Conversions: `conversion.dat`
 - Detector: `detector.dat`
 - Analysis/thresholds: `analysis.dat`, `display.dat`
-- Format: `< key = value >    # comment` (see [parameters/PARAMETERS.md](parameters/PARAMETERS.md))
+- Format: `< key = value >    # comment`
 
 2) JSON settings (`json/*.json`)
 - Only example configs + `test_settings.json` are tracked; personal/production configs stay untracked.
-- Keys cover inputs, folder auto-generation, clustering/matching knobs, and step toggles. See [json/README.md](json/README.md).
+- Keys cover inputs, folder auto-generation, clustering/matching knobs, and step toggles. See [../json/README.md](../json/README.md).
 
 3) Environment
 - Sourced automatically by `scripts/init.sh` (called by every wrapper):

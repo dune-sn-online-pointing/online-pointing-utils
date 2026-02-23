@@ -11,7 +11,7 @@ Short overview of how the code is organized today. Use this as a map while brows
 - `src/planes-matching/` – 3-plane matching (Pentagon)
 - `src/objects/`  – core structs/classes (`TriggerPrimitive`, `Cluster`, etc.)
 - `src/io/`       – declarations for file discovery/folder helpers (implemented in `src/lib`)
-- `python/`       – Python utilities (volumes, displays, legacy analysis)
+- `python/`       – Python utilities (core pipeline analysis + shared modules)
 - `scripts/`      – orchestration wrappers (build + run steps)
 - `parameters/`   – `.dat` parameter files
 - `json/`         – example JSON configs + test settings (all other JSONs are gitignored)
@@ -22,7 +22,10 @@ Short overview of how the code is organized today. Use this as a map while brows
 2) `add_backgrounds` → `tps_bg/*_tps_bg.root`
 3) `make_clusters` → `clusters_<prefix>_<conds>/*_clusters.root`
 4) `match_clusters` → `matched_clusters_<prefix>_<conds>/*_matched.root`
-5) Optional Python volumes → `volume_images_<prefix>_<conds>/*.npz`
+5) Optional Python products:
+  - Cluster image arrays → `cluster_images_<prefix>_<conds>/cluster_plane*.npy`
+  - Volume images → `volume_images_<prefix>_<conds>/*.npz`
+  - Volume analysis summaries via `python/ana/analyze_volumes.py`
 
 `scripts/sequence.sh` drives these steps and recompiles once at the start.
 
@@ -56,8 +59,8 @@ Short overview of how the code is organized today. Use this as a map while brows
 
 ## Notes on Python layout
 
-- Maintained tools: `python/app/create_volumes.py`, `python/ana/analyze_volumes.py`, `python/ana/view_volume_quick.py`, `python/ana/cluster_display.py`
-- Legacy/analysis helpers: other scripts under `python/ana/`; keep them out of automated pipelines unless needed.
+- Maintained tools: `python/app/create_volumes.py`, `python/app/generate_cluster_arrays.py`, `python/ana/analyze_volumes.py`, `python/ana/view_volume_quick.py`, `python/ana/cluster_display.py`
+- Shared modules: `python/lib/cluster.py`, `python/lib/utils.py`
 
 ## Testing hook
 
@@ -85,9 +88,7 @@ Short overview of how the code is organized today. Use this as a map while brows
 
 #### Applications (`python/app/`)
 - `create_volumes.py`: Volume image generation (see above)
-- `cluster_analyse.py`: Detailed cluster visualization and fitting
-- `clusters_to_dataset.py`: ML dataset preparation
-- `plot_cluster_variables.py`: Histogram generation
+- `generate_cluster_arrays.py`: Cluster image array generation (`.npy`)
 
 #### Analysis (`python/ana/`)
 - `analyze_volumes.py`: Volume statistics and PDF reports
@@ -95,8 +96,6 @@ Short overview of how the code is organized today. Use this as a map while brows
 #### Utilities (`python/`)
 - `cluster.py`: `Cluster` class and ROOT file reading
 - `utils.py`: Distance calculations, channel maps
-- `image_creator.py`: 2D image generation
-- `dataset_creator.py`: NPY dataset creation
 
 ### Bash Scripts (`scripts/`)
 

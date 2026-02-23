@@ -52,7 +52,7 @@ This document provides quick reference links to key APIs and interfaces in the o
   #include "ParametersManager.h"
   double value = GET_PARAM_DOUBLE("geometry.apa_length_cm");
   ```
-- **Documentation**: [parameters/PARAMETERS.md](parameters/PARAMETERS.md)
+- **Documentation**: parameter files under `parameters/*.dat`
 
 ### Legacy Constants
 - **Location**: `src/lib/utils.h`
@@ -92,13 +92,13 @@ See [APPS.md](APPS.md) for an up-to-date overview.
 
 ### JSON Configuration
 - **Location**: `json/` directory
-- **Documentation**: [json/README.md](json/README.md)
+- **Documentation**: [../json/README.md](../json/README.md)
 - **Usage**: Algorithm parameters, file paths, processing options
 
 ### Parameter Files
 - **Location**: `parameters/` directory
 - **Format**: `.dat` files with `< key = value >` syntax
-- **Documentation**: [parameters/PARAMETERS.md](parameters/PARAMETERS.md)
+- **Documentation**: parameter files under `parameters/*.dat`
 
 ## External Dependencies
 
