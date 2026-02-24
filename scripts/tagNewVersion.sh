@@ -41,7 +41,7 @@ git pull
 
 # Run smoke tests before any version/tag changes
 echo "Running smoke tests before tagging..."
-test_command="${REPO_HOME}/test/run_all_tests.sh --clean"
+test_command=". ${HOME_DIR}/test/run_all_tests.sh --clean"
 echo "$test_command"
 $test_command
 if [ $? -ne 0 ]
@@ -51,7 +51,7 @@ then
 fi
 
 # Update docs/version.txt after tests pass
-version_file="${REPO_HOME}/docs/version.txt"
+version_file="${HOME_DIR}/docs/version.txt"
 echo "$versionNumber" > $version_file
 git add $version_file
 git commit -m "Update version number to $versionNumber"
