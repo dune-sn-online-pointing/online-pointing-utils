@@ -1,11 +1,11 @@
 // Batch-mode match_clusters - matches U/V/X plane clusters across files
 #include "Clustering.h"
 #include "Cluster.h"
-#include "geometry.h"
+#include "Geometry.h"
 #include "Backtracking.h"
-#include "match_clusters_libs.h"
+#include "MatchClusters.h"
 #include "ParametersManager.h"
-#include "utils.h"
+#include "Utils.h"
 #include "verbosity.h"
 
 #include <algorithm>

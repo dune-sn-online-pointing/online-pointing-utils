@@ -1,7 +1,0 @@
-{
-    "input_files": ["data/flat_es_tpstream.root"],
-    "outputFolder": "data/test_new_format",
-    "max_files": 1,
-    "backtracker_error_margin": 10,
-    "backtracker_channel_tolerance": 0
-}

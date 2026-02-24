@@ -1,5 +1,5 @@
-#include "functions.h"
-#include "global.h"
+#include "Functions.h"
+#include "Global.h"
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 

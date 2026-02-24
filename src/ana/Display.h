@@ -1,7 +1,7 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include "global.h"
+#include "Global.h"
 
 enum DrawMode {
   TRIANGLE,

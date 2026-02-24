@@ -1,5 +1,0 @@
-{
-  "inputFile": "data/prodmarley_nue_flat_es_dune10kt_1x2x2_20250926T155625Z_gen_000001_supernova_g4_detsim_ana_2025-10-03T_031735Zbktr10_clusters_tick5_ch2_min2_tot1_en0.root",
-  "output_file": "test_with_simide.pdf",
-  "use_simide_energy": true
-}

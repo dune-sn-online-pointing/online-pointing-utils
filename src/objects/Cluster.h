@@ -2,7 +2,7 @@
 #define CLUSTER_H
 
 #include "TriggerPrimitive.hpp"
-#include "global.h"
+#include "Global.h"
 
 extern std::map<std::string, int> variables_to_index;
 

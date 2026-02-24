@@ -2,7 +2,7 @@
 # Convenience wrapper for Python cluster display application
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PYTHON_SCRIPT="$SCRIPT_DIR/../python/cluster_display.py"
+PYTHON_SCRIPT="$SCRIPT_DIR/../python/ana/cluster_display.py"
 
 # Check if Python script exists
 if [[ ! -f "$PYTHON_SCRIPT" ]]; then

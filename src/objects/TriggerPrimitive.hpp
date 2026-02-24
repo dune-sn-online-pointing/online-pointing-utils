@@ -2,7 +2,7 @@
 #define TRIGGERPRIMITIVE_HPP
 
 #include "TrueParticle.h"
-#include "global.h"
+#include "Global.h"
 
 class TriggerPrimitive {
 

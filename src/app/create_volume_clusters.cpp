@@ -8,11 +8,11 @@
 #include "CmdLineParser.h"
 #include "Logger.h"
 
-#include "aggregate_clusters_within_volume_libs.h"
-// #include "position_calculator.h"
+#include "AggregateClustersWithinVolume.h"
+// #include "PositionCalculator.h"
 #include "Clustering.h"
 #include "Cluster.h"
-#include "create_volume_clusters_libs.h"
+#include "CreateVolumeClusters.h"
 
 
 LoggerInit([]{ Logger::getUserHeader() << "[" << FILENAME << "]";});

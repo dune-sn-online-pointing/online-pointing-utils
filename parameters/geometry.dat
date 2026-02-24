@@ -2,7 +2,6 @@
 Geometry parameters
 *******************************************************************************
 
-< geometry.events_offset = 0 >                    Events offset (TODO: verify usage)
 < geometry.apa_length_cm = 230.0 >                APA length in cm
 < geometry.wire_pitch_collection_cm = 0.479 >     Wire pitch for collection wires in cm
 < geometry.wire_pitch_induction_diagonal_cm = 0.4669 >  Wire pitch for induction wires (diagonal) in cm

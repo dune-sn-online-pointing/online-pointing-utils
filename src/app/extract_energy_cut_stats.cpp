@@ -6,7 +6,7 @@
  * and main track clusters from the ROOT files generated during energy cut scans.
  */
 
-#include "global.h"
+#include "Global.h"
 
 namespace fs = std::filesystem;
 

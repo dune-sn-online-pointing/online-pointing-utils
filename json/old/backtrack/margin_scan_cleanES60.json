@@ -1,6 +1,0 @@
-{
-  "filename": "data/test_files_tps_cleanES60.txt",
-  "output_folder": "data",
-  "backtracker_error_margin": 10,
-  "comment": "Base config for cleanES60 margin scan"
-}

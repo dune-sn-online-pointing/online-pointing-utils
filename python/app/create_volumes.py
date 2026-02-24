@@ -394,13 +394,17 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False, use_global_c
             'event', 'n_tps', 'is_main_cluster',
             'is_es_interaction', 'true_neutrino_energy', 'true_particle_energy',
             'true_mom_x', 'true_mom_y', 'true_mom_z',
-            'true_neutrino_mom_x', 'true_neutrino_mom_y', 'true_neutrino_mom_z',
             'true_label', 'marley_tp_fraction',
             'tp_detector_channel', 'tp_time_start',
-            'tp_adc_integral', 'tp_adc_peak', 
+            'tp_adc_integral', 'tp_adc_peak',
             'tp_samples_over_threshold', 'tp_samples_to_peak',
             'cluster_id'
         ]
+
+        # Optional truth branches (not always present in cluster files)
+        for opt in ['true_neutrino_mom_x', 'true_neutrino_mom_y', 'true_neutrino_mom_z']:
+            if opt in tree.keys():
+                branches.append(opt)
         if 'tp_detector' in tree.keys():
             branches.append('tp_detector')
         # total_charge is written by clustering (reconstructed charge for the cluster)
@@ -471,6 +475,7 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False, use_global_c
                 'event': int(arrays['event'][i]),
                 'n_tps': int(arrays['n_tps'][i]),
                 'is_main_cluster': bool(arrays['is_main_cluster'][i]),
+                'is_discarded': (directory == 'discarded'),
                 'channels': channels,
                 'times_tpc': times_tpc,
                 'times_end_tpc': times_end_tpc,
@@ -489,9 +494,9 @@ def load_clusters_from_file(cluster_file, plane='X', verbose=False, use_global_c
                 'true_mom_x': float(arrays['true_mom_x'][i]),
                 'true_mom_y': float(arrays['true_mom_y'][i]),
                 'true_mom_z': float(arrays['true_mom_z'][i]),
-                'true_neutrino_mom_x': float(arrays['true_neutrino_mom_x'][i]),
-                'true_neutrino_mom_y': float(arrays['true_neutrino_mom_y'][i]),
-                'true_neutrino_mom_z': float(arrays['true_neutrino_mom_z'][i]),
+                'true_neutrino_mom_x': float(arrays['true_neutrino_mom_x'][i]) if 'true_neutrino_mom_x' in arrays else 0.0,
+                'true_neutrino_mom_y': float(arrays['true_neutrino_mom_y'][i]) if 'true_neutrino_mom_y' in arrays else 0.0,
+                'true_neutrino_mom_z': float(arrays['true_neutrino_mom_z'][i]) if 'true_neutrino_mom_z' in arrays else 0.0,
                 'is_marley': is_marley,
                 'marley_tp_fraction': float(arrays['marley_tp_fraction'][i]),
                 'cluster_id': int(arrays['cluster_id'][i]),

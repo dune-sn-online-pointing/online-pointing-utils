@@ -12,8 +12,34 @@ source $SCRIPTS_DIR/init.sh
 cleanCompile=false
 noCompile=false
 pwd=$PWD
-nproc=$(nproc)
-nproc_to_use=$((nproc-2))
+
+# Determine available CPU cores (portable across Linux/macOS)
+if command -v nproc >/dev/null 2>&1; then
+    nproc=$(nproc)
+elif command -v sysctl >/dev/null 2>&1; then
+    nproc=$(sysctl -n hw.ncpu)
+elif command -v getconf >/dev/null 2>&1; then
+    nproc=$(getconf _NPROCESSORS_ONLN)
+else
+    nproc=4
+fi
+
+# Default build parallelism policy:
+# - If available cores are 1..4: use 1
+# - If available cores are >=5: use (cores-2), capped at 4
+if [ "$nproc" -le 4 ]; then
+    nproc_to_use=1
+else
+    nproc_to_use=$((nproc/2))
+    if [ "$nproc_to_use" -gt 16 ]; then
+        nproc_to_use=8
+    fi
+fi
+
+# Safety clamp
+if [ "$nproc_to_use" -lt 1 ]; then
+    nproc_to_use=1
+fi
 
 # Function to print help message
 print_help() {
@@ -32,9 +58,24 @@ print_help() {
 while [[ $# -gt 0 ]]; do
     case "$1" in
     -p|--home-path)         HOME_DIR="$2"; echo " Got home path as argument";    shift 2 ;;
-    -n|--no-compile)        noCompile="${2:-true}";      shift ;;
-    -j|--nproc)            nproc_to_use="${2:-$((nproc-2))}"; shift 2 ;;
-    -c|--clean-compile)     cleanCompile="${2:-true}";   shift ;;
+    -n|--no-compile)
+        if [[ "${2:-}" == "true" || "${2:-}" == "false" ]]; then
+            noCompile="$2"; shift 2
+        else
+            noCompile=true; shift
+        fi
+        ;;
+    -j|--nproc)
+        nproc_to_use="$2"; shift 2
+        if [ "$nproc_to_use" -lt 1 ]; then nproc_to_use=1; fi
+        ;;
+    -c|--clean-compile)
+        if [[ "${2:-}" == "true" || "${2:-}" == "false" ]]; then
+            cleanCompile="$2"; shift 2
+        else
+            cleanCompile=true; shift
+        fi
+        ;;
     -h|--help)              print_help ;;
     *)                      shift ;;
     esac
@@ -69,7 +110,7 @@ else
     then
         echo -e "  CMake failed. Stopping execution.\n"
         cd $pwd # go back to the original directory
-        return 1
+        exit 1
     fi
 
     echo "Using $nproc_to_use processors for compilation"
@@ -79,7 +120,7 @@ else
     then
         echo -e "  Make failed. Stopping execution.\n"
         cd $pwd # go back to the original directory
-        return 1
+        exit 1
     else
         echo -e "  Compilation finished successfully!\n"
     fi

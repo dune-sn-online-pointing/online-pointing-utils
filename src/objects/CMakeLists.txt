@@ -4,7 +4,6 @@ set( LIB_NAME "objectsLibs" )
 
 set( SRC_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/Cluster.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/functions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Neutrino.cpp
 )
 

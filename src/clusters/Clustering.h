@@ -3,7 +3,7 @@
 #define cluster_TO_ROOT_LIBS_H
 
 #include "Cluster.h"
-#include "functions.h"
+#include "Functions.h"
 
 // create the clusters from the tps
 bool channel_condition_with_pbc(TriggerPrimitive* tp1, TriggerPrimitive* tp2, int channel_limit);

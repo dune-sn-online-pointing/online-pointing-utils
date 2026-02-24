@@ -67,11 +67,16 @@ do
     exit 0;
   elif [ $arg == "--up" ]; then
     echo "Updating..."
-    # git pull
-    git submodule deinit --all -f
-    git submodule update --init 
-    git submodule sync
-    git submodule update --remote --recursive
+    # Keep the superproject branch as-is, but make sure submodules are usable.
+    # Avoid `deinit -f` here: it removes submodule worktrees and, if a pinned
+    # submodule SHA is no longer reachable upstream, a subsequent checkout can
+    # fail and leave an effectively empty directory (only a `.git` file).
+    git submodule sync --recursive
+    git submodule update --init --remote --recursive
+    if [ $? -ne 0 ]; then
+      echo "Submodule update failed. If this is a fresh clone, try: ./scripts/manage-submodules.sh --fix-submodules"
+      exit 1
+    fi
     exit 0;
   fi
 done

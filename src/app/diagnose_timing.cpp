@@ -6,7 +6,7 @@
 #include <fstream>
 #include "Clustering.h"
 #include "Cluster.h"
-#include "utils.h"
+#include "Utils.h"
 #include "ParametersManager.h"
 #include "nlohmann/json.hpp"
 

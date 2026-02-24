@@ -1,8 +1,0 @@
-{
-  "inputList": [
-    "data/cleanES60_tpstream.root",
-    "data/cleanES909080_tpstream.root"
-  ],
-  "outputFolder": "data/backtrack_test",
-  "backtracker_error_margin": 10
-}

@@ -10,12 +10,21 @@ function( checkSubmodule )
   list( GET ARGV 0 SELECTED_SUBMODULE )
   cmessage( WARNING "Checking submodule: ${SELECTED_SUBMODULE}" )
 
-  file( GLOB FILES_IN_DIRECTORY "${SUBMODULE_DIR}/${SELECTED_SUBMODULE}/*")
+  # A submodule directory may exist but still be effectively empty (e.g. only a
+  # `.git` file with no checked-out worktree). Prefer a content-based check.
+  set( SUBMODULE_PATH "${SUBMODULE_DIR}/${SELECTED_SUBMODULE}" )
+  set( SUBMODULE_INCLUDE_DIR "${SUBMODULE_PATH}/include" )
 
-  if( FILES_IN_DIRECTORY )
+  if( EXISTS "${SUBMODULE_INCLUDE_DIR}" )
+    file( GLOB SUBMODULE_INCLUDE_CONTENT "${SUBMODULE_INCLUDE_DIR}/*" )
+  else()
+    set( SUBMODULE_INCLUDE_CONTENT "" )
+  endif()
+
+  if( SUBMODULE_INCLUDE_CONTENT )
     cmessage( STATUS "Git submodule ${SELECTED_SUBMODULE} is present" )
   else()
-    cmessage( ERROR "Git submodule ${SELECTED_SUBMODULE} is not present, please checkout: \"git submodule update --init --remote --recursive\"" )
+    cmessage( ERROR "Git submodule ${SELECTED_SUBMODULE} is not checked out (missing/empty include/). Please run: \"git submodule update --init --remote --recursive\"" )
     cmessage( FATAL_ERROR "CMake fatal error." )
   endif()
 endfunction( checkSubmodule )

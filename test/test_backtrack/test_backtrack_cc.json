@@ -1,5 +1,0 @@
-{
-  "tpstream_input_file": "test/data/test_cc_tpstream.root",
-  "outputFolder": "test/test_backtrack/output/",
-  "outputFilename": "test_cc"
-}

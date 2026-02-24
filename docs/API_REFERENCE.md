@@ -5,17 +5,17 @@ This document provides quick reference links to key APIs and interfaces in the o
 ## Core Data Structures
 
 ### TriggerPrimitive
-- **Location**: `src/objects/inc/TriggerPrimitive.hpp`
+- **Location**: `src/objects/TriggerPrimitive.hpp`
 - **Description**: Represents individual trigger primitives with timing, channel, and ADC information
 - **Key Methods**: `GetTimeStart()`, `GetDetectorChannel()`, `GetAdcIntegral()`, `GetView()`
 
 ### Cluster
-- **Location**: `src/objects/inc/Cluster.h`
+- **Location**: `src/objects/Cluster.h`
 - **Description**: Collection of trigger primitives forming a cluster
 - **Key Methods**: `get_tps()`, `get_reco_pos()`, `get_total_charge()`, `get_size()`
 
 ### TrueParticle
-- **Location**: `src/objects/inc/TrueParticle.h`
+- **Location**: `src/objects/TrueParticle.h`
 - **Description**: Monte Carlo truth information for particles
 - **Usage**: Truth matching and validation
 
@@ -29,73 +29,76 @@ This document provides quick reference links to key APIs and interfaces in the o
   - `eval_y_knowing_z_V_plane()` - Y-coordinate calculation for V-plane
 
 ### Clustering Algorithms
-- **Location**: `src/clustering/inc/cluster_to_root_libs.h`
+- **Location**: `src/clusters/Clustering.h`
 - **Key Functions**:
-  - `cluster_maker()` - Main clustering algorithm
-  - `write_clusters_to_root()` - ROOT file output
   - `channel_condition_with_pbc()` - Channel proximity with periodic boundary conditions
+  - `make_cluster()` - Main clustering algorithm
+  - `write_clusters()` / `write_clusters_with_match_id()` - ROOT output
 
 ### Volume Operations
-- **Location**: `src/clustering/inc/aggregate_clusters_within_volume_libs.h`
+- **Location**: `src/clusters/AggregateClustersWithinVolume.h`
 - **Key Functions**:
   - `aggregate_clusters_within_volume()` - Spatial cluster aggregation
-  - **Location**: `src/clustering/inc/create_volume_clusters_libs.h`
+  - **Location**: `src/clusters/CreateVolumeClusters.h`
   - `get_tps_around_cluster()` - Find trigger primitives near cluster
 
 ## Parameter System
 
 ### ParametersManager
-- **Location**: `src/lib/inc/ParametersManager.h`
+- **Location**: `src/lib/ParametersManager.h`
 - **Usage**: 
+- **Usage**:
   ```cpp
   #include "ParametersManager.h"
   double value = GET_PARAM_DOUBLE("geometry.apa_length_cm");
   ```
-- **Documentation**: [PARAMETERS.md](../parameters/PARAMETERS.md)
+- **Documentation**: parameter files under `parameters/*.dat`
 
 ### Legacy Constants
-- **Location**: `src/lib/inc/utils.h`
+- **Location**: `src/lib/Utils.h`
 - **Description**: Backward-compatible access to parameters
 - **Usage**: Direct constants like `apa_lenght_in_cm`, `wire_pitch_in_cm_collection`
 
 ## Utility Functions
 
 ### Global Utilities
-- **Location**: `src/lib/inc/global.h`
+- **Location**: `src/lib/Global.h`
 - **Functions**: General utility functions used across the project
 
 ### Geometry Constants
-- **Location**: `src/lib/inc/utils.h`
+- **Location**: `src/lib/Utils.h`
 - **Namespaces**: `APA::` (detector configuration), `PDG::` (particle codes)
 
 ## Application Interfaces
 
 ### Main Applications
-Located in `src/app/src/`:
-- **cluster.cpp** - Main clustering application
-- **backtrack.cpp** - Position backtracking application  
-- **analyze_tps.cpp** - Trigger primitive analysis
-- **analyze_clusters.cpp** - Cluster analysis
+Located in `src/app/`:
+- `make_clusters.cpp`
+- `backtrack_tpstream.cpp`
+- `add_backgrounds.cpp`
+- `match_clusters.cpp`
+- `analyze_tps.cpp`
+- `analyze_clusters.cpp`
 
 ### Script Interfaces
 Located in `scripts/`:
-- **cluster.sh** - Clustering workflow script
+- **make_clusters.sh** - Clustering workflow script
 - **backtrack.sh** - Backtracking workflow script
 - **analyze_tps.sh** - TP analysis workflow script
 
-See [scripts/README.md](../scripts/README.md) for detailed usage.
+See [APPS.md](APPS.md) for an up-to-date overview.
 
 ## Configuration Interfaces
 
 ### JSON Configuration
 - **Location**: `json/` directory
-- **Documentation**: [json/README.md](../json/README.md)
+- **Documentation**: [../json/README.md](../json/README.md)
 - **Usage**: Algorithm parameters, file paths, processing options
 
 ### Parameter Files
-- **Location**: `parameters/` directory  
+- **Location**: `parameters/` directory
 - **Format**: `.dat` files with `< key = value >` syntax
-- **Documentation**: [parameters/PARAMETERS.md](../parameters/PARAMETERS.md)
+- **Documentation**: parameter files under `parameters/*.dat`
 
 ## External Dependencies
 
