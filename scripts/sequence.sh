@@ -201,7 +201,7 @@ fi
 
 ####################
 
-analyze_tps_command="${HOME_DIR}/scripts/analyze_tps.sh -j $analyze_tps_json    $common_options"
+analyze_tps_command="${HOME_DIR}/scripts/analyze_tps.sh $common_options"
 if [ "$run_analyze_tps" = true ]; then
         echo "Running analyze_tps step with command:"
         echo $analyze_tps_command

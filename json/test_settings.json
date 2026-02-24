@@ -9,7 +9,7 @@
   "clusters_folder": "test/output/clusters",
   "matched_clusters_folder": "test/output/matched_clusters",
 
-  "bg_folder": "Data/bkgs",
+  "bg_folder": "test/data",
 
   "backtracker_error_margin": 10,
 
@@ -22,7 +22,7 @@
   "channel_limit": 2,
   "min_tps_to_cluster": 2,
   "tot_cut": 1,
-  "energy_cut": 0.0,
+  "energy_cut": 1.0,
 
   "time_tolerance_ticks": 10
 }

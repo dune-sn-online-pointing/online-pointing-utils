@@ -659,11 +659,18 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
                 base = j["bg_folder"].get<std::string>();
             }
         } else {
-            // For other patterns, use main_folder or signal_folder
+            // For other patterns, use main_folder, signal_folder, outputFolder/output_folder,
+            // and for TPS-compatible flows also sig_folder.
             if (j.contains("main_folder") && !j["main_folder"].get<std::string>().empty()) {
                 base = j["main_folder"].get<std::string>();
             } else if (j.contains("signal_folder") && !j["signal_folder"].get<std::string>().empty()) {
                 base = j["signal_folder"].get<std::string>();
+            } else if (j.contains("outputFolder") && !j["outputFolder"].get<std::string>().empty()) {
+                base = j["outputFolder"].get<std::string>();
+            } else if (j.contains("output_folder") && !j["output_folder"].get<std::string>().empty()) {
+                base = j["output_folder"].get<std::string>();
+            } else if ((pattern == "tps" || pattern == "sig") && j.contains("sig_folder") && !j["sig_folder"].get<std::string>().empty()) {
+                base = j["sig_folder"].get<std::string>();
             }
         }
         
@@ -703,15 +710,34 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
     // Priority 2: pattern_folder (scan folder for files with pattern)
     if (input_files.empty()) {
         std::string folder;
-        // For bg pattern, always use auto_folder (which adds /tps to bg_folder)
-        if (pattern == "bg" && !auto_folder.empty()) {
-            folder = auto_folder;
+        std::string bg_base_folder;
+        if (pattern == "bg" && j.contains("bg_folder") && !j["bg_folder"].get<std::string>().empty()) {
+            bg_base_folder = j["bg_folder"].get<std::string>();
+        }
+
+        // For bg pattern, prefer bg_folder/tps if it exists, otherwise fallback to bg_folder
+        if (pattern == "bg") {
+            if (!auto_folder.empty() && std::filesystem::exists(auto_folder)) {
+                folder = auto_folder;
+            } else if (!bg_base_folder.empty()) {
+                folder = bg_base_folder;
+                if (!auto_folder.empty()) {
+                    LogWarning << "[find_input_files] Folder '" << auto_folder
+                               << "' does not exist. Falling back to bg_folder: "
+                               << bg_base_folder << std::endl;
+                }
+            }
         } else if (j.contains(folder_key)) {
             folder = resolveFolderAgainstTpstream(j, j[folder_key].get<std::string>(), pattern == "sig");
         } else if (!auto_folder.empty()) {
             folder = auto_folder;
         }
         
+        if ((pattern == "tps" || pattern == "sig") && folder.empty() &&
+            j.contains("sig_folder") && !j["sig_folder"].get<std::string>().empty()) {
+            folder = resolveFolderAgainstTpstream(j, j["sig_folder"].get<std::string>(), true);
+        }
+
         if (!folder.empty()) {
             if (!std::filesystem::exists(folder)) {
                 if (pattern == "sig") {
@@ -724,6 +750,16 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
                     }
                     if (!fallback.empty() && folder != fallback) {
                         LogWarning << "[find_input_files] Folder '" << folder << "' does not exist. Falling back to tps folder: " << fallback << std::endl;
+                        folder = fallback;
+                    }
+                } else if (pattern == "tps") {
+                    // Try fallback to explicit signal folder (legacy/test layouts)
+                    std::string fallback;
+                    if (j.contains("sig_folder") && !j["sig_folder"].get<std::string>().empty()) {
+                        fallback = resolveFolderAgainstTpstream(j, j["sig_folder"].get<std::string>(), true);
+                    }
+                    if (!fallback.empty() && folder != fallback) {
+                        LogWarning << "[find_input_files] Folder '" << folder << "' does not exist. Falling back to sig_folder: " << fallback << std::endl;
                         folder = fallback;
                     }
                 }

@@ -35,6 +35,8 @@ echo "Running sequence pipeline using ${SETTINGS_JSON}"
   -s test_cc \
   -j "${SETTINGS_JSON}" \
   -bt -ab -mc -mm \
+  -gi -gv \
+  -at -ac \
   --max-files 1 \
   --skip-files 0
 

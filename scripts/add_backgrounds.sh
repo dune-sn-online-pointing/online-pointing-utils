@@ -94,7 +94,13 @@ echo -e "Settings file found, full path is: $settingsFile \n"
 ################################################
 # Compile the code if requested
 # pass through any compile flags provided on the command line
-compile_command="$SCRIPTS_DIR/compile.sh -p $HOME_DIR --no-compile $noCompile --clean-compile $cleanCompile"
+compile_command="$SCRIPTS_DIR/compile.sh -p $HOME_DIR"
+if [ "$noCompile" = true ]; then
+  compile_command="$compile_command --no-compile"
+fi
+if [ "$cleanCompile" = true ]; then
+  compile_command="$compile_command --clean-compile"
+fi
 echo "Compiling the code with the following command:"
 echo $compile_command
 . $compile_command || exit
