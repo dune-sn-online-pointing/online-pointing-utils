@@ -8,6 +8,7 @@
   "tps_bg_folder": "test/output/tps_bg",
   "clusters_folder": "test/output/clusters",
   "matched_clusters_folder": "test/output/matched_clusters",
+  "volume_images_folder": "test/output/volume_images",
 
   "bg_folder": "test/data",
 

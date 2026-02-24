@@ -882,12 +882,18 @@ def main():
     elif 'volume_images_folder' in config and config['volume_images_folder']:
         output_folder = config['volume_images_folder']
     else:
-        # Auto-generate from main_folder or signal_folder
+        # Auto-generate from main_folder/signal_folder or legacy test keys
         base_folder = ""
         if "main_folder" in config and config["main_folder"]:
             base_folder = config["main_folder"]
         elif "signal_folder" in config and config["signal_folder"]:
             base_folder = config["signal_folder"]
+        elif "outputFolder" in config and config["outputFolder"]:
+            base_folder = config["outputFolder"]
+        elif "output_folder" in config and config["output_folder"]:
+            base_folder = config["output_folder"]
+        elif "sig_folder" in config and config["sig_folder"]:
+            base_folder = config["sig_folder"]
         else:
             base_folder = config.get('tpstream_folder', '.')
         

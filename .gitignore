@@ -17,6 +17,8 @@ condor_test/
 condor/
 app/plots/
 output/
+test/output/
+*_volume_images_*/
 */*.root
 *.png  
 *.jpg
