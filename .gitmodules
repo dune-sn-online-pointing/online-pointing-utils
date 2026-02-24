@@ -10,3 +10,4 @@
 [submodule "submodules/cpp-generic-toolbox"]
 	path = submodules/cpp-generic-toolbox
 	url = https://github.com/nadrino/cpp-generic-toolbox.git
+	branch = main

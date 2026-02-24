@@ -24,8 +24,19 @@ else
     nproc=4
 fi
 
-# Default to "all cores minus 2" but never below 1
-nproc_to_use=$((nproc-2))
+# Default build parallelism policy:
+# - If available cores are 1..4: use 1
+# - If available cores are >=5: use (cores-2), capped at 4
+if [ "$nproc" -le 4 ]; then
+    nproc_to_use=1
+else
+    nproc_to_use=$((nproc/2))
+    if [ "$nproc_to_use" -gt 16 ]; then
+        nproc_to_use=8
+    fi
+fi
+
+# Safety clamp
 if [ "$nproc_to_use" -lt 1 ]; then
     nproc_to_use=1
 fi
@@ -99,7 +110,7 @@ else
     then
         echo -e "  CMake failed. Stopping execution.\n"
         cd $pwd # go back to the original directory
-        return 1
+        exit 1
     fi
 
     echo "Using $nproc_to_use processors for compilation"
@@ -109,7 +120,7 @@ else
     then
         echo -e "  Make failed. Stopping execution.\n"
         cd $pwd # go back to the original directory
-        return 1
+        exit 1
     else
         echo -e "  Compilation finished successfully!\n"
     fi

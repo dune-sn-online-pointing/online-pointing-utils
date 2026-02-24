@@ -2,13 +2,16 @@
 
 End-to-end toolkit for the DUNE supernova online pointing chain: backtracking TPStreams, overlaying backgrounds, clustering, 3-plane matching, and producing analysis/visualization products (cluster displays and volume images).
 
-This page is the expanded, single-stop README. It replaces scattered docs and mirrors the current state of the code and scripts.
-
 ## 1) Quickstart
 
 Prerequisites
-- C++17 toolchain, CMake, ROOT
-- Python 3.9+ with `python/requirements.txt` (only needed for the Python utilities)
+- C++17, CMake, ROOT
+- Python 3.9+ with `python/requirements.txt`
+
+Set up the submodules used in this project:
+```bash
+	./scripts/manage-submodules.sh --up
+```
 
 Build (use the wrapper to stay portable across macOS/Linux)
 ```bash
@@ -17,12 +20,12 @@ Build (use the wrapper to stay portable across macOS/Linux)
 
 Run the standard pipeline
 ```bash
-./scripts/sequence.sh -s es_valid -j json/example_es_clean.json --all
+./scripts/sequence.sh -j json/example_es_clean.json --all
 ```
 
-Smoke test (what CI uses locally)
+Smoke test used also for local CI
 ```bash
-./test/run_all_tests.sh --clean
+./test/run_all_tests.sh 
 ```
 
 ## 2) Pipeline at a Glance
@@ -40,7 +43,7 @@ The `scripts/sequence.sh` wrapper runs the steps above in order and recompiles o
 
 ## 3) Configuration
 
-- **JSON settings**: keep user configs under `json/` (only the examples + `test_settings.json` are tracked). See [../json/README.md](../json/README.md) for allowed keys and folder auto-generation.
+- **JSON settings**: keep user configs under `json/` (only the examples + `test_settings.json` are tracked). See [json/README.md](../json/README.md) for allowed keys and folder auto-generation.
 - **Parameters**: `.dat` files in `parameters/` are the single source of runtime constants. Set `PARAMETERS_DIR` if you keep them elsewhere.
 - **Environment**: source `scripts/init.sh` (done automatically by the wrappers) to define `HOME_DIR`, `SCRIPTS_DIR`, and `BUILD_DIR`.
 
@@ -89,11 +92,3 @@ pip install -r python/requirements.txt
 - [CONFIGURATION.md](CONFIGURATION.md): environment + JSON + parameters (current keys)
 - [../json/README.md](../json/README.md): JSON conventions and examples
 - [code-structure.md](code-structure.md): concise architecture and folder map
-
-Part of the DUNE DAQ Application Framework. See COPYING for licensing details.
-
-## 9) Contacts
-
-DUNE Supernova Online Pointing Group
-- Repository: [dune-sn-online-pointing/online-pointing-utils](https://github.com/dune-sn-online-pointing/online-pointing-utils)
-- DUNE Collaboration: [dunescience.org](https://www.dunescience.org/)
