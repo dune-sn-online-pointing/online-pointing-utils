@@ -4,6 +4,7 @@
   "signal_folder": "/path/to/your/signal/data",
   "products_prefix": "es_clean",
   "max_files": 10,
+  "skip_files": 0, 
   
   "backtracker_error_margin": 0,
   "time_tolerance_ticks": 10,
@@ -12,9 +13,6 @@
   "tick_limit": 3,
   "channel_limit": 2,
   "min_tps_to_cluster": 2,
-  "tot_cut": 1,
-  "energy_cut": 0.0,
-  
-  "reports_folder": "reports/",
-  "outputFolder": "data/"
+  "tot_cut": 3,
+  "energy_cut": 2.0
 }

@@ -24,11 +24,11 @@ print_help() {
 # init
 delete_submit_files=false
 delete_root_files=true
-tot_files=180
-max_files=5
+tot_files=4500
+max_files=10
 skip=0
 
-which_sims="-bt -f"
+which_sims="--all"
 
 # parse
 while [[ "$#" -gt 0 ]]; do

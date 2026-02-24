@@ -59,8 +59,8 @@ override=false
 all_steps=false
 debug=false
 verbose=false
-max_files=-1
-skip_files=0
+# max_files=-1
+# skip_files=0
 
 while [[ $# -gt 0 ]]; do
         case $1 in
@@ -177,7 +177,15 @@ echo $compile_command
 cd $HOME_DIR
 
 # all handed centrally 
-common_options="--no-compile -f $override -v $verbose -d $debug --max-files $max_files --skip-files $skip_files -j $settingsFile"
+common_options="--no-compile -f $override -v $verbose -d $debug -j $settingsFile"
+
+if [ -n "$max_files" ]; then
+        common_options+=" --max-files $max_files"
+fi
+
+if [ -n "$skip_files" ]; then
+        common_options+=" --skip-files $skip_files"
+fi
 
 backtrack_command="${HOME_DIR}/scripts/backtrack.sh $common_options"
 if [ "$run_backtrack" = true ]; then

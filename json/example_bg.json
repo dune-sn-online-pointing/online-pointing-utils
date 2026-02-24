@@ -4,6 +4,7 @@
   "main_folder": "/path/to/your/background/data",
   "products_prefix": "bg_only",
   "max_files": 10,
+  "skip_files": 0,
   
   "backtracker_error_margin": 0,
   "time_tolerance_ticks": 10,
@@ -13,8 +14,5 @@
   "channel_limit": 2,
   "min_tps_to_cluster": 2,
   "tot_cut": 0,
-  "energy_cut": 0.0,
-  
-  "reports_folder": "reports/",
-  "outputFolder": "data/"
+  "energy_cut": 0.0
 }
