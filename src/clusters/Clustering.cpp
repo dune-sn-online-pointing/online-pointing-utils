@@ -1,6 +1,96 @@
 #include "Clustering.h"
 
+#include <cstdint>
+#include <unordered_set>
+
 LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
+
+namespace {
+
+enum class ViewId : uint8_t {
+    U,
+    V,
+    X,
+    Unknown
+};
+
+struct TpCached {
+    int time_start = 0;
+    int time_end = 0;
+    int detector_channel = 0;
+    int detector = -1;
+    ViewId view = ViewId::Unknown;
+};
+
+inline ViewId view_from_string(const std::string& view) {
+    if (view == "U") return ViewId::U;
+    if (view == "V") return ViewId::V;
+    if (view == "X") return ViewId::X;
+    return ViewId::Unknown;
+}
+
+inline int channels_in_view(ViewId view) {
+    switch (view) {
+        case ViewId::U:
+        case ViewId::V:
+            return APA::induction_channels;
+        case ViewId::X:
+            return APA::collection_channels;
+        default:
+            return 0;
+    }
+}
+
+inline int interval_gap_ticks(const TpCached& a, const TpCached& b) {
+    const int gap1 = a.time_start - b.time_end;  // a starts after b ends
+    const int gap2 = b.time_start - a.time_end;  // b starts after a ends
+    return std::max(0, std::max(gap1, gap2));
+}
+
+inline bool channel_condition_with_pbc_cached(const TpCached& tp1, const TpCached& tp2, int channel_limit) {
+    if (tp1.detector != tp2.detector || tp1.view != tp2.view || tp1.view == ViewId::Unknown) {
+        return false;
+    }
+
+    const double diff = std::abs(tp1.detector_channel - tp2.detector_channel);
+    const int channels_in_this_view = channels_in_view(tp1.view);
+
+    if (tp1.view == ViewId::X) {
+        const int ch1 = tp1.detector_channel % 2560;
+        const int ch2 = tp2.detector_channel % 2560;
+
+        const bool tp1_in_vol0 = (ch1 >= 1600 && ch1 < 2080);
+        const bool tp1_in_vol1 = (ch1 >= 2080 && ch1 < 2560);
+        const bool tp2_in_vol0 = (ch2 >= 1600 && ch2 < 2080);
+        const bool tp2_in_vol1 = (ch2 >= 2080 && ch2 < 2560);
+
+        if ((tp1_in_vol0 && tp2_in_vol1) || (tp1_in_vol1 && tp2_in_vol0)) {
+            return false;
+        }
+    }
+
+    if (diff <= channel_limit) {
+        return true;
+    }
+
+    if ((tp1.view == ViewId::U || tp1.view == ViewId::V) && diff >= channels_in_this_view - channel_limit) {
+        return true;
+    }
+
+    return false;
+}
+
+TpCached build_tp_cache(const TriggerPrimitive* tp) {
+    TpCached out;
+    out.time_start = static_cast<int>(tp->GetTimeStart());
+    out.time_end = out.time_start + toTDCticks(static_cast<int>(tp->GetSamplesOverThreshold()));
+    out.detector_channel = tp->GetDetectorChannel();
+    out.detector = tp->GetDetector();
+    out.view = view_from_string(tp->GetView());
+    return out;
+}
+
+}
 
 void read_tps(const std::string& in_filename, 
         std::map<int, std::vector<TriggerPrimitive>>& tps_by_event, 
@@ -110,46 +200,12 @@ void read_tps(const std::string& in_filename,
 
 // PBC is periodic boundary condition
 bool channel_condition_with_pbc(TriggerPrimitive *tp1, TriggerPrimitive* tp2, int channel_limit) {
-    if ( tp1->GetDetector() !=  tp2->GetDetector()
-        || tp1->GetView() !=  tp2->GetView())
-        return false;
-
-    double diff = std::abs(tp1->GetDetectorChannel() - tp2->GetDetectorChannel());
-    int channels_in_this_view = APA::channels_in_view[tp1->GetView()];
-    
-    // For X plane, check if TPs are in the same TPC volume
-    // X plane: 960 channels split into 2 volumes of 480 each
-    // Channels 1600-2079 → volume 0, channels 2080-2559 → volume 1
-    if (tp1->GetView() == "X") {
-        int ch1 = tp1->GetDetectorChannel() % 2560;
-        int ch2 = tp2->GetDetectorChannel() % 2560;
-        
-        // Determine which volume each TP is in
-        bool tp1_in_vol0 = (ch1 >= 1600 && ch1 < 2080);
-        bool tp1_in_vol1 = (ch1 >= 2080 && ch1 < 2560);
-        bool tp2_in_vol0 = (ch2 >= 1600 && ch2 < 2080);
-        bool tp2_in_vol1 = (ch2 >= 2080 && ch2 < 2560);
-        
-        // Reject if TPs are in different volumes
-        if ((tp1_in_vol0 && tp2_in_vol1) || (tp1_in_vol1 && tp2_in_vol0)) {
-            return false;
-        }
-    }
-    
-    if (diff <= channel_limit) 
-        return true;
-    
-    // only for U and V
-    if (tp1->GetView() == "U" || tp1->GetView() == "V")
-        if (diff >= channels_in_this_view - channel_limit)
-            return true;
-    
-    return false;
+    return channel_condition_with_pbc_cached(build_tp_cache(tp1), build_tp_cache(tp2), channel_limit);
 }
 
 // this is supposed to do one event at the time
 // TODO add number to save fraction of TPs removed with the cut
-std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
+std::vector<Cluster> make_cluster(const std::vector<TriggerPrimitive*>& all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
     
     if (verboseMode) LogInfo << "Creating clusters from TPs" << std::endl;
     
@@ -158,8 +214,25 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
     int ticks_limit_tdc = toTDCticks(ticks_limit);
     if (verboseMode) LogInfo << "Ticks limit: " << ticks_limit_tdc << " TDC ticks" << std::endl;
 
-    std::vector<std::vector<TriggerPrimitive*>> buffer;
+    struct CandidateCluster {
+        std::vector<TriggerPrimitive*> tps;
+        std::vector<size_t> tp_indices;
+        std::unordered_set<int> channels;
+        int min_time_start = INT_MAX;
+        int max_time_end = INT_MIN;
+        int min_channel = INT_MAX;
+        int max_channel = INT_MIN;
+        int detector = -1;
+        ViewId view = ViewId::Unknown;
+    };
+
+    std::vector<CandidateCluster> buffer;
     std::vector<Cluster> clusters;
+    std::vector<TpCached> tp_cache;
+    tp_cache.reserve(all_tps.size());
+    for (const auto* tp : all_tps) {
+        tp_cache.push_back(build_tp_cache(tp));
+    }
 
     // Reset the buffer for each event
     buffer.clear();
@@ -167,31 +240,34 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
     // ...existing code...
 
 
-    // Helper: non-overlap time gap between two TP time intervals in TPC ticks (overlap -> 0)
-    auto interval_gap_ticks = [&](TriggerPrimitive* a, TriggerPrimitive* b) -> int {
-        const int a_start = a->GetTimeStart();
-        const int a_end   = a_start + toTDCticks(a->GetSamplesOverThreshold());
-        const int b_start = b->GetTimeStart();
-        const int b_end   = b_start + toTDCticks(b->GetSamplesOverThreshold());
-        const int gap1 = a_start - b_end;  // a starts after b ends
-        const int gap2 = b_start - a_end;  // b starts after a ends
-        const int gap = std::max(0, std::max(gap1, gap2));
-    // ...existing code...
-        return gap;
-    };
-
-
-
-    for (int iTP = 0; iTP < all_tps.size(); iTP++) {
+    for (size_t iTP = 0; iTP < all_tps.size(); iTP++) {
         
         
-        TriggerPrimitive* tp1 = all_tps.at(iTP);
+        TriggerPrimitive* tp1 = all_tps[iTP];
+        const TpCached& tp1c = tp_cache[iTP];
 
         if (debugMode) LogInfo << "Processing TP: " << tp1->GetTimeStart() << " " << tp1->GetDetectorChannel() << std::endl;
 
         bool appended = false;
 
         for (auto& candidate : buffer) {
+            if (candidate.detector != tp1c.detector || candidate.view != tp1c.view) {
+                continue;
+            }
+
+            const int candidate_time_gap = std::max(0, std::max(tp1c.time_start - candidate.max_time_end,
+                                                                 candidate.min_time_start - tp1c.time_end));
+            if (candidate_time_gap > ticks_limit_tdc) {
+                continue;
+            }
+
+            if (tp1c.view == ViewId::X) {
+                if (tp1c.detector_channel < candidate.min_channel - channel_limit
+                    || tp1c.detector_channel > candidate.max_channel + channel_limit) {
+                    continue;
+                }
+            }
+
             // Check if tp1 can be added to this candidate
             // Rule A (strict): If any TP in candidate is on the SAME channel as tp1 and
             // the time gap > ticks_limit, this candidate must be REJECTED.
@@ -201,9 +277,14 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
             bool reject_due_to_same_channel = false;
             bool can_append = false;
 
-            for (auto& tp2 : candidate) {
-                const bool same_channel = (tp1->GetDetectorChannel() == tp2->GetDetectorChannel());
-                const int gap = interval_gap_ticks(tp1, tp2);
+            const bool has_same_channel_in_candidate = (candidate.channels.find(tp1c.detector_channel) != candidate.channels.end());
+
+            for (size_t j = 0; j < candidate.tps.size(); ++j) {
+                TriggerPrimitive* tp2 = candidate.tps[j];
+                const TpCached& tp2c = tp_cache[candidate.tp_indices[j]];
+
+                const bool same_channel = has_same_channel_in_candidate && (tp1c.detector_channel == tp2c.detector_channel);
+                const int gap = interval_gap_ticks(tp1c, tp2c);
 
                 if (same_channel) {
                     if (gap > ticks_limit_tdc) {
@@ -213,11 +294,14 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
                     // gap <= ticks_limit_tdc on same channel is sufficient to allow append
                     can_append = true;
                 } else {
-                    if (gap <= ticks_limit_tdc && channel_condition_with_pbc(tp1, tp2, channel_limit)) {
+                    if (gap <= ticks_limit_tdc && channel_condition_with_pbc_cached(tp1c, tp2c, channel_limit)) {
                         // ...existing code...
 
 
                         can_append = true;
+                        if (!has_same_channel_in_candidate) {
+                            break;
+                        }
                     }
                 }
             }
@@ -228,7 +312,13 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
             }
 
             if (can_append) {
-                candidate.push_back(tp1);
+                candidate.tps.push_back(tp1);
+                candidate.tp_indices.push_back(iTP);
+                candidate.channels.insert(tp1c.detector_channel);
+                candidate.min_time_start = std::min(candidate.min_time_start, tp1c.time_start);
+                candidate.max_time_end = std::max(candidate.max_time_end, tp1c.time_end);
+                candidate.min_channel = std::min(candidate.min_channel, tp1c.detector_channel);
+                candidate.max_channel = std::max(candidate.max_channel, tp1c.detector_channel);
                 appended = true;
                 if (debugMode) LogInfo << "Appended TP to candidate Cluster" << std::endl;
                 break;
@@ -238,22 +328,32 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
         // If not appended to any candidate, create a new Cluster in the buffer
         if (!appended) {
             if (debugMode) LogInfo << "Creating new candidate Cluster" << std::endl;
-            buffer.push_back({tp1});
+            CandidateCluster candidate;
+            candidate.tps.push_back(tp1);
+            candidate.tp_indices.push_back(iTP);
+            candidate.channels.insert(tp1c.detector_channel);
+            candidate.min_time_start = tp1c.time_start;
+            candidate.max_time_end = tp1c.time_end;
+            candidate.min_channel = tp1c.detector_channel;
+            candidate.max_channel = tp1c.detector_channel;
+            candidate.detector = tp1c.detector;
+            candidate.view = tp1c.view;
+            buffer.emplace_back(std::move(candidate));
         }
     }
 
     // Process remaining candidates in the buffer
     for (auto& candidate : buffer) {
-        if (candidate.size() >= min_tps_to_cluster) {
+        if (candidate.tps.size() >= static_cast<size_t>(min_tps_to_cluster)) {
             int adc_integral = 0;
-            for (auto& tp1 : candidate) {
+            for (auto& tp1 : candidate.tps) {
                 adc_integral += tp1->GetAdcIntegral();
             }
             // ENERGY CUT LOGIC IN THE APP, NOT HERE
             // if (adc_integral > adc_integral_cut) {
                 // check validity of tps in candidate
-                if (debugMode) LogInfo << "Candidate Cluster has " << candidate.size() << " TPs" << std::endl;
-                clusters.emplace_back(Cluster(std::move(candidate)));
+                if (debugMode) LogInfo << "Candidate Cluster has " << candidate.tps.size() << " TPs" << std::endl;
+                clusters.emplace_back(Cluster(std::move(candidate.tps)));
                 if (debugMode) LogInfo << "Cluster created with " << clusters.back().get_tps().size() << " TPs" << std::endl;
             // }
             // else {

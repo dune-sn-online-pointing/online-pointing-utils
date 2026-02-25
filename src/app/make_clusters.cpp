@@ -2,6 +2,36 @@
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
+namespace {
+
+bool has_all_view_trees(TDirectory* dir) {
+    if (dir == nullptr) return false;
+    for (const auto& view : APA::views) {
+        const std::string tree_name = "clusters_tree_" + view;
+        if (dir->Get(tree_name.c_str()) == nullptr) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool is_valid_clusters_output_file(const std::string& file_path) {
+    TFile in_file(file_path.c_str(), "READ");
+    if (in_file.IsZombie()) {
+        return false;
+    }
+
+    auto* clusters_dir = dynamic_cast<TDirectory*>(in_file.Get("clusters"));
+    auto* discarded_dir = dynamic_cast<TDirectory*>(in_file.Get("discarded"));
+    if (clusters_dir == nullptr || discarded_dir == nullptr) {
+        return false;
+    }
+
+    return has_all_view_trees(clusters_dir) && has_all_view_trees(discarded_dir);
+}
+
+}
+
 int main(int argc, char* argv[]) {
     CmdLineParser clp;
     clp.getDescription() << "> Cluster app - build clusters from *_tps.root files."<< std::endl;
@@ -10,6 +40,7 @@ int main(int argc, char* argv[]) {
     clp.addOption("inputFile", {"-i", "--input-file"}, "Input file with list OR single ROOT file path (overrides JSON inputs)");
     clp.addOption("skip_files", {"-s", "--skip", "--skip-files"}, "Number of files to skip at start (overrides JSON)", -1);
     clp.addOption("max_files", {"-m", "--max", "--max-files"}, "Maximum number of files to process (overrides JSON)", -1);
+    clp.addOption("apa", {"-a", "--apa", "--apa-filter"}, "Filter TPs by APA index (e.g. 1 for APA1). Use -1 to disable.", -1);
     clp.addOption("override", {"-f", "--override"}, "Override existing output files (default: false)", false);
     clp.addOption("outFolder", {"--output-folder"}, "Output folder path (default: data)");
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
@@ -37,12 +68,16 @@ int main(int argc, char* argv[]) {
     // Handle skip and max files with CLI override BEFORE file finding
     int max_files = j.value("max_files", -1);
     int skip_files = j.value("skip_files", 0);
+    int apa_filter = -1;
     
     if (clp.isOptionTriggered("skip_files")) {
         skip_files = clp.getOptionVal<int>("skip_files");
     }
     if (clp.isOptionTriggered("max_files")) {
         max_files = clp.getOptionVal<int>("max_files");
+    }
+    if (clp.isOptionTriggered("apa")) {
+        apa_filter = clp.getOptionVal<int>("apa");
     }
 
     // Use tpstream-based file tracking for consistent skip/max across pipeline
@@ -123,6 +158,7 @@ int main(int argc, char* argv[]) {
     LogInfo << "    - ADC integral cut (induction): " << adc_integral_cut_ind << std::endl;
     LogInfo << "    - ADC integral cut (collection): " << adc_integral_cut_col << std::endl;
     LogInfo << " - ToT cut: " << tot_cut << std::endl;
+    LogInfo << " - APA filter: " << (apa_filter >= 0 ? std::to_string(apa_filter) : std::string("disabled")) << std::endl;
     LogInfo << " - Files to process (after skip/max): " << inputs.size() << std::endl;
 
     // Create clusters subfolder if it doesn't exist
@@ -179,9 +215,20 @@ int main(int argc, char* argv[]) {
         
         // Check if output already exists
         if (std::filesystem::exists(current_clusters_filename) && !overrideExistingFiles) {
-            LogInfo << "Output file already exists (use -f to override): " << current_clusters_filename << std::endl;
-            done_files++;
-            continue;
+            if (is_valid_clusters_output_file(current_clusters_filename)) {
+                LogInfo << "Output file already exists (use -f to override): " << current_clusters_filename << std::endl;
+                done_files++;
+                continue;
+            }
+
+            LogWarning << "Existing output file is incomplete/corrupted, regenerating: " << current_clusters_filename << std::endl;
+            std::error_code ec;
+            std::filesystem::remove(current_clusters_filename, ec);
+            if (ec) {
+                LogError << "Failed to remove invalid output file: " << current_clusters_filename << " (" << ec.message() << ")" << std::endl;
+                done_files++;
+                continue;
+            }
         }
         
         if (verboseMode) LogInfo << "Input TPs file: " << tps_file << std::endl;
@@ -197,6 +244,16 @@ int main(int argc, char* argv[]) {
         std::map<int, std::vector<Neutrino>> nu_by_event;
         
         read_tps(tps_file, tps_by_event, true_by_event, nu_by_event);
+
+        if (apa_filter >= 0) {
+            for (auto& kv : tps_by_event) {
+                auto& vec = kv.second;
+                vec.erase(
+                    std::remove_if(vec.begin(), vec.end(), [&](const TriggerPrimitive &tp){ return tp.GetDetector() != apa_filter; }),
+                    vec.end()
+                );
+            }
+        }
 
         // Apply ToT cut to TPs if requested
         if (tot_cut > 0) {
