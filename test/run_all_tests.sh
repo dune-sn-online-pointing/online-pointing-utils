@@ -32,7 +32,7 @@ cd "${ROOT_DIR}"
 
 echo "Running sequence pipeline using ${SETTINGS_JSON}"
 ./scripts/sequence.sh \
-  -s test_cc \
+  -s test_cc -f \
   -j "${SETTINGS_JSON}" \
   -bt -ab -mc -mm \
   -gi -gv \
