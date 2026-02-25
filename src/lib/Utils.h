@@ -10,6 +10,7 @@
 
 // Utility helpers not covered by io/InputOutput
 std::string toLower(std::string s);
+bool is_valid_clusters_output_file(const std::string& file_path);
 
 // Time conversion utilities (declared here, defined in Utils.cpp to avoid circular dependency)
 int toTPCticks(int tdcTicks);

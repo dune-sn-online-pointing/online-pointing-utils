@@ -7,7 +7,7 @@
 
 // create the clusters from the tps
 bool channel_condition_with_pbc(TriggerPrimitive* tp1, TriggerPrimitive* tp2, int channel_limit);
-std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ticks_limit=3, int channel_limit=1, int min_tps_to_cluster=1, int adc_integral_cut=0);
+std::vector<Cluster> make_cluster(const std::vector<TriggerPrimitive*>& all_tps, int ticks_limit=3, int channel_limit=1, int min_tps_to_cluster=1, int adc_integral_cut=0);
 
 // create a map connectig the file index to the true x y z
 // std::map<int, std::vector<float>> file_idx_to_true_xyz(std::vector<std::string> filenames);
