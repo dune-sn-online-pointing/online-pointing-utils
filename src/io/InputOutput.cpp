@@ -465,7 +465,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
                     filenames.push_back(filepath);
                 }
             } else {
-                LogInfo << "Scanning folder for files with suffixes..." << std::endl;
+                LogInfo << "Scanning folder for files with suffixes: '" << folder << "'" << std::endl;
                 try {
                     for (const auto& entry : std::filesystem::directory_iterator(folder)) {
                         if (entry.is_regular_file()) {
@@ -620,6 +620,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
         std::string clusters_folder_path = getClustersFolder(j);
 
         LogInfo << "[find_input_files] clusters_folder_path: " << clusters_folder_path << std::endl;
+        LogInfo << "[find_input_files] Scanning clusters folder: '" << clusters_folder_path << "'" << std::endl;
 
         // Scan the clusters_folder_path for matching files
         std::error_code ec;
@@ -765,7 +766,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
                 }
             }
             if (verboseMode) LogInfo << "[find_input_files] Found key '" << folder_key << "' with value: " << folder << std::endl;
-            if (verboseMode) LogInfo << "[find_input_files] Scanning folder '" << folder << "' for matching files..." << std::endl;
+            LogInfo << "[find_input_files] Scanning folder: '" << folder << "'" << std::endl;
             
             // OPTIMIZATION: Use system find command for faster directory scanning on EOS
             // Build the find command based on pattern
