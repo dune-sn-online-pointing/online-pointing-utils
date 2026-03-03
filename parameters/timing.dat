@@ -5,5 +5,5 @@ Timing parameters
 < timing.time_tick_cm = 0.082 >                 Time tick in cm
 < timing.conversion_tdc_to_tpc = 32 >             Conversion factor TDC to TPC
 < timing.clock_tick_ns = 16.0 >                  Clock tick in ns
-< timing.backtracker_error_margin = 0 >         Backtracker error margin
+< timing.backtracker_error_margin = 10 >         Backtracker error margin
 
