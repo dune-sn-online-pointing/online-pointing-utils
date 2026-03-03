@@ -6,7 +6,7 @@
   "products_prefix": "es_bg",
   "max_files": 10,
   
-  "backtracker_error_margin": 0,
+  "backtracker_error_margin": 10,
   "time_tolerance_ticks": 10,
   "spatial_tolerance_cm": 100,
   
