@@ -14,6 +14,7 @@ print_help() {
     echo "  -w, --which                 Which cat (number)"
     echo "  --tot-files                 Total number of files to process (default: 5000)"
     echo "  --max-files                 Maximum number of files to process per job (default: 100)"
+    echo "  --sequence-flags            Flags passed to sequence.sh (default: \"-gv -f\")"
     echo "  -d, --delete-submit-files   Delete submit files after submission (default: false)"
     echo "  --delete-root               Delete root files (default: true)"
     echo "  -p, --print-only            Dry run: print the submit file without submitting"
@@ -28,7 +29,7 @@ tot_files=110
 max_files=110    
 skip=0
 
-which_sims="--all"
+sequence_flags="-gv -f"
 
 # parse
 while [[ "$#" -gt 0 ]]; do
@@ -37,6 +38,7 @@ while [[ "$#" -gt 0 ]]; do
         -w|--which) which_cat="$2"; shift ;;
         --tot-files) tot_files="$2"; shift ;;
         --max-files) max_files="$2"; shift ;;
+        --sequence-flags) sequence_flags="$2"; shift ;;
         -d|--delete-submit-files) delete_submit_files="$2"; shift ;;
         -p|--print-only) print_only=true ;;
         -h|--help) print_help ;;
@@ -56,12 +58,13 @@ fi
 
 # create a json file for this cat
 which_cat=$(printf "%06d" "$which_cat")
+mkdir -p "$HOME_DIR/json/cats"
 JSON_SETTINGS=$HOME_DIR/json/cats/cat_${which_cat}.json
  
 cat > $JSON_SETTINGS << EOL
 {
-    "signal_folder": "/eos/project-e/ep-nu/evilla/sn-pointing/cat${which_cat}/",
-    "bg_folder": "/eos/project-e/ep-nu/evilla/sn-pointing/backgrounds/",
+    "signal_folder": "/eos/project-e/ep-nu/evilla/sn-online-pointing/sn-burst-samples/cat${which_cat}/",
+    "bg_folder": "/eos/project-e/ep-nu/evilla/sn-online-pointing/sn-burst-samples/backgrounds/",
     "products_prefix": "cat${which_cat}",
 
     "max_files": -1,
@@ -109,7 +112,7 @@ touch $list_of_jobs
 for i in $(seq 1 $max_jobs); do
     skip=$(( (i - 1) * max_files ))
     # echo "Adding job $i with skip $skip"
-    echo "-j ${JSON_SETTINGS} --home-dir ${HOME_DIR} --no-compile $which_sims --skip-files $skip --max-files $max_files" >> $list_of_jobs
+    echo "-j ${JSON_SETTINGS} --home-dir ${HOME_DIR} --no-compile ${sequence_flags} --skip-files $skip --max-files $max_files" >> $list_of_jobs
 done
 
 echo "List of jobs:"
