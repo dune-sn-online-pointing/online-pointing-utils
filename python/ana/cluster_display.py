@@ -353,7 +353,7 @@ class ClusterViewer:
         # Read all branches
         branches = [
             'n_tps', 'true_neutrino_energy', 'total_charge', 'total_energy',
-            'true_label', 'true_interaction', 'event',
+            'true_label', 'is_es_interaction', 'event',
             'tp_detector_channel', 'tp_time_start', 'tp_samples_over_threshold',
             'tp_samples_to_peak', 'tp_adc_peak', 'tp_adc_integral'
         ]
@@ -377,7 +377,7 @@ class ClusterViewer:
                 item.label = label
                 
                 # Handle interaction string (may be bytes or str)
-                interaction = arrays['true_interaction'][i] if 'true_interaction' in arrays else ''
+                interaction = arrays['is_es_interaction'][i] if 'is_es_interaction' in arrays else ''
                 if isinstance(interaction, bytes):
                     interaction = interaction.decode('utf-8')
                 item.interaction = interaction

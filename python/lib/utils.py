@@ -112,6 +112,7 @@ def find_files_by_tpstream_basenames(json_config, folder, file_pattern, skip_fil
     from pathlib import Path
     
     # Get tpstream folder
+    print (f"[find_files_by_tpstream_basenames] Resolving tpstream folder from JSON config...")
     signal_folder = json_config.get('signal_folder', '')
     if not signal_folder:
         main_folder = json_config.get('main_folder', '')
@@ -140,7 +141,7 @@ def find_files_by_tpstream_basenames(json_config, folder, file_pattern, skip_fil
     
     # Get tpstream files (the source of truth)
     tpstream_files = sorted(tpstream_folder.glob("*_tpstream.root"))
-    
+    print (f"[find_files_by_tpstream_basenames] Found {len(tpstream_files)} tpstream files in {tpstream_folder}")
     if not tpstream_files:
         print(f"[find_files_by_tpstream_basenames] Warning: No tpstream files found in {tpstream_folder}")
         print("[find_files_by_tpstream_basenames] Falling back to simple glob")

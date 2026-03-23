@@ -93,6 +93,7 @@ int main(int argc, char* argv[]) {
 
     // sig_folder: pure signal TPs (input) - default to tpstream_folder
     std::string sig_folder_cfg = j.value("sig_folder", std::string(""));
+    std::cout << "sig_folder_cfg" << sig_folder_cfg << std::endl;
     std::string sig_folder = sig_folder_cfg.empty()
         ? base_folder
         : resolveFolderAgainstTpstream(j, sig_folder_cfg, true);
@@ -101,6 +102,7 @@ int main(int argc, char* argv[]) {
     // bg_folder: base folder for background files (will auto-generate to bg_folder/tps)
     // Don't need to explicitly resolve here - find_input_files will handle it
     std::string bg_folder_cfg = j.value("bg_folder", std::string(""));
+    std::cout << "bg_folder_cfg" << bg_folder_cfg << std::endl;
     LogThrowIf(bg_folder_cfg.empty(), "bg_folder is not specified in JSON config.");
     
     // tps_bg_folder or tps_folder: merged TPs output

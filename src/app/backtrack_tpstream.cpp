@@ -164,7 +164,7 @@ int main(int argc, char* argv[]) {
         input_basename = input_basename.substr(0, input_basename.length() - 14); // remove _tpstream.root
         std::ostringstream suffix;
         if (bktr_margin != standard_backtracker_error_margin) {
-            suffix << "_tps_bktr" << bktr_margin << ".root";
+            suffix << "_bktr" << bktr_margin << "_tps.root";
         } else {
             suffix << "_tps.root";
         }

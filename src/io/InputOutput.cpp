@@ -18,6 +18,7 @@ bool ensureDirectoryExists(const std::string& folder) {
 
 std::string getTpstreamBaseFolder(const nlohmann::json& j) {
     // Priority 1: Explicit tpstream_folder
+    std::cout << "Resolving tpstream base folder..." << std::endl;
     if (j.contains("tpstream_folder") && !j["tpstream_folder"].get<std::string>().empty()) {
         std::string folder = j["tpstream_folder"].get<std::string>();
         return std::filesystem::path(folder).lexically_normal().string();
@@ -34,6 +35,7 @@ std::string getTpstreamBaseFolder(const nlohmann::json& j) {
     if (j.contains("signal_folder") && !j["signal_folder"].get<std::string>().empty()) {
         std::string signal_folder = j["signal_folder"].get<std::string>();
         std::filesystem::path tpstream_path = std::filesystem::path(signal_folder) / "tpstreams";
+        std::cout << "Derived tpstream path from signal_folder: " << tpstream_path << std::endl;
         return tpstream_path.lexically_normal().string();
     }
     
@@ -545,6 +547,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
 
 // another version to look for a specific pattern in json
 std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& pattern) {
+    
     std::vector<std::string> possible_patterns = {"tpstream", "tps", "tps_bg", "clusters", "sig", "bg"};
     LogInfo << "[find_input_files] Called with pattern: " << pattern << std::endl;
 
@@ -672,8 +675,9 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
             } else if ((pattern == "tps" || pattern == "sig") && j.contains("sig_folder") && !j["sig_folder"].get<std::string>().empty()) {
                 base = j["sig_folder"].get<std::string>();
             }
+            
         }
-        
+        std::cout << "background base " << base << std::endl;
         // Auto-generate subfolder based on pattern
         if (!base.empty()) {
             if (pattern == "tpstream") {
@@ -771,7 +775,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
             // Build the find command based on pattern
             std::string find_pattern;
             if (pattern == "sig" || pattern == "bg") {
-                find_pattern = "*_tps.root";
+                find_pattern = "*_tps*.root";
             } else if (pattern == "tps_bg") {
                 find_pattern = "*_bg_tps.root";
             } else {
