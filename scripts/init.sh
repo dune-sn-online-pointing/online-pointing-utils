@@ -39,14 +39,15 @@ else
         if grep -q "Scientific Linux release 7" /etc/redhat-release 2>/dev/null; then
             echo " Setting up environment for fnal cluster, using ups products. If this fails, it means you're not in a slf7 container."
             # Set up the basic environment
-            source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
-            echo " Setting up necessary packages..."
-            # versions are chosen for compatibility with the pyenv
-            setup root v6_26_06a -q e20:p3913:prof
-            setup nlohmann_json v3_10_4_1 -q e26:prof
-            setup cmake  v3_27_4
-            setup valgrind v3_10_1
-            setup gcc v9_3_0
+            # source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
+            # echo "got here"
+            # echo " Setting up necessary packages..."
+            # # versions are chosen for compatibility with the pyenv
+            # setup root v6_26_06a -q e20:p3913:prof
+            # setup nlohmann_json v3_10_4_1 -q e26:prof
+            # setup cmake  v3_27_4
+            # setup valgrind v3_10_1
+            # setup gcc v9_3_0
             echo " Done!"
         else
             echo " WARNING: not running in slf7, can't set up dune products and commands, can't compile."
