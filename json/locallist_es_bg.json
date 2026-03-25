@@ -1,0 +1,26 @@
+{
+  "comment": "Example configuration for ES signal with background mixing workflow",
+  
+  "inputListFile":"/Users/schellma/Dropbox/snb/online-pointing-utils/data/prod_es/ec_marley.txt",
+  "bgListFile":"/Users/schellma/Dropbox/snb/online-pointing-utils/data/bg_folder/bg_list.txt",
+
+  "outputFolder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output",
+  "sig_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/sig",
+  "tps_bg_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/tps_bg",
+  "clusters_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/clusters",
+  "matched_clusters_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/matched_clusters",
+  "volume_images_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/volume_images",
+
+  "products_prefix": "es_bg",
+  "max_files": 10,
+  "file_pattern": "*_tps.root",
+  "backtracker_error_margin": 0,
+  "time_tolerance_ticks": 10,
+  "spatial_tolerance_cm": 100,
+  
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 3,
+  "energy_cut": 2.0
+}
