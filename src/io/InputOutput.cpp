@@ -618,8 +618,10 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
         
     auto file_exists = [](const std::string& filename) -> bool {
         std::ifstream file(filename);
-        bool exists = file.good();
-        if (debugMode) LogDebug << "[find_input_files] Checking existence of '" << filename << "': " << (exists ? "exists" : "missing") << std::endl;
+        bool exists = true;
+        // HMS disable while we figure out how to do xroot
+        // bool exists = file.good();
+        // if (debugMode) LogDebug << "[find_input_files] Checking existence of '" << filename << "': " << (exists ? "exists" : "missing") << std::endl;
         return exists;
     };
 
