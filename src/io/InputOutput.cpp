@@ -432,7 +432,8 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
     auto file_exists = [](const std::string& filename) -> bool {
         // HMS need to implement something that can work with xrootd
         // std::ifstream file(filename);
-        return file.good();
+        //return file.good();
+        return true;
     };
 
     try {
