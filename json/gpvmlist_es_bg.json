@@ -1,8 +1,8 @@
 {
   "comment": "Example configuration for ES signal with background mixing workflow",
   
-  "inputListFile":"/exp/dune/data/users/schellma/snb/online-pointing-utils/data/prod_es/ec_marley.txt",
-  "bgListFile":"/exp/dune/data/users/schellma/snb/online-pointing-utils/data/bg_folder/bg_list.txt",
+  "inputListFile":"/exp/dune/data/users/schellma/snb/online-pointing-utils/lists/TRGSIM_EC_v8.txt",
+  "bgListFile":"/exp/dune/data/users/schellma/snb/online-pointing-utils/lists/TRGSIM_CENTRAL_v3.txt",
 
   "outputFolder": "/exp/dune/data/users/schellma/snb/online-pointing-utils/data/output",
   "sig_folder": "/exp/dune/data/users/schellma/snb/online-pointing-utils/data/output/sig",
