@@ -1,4 +1,4 @@
-#include "Backtracking.h"
+#include "../backtracking/Backtracking.h"
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -51,7 +51,8 @@ int main(int argc, char* argv[]) {
         std::string basename = path.substr(path.find_last_of("/\\") + 1);
         return basename.length() >= 14 && basename.substr(basename.length()-14) == "_tpstream.root";
     };
-    auto file_exists = [](const std::string& path){ std::ifstream f(path); return f.good(); };
+    // HMS - close the file (also needs to support "root:")
+    auto file_exists = [](const std::string& path){ std::ifstream f(path); bool ok =  f.good(); f.close(); return ok;};
 
     std::vector<std::string> filenames;
     filenames.reserve(64); // arbitrary, could reconsider TODO
@@ -136,9 +137,9 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::string> output_files;
 
-    std::vector<std::vector<TriggerPrimitive>> tps;
-    std::vector<std::vector<TrueParticle>> true_particles;
-    std::vector<std::vector<Neutrino>> neutrinos;
+    std::map<int, std::vector<TriggerPrimitive>> tps;
+    std::map<int, std::vector<TrueParticle>> true_particles;
+    std::map<int, std::vector<Neutrino>> neutrinos;
 
     // Effective time window for TP<->truth association in TDC ticks (base 1 TPC sample + margin in TPC samples)
     int effective_time_window = (1 + bktr_margin) * conversion_tdc_to_tpc;
@@ -194,40 +195,66 @@ int main(int argc, char* argv[]) {
         TTree *MCtree = dynamic_cast<TTree*>(file->Get(MCtree_path.c_str()));
         int n_events = 0;
         UInt_t this_event_number = 0;
+        UInt_t this_run_number = 0;
         if (!MCtree) { LogError << "Tree not found: " << MCtree_path << std::endl; file->Close(); delete file; continue; }
+        int therun = -1;
+        int theevent = -1;
+        std::set<UInt_t> unique_events;
         if (MCtree) {
-            MCtree->SetBranchAddress("Event", &this_event_number);
-            std::set<UInt_t> unique_events;
+            MCtree->SetBranchAddress("event", &this_event_number);
+            MCtree->SetBranchAddress("run", &this_run_number);
+            
             for (Long64_t i = 0; i < MCtree->GetEntries(); ++i) {
                 MCtree->GetEntry(i);
-                unique_events.insert(this_event_number);
+                std::cout << "check event" << i << this_run_number << " " << this_event_number << std::endl;
+                // if (therun != -1 && therun != this_run_number){
+                //     LogInfo << "run number has changed, quitting " << therun << " " << this_run_number << std::endl;
+                //     break;
+                // }
+                // else{ 
+                //     therun = this_run_number;
+                // }
+                // if (theevent != -1 && this_event_number < theevent){
+                //     LogInfo << "event number has decreased, quitting " << theevent << " " << this_event_number << std::endl;
+                //     break;
+                // } 
+                // else if (theevent != -1 && this_event_number > theevent + 1) {
+                //     LogInfo << "event number skipped, quitting " << theevent << " " << this_event_number << std::endl;
+                //     break;
+                // } else {
+                //     theevent = this_event_number;
+                // }
+                UInt_t event_index = this_event_number;
+                unique_events.insert(event_index);
             }
-            n_events = unique_events.size();
-            if (verboseMode) LogInfo << " Found " << n_events << " unique events in tree: " << MCtree_path << std::endl;
         }
+        n_events = unique_events.size();
+        if (verboseMode) LogInfo << " Found " << n_events << " unique events in tree: " << MCtree_path << std::endl;
         
-        MCtree->GetEntry(0);
-        int first_event = this_event_number;
+        
+        // MCtree->GetEntry(0);
+        // int first_event = this_event_number;
 
         if (verboseMode) LogInfo << "Number of events in file: " << n_events << std::endl;
         file->Close(); delete file; file = nullptr;
 
         tps.clear(); true_particles.clear(); neutrinos.clear();
-        tps.resize(n_events); true_particles.resize(n_events); neutrinos.resize(n_events);
-
+        //tps.resize(n_events); true_particles.resize(n_events); neutrinos.resize(n_events);
+        
         // loop over events
-        for (int iEvent = first_event; iEvent < first_event + n_events; ++iEvent) {
-            int event_index = iEvent - first_event;
-            if (verboseMode) LogInfo << "Reading event " << iEvent << std::endl;
-            if (debugMode) LogDebug << "Beginning read_tpstream for event " << iEvent << std::endl;
+        // for (int iEvent = first_event; iEvent < first_event + n_events; ++iEvent) {
+        //     int event_index = iEvent - first_event;
+        for (auto event_index:unique_events){
+            if (verboseMode) LogInfo << "Reading event " << event_index << std::endl;
+            if (debugMode) LogDebug << "Beginning read_tpstream for event " << event_index << std::endl;
             
             read_tpstream(
                 filename,
-                tps.at(event_index),
-                true_particles.at(event_index),
-                neutrinos.at(iEvent - first_event),
+                tps[event_index],
+                true_particles[event_index],
+                neutrinos[event_index],
                 /*supernova_option*/0,
-                iEvent,
+                event_index,
                 static_cast<double>(effective_time_window),
                 channel_tolerance
             );
@@ -241,7 +268,7 @@ int main(int argc, char* argv[]) {
                 << " TPs to true particles via SimIDE association." << std::endl;
                     
             if (debugMode) {
-                LogDebug << "Event " << iEvent << " processing complete with " 
+                LogDebug << "Event " << event_index << " processing complete with " 
                          << tps.at(event_index).size() << " TPs and " 
                          << true_particles.at(event_index).size() << " true particles" << std::endl;
             }

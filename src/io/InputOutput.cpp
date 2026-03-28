@@ -533,6 +533,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
                         LogWarning << "Skipping (wrong suffixes): " << line << std::endl; 
                         continue; 
                     }
+                    std::cout << "first attempt file" << line << std::endl;
                     filenames.push_back(line);
                 }
             }
@@ -656,7 +657,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
     std::string input_file_key  = pattern + "_input_file";
     std::string input_list_key  = pattern + "_input_list";
     std::string input_list_file_key = pattern + "_input_list_file";
-    if (debugMode) LogDebug << "[find_input_files] Keys: folder_key='" << folder_key << "', input_file_key='" << input_file_key << "', input_list_key='" << input_list_key << "'" << "', input_list_file_key='" << input_list_file_key << "'" << std::endl;
+    if (debugMode) LogDebug << "[find_input_files] Keys: folder_key='" << folder_key << "', input_file_key='" << input_file_key << "', input_list_key='" << input_list_key << "'" << "', input_list_file_key='" << input_list_file_key << std::endl;
 
     // Auto-generate folder path if not explicitly provided
     // For "bg" pattern, ALWAYS auto-generate (bg_folder is base, we need bg_folder/tps)
@@ -867,7 +868,8 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
         if (j.contains("filelist") && !j["filelist"].get<std::string>().empty()) {
             list_file = j["filelist"].get<std::string>();
             LogInfo << "JSON filelist: " << list_file << std::endl;
-        } else if (j.contains("inputListFile") && !j["inputListFile"].get<std::string>().empty()) {
+        } 
+        else if (j.contains("inputListFile") && !j["inputListFile"].get<std::string>().empty()) {
             list_file = j["inputListFile"].get<std::string>();
             LogInfo << "JSON inputListFile: " << list_file << std::endl;
         }
@@ -882,23 +884,26 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
             while (std::getline(infile, line)) {
                 if (line.size() >= 3 && line.substr(0, 3) == "###") break;
                 if (line.empty() || line[0] == '#') continue;
-                if (!file_exists(line)) {
-                    LogWarning << "Skipping (missing): " << line << std::endl;
-                    continue;
-                }
+                // HMS disable file location for xroot
+                // if (!file_exists(line)) {
+                //     LogWarning << "Skipping (missing): " << line << std::endl;
+                //     continue;
+                
                 // HMS - disable as this code doesn't exist in this section 
                 // if (!has_any_suffix(line)) {
                 //     LogWarning << "Skipping (wrong suffixes): " << line << std::endl;
                 //     continue;
                 // }
+                std::cout << "second attempt file" << line << std::endl;
                 input_files.push_back(line);
             }
+            infile.close();
         }
     }
 
-else if (input_files.empty()) {
-    if (debugMode) LogDebug << "[find_input_files] Key '" << input_list_key << "' not found in JSON or input_files already found" << std::endl;
-}
+    else if (input_files.empty()) {
+        if (debugMode) LogDebug << "[find_input_files] Key '" << input_list_key << "' not found in JSON or input_files already found" << std::endl;
+    }
 
     if (verboseMode) LogInfo << "[find_input_files] Sorting " << input_files.size() << " input files" << std::endl;
     std::sort(input_files.begin(), input_files.end());

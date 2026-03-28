@@ -13,13 +13,14 @@ void read_tpstream(std::string filename,
                  double time_tolerance_ticks,
                  int channel_tolerance) {
 
-    if (debugMode) LogInfo << " Reading file: " << filename << std::endl;
-
+    LogInfo << " Reading file: " << filename << std::endl;
+     
     TFile *file = TFile::Open(filename.c_str());
     if (!file || file->IsZombie()) {
         LogError << " Error opening file: " << filename << std::endl;
         return;
     }
+
     
     std::string this_interaction = "UNKNOWN";
     // Extract interaction type from filename by looking for exact _cc_ or _es_ patterns
@@ -42,17 +43,19 @@ void read_tpstream(std::string filename,
     TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
     if (!TPtree) {
         LogError << " Tree not found: " << TPtree_path << std::endl;
-        return; // can still go to next file
+        file->Close();
+        return;  // can still go to next file
+        // HMS need to close the file before trun
     }
     
     int first_tp_entry_in_event = -1;
     int last_tp_entry_in_event = -1;
 
     UInt_t this_event_number = 0;
-    if (TPtree->SetBranchAddress("Event", &this_event_number) < 0) {
-        LogWarning << "Failed to bind branch 'Event'" << std::endl;
+    if (TPtree->SetBranchAddress("event", &this_event_number) < 0) {
+        LogWarning << "Failed to bind branch 'event'" << std::endl;
     }
-
+    
     get_first_and_last_event(TPtree, &this_event_number, event_number, first_tp_entry_in_event, last_tp_entry_in_event);
 
     if (debugMode) LogInfo << "First entry having this event number: " << first_tp_entry_in_event << std::endl;
@@ -61,6 +64,7 @@ void read_tpstream(std::string filename,
     // Check if we found the event in TPs tree - if not, skip this event (can happen with backgrounds)
     if (first_tp_entry_in_event == -1) {
         if (verboseMode) LogInfo << "Event " << event_number << " has no TPs in file " << filename << " (skipping)" << std::endl;
+        file->Close(); // HMS still need to close the file
         return; // Return with empty vectors - this is normal for some background events
     }
 
@@ -84,7 +88,7 @@ void read_tpstream(std::string filename,
     bindBranch(TPtree,"adc_integral", &this_adc_integral);
     bindBranch(TPtree,"adc_peak", &this_adc_peak);
     bindBranch(TPtree,"detid", &this_detid);
-    bindBranch(TPtree,"Event", &this_event_number);
+    bindBranch(TPtree,"event", &this_event_number);
     bindBranch(TPtree,"samples_over_threshold", &this_samples_over_threshold);
     bindBranch(TPtree,"samples_to_peak", &this_samples_to_peak);
 
@@ -163,6 +167,7 @@ void read_tpstream(std::string filename,
     TTree *MCparticlestree = dynamic_cast<TTree*>(file->Get(MCparticlestree_path.c_str()));
     if (!MCparticlestree) {
         LogError << "Tree not found: " << MCparticlestree_path << std::endl;
+        file->Close(); //HMS need to close the file
         return;
     }
 
@@ -171,8 +176,8 @@ void read_tpstream(std::string filename,
     int last_mcparticle_entry_in_event = -1;
 
     UInt_t event = 0;
-    MCparticlestree->SetBranchAddress("Event", &event);
-
+    MCparticlestree->SetBranchAddress("event", &event);
+    
     get_first_and_last_event(MCparticlestree, &event, this_event_number, first_mcparticle_entry_in_event, last_mcparticle_entry_in_event);
 
     if (verboseMode) LogInfo << "Number of MC particles in event " << event_number << ": " << last_mcparticle_entry_in_event - first_mcparticle_entry_in_event + 1 << std::endl;
@@ -201,20 +206,24 @@ void read_tpstream(std::string filename,
     MCparticlestree->SetBranchAddress("z", &z);
 
     if (!SetBranchWithFallback(MCparticlestree, {"Px", "px"}, &px, "MC particles Px")) {
+        file->Close(); //HMS still need to close before return 
         return;
     }
     if (!SetBranchWithFallback(MCparticlestree, {"Py", "py"}, &py, "MC particles Py")) {
+        file->Close();  // HMS still need to close before return
         return;
     }
     if (!SetBranchWithFallback(MCparticlestree, {"Pz", "pz"}, &pz, "MC particles Pz")) {
+        file->Close();  // HMS still need to close before return
         return;
     }
     if (!SetBranchWithFallback(MCparticlestree, {"en", "energy"}, &energy, "MC particles energy")) {
+        file->Close();  // HMS still need to close before return
         return;
     }
 
     MCparticlestree->SetBranchAddress("pdg", &pdg);
-    MCparticlestree->SetBranchAddress("Event", &event);
+    MCparticlestree->SetBranchAddress("event", &event);
     MCparticlestree->SetBranchAddress("g4_track_id", &track_id);
     MCparticlestree->SetBranchAddress("truth_block_id", &truth_id);
     MCparticlestree->SetBranchAddress("status_code", &status_code);
@@ -257,6 +266,7 @@ void read_tpstream(std::string filename,
     TTree *MCtruthtree = dynamic_cast<TTree*>(file->Get(MCtruthtree_path.c_str()));
     if (!MCtruthtree) {
         LogError << " Tree not found: " << MCtruthtree_path << std::endl;
+        file->Close();  // HMS still need to close before return
         return;
     }
 
@@ -265,7 +275,7 @@ void read_tpstream(std::string filename,
     int last_mctruth_entry_in_event = -1;
 
     UInt_t event_truth = 0;
-    MCtruthtree->SetBranchAddress("Event", &event_truth);
+    MCtruthtree->SetBranchAddress("event", &event_truth);
 
     get_first_and_last_event(MCtruthtree, &event_truth, this_event_number, first_mctruth_entry_in_event, last_mctruth_entry_in_event);
 
@@ -281,19 +291,23 @@ void read_tpstream(std::string filename,
     MCtruthtree->SetBranchAddress("y", &y);
     MCtruthtree->SetBranchAddress("z", &z);
     if (!SetBranchWithFallback(MCtruthtree, {"Px", "px"}, &px, "MC truth Px")) {
+        file->Close();  // HMS still need to close before return
         return;
     }
     if (!SetBranchWithFallback(MCtruthtree, {"Py", "py"}, &py, "MC truth Py")) {
+        file->Close();  // HMS still need to close before return
         return;
     }
     if (!SetBranchWithFallback(MCtruthtree, {"Pz", "pz"}, &pz, "MC truth Pz")) {
+        file->Close();  // HMS still need to close before return
         return;
     }
     if (!SetBranchWithFallback(MCtruthtree, {"en", "energy"}, &energy, "MC truth energy")) {
+        
         return;
     }
     MCtruthtree->SetBranchAddress("pdg", &pdg);
-    MCtruthtree->SetBranchAddress("Event", &event);
+    MCtruthtree->SetBranchAddress("event", &event);
     MCtruthtree->SetBranchAddress("block_id", &block_id);
     MCtruthtree->SetBranchAddress("status_code", &status_code);
     
@@ -362,7 +376,7 @@ void read_tpstream(std::string filename,
     if (verboseMode) LogInfo << " Applying direct TP-SimIDE matching for event " << this_event_number << std::endl;
     const double effective_time_tolerance = (time_tolerance_ticks >= 0.0) ? time_tolerance_ticks : 5000.0;
     match_tps_to_simides_direct(tps, true_particles, file, this_event_number, effective_time_tolerance, channel_tolerance);
-
+    std::cout << " closing file " << file->GetName() << std::endl;
     file->Close(); // don't need anymore
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -447,13 +461,17 @@ void get_first_and_last_event(TTree* tree, UInt_t* branch_value, int which_event
     if (debugMode) LogInfo << " Looking for event number " << which_event << std::endl;
     for (int iEntry = 0; iEntry < tree->GetEntries(); ++iEntry) {
         tree->GetEntry(iEntry);
+        
         if (*branch_value == which_event) {
             if (first_entry == -1) {
                 first_entry = iEntry;
             }
+            
             last_entry = iEntry;
         } else if (first_entry != -1) {
+            std::cout << "found  event " << which_event << " " << first_entry << " " << last_entry << std::endl;
             // Since entries are ordered, once we see a different event after finding the first, we stop
+            
             break;
         }
     }
@@ -499,7 +517,7 @@ void match_tps_to_simides_direct(
     int first_simide_entry = -1;
     int last_simide_entry = -1;
     UInt_t event_number_simides = 0;
-    simidestree->SetBranchAddress("Event", &event_number_simides);
+    simidestree->SetBranchAddress("event", &event_number_simides);
     get_first_and_last_event(simidestree, &event_number_simides, event_number, first_simide_entry, last_simide_entry);
     
     if (verboseMode)  LogInfo << "SimIDEs in event " << event_number << ": " 
@@ -964,10 +982,9 @@ float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitive*> tps, float z, floa
 
 void write_tps(
     const std::string& out_filename,
-    const std::vector<std::vector<TriggerPrimitive>>& tps_by_event,
-    const std::vector<std::vector<TrueParticle>>& true_particles_by_event,
-    const std::vector<std::vector<Neutrino>>& neutrinos_by_event)
-{
+    const std::map <int, std::vector<TriggerPrimitive> >& tps_by_event,
+    const std::map < int, std::vector<TrueParticle> > & true_particles_by_event,
+    const std::map < int, std::vector<Neutrino> > & neutrinos_by_event) {
     // Ensure output directory exists
     std::string folder = out_filename.substr(0, out_filename.find_last_of("/"));
     if (!ensureDirectoryExists(folder)) {
@@ -1058,7 +1075,7 @@ void write_tps(
     TTree metaTree("backtracking_metadata", "Backtracking metadata");
     int n_events = tps_by_event.size();
     int n_tps_total = 0;
-    for (const auto& v : tps_by_event) n_tps_total += v.size();
+    for (const auto& [event, v] : tps_by_event) n_tps_total += v.size();
     float bt_error_margin = static_cast<float>(ParametersManager::getInstance().getDouble("timing.backtracker_error_margin"));
     metaTree.Branch("n_events", &n_events, "n_events/I");
     metaTree.Branch("n_tps_total", &n_tps_total, "n_tps_total/I");
@@ -1066,8 +1083,9 @@ void write_tps(
     metaTree.Fill();
 
     // Fill TPs with embedded truth
-    for (size_t ev = 0; ev < tps_by_event.size(); ++ev) {
-        const auto& v = tps_by_event[ev];
+   // for (size_t ev = 0; ev < tps_by_event.size(); ++ev) {
+   //     const auto& v = tps_by_event[ev];
+   for (const auto& [ev, v] : tps_by_event) {
         for (const auto& tp : v) {
             // Basic TP info
             evt = tp.GetEvent(); 
