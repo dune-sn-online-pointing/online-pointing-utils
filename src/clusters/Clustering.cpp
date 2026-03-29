@@ -93,18 +93,21 @@ TpCached build_tp_cache(const TriggerPrimitive* tp) {
 }
 
 void read_tps(const std::string& in_filename, 
-        std::map<int, std::vector<TriggerPrimitive>>& tps_by_event, 
-        std::map<int, std::vector<TrueParticle>>& true_particles_by_event, 
-        std::map<int, std::vector<Neutrino>>& neutrinos_by_event){
+    std::map<int, std::vector<TriggerPrimitive>>& tps_by_event, 
+    std::map<int, std::vector<TrueParticle>>& true_particles_by_event, 
+    std::map<int, std::vector<Neutrino>>& neutrinos_by_event,
+    std::string tpTree_path) {
     
     if (verboseMode) LogInfo << "Reading TPs from: " << in_filename << std::endl;
     
     TFile inFile(in_filename.c_str(), "READ"); 
     if (inFile.IsZombie()) { LogError << "Cannot open: " << in_filename << std::endl; return; }
-
+    inFile.ls();
     // Read TPs tree from root level (no longer in "tps" directory)
-    if (auto* tpTree = dynamic_cast<TTree*>(inFile.Get("tps"))) {
-        
+    // HMS if (auto* tpTree = dynamic_cast<TTree*>(inFile.Get("tps"))) {
+    // for overlay 
+    //std::string tpTree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x6"; // TODO make flexible for 1x2x6 and maybe else
+    if (auto* tpTree = dynamic_cast<TTree*>(inFile.Get(tpTree_path.c_str()))) {
         // TP basic variables
         int event=0; 
         UShort_t version=0; 
@@ -164,9 +167,10 @@ void read_tps(const std::string& in_filename,
         if (tpTree->GetBranch("neutrino_py")) tpTree->SetBranchAddress("neutrino_py", &neutrino_py);
         if (tpTree->GetBranch("neutrino_pz")) tpTree->SetBranchAddress("neutrino_pz", &neutrino_pz);
         if (tpTree->GetBranch("neutrino_energy")) tpTree->SetBranchAddress("neutrino_energy", &neutrino_energy);
-
+        int count = 0;
         for (Long64_t i=0;i<tpTree->GetEntries();++i){ 
-
+            if (debugMode && count % 10000 == 0) LogInfo << "Reading entry " << i << "/" << tpTree->GetEntries() << std::endl;
+            count++;
             tpTree->GetEntry(i); 
 
             TriggerPrimitive tp(version, 0, detid, channel, s_over, tstart, s_to_peak, adc_integral, adc_peak); 
