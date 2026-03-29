@@ -40,6 +40,7 @@ void read_tpstream(std::string filename,
     if (verboseMode) LogInfo << " For this file, interaction type: " << this_interaction << std::endl;
 
     std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
+    if (verboseMode) LogInfo << " Looking for TTree at path: " << TPtree_path << std::endl;
     TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
     if (!TPtree) {
         LogError << " Tree not found: " << TPtree_path << std::endl;
