@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <nlohmann/json.hpp>
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
@@ -174,8 +175,7 @@ int main(int argc, char* argv[]) {
     
     MatchingMetrics metrics;
     
-    // Count input clusters from U, V, X trees (if they exist in the matched file)
-    // These would only exist if match_clusters copied the original single-plane trees
+    // Trees in matched files
     TTree* tree_u = (TTree*)file->Get("clusters/clusters_tree_U");
     TTree* tree_v = (TTree*)file->Get("clusters/clusters_tree_V");
     TTree* tree_x = (TTree*)file->Get("clusters/clusters_tree_X");
@@ -186,39 +186,99 @@ int main(int argc, char* argv[]) {
     if (tree_x) metrics.n_x_clusters = tree_x->GetEntries();
     if (tree_multi) metrics.n_multiplane_clusters = tree_multi->GetEntries();
     
-    if (!tree_multi) {
-        LogError << "No multiplane tree found in file" << std::endl;
-        file->Close();
-        return 1;
-    }
-    
-    LogInfo << "Found " << metrics.n_multiplane_clusters << " matched clusters" << std::endl;
-    
-    // Read multiplane clusters and analyze
-    Float_t marley_tp_fraction;
-    Int_t cluster_id;
-    
-    tree_multi->SetBranchAddress("marley_tp_fraction", &marley_tp_fraction);
-    tree_multi->SetBranchAddress("cluster_id", &cluster_id);
-    
-    LogInfo << "Processing " << metrics.n_multiplane_clusters << " matched clusters..." << std::endl;
-    
-    for (Long64_t i = 0; i < tree_multi->GetEntries(); i++) {
-        tree_multi->GetEntry(i);
+    // Legacy path: explicit multiplane tree
+    if (tree_multi) {
+        LogInfo << "Using legacy multiplane tree schema" << std::endl;
+        LogInfo << "Found " << metrics.n_multiplane_clusters << " matched clusters" << std::endl;
         
-        // Determine if cluster is MARLEY (threshold at 0.5)
-        bool is_marley = marley_tp_fraction > 0.5;
+        Float_t marley_tp_fraction = 0.f;
+        Int_t cluster_id = -1;
+        tree_multi->SetBranchAddress("marley_tp_fraction", &marley_tp_fraction);
+        tree_multi->SetBranchAddress("cluster_id", &cluster_id);
         
-        if (is_marley) {
-            metrics.n_marley_multiplane++;
-            // Since we don't have separate U/V/X fractions in the combined cluster,
-            // we consider it a pure match if the combined fraction is high
-            if (marley_tp_fraction > 0.9) {
-                metrics.n_pure_marley_matches++;
-            } else {
-                metrics.n_partial_marley_matches++;
+        LogInfo << "Processing " << metrics.n_multiplane_clusters << " matched clusters..." << std::endl;
+        
+        for (Long64_t i = 0; i < tree_multi->GetEntries(); i++) {
+            tree_multi->GetEntry(i);
+            
+            bool is_marley = marley_tp_fraction > 0.5;
+            if (is_marley) {
+                metrics.n_marley_multiplane++;
+                if (marley_tp_fraction > 0.9) {
+                    metrics.n_pure_marley_matches++;
+                } else {
+                    metrics.n_partial_marley_matches++;
+                }
             }
         }
+    } else {
+        // Current path: match_id stored on per-plane trees
+        if (!tree_u || !tree_v || !tree_x) {
+            LogError << "No compatible matching schema found. Expected either "
+                     << "clusters_tree_multiplane (legacy) or clusters_tree_U/V/X (current)." << std::endl;
+            file->Close();
+            return 1;
+        }
+
+        if (!tree_u->GetBranch("match_id") || !tree_v->GetBranch("match_id") || !tree_x->GetBranch("match_id")) {
+            LogError << "Per-plane trees are present but missing match_id branch." << std::endl;
+            file->Close();
+            return 1;
+        }
+
+        LogInfo << "Using current per-plane match_id schema" << std::endl;
+
+        std::map<int, int> match_view_mask; // match_id -> bitmask (U=1, V=2, X=4)
+
+        auto process_plane = [&](TTree* tree, int view_bit, int& n_matched_plane, std::map<int, int>& matches_per_plane,
+                                 bool track_purity_from_x = false) {
+            Int_t match_id = -1;
+            Int_t cluster_id = -1;
+            Float_t marley_tp_fraction = 0.f;
+
+            tree->SetBranchAddress("match_id", &match_id);
+            tree->SetBranchAddress("cluster_id", &cluster_id);
+            if (track_purity_from_x) {
+                if (!tree->GetBranch("marley_tp_fraction")) {
+                    LogError << "X tree missing marley_tp_fraction branch." << std::endl;
+                    return false;
+                }
+                tree->SetBranchAddress("marley_tp_fraction", &marley_tp_fraction);
+            }
+
+            for (Long64_t i = 0; i < tree->GetEntries(); i++) {
+                tree->GetEntry(i);
+                if (match_id >= 0) {
+                    n_matched_plane++;
+                    matches_per_plane[cluster_id]++;
+                    match_view_mask[match_id] |= view_bit;
+
+                    if (track_purity_from_x) {
+                        bool is_marley = marley_tp_fraction > 0.5;
+                        if (is_marley) {
+                            metrics.n_marley_multiplane++;
+                            if (marley_tp_fraction > 0.9) metrics.n_pure_marley_matches++;
+                            else metrics.n_partial_marley_matches++;
+                        }
+                    }
+                }
+            }
+            return true;
+        };
+
+        if (!process_plane(tree_u, 1, metrics.n_matched_u, metrics.matches_per_u) ||
+            !process_plane(tree_v, 2, metrics.n_matched_v, metrics.matches_per_v) ||
+            !process_plane(tree_x, 4, metrics.n_matched_x, metrics.matches_per_x, true)) {
+            file->Close();
+            return 1;
+        }
+
+        // Count only full U+V+X matches as "multiplane"
+        for (const auto& [mid, mask] : match_view_mask) {
+            if (mask == 7) metrics.n_multiplane_clusters++;
+        }
+
+        LogInfo << "Found " << metrics.n_multiplane_clusters << " full U+V+X matches (from match_id linking)" << std::endl;
     }
     
     file->Close();

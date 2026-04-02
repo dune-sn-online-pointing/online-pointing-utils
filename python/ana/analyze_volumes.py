@@ -21,23 +21,51 @@ matplotlib.use('Agg')  # Non-interactive backend
 import matplotlib.pyplot as plt
 
 
+def _resolve_npz_folder(volume_folder, verbose=False):
+    """
+    Return the folder that actually contains .npz files.
+
+    The pipeline splits volume images into X/, U/, V/ subdirectories.
+    If the given folder contains no .npz files directly but has plane
+    subdirectories, return one of them (X preferred) so metadata is
+    loaded once without triple-counting.
+    """
+    base = Path(volume_folder)
+    # Top-level files take priority (old structure)
+    if any(base.glob('*.npz')):
+        return base
+    # New split structure: pick first existing plane subdir
+    for plane in ('X', 'U', 'V'):
+        sub = base / plane
+        if sub.is_dir() and any(sub.glob('*.npz')):
+            if verbose:
+                print(f"Plane-split structure detected, using subdirectory: {sub}")
+            return sub
+    return base  # fall through; caller will report empty
+
+
 def load_volume_metadata(volume_folder, verbose=False, max_files=None, skip_files=0):
     """
     Load metadata from all volume NPZ files in the folder.
-    
+
+    Handles both flat structure (*.npz directly in folder) and the
+    plane-split structure produced by the pipeline (X/, U/, V/ subdirs).
+    Metadata is plane-independent so only one subdirectory is read.
+
     Args:
         volume_folder: Path to folder containing volume NPZ files
         verbose: Enable verbose output
         max_files: Maximum number of files to process (None = all)
         skip_files: Number of files to skip from beginning
-        
+
     Returns:
         list of metadata dictionaries
     """
-    volume_files = sorted(Path(volume_folder).glob('*.npz'))
+    npz_folder = _resolve_npz_folder(volume_folder, verbose=verbose)
+    volume_files = sorted(npz_folder.glob('*.npz'))
     
     if len(volume_files) == 0:
-        print(f"No volume files found in {volume_folder}")
+        print(f"No volume files found in {npz_folder}")
         return []
     
     # Apply skip and max
@@ -51,7 +79,7 @@ def load_volume_metadata(volume_folder, verbose=False, max_files=None, skip_file
         volume_files = volume_files[:max_files]
     
     if verbose:
-        print(f"Found {len(volume_files)} volume files")
+        print(f"Found {len(volume_files)} volume files in {npz_folder}")
     
     all_metadata = []
     for vol_file in volume_files:

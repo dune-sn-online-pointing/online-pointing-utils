@@ -205,27 +205,39 @@ int main(int argc, char* argv[]) {
             n_events = unique_events.size();
             if (verboseMode) LogInfo << " Found " << n_events << " unique events in tree: " << MCtree_path << std::endl;
         }
-        
-        MCtree->GetEntry(0);
-        int first_event = this_event_number;
 
         if (verboseMode) LogInfo << "Number of events in file: " << n_events << std::endl;
         file->Close(); delete file; file = nullptr;
 
+        // Collect the actual event numbers from mctruths (may be non-consecutive after hash-based splitting)
+        TFile *file2 = TFile::Open(filename.c_str());
+        TTree *MCtree2 = dynamic_cast<TTree*>(file2->Get(MCtree_path.c_str()));
+        std::vector<UInt_t> event_numbers;
+        {
+            UInt_t ev = 0;
+            MCtree2->SetBranchAddress("Event", &ev);
+            std::set<UInt_t> seen;
+            for (Long64_t i = 0; i < MCtree2->GetEntries(); ++i) {
+                MCtree2->GetEntry(i);
+                if (seen.insert(ev).second) event_numbers.push_back(ev);
+            }
+        }
+        file2->Close(); delete file2; file2 = nullptr;
+
         tps.clear(); true_particles.clear(); neutrinos.clear();
         tps.resize(n_events); true_particles.resize(n_events); neutrinos.resize(n_events);
 
-        // loop over events
-        for (int iEvent = first_event; iEvent < first_event + n_events; ++iEvent) {
-            int event_index = iEvent - first_event;
+        // loop over the actual event numbers (not a consecutive range from first_event)
+        for (int event_index = 0; event_index < (int)event_numbers.size(); ++event_index) {
+            int iEvent = (int)event_numbers[event_index];
             if (verboseMode) LogInfo << "Reading event " << iEvent << std::endl;
             if (debugMode) LogDebug << "Beginning read_tpstream for event " << iEvent << std::endl;
-            
+
             read_tpstream(
                 filename,
                 tps.at(event_index),
                 true_particles.at(event_index),
-                neutrinos.at(iEvent - first_event),
+                neutrinos.at(event_index),
                 /*supernova_option*/0,
                 iEvent,
                 static_cast<double>(effective_time_window),
@@ -237,12 +249,12 @@ int main(int argc, char* argv[]) {
             for (const auto& tp : tps.at(event_index)) {
                 if (tp.GetTrueParticle() != nullptr) { matched_tps_counter++; }
             }
-            if (verboseMode) LogInfo << "Matched " << matched_tps_counter << "/" << tps.at(event_index).size() 
+            if (verboseMode) LogInfo << "Matched " << matched_tps_counter << "/" << tps.at(event_index).size()
                 << " TPs to true particles via SimIDE association." << std::endl;
-                    
+
             if (debugMode) {
-                LogDebug << "Event " << iEvent << " processing complete with " 
-                         << tps.at(event_index).size() << " TPs and " 
+                LogDebug << "Event " << iEvent << " processing complete with "
+                         << tps.at(event_index).size() << " TPs and "
                          << true_particles.at(event_index).size() << " true particles" << std::endl;
             }
         }

@@ -1,5 +1,6 @@
 #include "Backtracking.h"
 #include "TriggerPrimitive.hpp"
+#include <memory>
 
 LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -15,7 +16,7 @@ void read_tpstream(std::string filename,
 
     if (debugMode) LogInfo << " Reading file: " << filename << std::endl;
 
-    TFile *file = TFile::Open(filename.c_str());
+    std::unique_ptr<TFile> file(TFile::Open(filename.c_str(), "READ"));
     if (!file || file->IsZombie()) {
         LogError << " Error opening file: " << filename << std::endl;
         return;
@@ -361,7 +362,7 @@ void read_tpstream(std::string filename,
     
     if (verboseMode) LogInfo << " Applying direct TP-SimIDE matching for event " << this_event_number << std::endl;
     const double effective_time_tolerance = (time_tolerance_ticks >= 0.0) ? time_tolerance_ticks : 5000.0;
-    match_tps_to_simides_direct(tps, true_particles, file, this_event_number, effective_time_tolerance, channel_tolerance);
+    match_tps_to_simides_direct(tps, true_particles, file.get(), this_event_number, effective_time_tolerance, channel_tolerance);
 
     file->Close(); // don't need anymore
 

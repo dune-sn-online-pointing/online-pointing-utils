@@ -9,16 +9,69 @@ This script reads matched_clusters files and generates plots showing:
 4. Matching quality vs energy
 
 Usage:
-    python analyze_matched_clusters.py --sample es_valid
+    python3 python/ana/analyze_matched_clusters.py -j json/test_01.json
 """
 
 import uproot
 import numpy as np
 import argparse
+import json
 from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
+
+
+def sanitize(value):
+    if isinstance(value, float):
+        s = f"{value:.6f}"
+    else:
+        s = str(value)
+    if '.' in s:
+        parts = s.split('.')
+        if len(parts[1]) > 1:
+            s = f"{parts[0]}.{parts[1][0]}"
+    s = s.replace('.', 'p')
+    return s
+
+
+def resolve_matched_clusters_folder(config):
+    """Derive the matched clusters folder path from the JSON config."""
+    matched_folder = config.get('matched_clusters_folder', None)
+    if matched_folder:
+        return Path(matched_folder)
+
+    base_folder = (config.get('signal_folder') or
+                   config.get('main_folder') or
+                   config.get('tpstream_folder', '.')).rstrip('/')
+
+    prefix = config.get('products_prefix', config.get('clusters_folder_prefix', ''))
+
+    tick_limit  = config.get('tick_limit', 0)
+    channel_limit = config.get('channel_limit', 0)
+    min_tps     = config.get('min_tps_to_cluster', 0)
+    tot_cut     = config.get('tot_cut', 0)
+    energy_cut  = float(config.get('energy_cut', 0.0))
+
+    conditions = (
+        f"tick{sanitize(tick_limit)}"
+        f"_ch{sanitize(channel_limit)}"
+        f"_min{sanitize(min_tps)}"
+        f"_tot{sanitize(tot_cut)}"
+        f"_e{sanitize(energy_cut)}"
+    )
+
+    if prefix:
+        return Path(f"{base_folder}/{prefix}_matched_clusters_{conditions}")
+    return Path(f"{base_folder}/matched_clusters_{conditions}")
+
+
+def resolve_reports_folder(config):
+    """Derive the reports output folder from the JSON config."""
+    base_folder = (config.get('signal_folder') or
+                   config.get('main_folder') or
+                   config.get('tpstream_folder', '.')).rstrip('/')
+    return Path(base_folder) / 'reports'
 
 def read_matched_clusters(file_path):
     """Read matched clusters from ROOT file."""
@@ -86,17 +139,16 @@ def analyze_single_file(file_path):
 
 def main():
     parser = argparse.ArgumentParser(description='Analyze matched clusters')
-    parser.add_argument('--sample', default='es_valid', help='Sample name (es_valid or cc_valid)')
+    parser.add_argument('-j', '--json', required=True, help='JSON configuration file')
     parser.add_argument('--max-files', type=int, default=None, help='Maximum files to analyze')
     parser.add_argument('--skip-files', type=int, default=0, help='Number of files to skip from beginning')
     args = parser.parse_args()
-    
-    # Find matched clusters folder
-    base = Path('/home/virgolaema/dune/online-pointing-utils/data')
-    sample_type = 'prod_es' if 'es' in args.sample else 'prod_cc'
-    
-    matched_folder = base / sample_type / f'matched_clusters_{args.sample}_tick3_ch2_min2_tot1_e0p0'
-    
+
+    with open(args.json) as f:
+        config = json.load(f)
+
+    matched_folder = resolve_matched_clusters_folder(config)
+
     if not matched_folder.exists():
         print(f"Error: Matched clusters folder not found: {matched_folder}")
         return
@@ -119,10 +171,14 @@ def main():
             all_stats.append(stats)
     
     # Create summary plots
-    create_summary_plots(all_stats, args.sample)
+    sample_name = config.get('products_prefix', matched_folder.name)
+    reports_folder = resolve_reports_folder(config)
+    create_summary_plots(all_stats, sample_name, reports_folder)
 
-def create_summary_plots(all_stats, sample):
+def create_summary_plots(all_stats, sample, reports_folder):
     """Create summary plots of matching performance."""
+    reports_folder = Path(reports_folder)
+    reports_folder.mkdir(parents=True, exist_ok=True)
     
     fig, axs = plt.subplots(2, 2, figsize=(14, 10))
     fig.suptitle(f'Matching Performance - {sample.upper()}', fontsize=16)
@@ -192,7 +248,7 @@ def create_summary_plots(all_stats, sample):
     
     plt.tight_layout()
     
-    output_file = f'/home/virgolaema/dune/online-pointing-utils/output/matching_performance_{sample}.png'
+    output_file = reports_folder / f'matching_performance_{sample}.png'
     plt.savefig(output_file, dpi=150)
     print(f"\nSaved plot: {output_file}")
     
