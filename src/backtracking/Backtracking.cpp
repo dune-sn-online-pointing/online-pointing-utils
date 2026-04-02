@@ -3,15 +3,112 @@
 
 LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
+// method to read in all events and store in maps for later access (instead of just one event at a time like above) - not currently used but could be useful for future studies
+void read_tpstream_maps(std::string filename,
+				 std::map<int,std::vector<TriggerPrimitive>>tps_map,
+				 std::map<int,std::vector<TrueParticle>>true_particles_map,
+				 std::map<int,std::vector<Neutrino>>neutrinos_map,
+                 std::string treepath,
+                 bool noMatchingMode,
+				 int supernova_option,
+				 double time_tolerance_ticks,
+				 int channel_tolerance){
+    if (verboseMode) LogInfo << "Reading file: " << filename << std::endl;
+
+    std::cout << "treepath: " << treepath 
+    << " noMatchingMode: " << noMatchingMode 
+    << " supernova_option: " << supernova_option 
+    << " time_tolerance_ticks: " << time_tolerance_ticks 
+    << " channel_tolerance: " << channel_tolerance <<   std::endl;
+    // count events
+    // using this tree just because it's the smallest
+    std::string MCtree_path = "triggerAnaDumpTPs/mctruths";
+    TFile *file = TFile::Open(filename.c_str());
+    if (!file || file->IsZombie()) { LogError << "Failed to open file: " << filename << std::endl; return ; }
+    // TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
+    // if (!TPtree) { LogError << "Tree not found: " << TPtree_path << std::endl; file->Close(); delete file; return; }
+    TTree *MCtree = dynamic_cast<TTree*>(file->Get(MCtree_path.c_str()));
+    int n_events = 0;
+    UInt_t this_event_number = 0;
+    UInt_t this_run_number = 0;
+    if (!MCtree) { LogError << "Tree not found: " << MCtree_path << std::endl; file->Close(); delete file; return; }
+    int therun = -1;
+    int theevent = -1;
+    std::set<UInt_t> unique_events;
+    if (MCtree) {
+        MCtree->SetBranchAddress("event", &this_event_number);
+        MCtree->SetBranchAddress("run", &this_run_number);
+        
+        for (Long64_t i = 0; i < MCtree->GetEntries(); ++i) {
+            MCtree->GetEntry(i);
+            //std::cout << "check event" << i << this_run_number << " " << this_event_number << std::endl;
+            theevent = this_event_number;
+            
+            UInt_t event_index = this_event_number;
+            unique_events.insert(event_index);
+        }
+    }
+    n_events = unique_events.size();
+    if (verboseMode) LogInfo << " Found " << n_events << " unique events in tree: " << MCtree_path << std::endl;
+    
+    if (verboseMode) LogInfo << "Number of events in file: " << n_events << std::endl;
+    file->Close(); delete file; file = nullptr;
+
+    tps_map.clear(); true_particles_map.clear(); neutrinos_map.clear();
+    int count = 0;
+
+    for (auto event_index:unique_events){
+        count++;
+        if (verboseMode) LogInfo << "Reading event " << event_index << std::endl;
+        if (debugMode) LogDebug << "Beginning read_tpstream for event " << event_index << std::endl;
+        
+        read_tpstream(
+            filename,
+            tps_map[event_index],
+            true_particles_map[event_index],
+            neutrinos_map[event_index],
+            treepath,
+            noMatchingMode,
+            /*supernova_option*/0,
+            event_index,
+            static_cast<double>(time_tolerance_ticks),
+            channel_tolerance
+        );
+
+        // Summarise direct TP-to-truth associations built inside read_tpstream
+        int matched_tps_counter = 0;
+        for (const auto& tp : tps_map[event_index]) {
+            if (tp.GetTrueParticle() != nullptr) { matched_tps_counter++; }
+        }
+        if (verboseMode) LogInfo << "Matched " << matched_tps_counter << "/" << tps_map[event_index].size() 
+            << " TPs to true particles via SimIDE association." << std::endl;
+                
+        if (debugMode) {
+            LogDebug << "Event " << event_index << " processing complete with " 
+                        << tps_map[event_index].size() << " TPs and " 
+                        << true_particles_map[event_index].size() << " true particles" << std::endl;
+        }
+        // if (verboseMode && count < 2){
+        // LogDebug << print_tps(tps_map, true_particles_map, neutrinos_map, event_index) << std::endl;
+        // }
+    }
+    return;
+}
+
+                 
+
 // read the tps from the files and save them in a vector
 void read_tpstream(std::string filename,
                  std::vector<TriggerPrimitive>& tps,
                  std::vector<TrueParticle>& true_particles,
                  std::vector<Neutrino>& neutrinos,
+                 std::string TPtree_path,
+                 bool noMatchingMode,
                  int supernova_option,
                  int event_number,
                  double time_tolerance_ticks,
-                 int channel_tolerance) {
+                 int channel_tolerance
+                ){
 
     LogInfo << " Reading file: " << filename << std::endl;
      
@@ -39,7 +136,7 @@ void read_tpstream(std::string filename,
 
     if (verboseMode) LogInfo << " For this file, interaction type: " << this_interaction << std::endl;
 
-    std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
+    //std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
     if (verboseMode) LogInfo << " Looking for TTree at path: " << TPtree_path << std::endl;
     TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
     if (!TPtree) {
@@ -56,7 +153,8 @@ void read_tpstream(std::string filename,
     if (TPtree->SetBranchAddress("event", &this_event_number) < 0) {
         LogWarning << "Failed to bind branch 'event'" << std::endl;
     }
-    
+    if (debugMode) LogInfo << "look for  " << event_number << std::endl;
+  
     get_first_and_last_event(TPtree, &this_event_number, event_number, first_tp_entry_in_event, last_tp_entry_in_event);
 
     if (debugMode) LogInfo << "First entry having this event number: " << first_tp_entry_in_event << std::endl;
@@ -369,6 +467,11 @@ void read_tpstream(std::string filename,
     if (verboseMode) LogInfo << " There are " << mc_true_particles.size() << " true particles" << std::endl;
     if (verboseMode) LogInfo << " There are " << neutrinos.size() << " neutrinos" << std::endl;
     
+    if (noMatchingMode) {
+        if (verboseMode) LogInfo << "No matching mode enabled, skipping TP-SimIDE association and MC truth linking" << std::endl;
+        file->Close();
+        return;
+    }
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Apply direct TP-SimIDE matching
     // This function reads SimIDEs from the file and matches them directly to TPs
@@ -407,7 +510,7 @@ void read_tpstream(std::string filename,
             if (mc_true_particle.GetEvent() == particle.GetEvent() 
             && mc_true_particle.GetTruthId() == particle.GetTruthId()) 
         {
-                if (debugMode)  LogInfo << " Found a match, generator name: " << mc_true_particle.GetGeneratorName() << std::endl;
+                //if (debugMode)  LogInfo << " Found a match, generator name: " << mc_true_particle.GetGeneratorName() << std::endl;
                 particle.SetGeneratorName(mc_true_particle.GetGeneratorName());
                 particle.SetProcess(mc_true_particle.GetProcess());
                 // Copy momentum from MC truth (initial momentum)
@@ -458,11 +561,12 @@ void read_tpstream(std::string filename,
 void get_first_and_last_event(TTree* tree, UInt_t* branch_value, int which_event, int& first_entry, int& last_entry) {
     first_entry = -1;
     last_entry = -1;
-
-    if (debugMode) LogInfo << " Looking for event number " << which_event << std::endl;
+    int count = 0;
+    if (debugMode) LogInfo << " Looking for event number " << which_event << " in tree with " << tree->GetName() << " entries" << std::endl;
     for (int iEntry = 0; iEntry < tree->GetEntries(); ++iEntry) {
         tree->GetEntry(iEntry);
-        
+        count++;
+        if(debugMode && count < 1) LogInfo << "  Entry " << iEntry << ": event number = " << *branch_value << std::endl;
         if (*branch_value == which_event) {
             if (first_entry == -1) {
                 first_entry = iEntry;
@@ -470,7 +574,7 @@ void get_first_and_last_event(TTree* tree, UInt_t* branch_value, int which_event
             
             last_entry = iEntry;
         } else if (first_entry != -1) {
-            std::cout << "found  event " << which_event << " " << first_entry << " " << last_entry << std::endl;
+            if(debugMode) LogInfo << "found  event " << which_event << " " << first_entry << " " << last_entry << std::endl;
             // Since entries are ordered, once we see a different event after finding the first, we stop
             
             break;
@@ -487,7 +591,10 @@ void match_tps_to_simides_direct(
     double time_tolerance_ticks,
     int channel_tolerance)
 {
-    if (verboseMode) LogInfo << "Starting direct TP-SimIDE matching for event " << event_number << std::endl;
+    int count =0;
+
+    if (verboseMode) LogInfo << "Starting direct TP-SimIDE matching for event " << event_number << " time " 
+    << time_tolerance_ticks <<  " " << channel_tolerance << std::endl;
     
     // Fetch any previously estimated time-offset correction for this event
     // double event_time_offset = 0.0;
@@ -510,7 +617,7 @@ void match_tps_to_simides_direct(
     std::string simidestree_path = "triggerAnaDumpTPs/simides";
     TTree *simidestree = dynamic_cast<TTree*>(file->Get(simidestree_path.c_str()));
     if (!simidestree) {
-        LogError << "SimIDEs tree not found: " << simidestree_path << std::endl;
+        LogError << "SimIDEs tree not Direct TP-SimIDE: " << simidestree_path << std::endl;
         return;
     }
     
@@ -553,7 +660,7 @@ void match_tps_to_simides_direct(
     } else {
         LogWarning << "SimIDE energy branch not found - TP simide_energy will remain 0" << std::endl;
     }
-    
+    LogInfo << "SimIDE found " << last_simide_entry - first_simide_entry + 1 << " entries for event " << event_number << std::endl;
     // Build lookup map for true particles by trackID
     std::unordered_map<int, TrueParticle*> track_to_particle;
     for (auto& particle : true_particles) {
@@ -572,6 +679,7 @@ void match_tps_to_simides_direct(
     };
     std::vector<SimIDEInfo> simides_in_event;
     
+    double totenergy = 0.0;
     // Read all SimIDEs for this event
     for (Long64_t iSimIde = first_simide_entry; iSimIde <= last_simide_entry; ++iSimIde) {
         simidestree->GetEntry(iSimIde);
@@ -585,7 +693,9 @@ void match_tps_to_simides_direct(
         // Find associated particle
         auto particle_it = track_to_particle.find(std::abs(simide_track_id));
         if (particle_it != track_to_particle.end()) {
+            //std::cout << "simide energy" << simide_energy << std::endl;
             double energy_mev = has_energy ? simide_energy : 0.0;
+            totenergy += simide_energy;
             simides_in_event.push_back({
                 (int)simide_channel,
                 time_tpc_aligned,
@@ -596,7 +706,7 @@ void match_tps_to_simides_direct(
         }
     }
     
-    if (verboseMode) LogInfo << "Found " << simides_in_event.size() << " SimIDEs linked to particles in event " << event_number << std::endl;
+    if (verboseMode) LogInfo << "Found " << simides_in_event.size() << " SimIDEs linked to particles in event " << event_number << " e= " << totenergy << std::endl;
     
     // SimIDE time and channel ranges (diagnostic output commented out for selected events)
     double min_simide_time = std::numeric_limits<double>::max();
@@ -610,26 +720,37 @@ void match_tps_to_simides_direct(
             min_simide_channel = std::min(min_simide_channel, simide.channel);
             max_simide_channel = std::max(max_simide_channel, simide.channel);
         }
-        // Debug: diagnostic range output for specific events (commented out)
-        // if (event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) {
-        //     LogInfo << "[SIMIDE-RANGE] Event " << event_number << " time: [" << min_simide_time << "," << max_simide_time 
-        //             << "] channels: [" << min_simide_channel << "," << max_simide_channel << "]" << std::endl;
-        // }
+        //Debug: diagnostic range output for specific events (commented out)
+        if (count%1000 == 0) {
+            LogInfo << "[SIMIDE-RANGE] Event " << event_number << " time: [" << min_simide_time << "," << max_simide_time 
+                    << "] channels: [" << min_simide_channel << "," << max_simide_channel << "]" << std::endl;
+        
+            count++;
+        }
     }
     
     // Determine APA coverage of SimIDEs to optionally filter TPs when SimIDEs use global channels
     bool simides_use_global_channels = false;
     std::unordered_set<int> simide_apa_set;
+
+    // HMS try to include APA 0 by checking if any SimIDE channel is >= total_channels, which would indicate global numbering; if so, track which APAs are covered by the SimIDEs to restrict TP candidates accordingly
     for (const auto& s : simides_in_event) {
-        if (s.channel >= APA::total_channels) simides_use_global_channels = true;
-        if (s.channel >= APA::total_channels) simide_apa_set.insert(s.channel / APA::total_channels);
+        if (s.channel >= APA::total_channels) {simides_use_global_channels = true; break;}
     }
-    // Debug: show when SimIDEs use global channels (commented out)
-    // if (simides_use_global_channels && !simide_apa_set.empty()) {
-    //     std::ostringstream apas;
-    //     bool first = true; for (int a : simide_apa_set) { if (!first) apas << ","; apas << a; first = false; }
-    //     LogInfo << "[DIRECT] SimIDEs appear global; restricting TP candidates to APAs {" << apas.str() << "}" << std::endl;
-    // }
+    if (simides_use_global_channels) {
+        for (const auto& s : simides_in_event) { 
+            // HMS limit to the 1x2x2 geometry
+            if  (s.channel / APA::total_channels > 3) continue;
+            simide_apa_set.insert(s.channel / APA::total_channels);
+        }
+    }
+    //Debug: show when SimIDEs use global channels (commented out)
+    std::ostringstream apas;
+    if (simides_use_global_channels && !simide_apa_set.empty()) {
+       
+        bool first = true; for (int a : simide_apa_set) { if (!first) apas << ","; apas << a; first = false; }
+       // LogInfo << "[DIRECT] SimIDEs appear global; restricting TP candidates to APAs {" << apas.str() << "}" << std::endl;
+    }
 
     // Helper to infer plane from a channel index (local indexing rules: U:[0,800), V:[800,1600), X:[1600,2560))
     auto infer_plane_from_channel = [](int channel) -> char {
@@ -644,12 +765,19 @@ void match_tps_to_simides_direct(
     int total_tp_count = 0; // number of TPs considered as candidates
     int skipped_tp_outside_windows = 0; // skipped due to APA/time filters
     int matched_same_plane = 0; // diagnostics: how many matches used plane-consistency
-    
+    int skipped_tp_outside_time_windows = 0;
+    int tpcount = 0;
+
     for (auto& tp : tps) {
+        tpcount++;
         if (tp.GetEvent() != event_number) continue;
         // If SimIDEs are global, ignore TPs that are outside SimIDE APA set to avoid spurious matches
         if (simides_use_global_channels && !simide_apa_set.empty()) {
             int tp_apa = tp.GetChannel() / APA::total_channels;
+            // if (tpcount%1000000 == 0){
+            //     std::cout << "tp_apa channel " << tp.GetChannel() << " " << tp_apa << " " << apas.str() << std::endl;
+            // }
+            
             if (simide_apa_set.find(tp_apa) == simide_apa_set.end()) {
                 skipped_tp_outside_windows++;
                 continue; // skip this TP: different APA than SimIDEs
@@ -659,12 +787,12 @@ void match_tps_to_simides_direct(
         if (min_simide_time <= max_simide_time) {
             double t = tp.GetTimeStart();
             if (t < min_simide_time - time_tolerance_ticks || t > max_simide_time + time_tolerance_ticks) {
-                skipped_tp_outside_windows++;
+                skipped_tp_outside_time_windows++;
                 continue;
             }
         }
         total_tp_count++;
-        
+        // HMS if(verboseMode) LogInfo << "found " << total_tp_count << "skip reasons: outside "<< skipped_tp_outside_windows << " time " << skipped_tp_outside_time_windows << std::endl;
         // Find best matching SimIDE based on channel/time proximity with plane preference
         TrueParticle* best_match_same_plane = nullptr;
         double best_score_same_plane = std::numeric_limits<double>::max();
@@ -684,13 +812,21 @@ void match_tps_to_simides_direct(
             else tp_plane_char = infer_plane_from_channel(tp.GetChannel());
         }
         
+        int simcount = 0;
         for (const auto& simide : simides_in_event) {
+            simcount++;
             // Handle both local and global channel numbering for SimIDEs
             int tp_global_channel = tp.GetChannel();
             int tp_local_channel = tp_global_channel % 2560;
-            
+            double time_diff = std::abs(tp.GetTimeStart() - simide.time_tpc_ticks);
+            // if (simcount%100000 == 0 ){
+            //     std::cout << "tp time " << tp.GetTimeStart() << " simide time " << simide.time_tpc_ticks << " diff " << time_diff << std::endl;
+            // }
+            if  (time_diff > time_tolerance_ticks) continue;
+
             int channel_diff;
-            if (simide.channel < 2560) {
+
+            if (simide.channel < 2560 && !simides_use_global_channels) {
                 // SimIDE uses local channel numbering - compare with TP local channel
                 channel_diff = std::abs(tp_local_channel - simide.channel);
             } else {
@@ -698,18 +834,19 @@ void match_tps_to_simides_direct(
                 channel_diff = std::abs(tp_global_channel - simide.channel);
             }
             
-            // Calculate time difference
-            double time_diff = std::abs(tp.GetTimeStart() - simide.time_tpc_ticks);
+            // if (simcount%100000 == 0){
+            //     std::cout << "tp channel diff" << tp.GetChannel() << " simide channel " << simide.channel << " diff " << channel_diff << " " << channel_tolerance << std::endl;
+            // }
             
             // Check if within tolerance
-            if (channel_diff <= channel_tolerance && time_diff <= time_tolerance_ticks) {
+            if (channel_diff <= channel_tolerance) {
                 // Accumulate SimIDE energy to this TP (sum all SimIDEs that overlap)
                 tp.AddSimideEnergy(simide.energy);
                 
                 // Score based on combined time and channel proximity (favor tighter channel matches)
                 // Increased channel weight improves spatial consistency in presence of wide time windows
                 double score = time_diff + (channel_diff * 20.0);
-
+                //std::cout << "score " << simide.energy << " " << score << " time diff " << time_diff << " channel diff " << channel_diff << std::endl;
                 // Determine SimIDE plane
                 char simide_plane_char = infer_plane_from_channel(simide.channel);
                 bool same_plane = (simide_plane_char == tp_plane_char);
@@ -740,7 +877,7 @@ void match_tps_to_simides_direct(
             used_same_plane = true;
 
             // Debug: per-match details for specific events (commented out)
-            // if (event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) {
+            // if (tpcount%100 == 0){ 
             //     int tp_local_ch = tp.GetChannel() % 2560;
             //     LogInfo << "[DIRECT-MATCH] TP ch=" << tp.GetChannel() << " (local=" << tp_local_ch << ") time=" << tp.GetTimeStart()
             //             << " -> particle_id=" << best_match_same_plane->GetTrackId()
@@ -752,7 +889,7 @@ void match_tps_to_simides_direct(
             matched_tp_count++;
 
             // Debug: fallback any-plane match details (commented out)
-            // if (event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) {
+            // if (tpcount%100 == 0){ 
             //     int tp_local_ch = tp.GetChannel() % 2560;
             //     LogInfo << "[DIRECT-MATCH] (fallback-any-plane) TP ch=" << tp.GetChannel() << " (local=" << tp_local_ch << ") time=" << tp.GetTimeStart()
             //             << " -> particle_id=" << best_match_any_plane->GetTrackId()
@@ -761,11 +898,11 @@ void match_tps_to_simides_direct(
         }
         else {
             // Debug: diagnostic for failed matches (commented out)
-            // if ((event_number == 4 || event_number == 6 || event_number == 8 || event_number == 10) && total_tp_count <= 10) {
-            //     int tp_local_ch = tp.GetChannel() % 2560;
-            //     LogInfo << "[NO-MATCH] TP ch=" << tp.GetChannel() << " (local=" << tp_local_ch << ") time=" << tp.GetTimeStart()
-            //             << " -> no SimIDE match found within tolerances" << std::endl;
-            // }
+            if ((tpcount%100 == 0) && total_tp_count <= 10) {
+                int tp_local_ch = tp.GetChannel() % 2560;
+                LogInfo << "[NO-MATCH] TP ch=" << tp.GetChannel() << " (local=" << tp_local_ch << ") time=" << tp.GetTimeStart()
+                        << " -> no SimIDE match found within tolerances" << std::endl;
+            }
         }
     }
     
@@ -1139,3 +1276,103 @@ void write_tps(
     auto abs_p = std::filesystem::absolute(std::filesystem::path(out_filename), _ec_abs);
     if (verboseMode) LogInfo << "Wrote TPs file: " << (_ec_abs ? out_filename : abs_p.string()) << std::endl;
 }
+// print the contents of an event for diagnostic purposes.
+std::string print_tps(
+    const std::map <int, std::vector<TriggerPrimitive> >& tps_by_event,
+    const std::map < int, std::vector<TrueParticle> > & true_particles_by_event,
+    const std::map < int, std::vector<Neutrino> > & neutrinos_by_event,
+    const int event_number) {
+    
+    std::stringstream theevent;
+    
+    // TP basic variables
+    int evt = 0; 
+    UShort_t version=0; 
+    UInt_t detid=0; 
+    UInt_t channel=0; 
+    UInt_t adc_integral=0; 
+    UShort_t adc_peak=0; 
+    UShort_t det=0; 
+    Int_t det_channel=0; 
+    ULong64_t tstart=0; 
+    ULong64_t s_over=0; 
+    ULong64_t s_to_peak=0;
+    std::string view;
+    Double_t simide_energy = 0.0;
+    
+    // Truth variables (always stored: generator_name from MC truth)
+    std::string gen_name;
+    
+    // MARLEY-specific particle truth (only meaningful when gen_name contains "marley")
+    Int_t particle_pdg = 0;
+    std::string particle_process;
+    Float_t particle_energy = 0.0f;
+    Float_t particle_x = 0.0f, particle_y = 0.0f, particle_z = 0.0f;
+    Float_t particle_px = 0.0f, particle_py = 0.0f, particle_pz = 0.0f;
+    
+    // Neutrino info (only for MARLEY with neutrino association)
+    std::string neutrino_interaction;
+    Float_t neutrino_x = 0.0f, neutrino_y = 0.0f, neutrino_z = 0.0f;
+    Float_t neutrino_px = 0.0f, neutrino_py = 0.0f, neutrino_pz = 0.0f;
+    Float_t neutrino_energy = 0.0f;
+    
+    
+
+    
+
+    // Fill TPs with embedded truth
+   // for (size_t ev = 0; ev < tps_by_event.size(); ++ev) {
+   //     const auto& v = tps_by_event[ev];
+    auto ev = tps_by_event.at(event_number);
+    for (const auto& tp : ev) {
+        // Basic TP info
+        theevent << "evt = " << tp.GetEvent() << "\n";  
+        theevent << "version = " << TriggerPrimitive::s_trigger_primitive_version << "\n";
+        theevent << "detid = " << 0 << "\n";
+        theevent << "channel = " << tp.GetChannel() << "\n";
+        theevent << "samples_over_threshold = " << tp.GetSamplesOverThreshold() << "\n";
+        theevent << "time_start = " << tp.GetTimeStart() << "\n";
+        theevent << "samples_to_peak = " << tp.GetSamplesToPeak() << "\n";
+        theevent << "adc_integral = " << tp.GetAdcIntegral() << "\n";
+        theevent << "adc_peak = " << tp.GetAdcPeak() << "\n";
+        theevent << "detector = " << tp.GetDetector() << "\n";
+        theevent << "detector_channel = " << tp.GetDetectorChannel() << "\n";
+        theevent << "view = " << tp.GetView() << "\n";
+        theevent << "simide_energy = " << tp.GetSimideEnergy() << "\n";         
+        theevent << "detid = " << 0 << "\n";
+        theevent << "channel = " << tp.GetChannel() << "\n";        
+        
+        theevent << "samples_over_threshold = " << tp.GetSamplesOverThreshold() << "\n";
+        theevent << "time_start = " << tp.GetTimeStart() << "\n";
+        theevent << "samples_to_peak = " << tp.GetSamplesToPeak() << "\n";
+        theevent << "adc_integral = " << tp.GetAdcIntegral() << "\n";
+        theevent << "adc_peak = " << tp.GetAdcPeak() << "\n";
+        theevent << "detector = " << tp.GetDetector() << "\n";
+        theevent << "detector_channel = " << tp.GetDetectorChannel() << "\n";
+        theevent << "view = " << tp.GetView() << "\n";
+        theevent << "simide_energy = " << tp.GetSimideEnergy() << "\n";         
+        
+        // Truth info (embedded in TP)
+        theevent << "gen_name = " << tp.GetGeneratorName() << "\n" ;
+        theevent << "particle_pdg = " << tp.GetParticlePDG() << "\n";
+        theevent << "particle_process = " << tp.GetParticleProcess() << "\n";
+        theevent << "particle_energy = " << tp.GetParticleEnergy() << "\n";
+        theevent << "particle_x = " << tp.GetParticleX() << "\n";
+        theevent << "particle_y = " << tp.GetParticleY() << "\n";           
+        theevent << "particle_z = " << tp.GetParticleZ() << "\n";
+        theevent << "particle_px = " << tp.GetParticlePx() << "\n";
+        theevent << "particle_py = " << tp.GetParticlePy() << "\n";
+        theevent << "particle_pz = " << tp.GetParticlePz() << "\n";
+        theevent << "neutrino_interaction = " << tp.GetNeutrinoInteraction() << "\n";
+        theevent << "neutrino_x = " << tp.GetNeutrinoX() << "\n";
+        theevent << "neutrino_y = " << tp.GetNeutrinoY() << "\n";       
+        theevent << "neutrino_z = " << tp.GetNeutrinoZ() << "\n";
+        theevent << "neutrino_px = " << tp.GetNeutrinoPx() << "\n";
+        theevent << "neutrino_py = " << tp.GetNeutrinoPy() << "\n";
+        theevent << "neutrino_pz = " << tp.GetNeutrinoPz() << "\n";
+        theevent << "neutrino_energy = " << tp.GetNeutrinoEnergy() << "\n";
+    }   
+    return theevent.str();
+                
+}
+

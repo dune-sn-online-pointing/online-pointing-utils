@@ -17,11 +17,26 @@ void read_tpstream(std::string filename,
 				 std::vector<TriggerPrimitive>& tps,
 				 std::vector<TrueParticle>& true_particles,
 				 std::vector<Neutrino>& neutrinos,
+				 std::string treepath = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2",
+				 bool noMatchingMode = false,
 				 int supernova_option = 0,
 				 int event_number = 0,
 				 double time_tolerance_ticks = -1.0,
-				 int channel_tolerance = -1);
-                 
+				 int channel_tolerance = 0);
+// method to read in all events and store in maps for later access (instead of just one event at a time like above) - not currently used but could be useful for future studies
+void read_tpstream_maps(std::string filename,
+				 std::map<int, std::vector<TriggerPrimitive>>tps_map,
+				 std::map<int, std::vector<TrueParticle>>true_particles_map,
+				 std::map<int, std::vector<Neutrino>>neutrinos_map,
+				 std::string treepath = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2",
+				 bool noMatchingMode = false,
+				 int supernova_option = 0,
+				 double time_tolerance_ticks = -1.0,
+				 int channel_tolerance = 0
+		);
+
+					
+
 // Direct TP-SimIDE matching based on time and channel proximity
 void match_tps_to_simides_direct(
 	std::vector<TriggerPrimitive>& tps,
@@ -38,5 +53,10 @@ void write_tps(
     const std::map<int, std::vector<TrueParticle>>& true_particles_by_event,
     const std::map<int, std::vector<Neutrino>>& neutrinos_by_event);
 
+std::string print_tps(
+    const std::map <int, std::vector<TriggerPrimitive> >& tps_by_event,
+    const std::map < int, std::vector<TrueParticle> > & true_particles_by_event,
+    const std::map < int, std::vector<Neutrino> > & neutrinos_by_event,
+    const int event_number);
 #endif // BACKTRACKING_H
 

@@ -43,9 +43,9 @@ void read_tps(
 	const std::string& in_filename,
 	std::map<int, std::vector<TriggerPrimitive>>& tps_by_event,
 	std::map<int, std::vector<TrueParticle>>& true_particles_by_event,
-	std::map<int, std::vector<Neutrino>>& neutrinos_by_event,
-	std::string tpTree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x6" // default path for overlay files, can be overridden for 1x2x2 or other formats);
-);
+	std::map<int, std::vector<Neutrino>>& neutrinos_by_event);
+
+
 #endif
 
 

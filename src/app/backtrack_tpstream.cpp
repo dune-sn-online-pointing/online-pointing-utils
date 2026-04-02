@@ -38,14 +38,22 @@ int main(int argc, char* argv[]) {
     nlohmann::json j; i >> j;
     
     // Determine backtracker_error_margin value: CLI > JSON > default from parameters/timing.h
+    std::string tp_tree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2";
+    if (j.contains("tp_tree_path")) {
+        try { tp_tree_path = j.at("tp_tree_path").get<std::string>(); }
+        catch (...) { /* ignore and keep default */ }
+    }
+    LogInfo << "Using TP tree path: " << tp_tree_path << std::endl;
     int bktr_margin = backtracker_error_margin; // from parameters/timing.h
     if (j.contains("backtracker_error_margin")) {
         try { bktr_margin = j.at("backtracker_error_margin").get<int>(); }
         catch (...) { /* ignore and keep default */ }
     }
+
     if (clp.isOptionTriggered("bktrMargin")) {
         bktr_margin = clp.getOptionVal<int>("bktrMargin");
     }
+    
     LogInfo << "Using backtracker_error_margin: " << bktr_margin << std::endl;
     auto is_tpstream = [](const std::string& path){
         std::string basename = path.substr(path.find_last_of("/\\") + 1);
@@ -83,6 +91,9 @@ int main(int argc, char* argv[]) {
     // Get skip/max parameters (CLI overrides JSON)
     int skip_files = j.value("skip_files", 0);
     int max_files = j.value("max_files", -1);
+    int maxcount = j.value("maxcount", -1); 
+    LogInfo << "Initial skip_files: " << skip_files << ", max_files: " << max_files << ", maxcount: " << maxcount << std::endl;
+    // legacy, will be ignored if skip_files/max_files are set
     
     if (clp.isOptionTriggered("skipFiles")) {
         skip_files = clp.getOptionVal<int>("skipFiles");
@@ -200,30 +211,21 @@ int main(int argc, char* argv[]) {
         int therun = -1;
         int theevent = -1;
         std::set<UInt_t> unique_events;
+        int count = 0;
         if (MCtree) {
+            count++;
+            if ( count > maxcount && maxcount > 0) {
+                std::cout << "Too many trees, breaking loop after maxcount iterations." << std::endl;
+                break;
+            }
+
             MCtree->SetBranchAddress("event", &this_event_number);
             MCtree->SetBranchAddress("run", &this_run_number);
             
             for (Long64_t i = 0; i < MCtree->GetEntries(); ++i) {
                 MCtree->GetEntry(i);
-                std::cout << "check event" << i << this_run_number << " " << this_event_number << std::endl;
-                // if (therun != -1 && therun != this_run_number){
-                //     LogInfo << "run number has changed, quitting " << therun << " " << this_run_number << std::endl;
-                //     break;
-                // }
-                // else{ 
-                //     therun = this_run_number;
-                // }
-                // if (theevent != -1 && this_event_number < theevent){
-                //     LogInfo << "event number has decreased, quitting " << theevent << " " << this_event_number << std::endl;
-                //     break;
-                // } 
-                // else if (theevent != -1 && this_event_number > theevent + 1) {
-                //     LogInfo << "event number skipped, quitting " << theevent << " " << this_event_number << std::endl;
-                //     break;
-                // } else {
-                //     theevent = this_event_number;
-                // }
+                //std::cout << "check event" << i << this_run_number << " " << this_event_number << std::endl;
+                
                 UInt_t event_index = this_event_number;
                 unique_events.insert(event_index);
             }
@@ -239,11 +241,7 @@ int main(int argc, char* argv[]) {
         file->Close(); delete file; file = nullptr;
 
         tps.clear(); true_particles.clear(); neutrinos.clear();
-        //tps.resize(n_events); true_particles.resize(n_events); neutrinos.resize(n_events);
-        
-        // loop over events
-        // for (int iEvent = first_event; iEvent < first_event + n_events; ++iEvent) {
-        //     int event_index = iEvent - first_event;
+        //std::string treepath = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2";
         for (auto event_index:unique_events){
             if (verboseMode) LogInfo << "Reading event " << event_index << std::endl;
             if (debugMode) LogDebug << "Beginning read_tpstream for event " << event_index << std::endl;
@@ -253,6 +251,8 @@ int main(int argc, char* argv[]) {
                 tps[event_index],
                 true_particles[event_index],
                 neutrinos[event_index],
+                tp_tree_path,
+                /*noMatchingMode*/false,
                 /*supernova_option*/0,
                 event_index,
                 static_cast<double>(effective_time_window),
@@ -272,6 +272,7 @@ int main(int argc, char* argv[]) {
                          << tps.at(event_index).size() << " TPs and " 
                          << true_particles.at(event_index).size() << " true particles" << std::endl;
             }
+            //std::cout << print_tps(tps, true_particles, neutrinos, event_index) << std::endl;
         }
 
         // write *_tps_bktr<N>.root where N is backtracker_error_margin
