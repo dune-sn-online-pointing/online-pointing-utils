@@ -721,12 +721,12 @@ void match_tps_to_simides_direct(
             max_simide_channel = std::max(max_simide_channel, simide.channel);
         }
         //Debug: diagnostic range output for specific events (commented out)
-        if (count%1000 == 0) {
-            LogInfo << "[SIMIDE-RANGE] Event " << event_number << " time: [" << min_simide_time << "," << max_simide_time 
-                    << "] channels: [" << min_simide_channel << "," << max_simide_channel << "]" << std::endl;
+        // if (count%1000 == 0) {
+        //     // LogInfo << "[SIMIDE-RANGE] Event " << event_number << " time: [" << min_simide_time << "," << max_simide_time 
+        //     //         << "] channels: [" << min_simide_channel << "," << max_simide_channel << "]" << std::endl;
         
-            count++;
-        }
+        //     count++;
+        // }
     }
     
     // Determine APA coverage of SimIDEs to optionally filter TPs when SimIDEs use global channels

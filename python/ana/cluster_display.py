@@ -313,17 +313,16 @@ class ClusterViewer:
         self.draw_mode = draw_mode.lower()
         self.only_marley = only_marley
         self.params = Parameters(params_dir)
-        
+        self.axis_location = None 
         self.items: List[ClusterItem] = []
         self.current_idx = 0
         
         self.fig = None
         self.ax = None
+        self.ax_y_cm = None
         self.im = None
-        self.axis_location = None 
         self.btn_prev = None
         self.btn_next = None
-        self.ax_y_cm = None
         
         self.load_clusters()
     
@@ -410,7 +409,6 @@ class ClusterViewer:
                     continue
                 
                 evt = arrays['event'][i]
-                print ("evt",n_entries,evt,list(events))
                 if evt not in events:
                     item = ClusterItem()
                     item.is_event = True
@@ -440,6 +438,7 @@ class ClusterViewer:
         
         item = self.items[self.current_idx]
         n_tps = min(len(item.ch), len(item.tstart), len(item.sot))
+        
         if n_tps == 0:
             return
         
@@ -458,15 +457,6 @@ class ClusterViewer:
         # Create histogram with padding
         pad_bins = 2
         n_ch = len(unique_channels)
-        padded_channels = unique_channels.copy()
-        padded_channels.sort()
-        first = padded_channels[0]
-        last = padded_channels[-1]
-        for i in range(pad_bins):
-            padded_channels.append(first-i-1)
-            padded_channels.append(last+1+i)
-        padded_channels.sort()
-    
         n_t = int(tmax - tmin) + 1
         
         hist = np.zeros((n_t + 2 * pad_bins, n_ch + 2 * pad_bins))
@@ -506,22 +496,21 @@ class ClusterViewer:
                 DrawingAlgorithms.fill_histogram_rectangle(
                     hist, ch_idx, ts, tot, adc_integral, int(tmin), ch_to_idx
                 )
-        # clear the plot
+        
+        # Clear and redraw
         self.ax.clear()
-    
+        
         self.ax.set_xticks([])
-        
-        
+
         # Apply threshold mask
         hist_masked = np.ma.masked_where(hist < threshold_adc, hist)
         
-      
         # Plot with viridis colormap
         extent = [
             -pad_bins - 0.5, n_ch + pad_bins - 0.5,
             int(tmin) - pad_bins - 0.5, int(tmax) + pad_bins + 0.5
         ]
-       
+        
         self.im = self.ax.imshow(
             hist_masked, aspect='auto', origin='lower',
             extent=extent, cmap='viridis', interpolation='nearest'
@@ -532,12 +521,8 @@ class ClusterViewer:
         self.ax.set_ylabel('time [ticks]')
         
         # Create X-axis labels with actual channel numbers
-
-        # modified by HMS to make padding work properly 3-24-2026
-        xticks = [i  for i in range(len(padded_channels))]
-        #xticks = [i  for i in range(len(unique_channels))]
-
-        xticklabels = [str(ch) for ch in padded_channels]
+        xticks = [i + pad_bins for i in range(len(unique_channels))]
+        xticklabels = [str(ch) for ch in unique_channels]
         self.ax.set_xticks(xticks)
         self.ax.set_xticklabels(xticklabels, rotation=90, fontsize=8)
         
@@ -547,11 +532,9 @@ class ClusterViewer:
             wire_pitch_cm = self.params.get('geometry.wire_pitch_induction_diagonal_cm', 0.5)
         time_tick_cm = self.params.get('timing.time_tick_cm', 0.0805)
         
-        #Add secondary Y axis (right side, inside plot)
-        
-        if self.ax_y_cm is None:
+        # Add secondary Y axis (right side, inside plot)
+        if self.ax_y_cm is None: 
             self.ax_y_cm = self.ax.twinx()
-        
         self.ax_y_cm.set_ylim(self.ax.get_ylim()[0] * time_tick_cm, self.ax.get_ylim()[1] * time_tick_cm)
         self.ax_y_cm.set_ylabel('drift [cm]')
         
@@ -569,18 +552,15 @@ class ClusterViewer:
         self.ax.set_title(title, fontsize=10)
         
         # Add colorbar
-        
         if hasattr(self, 'cbar') and self.cbar is not None:
             try:
                 self.cbar.remove()
-                
             except:
                 pass
-
         #HMS restore the axes as the colorbar messes with them.
         self.ax.set_position(self.axis_location)
-
-        self.cbar = plt.colorbar(self.im, ax=self.ax, label=f'ADC ({self.draw_mode} model)')       
+        self.cbar = plt.colorbar(self.im, ax=self.ax, label=f'ADC ({self.draw_mode} model)')
+        
         self.ax.grid(True, alpha=0.3)
         self.fig.canvas.draw_idle()
     
@@ -605,11 +585,9 @@ class ClusterViewer:
         # Create figure
         self.fig = plt.figure(figsize=(14, 8))
         
-
         # Create axes - main plot takes most of the space
-        self.ax = self.fig.add_axes(rect=[0.1, 0.15, 0.8, 0.75])
+        self.ax = self.fig.add_axes([0.1, 0.15, 0.8, 0.75])
         self.axis_location = self.ax.get_position()
-
         # Create navigation buttons
         ax_prev = self.fig.add_axes([0.3, 0.02, 0.15, 0.05])
         ax_next = self.fig.add_axes([0.55, 0.02, 0.15, 0.05])
@@ -619,7 +597,7 @@ class ClusterViewer:
         
         self.btn_prev.on_clicked(self.prev_cluster)
         self.btn_next.on_clicked(self.next_cluster)
-         
+        
         # Draw initial cluster
         self.draw_current()
         
