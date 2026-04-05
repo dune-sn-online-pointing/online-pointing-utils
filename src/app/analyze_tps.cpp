@@ -338,7 +338,9 @@ int main(int argc, char* argv[]) {
         tpTree->SetBranchAddress("samples_over_threshold", &samples_over_threshold);
         tpTree->SetBranchAddress("adc_integral", &adc_integral);
         tpTree->SetBranchAddress("generator_name", &generator_name);
-        tpTree->SetBranchAddress("truth_id", &tp_truth_id);
+        if (tpTree->GetBranch("truth_id")) {
+            tpTree->SetBranchAddress("truth_id", &tp_truth_id);
+        }
         if (tpTree->GetBranch("detector")) {
             tpTree->SetBranchAddress("detector", &detector);
         }
