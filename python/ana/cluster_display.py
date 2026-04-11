@@ -323,7 +323,7 @@ class ClusterViewer:
         self.im = None
         self.btn_prev = None
         self.btn_next = None
-        
+        self.cbar = None
         self.load_clusters()
     
     def load_clusters(self):
@@ -552,7 +552,7 @@ class ClusterViewer:
         self.ax.set_title(title, fontsize=10)
         
         # Add colorbar
-        if hasattr(self, 'cbar') and self.cbar is not None:
+        if self.cbar is not None and hasattr(self, 'cbar'):
             try:
                 self.cbar.remove()
             except:

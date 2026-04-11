@@ -1,9 +1,9 @@
 # Applications
 
-cmessage( STATUS "Creating plot_avg_times app..." )
-add_executable( plot_avg_times ${CMAKE_CURRENT_SOURCE_DIR}/plot_avg_times.cpp )
-target_link_libraries( plot_avg_times clustersLibs globalLib)
-install( TARGETS plot_avg_times DESTINATION bin )
+# cmessage( STATUS "Creating plot_avg_times app..." )
+# add_executable( plot_avg_times ${CMAKE_CURRENT_SOURCE_DIR}/plot_avg_times.cpp )
+# target_link_libraries( plot_avg_times clustersLibs globalLib)
+# install( TARGETS plot_avg_times DESTINATION bin )
 
 cmessage( STATUS "Creating make_clusters app..." )
 add_executable( make_clusters ${CMAKE_CURRENT_SOURCE_DIR}/make_clusters.cpp )

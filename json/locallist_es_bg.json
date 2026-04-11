@@ -4,12 +4,12 @@
   "inputListFile":"/Users/schellma/Dropbox/snb/online-pointing-utils/data/prod_es/ec_marley.txt",
   "bgListFile":"/Users/schellma/Dropbox/snb/online-pointing-utils/data/bg_btrk_list.txt",
 
-  "outputFolder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output",
-  "sig_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/sig",
+  "outputFolder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output",
+  "sig_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output/sig",
   "tps_bg_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/tps_bg",
-  "clusters_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/clusters",
-  "matched_clusters_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/matched_clusters",
-  "volume_images_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/volume_images",
+  "clusters_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output/clusters",
+  "matched_clusters_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output/matched_clusters",
+  "volume_images_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output/volume_images",
 
   "products_prefix": "es_bg",
   "max_files": 10,

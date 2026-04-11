@@ -3,34 +3,44 @@
 #include <cstdint>
 #include <unordered_set>
 
-LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
+LoggerInit([]
+           { Logger::getUserHeader() << "[" << FILENAME << "]"; });
 
-namespace {
+namespace
+{
 
-enum class ViewId : uint8_t {
-    U,
-    V,
-    X,
-    Unknown
-};
+    enum class ViewId : uint8_t
+    {
+        U,
+        V,
+        X,
+        Unknown
+    };
 
-struct TpCached {
-    int time_start = 0;
-    int time_end = 0;
-    int detector_channel = 0;
-    int detector = -1;
-    ViewId view = ViewId::Unknown;
-};
+    struct TpCached
+    {
+        int time_start = 0;
+        int time_end = 0;
+        int detector_channel = 0;
+        int detector = -1;
+        ViewId view = ViewId::Unknown;
+    };
 
-inline ViewId view_from_string(const std::string& view) {
-    if (view == "U") return ViewId::U;
-    if (view == "V") return ViewId::V;
-    if (view == "X") return ViewId::X;
-    return ViewId::Unknown;
-}
+    inline ViewId view_from_string(const std::string &view)
+    {
+        if (view == "U")
+            return ViewId::U;
+        if (view == "V")
+            return ViewId::V;
+        if (view == "X")
+            return ViewId::X;
+        return ViewId::Unknown;
+    }
 
-inline int channels_in_view(ViewId view) {
-    switch (view) {
+    inline int channels_in_view(ViewId view)
+    {
+        switch (view)
+        {
         case ViewId::U:
         case ViewId::V:
             return APA::induction_channels;
@@ -38,100 +48,111 @@ inline int channels_in_view(ViewId view) {
             return APA::collection_channels;
         default:
             return 0;
-    }
-}
-
-inline int interval_gap_ticks(const TpCached& a, const TpCached& b) {
-    const int gap1 = a.time_start - b.time_end;  // a starts after b ends
-    const int gap2 = b.time_start - a.time_end;  // b starts after a ends
-    return std::max(0, std::max(gap1, gap2));
-}
-
-inline bool channel_condition_with_pbc_cached(const TpCached& tp1, const TpCached& tp2, int channel_limit) {
-    if (tp1.detector != tp2.detector || tp1.view != tp2.view || tp1.view == ViewId::Unknown) {
-        return false;
-    }
-
-    const double diff = std::abs(tp1.detector_channel - tp2.detector_channel);
-    const int channels_in_this_view = channels_in_view(tp1.view);
-
-    if (tp1.view == ViewId::X) {
-        const int ch1 = tp1.detector_channel % 2560;
-        const int ch2 = tp2.detector_channel % 2560;
-
-        const bool tp1_in_vol0 = (ch1 >= 1600 && ch1 < 2080);
-        const bool tp1_in_vol1 = (ch1 >= 2080 && ch1 < 2560);
-        const bool tp2_in_vol0 = (ch2 >= 1600 && ch2 < 2080);
-        const bool tp2_in_vol1 = (ch2 >= 2080 && ch2 < 2560);
-
-        if ((tp1_in_vol0 && tp2_in_vol1) || (tp1_in_vol1 && tp2_in_vol0)) {
-            return false;
         }
     }
 
-    if (diff <= channel_limit) {
-        return true;
+    inline int interval_gap_ticks(const TpCached &a, const TpCached &b) {
+        const int gap1 = a.time_start - b.time_end; // a starts after b ends
+        const int gap2 = b.time_start - a.time_end; // b starts after a ends
+        return std::max(0, std::max(gap1, gap2));
     }
 
-    if ((tp1.view == ViewId::U || tp1.view == ViewId::V) && diff >= channels_in_this_view - channel_limit) {
-        return true;
+    inline bool channel_condition_with_pbc_cached(const TpCached &tp1,
+                                                  const TpCached &tp2,
+                                                  int channel_limit)
+    {
+        if (tp1.detector != tp2.detector || tp1.view != tp2.view ||
+            tp1.view == ViewId::Unknown)
+        {
+            return false;
+        }
+
+        const double diff = std::abs(tp1.detector_channel - tp2.detector_channel);
+        const int channels_in_this_view = channels_in_view(tp1.view);
+
+        if (tp1.view == ViewId::X){
+            const int ch1 = tp1.detector_channel % 2560;
+            const int ch2 = tp2.detector_channel % 2560;
+
+            const bool tp1_in_vol0 = (ch1 >= 1600 && ch1 < 2080);
+            const bool tp1_in_vol1 = (ch1 >= 2080 && ch1 < 2560);
+            const bool tp2_in_vol0 = (ch2 >= 1600 && ch2 < 2080);
+            const bool tp2_in_vol1 = (ch2 >= 2080 && ch2 < 2560);
+
+            if ((tp1_in_vol0 && tp2_in_vol1) || (tp1_in_vol1 && tp2_in_vol0))
+            {
+                return false;
+            }
+        }
+
+        if (diff <= channel_limit)
+        {
+            return true;
+        }
+
+        if ((tp1.view == ViewId::U || tp1.view == ViewId::V) && diff >= channels_in_this_view - channel_limit)
+        {
+            return true;
+        }
+
+        return false;
     }
 
-    return false;
-}
-
-TpCached build_tp_cache(const TriggerPrimitive* tp) {
-    TpCached out;
-    out.time_start = static_cast<int>(tp->GetTimeStart());
-    out.time_end = out.time_start + toTDCticks(static_cast<int>(tp->GetSamplesOverThreshold()));
-    out.detector_channel = tp->GetDetectorChannel();
-    out.detector = tp->GetDetector();
-    out.view = view_from_string(tp->GetView());
-    return out;
-}
+    TpCached build_tp_cache(const TriggerPrimitive *tp)
+    {
+        TpCached out;
+        out.time_start = static_cast<int>(tp->GetTimeStart());
+        out.time_end = out.time_start + toTDCticks(static_cast<int>(tp->GetSamplesOverThreshold()));
+        out.detector_channel = tp->GetDetectorChannel();
+        out.detector = tp->GetDetector();
+        out.view = view_from_string(tp->GetView());
+        return out;
+    }
 
 }
 
-void read_tps(const std::string& in_filename, 
-        std::map<int, std::vector<TriggerPrimitive>>& tps_by_event, 
-        std::map<int, std::vector<TrueParticle>>& true_particles_by_event, 
-        std::map<int, std::vector<Neutrino>>& neutrinos_by_event){
-    
-    if (verboseMode) LogInfo << "Reading TPs from: " << in_filename << std::endl;
-    
-    TFile inFile(in_filename.c_str(), "READ"); 
-    if (inFile.IsZombie()) { LogError << "Cannot open: " << in_filename << std::endl; return; }
+void read_tps(const std::string &in_filename,
+              std::map<int, std::vector<TriggerPrimitive>> &tps_by_event,
+              std::map<int, std::vector<TrueParticle>> &true_particles_by_event,
+              std::map<int, std::vector<Neutrino>> &neutrinos_by_event) {
+    if (verboseMode)
+        LogInfo << "Reading TPs from: " << in_filename << std::endl;
+
+    TFile inFile(in_filename.c_str(), "READ");
+    if (inFile.IsZombie()) {
+        LogError << "Cannot open: " << in_filename << std::endl;
+        return;
+    }
 
     // Read TPs tree from root level (no longer in "tps" directory)
-    if (auto* tpTree = dynamic_cast<TTree*>(inFile.Get("tps"))) {
-        
+    if (auto *tpTree = dynamic_cast<TTree *>(inFile.Get("tps"))) {
         // TP basic variables
-        int event=0; 
-        UShort_t version=0; 
-        UInt_t detid=0, channel=0; 
-        ULong64_t s_over=0, tstart=0, s_to_peak=0; 
-        UInt_t adc_integral=0; 
-        UShort_t adc_peak=0, det=0; 
-        Int_t det_channel=0; 
-        std::string* view=nullptr;
-        Double_t simide_energy=0.0;
-        
+        int event = 0;
+        UShort_t version = 0;
+        UInt_t detid = 0, channel = 0;
+        ULong64_t s_over = 0, tstart = 0, s_to_peak = 0;
+        UInt_t adc_integral = 0;
+        UShort_t adc_peak = 0, det = 0;
+        Int_t det_channel = 0;
+        std::string *view = nullptr;
+        Double_t simide_energy = 0.0;
+
         // Truth variables
-        std::string* gen_name=nullptr;
-        Int_t particle_pdg=0;
-        std::string* particle_process=nullptr;
-        Float_t particle_energy=0.0f;
-        Float_t particle_x=0.0f, particle_y=0.0f, particle_z=0.0f;
-        Float_t particle_px=0.0f, particle_py=0.0f, particle_pz=0.0f;
-        std::string* neutrino_interaction=nullptr;
-        Float_t neutrino_x=0.0f, neutrino_y=0.0f, neutrino_z=0.0f;
-        Float_t neutrino_px=0.0f, neutrino_py=0.0f, neutrino_pz=0.0f;
-        Float_t neutrino_energy=0.0f;
-        
+        std::string *gen_name = nullptr;
+        Int_t particle_pdg = 0;
+        std::string *particle_process = nullptr;
+        Float_t particle_energy = 0.0f;
+        Float_t particle_x = 0.0f, particle_y = 0.0f, particle_z = 0.0f;
+        Float_t particle_px = 0.0f, particle_py = 0.0f, particle_pz = 0.0f;
+        std::string *neutrino_interaction = nullptr;
+        Float_t neutrino_x = 0.0f, neutrino_y = 0.0f, neutrino_z = 0.0f;
+        Float_t neutrino_px = 0.0f, neutrino_py = 0.0f, neutrino_pz = 0.0f;
+        Float_t neutrino_energy = 0.0f;
+
         // Set branch addresses for TP basics
-        tpTree->SetBranchAddress("event", &event); 
-        tpTree->SetBranchAddress("version", &version); 
-        tpTree->SetBranchAddress("detid", &detid); 
+        tpTree->SetBranchAddress("event", &event);
+        tpTree->SetBranchAddress("version", &version);
+        tpTree->SetBranchAddress("detid", &detid);
         tpTree->SetBranchAddress("channel", &channel);
         tpTree->SetBranchAddress("samples_over_threshold", &s_over);
         tpTree->SetBranchAddress("time_start", &tstart);
@@ -144,49 +165,70 @@ void read_tps(const std::string& in_filename,
         if (tpTree->GetBranch("simide_energy")) {
             tpTree->SetBranchAddress("simide_energy", &simide_energy);
         }
-        
+
         // Set branch addresses for truth
         tpTree->SetBranchAddress("generator_name", &gen_name);
-        if (tpTree->GetBranch("particle_pdg")) tpTree->SetBranchAddress("particle_pdg", &particle_pdg);
-        if (tpTree->GetBranch("particle_process")) tpTree->SetBranchAddress("particle_process", &particle_process);
-        if (tpTree->GetBranch("particle_energy")) tpTree->SetBranchAddress("particle_energy", &particle_energy);
-        if (tpTree->GetBranch("particle_x")) tpTree->SetBranchAddress("particle_x", &particle_x);
-        if (tpTree->GetBranch("particle_y")) tpTree->SetBranchAddress("particle_y", &particle_y);
-        if (tpTree->GetBranch("particle_z")) tpTree->SetBranchAddress("particle_z", &particle_z);
-        if (tpTree->GetBranch("particle_px")) tpTree->SetBranchAddress("particle_px", &particle_px);
-        if (tpTree->GetBranch("particle_py")) tpTree->SetBranchAddress("particle_py", &particle_py);
-        if (tpTree->GetBranch("particle_pz")) tpTree->SetBranchAddress("particle_pz", &particle_pz);
-        if (tpTree->GetBranch("neutrino_interaction")) tpTree->SetBranchAddress("neutrino_interaction", &neutrino_interaction);
-        if (tpTree->GetBranch("neutrino_x")) tpTree->SetBranchAddress("neutrino_x", &neutrino_x);
-        if (tpTree->GetBranch("neutrino_y")) tpTree->SetBranchAddress("neutrino_y", &neutrino_y);
-        if (tpTree->GetBranch("neutrino_z")) tpTree->SetBranchAddress("neutrino_z", &neutrino_z);
-        if (tpTree->GetBranch("neutrino_px")) tpTree->SetBranchAddress("neutrino_px", &neutrino_px);
-        if (tpTree->GetBranch("neutrino_py")) tpTree->SetBranchAddress("neutrino_py", &neutrino_py);
-        if (tpTree->GetBranch("neutrino_pz")) tpTree->SetBranchAddress("neutrino_pz", &neutrino_pz);
-        if (tpTree->GetBranch("neutrino_energy")) tpTree->SetBranchAddress("neutrino_energy", &neutrino_energy);
+        if (tpTree->GetBranch("particle_pdg"))
+            tpTree->SetBranchAddress("particle_pdg", &particle_pdg);
+        if (tpTree->GetBranch("particle_process"))
+            tpTree->SetBranchAddress("particle_process", &particle_process);
+        if (tpTree->GetBranch("particle_energy"))
+            tpTree->SetBranchAddress("particle_energy", &particle_energy);
+        if (tpTree->GetBranch("particle_x"))
+            tpTree->SetBranchAddress("particle_x", &particle_x);
+        if (tpTree->GetBranch("particle_y"))
+            tpTree->SetBranchAddress("particle_y", &particle_y);
+        if (tpTree->GetBranch("particle_z"))
+            tpTree->SetBranchAddress("particle_z", &particle_z);
+        if (tpTree->GetBranch("particle_px"))
+            tpTree->SetBranchAddress("particle_px", &particle_px);
+        if (tpTree->GetBranch("particle_py"))
+            tpTree->SetBranchAddress("particle_py", &particle_py);
+        if (tpTree->GetBranch("particle_pz"))
+            tpTree->SetBranchAddress("particle_pz", &particle_pz);
+        if (tpTree->GetBranch("neutrino_interaction"))
+            tpTree->SetBranchAddress("neutrino_interaction", 
+                &neutrino_interaction);
+        if (tpTree->GetBranch("neutrino_x"))
+            tpTree->SetBranchAddress("neutrino_x", &neutrino_x);
+        if (tpTree->GetBranch("neutrino_y"))
+            tpTree->SetBranchAddress("neutrino_y", &neutrino_y);
+        if (tpTree->GetBranch("neutrino_z"))
+            tpTree->SetBranchAddress("neutrino_z", &neutrino_z);
+        if (tpTree->GetBranch("neutrino_px"))
+            tpTree->SetBranchAddress("neutrino_px", &neutrino_px);
+        if (tpTree->GetBranch("neutrino_py"))
+            tpTree->SetBranchAddress("neutrino_py", &neutrino_py);
+        if (tpTree->GetBranch("neutrino_pz"))
+            tpTree->SetBranchAddress("neutrino_pz", &neutrino_pz);
+        if (tpTree->GetBranch("neutrino_energy"))
+            tpTree->SetBranchAddress("neutrino_energy", &neutrino_energy);
 
-        for (Long64_t i=0;i<tpTree->GetEntries();++i){ 
+        for (Long64_t i = 0; i < tpTree->GetEntries(); ++i) {
+            tpTree->GetEntry(i);
 
-            tpTree->GetEntry(i); 
-
-            TriggerPrimitive tp(version, 0, detid, channel, s_over, tstart, s_to_peak, adc_integral, adc_peak); 
-            tp.SetEvent(event); 
+            TriggerPrimitive tp(version, 0, detid, channel, 
+                s_over, tstart, s_to_peak, adc_integral, adc_peak);
+            tp.SetEvent(event);
             tp.SetDetector(det);
             tp.SetDetectorChannel(det_channel);
             tp.SetSimideEnergy(simide_energy);
-            
+
             // Set embedded truth
-            if (gen_name) tp.SetGeneratorName(*gen_name);
+            if (gen_name)
+                tp.SetGeneratorName(*gen_name);
             tp.SetParticlePDG(particle_pdg);
-            if (particle_process) tp.SetParticleProcess(*particle_process);
+            if (particle_process)
+                tp.SetParticleProcess(*particle_process);
             tp.SetParticleEnergy(particle_energy);
             tp.SetParticlePosition(particle_x, particle_y, particle_z);
             tp.SetParticleMomentum(particle_px, particle_py, particle_pz);
             if (neutrino_interaction) {
-                tp.SetNeutrinoInfo(*neutrino_interaction, neutrino_x, neutrino_y, neutrino_z,
-                                  neutrino_px, neutrino_py, neutrino_pz, neutrino_energy);
+                tp.SetNeutrinoInfo(*neutrino_interaction, neutrino_x, 
+                        neutrino_y, neutrino_z,
+                        neutrino_px, neutrino_py, neutrino_pz, neutrino_energy);
             }
-            
+
             tps_by_event[event].push_back(tp);
         }
     }
@@ -199,23 +241,31 @@ void read_tps(const std::string& in_filename,
 }
 
 // PBC is periodic boundary condition
-bool channel_condition_with_pbc(TriggerPrimitive *tp1, TriggerPrimitive* tp2, int channel_limit) {
+bool channel_condition_with_pbc(TriggerPrimitive *tp1, 
+    TriggerPrimitive *tp2, int channel_limit) {
     return channel_condition_with_pbc_cached(build_tp_cache(tp1), build_tp_cache(tp2), channel_limit);
 }
 
 // this is supposed to do one event at the time
 // TODO add number to save fraction of TPs removed with the cut
-std::vector<Cluster> make_cluster(const std::vector<TriggerPrimitive*>& all_tps, int ticks_limit, int channel_limit, int min_tps_to_cluster, int adc_integral_cut) {
-    
-    if (verboseMode) LogInfo << "Creating clusters from TPs" << std::endl;
-    
-    if (verboseMode) LogInfo << "Ticks limit: " << ticks_limit << " TPC ticks" << std::endl;
+std::vector<Cluster> make_cluster(
+    const std::vector<TriggerPrimitive *> &all_tps,
+    int ticks_limit, int channel_limit, 
+    int min_tps_to_cluster, int adc_integral_cut) {
+
+    if (verboseMode)
+        LogInfo << "Creating clusters from TPs" << std::endl;
+
+    if (verboseMode)
+        LogInfo << "Ticks limit: " << ticks_limit << " TPC ticks" << std::endl;
 
     int ticks_limit_tdc = toTDCticks(ticks_limit);
-    if (verboseMode) LogInfo << "Ticks limit: " << ticks_limit_tdc << " TDC ticks" << std::endl;
-
-    struct CandidateCluster {
-        std::vector<TriggerPrimitive*> tps;
+    if (verboseMode) {
+        LogInfo << "Ticks limit: " << ticks_limit_tdc 
+        << " TDC ticks" << std::endl;
+    }
+    struct CandidateCluster{
+        std::vector<TriggerPrimitive *> tps;
         std::vector<size_t> tp_indices;
         std::unordered_set<int> channels;
         int min_time_start = INT_MAX;
@@ -230,7 +280,7 @@ std::vector<Cluster> make_cluster(const std::vector<TriggerPrimitive*>& all_tps,
     std::vector<Cluster> clusters;
     std::vector<TpCached> tp_cache;
     tp_cache.reserve(all_tps.size());
-    for (const auto* tp : all_tps) {
+    for (const auto *tp : all_tps) {
         tp_cache.push_back(build_tp_cache(tp));
     }
 
@@ -239,31 +289,33 @@ std::vector<Cluster> make_cluster(const std::vector<TriggerPrimitive*>& all_tps,
 
     // ...existing code...
 
-
     for (size_t iTP = 0; iTP < all_tps.size(); iTP++) {
-        
-        
-        TriggerPrimitive* tp1 = all_tps[iTP];
-        const TpCached& tp1c = tp_cache[iTP];
 
-        if (debugMode) LogInfo << "Processing TP: " << tp1->GetTimeStart() << " " << tp1->GetDetectorChannel() << std::endl;
+        TriggerPrimitive *tp1 = all_tps[iTP];
+        const TpCached &tp1c = tp_cache[iTP];
 
+        if (debugMode) {
+            LogInfo << "Processing TP: " << tp1->GetTimeStart() << " " << tp1->GetDetectorChannel() << std::endl;
+        }
         bool appended = false;
 
-        for (auto& candidate : buffer) {
-            if (candidate.detector != tp1c.detector || candidate.view != tp1c.view) {
+        for (auto &candidate : buffer) {
+            if (candidate.detector != tp1c.detector ||
+                candidate.view != tp1c.view) {
                 continue;
             }
 
-            const int candidate_time_gap = std::max(0, std::max(tp1c.time_start - candidate.max_time_end,
-                                                                 candidate.min_time_start - tp1c.time_end));
+            const int candidate_time_gap =
+                std::max(0, std::max(
+                    tp1c.time_start - candidate.max_time_end,
+                    candidate.min_time_start - tp1c.time_end));
             if (candidate_time_gap > ticks_limit_tdc) {
                 continue;
             }
 
             if (tp1c.view == ViewId::X) {
-                if (tp1c.detector_channel < candidate.min_channel - channel_limit
-                    || tp1c.detector_channel > candidate.max_channel + channel_limit) {
+                if (tp1c.detector_channel < candidate.min_channel - channel_limit 
+                        || tp1c.detector_channel > candidate.max_channel + channel_limit) {
                     continue;
                 }
             }
@@ -279,27 +331,31 @@ std::vector<Cluster> make_cluster(const std::vector<TriggerPrimitive*>& all_tps,
 
             const bool has_same_channel_in_candidate = (candidate.channels.find(tp1c.detector_channel) != candidate.channels.end());
 
-            for (size_t j = 0; j < candidate.tps.size(); ++j) {
-                TriggerPrimitive* tp2 = candidate.tps[j];
-                const TpCached& tp2c = tp_cache[candidate.tp_indices[j]];
+            for (size_t j = 0; j < candidate.tps.size(); ++j)
+            {
+                TriggerPrimitive *tp2 = candidate.tps[j];
+                const TpCached &tp2c = tp_cache[candidate.tp_indices[j]];
 
                 const bool same_channel = has_same_channel_in_candidate && (tp1c.detector_channel == tp2c.detector_channel);
                 const int gap = interval_gap_ticks(tp1c, tp2c);
 
-                if (same_channel) {
-                    if (gap > ticks_limit_tdc) {
+                if (same_channel)
+                {
+                    if (gap > ticks_limit_tdc)
+                    {
                         reject_due_to_same_channel = true;
                         break; // No need to check more TPs in this candidate
                     }
                     // gap <= ticks_limit_tdc on same channel is sufficient to allow append
                     can_append = true;
-                } else {
+                }
+                else{
                     if (gap <= ticks_limit_tdc && channel_condition_with_pbc_cached(tp1c, tp2c, channel_limit)) {
                         // ...existing code...
 
-
                         can_append = true;
-                        if (!has_same_channel_in_candidate) {
+                        if (!has_same_channel_in_candidate)
+                        {
                             break;
                         }
                     }
@@ -307,11 +363,13 @@ std::vector<Cluster> make_cluster(const std::vector<TriggerPrimitive*>& all_tps,
             }
 
             if (reject_due_to_same_channel) {
-                if (debugMode) LogInfo << "Rejecting candidate due to same-channel time gap > limit" << std::endl;
+                if (debugMode)
+                    LogInfo << "Rejecting candidate due to same-channel time gap > limit" << std::endl;
                 continue; // Try next candidate
             }
 
-            if (can_append) {
+            if (can_append)
+            {
                 candidate.tps.push_back(tp1);
                 candidate.tp_indices.push_back(iTP);
                 candidate.channels.insert(tp1c.detector_channel);
@@ -320,14 +378,17 @@ std::vector<Cluster> make_cluster(const std::vector<TriggerPrimitive*>& all_tps,
                 candidate.min_channel = std::min(candidate.min_channel, tp1c.detector_channel);
                 candidate.max_channel = std::max(candidate.max_channel, tp1c.detector_channel);
                 appended = true;
-                if (debugMode) LogInfo << "Appended TP to candidate Cluster" << std::endl;
+                if (debugMode)
+                    LogInfo << "Appended TP to candidate Cluster" << std::endl;
                 break;
             }
         }
 
         // If not appended to any candidate, create a new Cluster in the buffer
-        if (!appended) {
-            if (debugMode) LogInfo << "Creating new candidate Cluster" << std::endl;
+        if (!appended)
+        {
+            if (debugMode)
+                LogInfo << "Creating new candidate Cluster" << std::endl;
             CandidateCluster candidate;
             candidate.tps.push_back(tp1);
             candidate.tp_indices.push_back(iTP);
@@ -343,18 +404,23 @@ std::vector<Cluster> make_cluster(const std::vector<TriggerPrimitive*>& all_tps,
     }
 
     // Process remaining candidates in the buffer
-    for (auto& candidate : buffer) {
-        if (candidate.tps.size() >= static_cast<size_t>(min_tps_to_cluster)) {
+    for (auto &candidate : buffer)
+    {
+        if (candidate.tps.size() >= static_cast<size_t>(min_tps_to_cluster))
+        {
             int adc_integral = 0;
-            for (auto& tp1 : candidate.tps) {
+            for (auto &tp1 : candidate.tps)
+            {
                 adc_integral += tp1->GetAdcIntegral();
             }
             // ENERGY CUT LOGIC IN THE APP, NOT HERE
             // if (adc_integral > adc_integral_cut) {
-                // check validity of tps in candidate
-                if (debugMode) LogInfo << "Candidate Cluster has " << candidate.tps.size() << " TPs" << std::endl;
-                clusters.emplace_back(Cluster(std::move(candidate.tps)));
-                if (debugMode) LogInfo << "Cluster created with " << clusters.back().get_tps().size() << " TPs" << std::endl;
+            // check validity of tps in candidate
+            if (debugMode)
+                LogInfo << "Candidate Cluster has " << candidate.tps.size() << " TPs" << std::endl;
+            clusters.emplace_back(Cluster(std::move(candidate.tps)));
+            if (debugMode)
+                LogInfo << "Cluster created with " << clusters.back().get_tps().size() << " TPs" << std::endl;
             // }
             // else {
             //     if (verboseMode) LogInfo << "Candidate Cluster rejected due to adc_integral cut: " << adc_integral << " <= " << adc_integral_cut << std::endl;
@@ -364,50 +430,63 @@ std::vector<Cluster> make_cluster(const std::vector<TriggerPrimitive*>& all_tps,
 
     // ...existing code...
 
-
-    if (verboseMode) LogInfo << "Finished clustering. Number of clusters: " << clusters.size() << std::endl;
+    if (verboseMode)
+        LogInfo << "Finished clustering. Number of clusters: " << clusters.size() << std::endl;
 
     return clusters;
 }
 
-
-std::vector<Cluster> filter_main_tracks(std::vector<Cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
+std::vector<Cluster> filter_main_tracks(std::vector<Cluster> &clusters)
+{ // valid only if the clusters are ordered by event and for clean sn data
     int best_idx = INT_MAX;
 
     std::vector<Cluster> main_tracks;
     UInt_t event = clusters[0].get_tp(0)->GetEvent();
 
-    for (int index = 0; index < clusters.size(); index++) {
-        if (clusters[index].get_tp(0)->GetEvent() != event) {
-            if (best_idx < clusters.size() ){
-                if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+    for (int index = 0; index < clusters.size(); index++)
+    {
+        if (clusters[index].get_tp(0)->GetEvent() != event)
+        {
+            if (best_idx < clusters.size())
+            {
+                if (clusters[best_idx].get_min_distance_from_true_pos() < 5)
+                {
                     main_tracks.push_back(clusters[best_idx]);
                 }
             }
 
             event = clusters[index].get_tp(0)->GetEvent();
-            if (clusters[index].get_true_label() == 1){
+            if (clusters[index].get_true_label() == 1)
+            {
                 best_idx = index;
             }
-            else {
+            else
+            {
                 best_idx = INT_MAX;
             }
         }
-        else {
-            if (best_idx < clusters.size() ){
-                if (clusters[index].get_true_label() == 1 and clusters[index].get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos()){
+        else
+        {
+            if (best_idx < clusters.size())
+            {
+                if (clusters[index].get_true_label() == 1 and clusters[index].get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos())
+                {
                     best_idx = index;
                 }
             }
-            else {
-                if (clusters[index].get_true_label() == 1){
+            else
+            {
+                if (clusters[index].get_true_label() == 1)
+                {
                     best_idx = index;
                 }
             }
         }
     }
-    if (best_idx < clusters.size() ){
-        if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+    if (best_idx < clusters.size())
+    {
+        if (clusters[best_idx].get_min_distance_from_true_pos() < 5)
+        {
             main_tracks.push_back(clusters[best_idx]);
         }
     }
@@ -415,81 +494,102 @@ std::vector<Cluster> filter_main_tracks(std::vector<Cluster>& clusters) { // val
     return main_tracks;
 }
 
-std::vector<Cluster> filter_out_main_track(std::vector<Cluster>& clusters) { // valid only if the clusters are ordered by event and for clean sn data
+std::vector<Cluster> filter_out_main_track(std::vector<Cluster> &clusters)
+{ // valid only if the clusters are ordered by event and for clean sn data
     int best_idx = INT_MAX;
     std::vector<int> bad_idx_list;
     UInt_t event = clusters[0].get_tp(0)->GetEvent();
 
-    for (int index = 0; index < clusters.size(); index++) {
-        if (clusters[index].get_tp(0)->GetEvent() != event) {
-            if (best_idx < clusters.size() ){
-                if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
-                    bad_idx_list.push_back(best_idx);                    
+    for (int index = 0; index < clusters.size(); index++)
+    {
+        if (clusters[index].get_tp(0)->GetEvent() != event)
+        {
+            if (best_idx < clusters.size())
+            {
+                if (clusters[best_idx].get_min_distance_from_true_pos() < 5)
+                {
+                    bad_idx_list.push_back(best_idx);
                 }
             }
 
             event = clusters[index].get_tp(0)->GetEvent();
-            if (clusters[index].get_true_label() == 1){
+            if (clusters[index].get_true_label() == 1)
+            {
                 best_idx = index;
             }
-            else {
+            else
+            {
                 best_idx = INT_MAX;
             }
         }
-        else {
-            if (best_idx < clusters.size() ){
-                if (clusters[index].get_true_label() == 1 and clusters[index].get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos()){
+        else
+        {
+            if (best_idx < clusters.size())
+            {
+                if (clusters[index].get_true_label() == 1 and clusters[index].get_min_distance_from_true_pos() < clusters[best_idx].get_min_distance_from_true_pos())
+                {
                     best_idx = index;
                 }
             }
-            else {
-                if (clusters[index].get_true_label() == 1){
+            else
+            {
+                if (clusters[index].get_true_label() == 1)
+                {
                     best_idx = index;
                 }
             }
         }
     }
-    if (best_idx < clusters.size() ){
-        if (clusters[best_idx].get_min_distance_from_true_pos() < 5) {
+    if (best_idx < clusters.size())
+    {
+        if (clusters[best_idx].get_min_distance_from_true_pos() < 5)
+        {
             bad_idx_list.push_back(best_idx);
         }
     }
 
-
-
     std::vector<Cluster> blips;
 
-    for (int i=0; i<clusters.size(); i++) {
-        if (std::find(bad_idx_list.begin(), bad_idx_list.end(), i) == bad_idx_list.end()) {
+    for (int i = 0; i < clusters.size(); i++)
+    {
+        if (std::find(bad_idx_list.begin(), bad_idx_list.end(), i) == bad_idx_list.end())
+        {
             blips.push_back(clusters[i]);
         }
     }
-    
-    if (verboseMode) LogInfo << "Number of blips: " << blips.size() << std::endl;
+
+    if (verboseMode)
+        LogInfo << "Number of blips: " << blips.size() << std::endl;
     return blips;
 }
 
-
-void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::string view) {
+void write_clusters(std::vector<Cluster> &clusters, TFile *clusters_file, std::string view)
+{
     // File is already open and managed by caller
-    if (!clusters_file || clusters_file->IsZombie()) {
+    if (!clusters_file || clusters_file->IsZombie())
+    {
         LogError << "Invalid TFile pointer provided to write_clusters" << std::endl;
         return;
     }
     // Use the current directory (set by caller with cd())
-    TDirectory* clusters_dir = gDirectory;
-    
+    TDirectory *clusters_dir = gDirectory;
+
     // Check if tree exists and if it has the new momentum branches
-    TTree *old_tree = (TTree*)clusters_dir->Get(Form("clusters_tree_%s", view.c_str()));
+    TTree *old_tree = (TTree *)clusters_dir->Get(Form("clusters_tree_%s", view.c_str()));
     TTree *clusters_tree = nullptr;
-    
-    if (old_tree) {
+
+    if (old_tree)
+    {
+        std::cout << "Existing tree found for view " << view << ": " << old_tree->GetName() << std::endl;
         bool has_momentum = (old_tree->GetBranch("true_mom_x") != nullptr);
-        if (!has_momentum) {
+        if (!has_momentum)
+        {
             // Old tree doesn't have momentum - create a new tree which will overwrite on Write()
             LogWarning << "Existing tree lacks momentum branches - creating new tree with updated structure" << std::endl;
             clusters_tree = nullptr; // Force creation of new tree below
-        } else {
+        }
+        else
+        {
             clusters_tree = old_tree; // Use existing tree
         }
     }
@@ -514,24 +614,39 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
     float generator_tp_fraction;
     float marley_tp_fraction;
     double total_charge;
-    double total_energy;    
+    double total_energy;
     int true_pdg;
     bool is_main_cluster;
     int cluster_id;
-    
-    // TP information (allocate vectors once and reuse/clear per entry)
-    std::vector<int>* tp_detector_channel = new std::vector<int>();
-    std::vector<int>* tp_detector = new std::vector<int>();
-    std::vector<int>* tp_samples_over_threshold = new std::vector<int>();
-    std::vector<int>* tp_time_start = new std::vector<int>();
-    std::vector<int>* tp_samples_to_peak = new std::vector<int>();
-    std::vector<int>* tp_adc_peak = new std::vector<int>();
-    std::vector<int>* tp_adc_integral = new std::vector<int>();
-    std::vector<double>* tp_simide_energy = new std::vector<double>();
 
-    if (!clusters_tree) {
+    // declare TP vectors for tree branches (allocated once if tree doesn't exist, or just pointers to existing branches if tree exists)
+    std::vector<int> *tp_detector_channel;
+    std::vector<int> *tp_detector;
+    std::vector<int> *tp_samples_over_threshold;
+    std::vector<int> *tp_time_start;
+    std::vector<int> *tp_samples_to_peak;
+    std::vector<int> *tp_adc_peak;
+    std::vector<int> *tp_adc_integral;
+    std::vector<double> *tp_simide_energy;
+
+    std::cout << "Allocating TP vectors for tree branches" << std::endl;
+    tp_detector_channel = new std::vector<int>();
+    tp_detector = new std::vector<int>();
+    tp_samples_over_threshold = new std::vector<int>();
+    tp_time_start = new std::vector<int>();
+    tp_samples_to_peak = new std::vector<int>();
+    tp_adc_peak = new std::vector<int>();
+    tp_adc_integral = new std::vector<int>();
+    tp_simide_energy = new std::vector<double>();
+
+    if (!clusters_tree)
+    {
+        // TP information (allocate vectors once and reuse/clear per entry)
+
+        std::cout << "Creating new tree for clusters" << std::endl;
         clusters_tree = new TTree(Form("clusters_tree_%s", view.c_str()), "Tree of clusters");
-        if (verboseMode) LogInfo << "Tree not found, creating it" << std::endl;
+        if (verboseMode)
+            LogInfo << "Tree not found, creating it" << std::endl;
         // create the branches
         clusters_tree->Branch("event", &event, "event/I");
         clusters_tree->Branch("n_tps", &n_tps, "n_tps/I");
@@ -568,7 +683,8 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
 
         // LogInfo << "Tree created" << std::endl;
     }
-    else {
+    else
+    {
         // Existing tree: bind branch addresses to current output variables so Fill() works
         true_label_point = &true_label; // point to stack string for fill
         clusters_tree->SetBranchAddress("event", &event);
@@ -592,7 +708,8 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         clusters_tree->SetBranchAddress("total_energy", &total_energy);
         clusters_tree->SetBranchAddress("true_pdg", &true_pdg);
         clusters_tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
-        if (clusters_tree->GetBranch("cluster_id")) {
+        if (clusters_tree->GetBranch("cluster_id"))
+        {
             clusters_tree->SetBranchAddress("cluster_id", &cluster_id);
         }
         clusters_tree->SetBranchAddress("tp_detector_channel", &tp_detector_channel);
@@ -603,14 +720,15 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         clusters_tree->SetBranchAddress("tp_adc_peak", &tp_adc_peak);
         clusters_tree->SetBranchAddress("tp_adc_integral", &tp_adc_integral);
         // Optional: only set if branch exists (for backward compatibility)
-        if (clusters_tree->GetBranch("tp_simide_energy")) {
+        if (clusters_tree->GetBranch("tp_simide_energy"))
+        {
             clusters_tree->SetBranchAddress("tp_simide_energy", &tp_simide_energy);
         }
     }
-    
 
     // fill the tree
-    for (auto& Cluster : clusters) {
+    for (auto &Cluster : clusters)
+    {
         event = Cluster.get_event();
         n_tps = Cluster.get_size();
         true_pos_x = Cluster.get_true_pos()[0];
@@ -627,35 +745,47 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         true_label = Cluster.get_true_label();
         true_label_point = &true_label;
         supernova_tp_fraction = Cluster.get_supernova_tp_fraction();
-        // Compute fraction of TPs in this Cluster with a non-UNKNOWN generator
-        // Also compute marley-specific fraction
+        // Compute fraction of TPs in this Cluster with a
+        // non-UNKNOWN generator. Also compute marley-specific
+        // fraction
         int cluster_truth_count = 0;
         int marley_count = 0;
         {
-            const auto& cl_tps = Cluster.get_tps();
-            for (auto* tp : cl_tps) {
+            const auto &cl_tps = Cluster.get_tps();
+            for (auto *tp : cl_tps)
+            {
                 std::string gen_name = tp->GetGeneratorName();
-                if (gen_name != "UNKNOWN") {
+                if (gen_name != "UNKNOWN")
+                {
                     cluster_truth_count++;
                 }
                 // Case-insensitive check for MARLEY
                 std::string gen_lower = gen_name;
-                std::transform(gen_lower.begin(), gen_lower.end(), gen_lower.begin(), ::tolower);
-                if (gen_lower.find("marley") != std::string::npos) {
+                std::transform(gen_lower.begin(), gen_lower.end(),
+                               gen_lower.begin(), ::tolower);
+                if (gen_lower.find("marley") != std::string::npos)
+                {
                     marley_count++;
                 }
             }
-            generator_tp_fraction = cl_tps.empty() ? 0.f : static_cast<float>(cluster_truth_count) / static_cast<float>(cl_tps.size());
-            marley_tp_fraction = cl_tps.empty() ? 0.f : static_cast<float>(marley_count) / static_cast<float>(cl_tps.size());
-            // std::cout << "Fraction of TPs with non-null generator: " << generator_tp_fraction << std::endl;
+            generator_tp_fraction = cl_tps.empty() ? 0.f :
+                static_cast<float>(cluster_truth_count) /
+                static_cast<float>(cl_tps.size());
+            marley_tp_fraction = cl_tps.empty() ? 0.f :
+                static_cast<float>(marley_count) /
+                static_cast<float>(cl_tps.size());
         }
-        
-        // If TPs don't have truth info (cluster_truth_count==0), use the cluster's stored value instead
-        if (cluster_truth_count == 0) {
-            marley_tp_fraction = Cluster.get_supernova_tp_fraction();
-            generator_tp_fraction = Cluster.get_generator_tp_fraction();
+
+        // If TPs don't have truth info (cluster_truth_count==0),
+        // use the cluster's stored value instead
+        if (cluster_truth_count == 0)
+        {
+            marley_tp_fraction =
+                Cluster.get_supernova_tp_fraction();
+            generator_tp_fraction =
+                Cluster.get_generator_tp_fraction();
         }
-        
+
         is_es_interaction = Cluster.get_is_es_interaction();
         total_charge = Cluster.get_total_charge();
         total_energy = Cluster.get_total_energy();
@@ -664,16 +794,26 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         cluster_id = Cluster.get_cluster_id();
         // TODO create different tree for metadata? Currently in filename
 
-        if (tp_detector_channel) tp_detector_channel->clear();
-        if (tp_detector) tp_detector->clear();
-    if (tp_samples_over_threshold) tp_samples_over_threshold->clear();
-    if (tp_samples_to_peak) tp_samples_to_peak->clear();
-        if (tp_time_start) tp_time_start->clear();
-        if (tp_samples_to_peak) tp_samples_to_peak->clear();
-        if (tp_adc_peak) tp_adc_peak->clear();
-        if (tp_adc_integral) tp_adc_integral->clear();
-        if (tp_simide_energy) tp_simide_energy->clear();
-        for (auto& tp : Cluster.get_tps()) {
+        if (tp_detector_channel)
+            tp_detector_channel->clear();
+        if (tp_detector)
+            tp_detector->clear();
+        if (tp_samples_over_threshold)
+            tp_samples_over_threshold->clear();
+        if (tp_samples_to_peak)
+            tp_samples_to_peak->clear();
+        if (tp_time_start)
+            tp_time_start->clear();
+        if (tp_samples_to_peak)
+            tp_samples_to_peak->clear();
+        if (tp_adc_peak)
+            tp_adc_peak->clear();
+        if (tp_adc_integral)
+            tp_adc_integral->clear();
+        if (tp_simide_energy)
+            tp_simide_energy->clear();
+        for (auto &tp : Cluster.get_tps())
+        {
             tp_detector_channel->push_back(tp->GetDetectorChannel());
             tp_detector->push_back(tp->GetDetector());
             tp_samples_over_threshold->push_back(tp->GetSamplesOverThreshold());
@@ -682,7 +822,8 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
             tp_adc_peak->push_back(tp->GetAdcPeak());
             tp_adc_integral->push_back(tp->GetAdcIntegral());
             tp_simide_energy->push_back(tp->GetSimideEnergy());
-            if (debugMode && tp_samples_to_peak->size() <= 5) {
+            if (debugMode && tp_samples_to_peak->size() <= 5)
+            {
                 LogDebug << "[write_clusters_with_match_id] cluster_id=" << cluster_id
                          << " tp_index=" << (tp_samples_to_peak->size() - 1)
                          << " samples_to_peak=" << tp->GetSamplesToPeak()
@@ -691,29 +832,40 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
         }
         clusters_tree->Fill();
     }
+
     // write the tree
     // Write inside 'clusters' directory
     clusters_dir->cd();
     clusters_tree->Write("", TObject::kOverwrite);
     // File close is managed by caller
-
-    return;   
+    std::cout << "delete the TP vectors allocated for tree branches" << std::endl;
+    delete tp_detector_channel;
+    delete tp_detector;
+    delete tp_samples_over_threshold;
+    delete tp_time_start;
+    delete tp_samples_to_peak;
+    delete tp_adc_peak;
+    delete tp_adc_integral;
+    delete tp_simide_energy;
+    return;
 }
 
-void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, int>& cluster_to_match, TFile* clusters_file, std::string view,
-                                   std::map<int, int>* x_to_u_map, std::map<int, int>* x_to_v_map) {
+void write_clusters_with_match_id(std::vector<Cluster> &clusters, std::map<int, int> &cluster_to_match, TFile *clusters_file, std::string view,
+                                  std::map<int, int> *x_to_u_map, std::map<int, int> *x_to_v_map)
+{
     // Similar to write_clusters but adds match_id and match_type branches
     // For X plane, also adds matching_clusterId_U and matching_clusterId_V
-    if (!clusters_file || clusters_file->IsZombie()) {
+    if (!clusters_file || clusters_file->IsZombie())
+    {
         LogError << "Invalid TFile pointer provided to write_clusters_with_match_id" << std::endl;
         return;
     }
-    
+
     // Use the current directory (set by caller with cd())
-    TDirectory* clusters_dir = gDirectory;
-    
+    TDirectory *clusters_dir = gDirectory;
+
     TTree *clusters_tree = new TTree(Form("clusters_tree_%s", view.c_str()), "Tree of clusters with match info");
-    
+
     int event;
     int n_tps;
     float true_pos_x, true_pos_y, true_pos_z;
@@ -729,17 +881,17 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
     int cluster_id;
     int match_id;
     int match_type;
-    int matching_clusterId_U;  // Only for X plane
-    int matching_clusterId_V;  // Only for X plane
-    
-    std::vector<int>* tp_detector_channel = new std::vector<int>();
-    std::vector<int>* tp_detector = new std::vector<int>();
-    std::vector<int>* tp_samples_over_threshold = new std::vector<int>();
-    std::vector<int>* tp_time_start = new std::vector<int>();
-    std::vector<int>* tp_samples_to_peak = new std::vector<int>();
-    std::vector<int>* tp_adc_peak = new std::vector<int>();
-    std::vector<int>* tp_adc_integral = new std::vector<int>();
-    std::vector<double>* tp_simide_energy = new std::vector<double>();
+    int matching_clusterId_U; // Only for X plane
+    int matching_clusterId_V; // Only for X plane
+
+    std::vector<int> *tp_detector_channel = new std::vector<int>();
+    std::vector<int> *tp_detector = new std::vector<int>();
+    std::vector<int> *tp_samples_over_threshold = new std::vector<int>();
+    std::vector<int> *tp_time_start = new std::vector<int>();
+    std::vector<int> *tp_samples_to_peak = new std::vector<int>();
+    std::vector<int> *tp_adc_peak = new std::vector<int>();
+    std::vector<int> *tp_adc_integral = new std::vector<int>();
+    std::vector<double> *tp_simide_energy = new std::vector<double>();
 
     // Create branches (including match info)
     clusters_tree->Branch("event", &event, "event/I");
@@ -767,13 +919,14 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
     clusters_tree->Branch("cluster_id", &cluster_id, "cluster_id/I");
     clusters_tree->Branch("match_id", &match_id, "match_id/I");
     clusters_tree->Branch("match_type", &match_type, "match_type/I");
-    
+
     // Add matching cluster ID branches only for X plane
-    if (view == "X" && x_to_u_map && x_to_v_map) {
+    if (view == "X" && x_to_u_map && x_to_v_map)
+    {
         clusters_tree->Branch("matching_clusterId_U", &matching_clusterId_U, "matching_clusterId_U/I");
         clusters_tree->Branch("matching_clusterId_V", &matching_clusterId_V, "matching_clusterId_V/I");
     }
-    
+
     clusters_tree->Branch("tp_detector_channel", &tp_detector_channel);
     clusters_tree->Branch("tp_detector", &tp_detector);
     clusters_tree->Branch("tp_samples_over_threshold", &tp_samples_over_threshold);
@@ -784,7 +937,8 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
     clusters_tree->Branch("tp_simide_energy", &tp_simide_energy);
 
     // Fill the tree
-    for (auto& Cluster : clusters) {
+    for (auto &Cluster : clusters)
+    {
         event = Cluster.get_event();
         n_tps = Cluster.get_size();
         true_pos_x = Cluster.get_true_pos()[0];
@@ -799,33 +953,45 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
         true_neutrino_energy = Cluster.get_true_neutrino_energy();
         true_particle_energy = Cluster.get_true_particle_energy();
         true_label = Cluster.get_true_label();
-        
+
         // Compute fractions
         int cluster_truth_count = 0;
         int marley_count = 0;
         {
-            const auto& cl_tps = Cluster.get_tps();
-            for (auto* tp : cl_tps) {
+            const auto &cl_tps = Cluster.get_tps();
+            for (auto *tp : cl_tps)
+            {
                 std::string gen_name = tp->GetGeneratorName();
-                if (gen_name != "UNKNOWN") {
+                if (gen_name != "UNKNOWN")
+                {
                     cluster_truth_count++;
                 }
                 std::string gen_lower = gen_name;
-                std::transform(gen_lower.begin(), gen_lower.end(), gen_lower.begin(), ::tolower);
-                if (gen_lower.find("marley") != std::string::npos) {
+                std::transform(gen_lower.begin(), gen_lower.end(),
+                               gen_lower.begin(), ::tolower);
+                if (gen_lower.find("marley") != std::string::npos)
+                {
                     marley_count++;
                 }
             }
-            generator_tp_fraction = cl_tps.empty() ? 0.f : static_cast<float>(cluster_truth_count) / static_cast<float>(cl_tps.size());
-            marley_tp_fraction = cl_tps.empty() ? 0.f : static_cast<float>(marley_count) / static_cast<float>(cl_tps.size());
+            generator_tp_fraction = cl_tps.empty() ? 0.f :
+                static_cast<float>(cluster_truth_count) /
+                static_cast<float>(cl_tps.size());
+            marley_tp_fraction = cl_tps.empty() ? 0.f :
+                static_cast<float>(marley_count) /
+                static_cast<float>(cl_tps.size());
         }
-        
-        // If TPs don't have truth info, use cluster's stored value
-        if (cluster_truth_count == 0) {
-            marley_tp_fraction = Cluster.get_supernova_tp_fraction();
-            generator_tp_fraction = Cluster.get_generator_tp_fraction();
+
+        // If TPs don't have truth info, use cluster's stored
+        // value
+        if (cluster_truth_count == 0)
+        {
+            marley_tp_fraction =
+                Cluster.get_supernova_tp_fraction();
+            generator_tp_fraction =
+                Cluster.get_generator_tp_fraction();
         }
-        
+
         supernova_tp_fraction = Cluster.get_supernova_tp_fraction();
         is_es_interaction = Cluster.get_is_es_interaction();
         total_charge = Cluster.get_total_charge();
@@ -833,37 +999,50 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
         true_pdg = Cluster.get_true_pdg();
         is_main_cluster = Cluster.get_is_main_cluster();
         cluster_id = Cluster.get_cluster_id();
-        
+
         // Set match info
         auto it = cluster_to_match.find(cluster_id);
-        if (it != cluster_to_match.end()) {
+        if (it != cluster_to_match.end())
+        {
             match_id = it->second;
-            match_type = 3;  // Currently only 3-plane matches
-        } else {
-            match_id = -1;
-            match_type = -1;  // No match
+            match_type = 3; // Currently only 3-plane matches
         }
-        
+        else
+        {
+            match_id = -1;
+            match_type = -1; // No match
+        }
+
         // Set matching cluster IDs for X plane
-        if (view == "X" && x_to_u_map && x_to_v_map) {
+        if (view == "X" && x_to_u_map && x_to_v_map)
+        {
             auto u_it = x_to_u_map->find(cluster_id);
             matching_clusterId_U = (u_it != x_to_u_map->end()) ? u_it->second : -1;
-            
+
             auto v_it = x_to_v_map->find(cluster_id);
             matching_clusterId_V = (v_it != x_to_v_map->end()) ? v_it->second : -1;
         }
 
         // Fill TP vectors
-        if (tp_detector_channel) tp_detector_channel->clear();
-        if (tp_detector) tp_detector->clear();
-        if (tp_samples_over_threshold) tp_samples_over_threshold->clear();
-        if (tp_time_start) tp_time_start->clear();
-        if (tp_samples_to_peak) tp_samples_to_peak->clear();
-        if (tp_adc_peak) tp_adc_peak->clear();
-        if (tp_adc_integral) tp_adc_integral->clear();
-        if (tp_simide_energy) tp_simide_energy->clear();
-        
-        for (auto& tp : Cluster.get_tps()) {
+        if (tp_detector_channel)
+            tp_detector_channel->clear();
+        if (tp_detector)
+            tp_detector->clear();
+        if (tp_samples_over_threshold)
+            tp_samples_over_threshold->clear();
+        if (tp_time_start)
+            tp_time_start->clear();
+        if (tp_samples_to_peak)
+            tp_samples_to_peak->clear();
+        if (tp_adc_peak)
+            tp_adc_peak->clear();
+        if (tp_adc_integral)
+            tp_adc_integral->clear();
+        if (tp_simide_energy)
+            tp_simide_energy->clear();
+
+        for (auto &tp : Cluster.get_tps())
+        {
             tp_detector_channel->push_back(tp->GetDetectorChannel());
             tp_detector->push_back(tp->GetDetector());
             tp_samples_over_threshold->push_back(tp->GetSamplesOverThreshold());
@@ -875,11 +1054,11 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
         }
         clusters_tree->Fill();
     }
-    
+
     // Write tree
     clusters_dir->cd();
     clusters_tree->Write("", TObject::kOverwrite);
-    
+
     // Clean up vectors
     delete tp_detector_channel;
     delete tp_detector;
@@ -889,116 +1068,158 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
     delete tp_adc_peak;
     delete tp_adc_integral;
     delete tp_simide_energy;
-    
+
     return;
 }
 
-std::vector<Cluster> read_clusters(std::string root_filename){
-    if (verboseMode) LogInfo << "Reading clusters from: " << root_filename << std::endl;
+std::vector<Cluster> read_clusters(std::string root_filename)
+{
+    if (verboseMode)
+        LogInfo << "Reading clusters from: " << root_filename << std::endl;
     std::vector<Cluster> clusters;
     TFile *f = TFile::Open(root_filename.c_str());
-    if (!f || f->IsZombie()) {
+    if (!f || f->IsZombie())
+    {
         LogError << "Cannot open file: " << root_filename << std::endl;
         return clusters;
     }
-    
+
     // Find clusters directory
-    TDirectory* clusters_dir = dynamic_cast<TDirectory*>(f->Get("clusters"));
-    if (!clusters_dir) {
+    TDirectory *clusters_dir = dynamic_cast<TDirectory *>(f->Get("clusters"));
+    if (!clusters_dir)
+    {
         LogWarning << "No 'clusters' directory found, trying file root" << std::endl;
         clusters_dir = f;
     }
-    
+
     // Iterate through all trees in the directory
     TIter nextKey(clusters_dir->GetListOfKeys());
-    TKey* key;
-    while ((key = (TKey*)nextKey())) {
-        if (std::string(key->GetClassName()) != "TTree") continue;
-        
-        TTree* tree = dynamic_cast<TTree*>(key->ReadObj());
-        if (!tree) continue;
-        
-        if (verboseMode) LogInfo << "  Found tree: " << tree->GetName() << " with " << tree->GetEntries() << " entries" << std::endl;
-        
-    // Set up branch addresses for CURRENT schema (as written by write_clusters)
-    Int_t event = 0;
-    Int_t n_tps = 0;
-    Float_t true_pos_x = 0, true_pos_y = 0, true_pos_z = 0;
-    Float_t true_neutrino_mom_x = 0, true_neutrino_mom_y = 0, true_neutrino_mom_z = 0;
-    Float_t true_mom_x = 0, true_mom_y = 0, true_mom_z = 0;
-    Float_t true_neutrino_energy = 0;
-    Float_t true_particle_energy = 0;
-    std::string* true_label = nullptr;
-    Bool_t is_es_interaction = false;
-    Int_t true_pdg = 0;
-    Bool_t is_main_cluster = false;
-    Int_t cluster_id = -1;
-    std::vector<int>* tp_channel = nullptr;
-    std::vector<int>* tp_detector = nullptr;
-    std::vector<int>* tp_time_start = nullptr;
-    std::vector<int>* tp_s_over = nullptr;
-    std::vector<int>* tp_adc_integral = nullptr;
-    
-    if (tree->GetBranch("event")) tree->SetBranchAddress("event", &event);
-    if (tree->GetBranch("n_tps")) tree->SetBranchAddress("n_tps", &n_tps);
-    if (tree->GetBranch("true_pos_x")) tree->SetBranchAddress("true_pos_x", &true_pos_x);
-    if (tree->GetBranch("true_pos_y")) tree->SetBranchAddress("true_pos_y", &true_pos_y);
-    if (tree->GetBranch("true_pos_z")) tree->SetBranchAddress("true_pos_z", &true_pos_z);
-    if (tree->GetBranch("true_neutrino_mom_x")) tree->SetBranchAddress("true_neutrino_mom_x", &true_neutrino_mom_x);
-    if (tree->GetBranch("true_neutrino_mom_y")) tree->SetBranchAddress("true_neutrino_mom_y", &true_neutrino_mom_y);
-    if (tree->GetBranch("true_neutrino_mom_z")) tree->SetBranchAddress("true_neutrino_mom_z", &true_neutrino_mom_z);
-    if (tree->GetBranch("true_mom_x")) tree->SetBranchAddress("true_mom_x", &true_mom_x);
-    if (tree->GetBranch("true_mom_y")) tree->SetBranchAddress("true_mom_y", &true_mom_y);
-    if (tree->GetBranch("true_mom_z")) tree->SetBranchAddress("true_mom_z", &true_mom_z);
-    if (tree->GetBranch("true_neutrino_energy")) tree->SetBranchAddress("true_neutrino_energy", &true_neutrino_energy);
-    if (tree->GetBranch("true_particle_energy")) tree->SetBranchAddress("true_particle_energy", &true_particle_energy);
-    if (tree->GetBranch("true_label")) tree->SetBranchAddress("true_label", &true_label);
-    if (tree->GetBranch("is_es_interaction")) tree->SetBranchAddress("is_es_interaction", &is_es_interaction);
-    if (tree->GetBranch("true_pdg")) tree->SetBranchAddress("true_pdg", &true_pdg);
-    if (tree->GetBranch("is_main_cluster")) tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
-    if (tree->GetBranch("cluster_id")) tree->SetBranchAddress("cluster_id", &cluster_id);
-    if (tree->GetBranch("tp_detector")) tree->SetBranchAddress("tp_detector", &tp_detector);
-    if (tree->GetBranch("tp_detector_channel")) tree->SetBranchAddress("tp_detector_channel", &tp_channel);
-    if (tree->GetBranch("tp_time_start")) tree->SetBranchAddress("tp_time_start", &tp_time_start);
-    if (tree->GetBranch("tp_samples_over_threshold")) tree->SetBranchAddress("tp_samples_over_threshold", &tp_s_over);
-    if (tree->GetBranch("tp_adc_integral")) tree->SetBranchAddress("tp_adc_integral", &tp_adc_integral);        // Read all entries
-        for (Long64_t i = 0; i < tree->GetEntries(); i++) {
+    TKey *key;
+    while ((key = (TKey *)nextKey()))
+    {
+        if (std::string(key->GetClassName()) != "TTree")
+            continue;
+
+        TTree *tree = dynamic_cast<TTree *>(key->ReadObj());
+        if (!tree)
+            continue;
+
+        if (verboseMode)
+            LogInfo << "  Found tree: " << tree->GetName() << " with " << tree->GetEntries() << " entries" << std::endl;
+
+        // Set up branch addresses for CURRENT schema (as written by write_clusters)
+        Int_t event = 0;
+        Int_t n_tps = 0;
+        Float_t true_pos_x = 0, true_pos_y = 0, true_pos_z = 0;
+        Float_t true_neutrino_mom_x = 0, true_neutrino_mom_y = 0, true_neutrino_mom_z = 0;
+        Float_t true_mom_x = 0, true_mom_y = 0, true_mom_z = 0;
+        Float_t true_neutrino_energy = 0;
+        Float_t true_particle_energy = 0;
+        std::string *true_label = nullptr;
+        Bool_t is_es_interaction = false;
+        Int_t true_pdg = 0;
+        Bool_t is_main_cluster = false;
+        Int_t cluster_id = -1;
+        std::vector<int> *tp_channel = nullptr;
+        std::vector<int> *tp_detector = nullptr;
+        std::vector<int> *tp_time_start = nullptr;
+        std::vector<int> *tp_s_over = nullptr;
+        std::vector<int> *tp_adc_integral = nullptr;
+
+        if (tree->GetBranch("event"))
+            tree->SetBranchAddress("event", &event);
+        if (tree->GetBranch("n_tps"))
+            tree->SetBranchAddress("n_tps", &n_tps);
+        if (tree->GetBranch("true_pos_x"))
+            tree->SetBranchAddress("true_pos_x", &true_pos_x);
+        if (tree->GetBranch("true_pos_y"))
+            tree->SetBranchAddress("true_pos_y", &true_pos_y);
+        if (tree->GetBranch("true_pos_z"))
+            tree->SetBranchAddress("true_pos_z", &true_pos_z);
+        if (tree->GetBranch("true_neutrino_mom_x"))
+            tree->SetBranchAddress("true_neutrino_mom_x", &true_neutrino_mom_x);
+        if (tree->GetBranch("true_neutrino_mom_y"))
+            tree->SetBranchAddress("true_neutrino_mom_y", &true_neutrino_mom_y);
+        if (tree->GetBranch("true_neutrino_mom_z"))
+            tree->SetBranchAddress("true_neutrino_mom_z", &true_neutrino_mom_z);
+        if (tree->GetBranch("true_mom_x"))
+            tree->SetBranchAddress("true_mom_x", &true_mom_x);
+        if (tree->GetBranch("true_mom_y"))
+            tree->SetBranchAddress("true_mom_y", &true_mom_y);
+        if (tree->GetBranch("true_mom_z"))
+            tree->SetBranchAddress("true_mom_z", &true_mom_z);
+        if (tree->GetBranch("true_neutrino_energy"))
+            tree->SetBranchAddress("true_neutrino_energy", &true_neutrino_energy);
+        if (tree->GetBranch("true_particle_energy"))
+            tree->SetBranchAddress("true_particle_energy", &true_particle_energy);
+        if (tree->GetBranch("true_label"))
+            tree->SetBranchAddress("true_label", &true_label);
+        if (tree->GetBranch("is_es_interaction"))
+            tree->SetBranchAddress("is_es_interaction", &is_es_interaction);
+        if (tree->GetBranch("true_pdg"))
+            tree->SetBranchAddress("true_pdg", &true_pdg);
+        if (tree->GetBranch("is_main_cluster"))
+            tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
+        if (tree->GetBranch("cluster_id"))
+            tree->SetBranchAddress("cluster_id", &cluster_id);
+        if (tree->GetBranch("tp_detector"))
+            tree->SetBranchAddress("tp_detector", &tp_detector);
+        if (tree->GetBranch("tp_detector_channel"))
+            tree->SetBranchAddress("tp_detector_channel", &tp_channel);
+        if (tree->GetBranch("tp_time_start"))
+            tree->SetBranchAddress("tp_time_start", &tp_time_start);
+        if (tree->GetBranch("tp_samples_over_threshold"))
+            tree->SetBranchAddress("tp_samples_over_threshold", &tp_s_over);
+        if (tree->GetBranch("tp_adc_integral"))
+            tree->SetBranchAddress("tp_adc_integral", &tp_adc_integral); // Read all entries
+        for (Long64_t i = 0; i < tree->GetEntries(); i++)
+        {
             tree->GetEntry(i);
-            
-            if (!tp_channel || tp_channel->empty()) {
-                if (debugMode) LogDebug << "    Skipping entry " << i << " (no TPs)" << std::endl;
+
+            if (!tp_channel || tp_channel->empty())
+            {
+                if (debugMode)
+                    LogDebug << "    Skipping entry " << i << " (no TPs)" << std::endl;
                 continue;
             }
-            
-            if (verboseMode) LogInfo << "    Entry " << i << ": " << tp_channel->size() << " TPs, event " << event << std::endl;
-            
+
+            if (verboseMode)
+                LogInfo << "    Entry " << i << ": " << tp_channel->size() << " TPs, event " << event << std::endl;
+
             // Create TriggerPrimitives from the vectors
-            std::vector<TriggerPrimitive*> tps;
-            for (size_t j = 0; j < tp_channel->size(); j++) {
+            std::vector<TriggerPrimitive *> tps;
+            for (size_t j = 0; j < tp_channel->size(); j++)
+            {
                 int channel = (*tp_channel)[j];
                 int time_start = (*tp_time_start)[j];
                 int s_over_threshold = (*tp_s_over)[j];
                 int adc_integral = (*tp_adc_integral)[j];
-                
+
                 // Create TP (version=0, flag=0, detid=0 are defaults, adc_peak=0, samples_to_peak=0)
-                TriggerPrimitive* tp = new TriggerPrimitive(0, 0, 0, channel, s_over_threshold, time_start, 0, adc_integral, 0);
+                TriggerPrimitive *tp = new TriggerPrimitive(0, 0, 0, channel, s_over_threshold, time_start, 0, adc_integral, 0);
                 tp->SetEvent(event);
-                
+
                 // Determine view from tree name
                 std::string tree_name = tree->GetName();
-                if (tree_name.find("_X") != std::string::npos) {
+                if (tree_name.find("_X") != std::string::npos)
+                {
                     tp->SetView(0); // Collection
-                } else if (tree_name.find("_U") != std::string::npos) {
+                }
+                else if (tree_name.find("_U") != std::string::npos)
+                {
                     tp->SetView(1); // Induction U
-                } else if (tree_name.find("_V") != std::string::npos) {
+                }
+                else if (tree_name.find("_V") != std::string::npos)
+                {
                     tp->SetView(2); // Induction V
                 }
-                
+
                 tps.push_back(tp);
             }
-            
-            if (verboseMode) LogInfo << "    Creating cluster from " << tps.size() << " TPs..." << std::endl;
-            
+
+            if (verboseMode)
+                LogInfo << "    Creating cluster from " << tps.size() << " TPs..." << std::endl;
+
             // Create cluster
             Cluster cluster(tps);
             cluster.set_is_main_cluster(is_main_cluster);
@@ -1008,47 +1229,54 @@ std::vector<Cluster> read_clusters(std::string root_filename){
             cluster.set_true_pos({true_pos_x, true_pos_y, true_pos_z});
             cluster.set_true_neutrino_momentum({true_neutrino_mom_x, true_neutrino_mom_y, true_neutrino_mom_z});
             cluster.set_true_momentum({true_mom_x, true_mom_y, true_mom_z});
-            if (true_label) cluster.set_true_label(*true_label);
+            if (true_label)
+                cluster.set_true_label(*true_label);
             cluster.set_is_es_interaction(is_es_interaction);
             cluster.set_true_pdg(true_pdg);
-            
+
             clusters.push_back(cluster);
         }
     }
-    
+
     f->Close();
-    if (verboseMode) LogInfo << "  Read " << clusters.size() << " total clusters from all trees" << std::endl;
+    if (verboseMode)
+        LogInfo << "  Read " << clusters.size() << " total clusters from all trees" << std::endl;
     return clusters;
 }
 
-std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::string view, std::string directory){
+std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::string view, std::string directory)
+{
     LogInfo << "Reading " << view << " clusters from: " << root_filename << " (directory: " << directory << ")" << std::endl;
     std::vector<Cluster> clusters;
     TFile *f = TFile::Open(root_filename.c_str());
-    if (!f || f->IsZombie()) {
+    if (!f || f->IsZombie())
+    {
         LogError << "Cannot open file: " << root_filename << std::endl;
         return clusters;
     }
-    
+
     // Find specified directory
-    TDirectory* clusters_dir = dynamic_cast<TDirectory*>(f->Get(directory.c_str()));
-    if (!clusters_dir) {
+    TDirectory *clusters_dir = dynamic_cast<TDirectory *>(f->Get(directory.c_str()));
+    if (!clusters_dir)
+    {
         LogWarning << "No '" << directory << "' directory found, trying file root" << std::endl;
         clusters_dir = f;
     }
-    
+
     // Look for specific tree by view name
     std::string tree_name = "clusters_tree_" + view;
-    TTree* tree = dynamic_cast<TTree*>(clusters_dir->Get(tree_name.c_str()));
-    if (!tree) {
+    TTree *tree = dynamic_cast<TTree *>(clusters_dir->Get(tree_name.c_str()));
+    if (!tree)
+    {
         LogError << "  Tree " << tree_name << " not found in file" << std::endl;
         f->Close();
         delete f;
         return clusters;
     }
-    
-    if (verboseMode) LogInfo << "  Found tree: " << tree->GetName() << " with " << tree->GetEntries() << " entries" << std::endl;
-    
+
+    if (verboseMode)
+        LogInfo << "  Found tree: " << tree->GetName() << " with " << tree->GetEntries() << " entries" << std::endl;
+
     // Set up branch addresses for CURRENT schema (as written by write_clusters)
     Int_t event = 0;
     Int_t n_tps = 0;
@@ -1058,78 +1286,113 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
     Float_t true_neutrino_energy = 0;
     Float_t true_particle_energy = 0;
     Float_t marley_tp_fraction = 0;
-    std::string* true_label = nullptr;
+    std::string *true_label = nullptr;
     Bool_t is_main_cluster = false;
     Bool_t is_es_interaction = false;
     Int_t true_pdg = 0;
     Int_t cluster_id = -1;
-    std::vector<int>* tp_channel = nullptr;
-    std::vector<int>* tp_detector = nullptr;
-    std::vector<int>* tp_time_start = nullptr;
-    std::vector<int>* tp_s_over = nullptr;
-    std::vector<int>* tp_samples_to_peak = nullptr;
-    std::vector<int>* tp_adc_peak = nullptr;
-    std::vector<int>* tp_adc_integral = nullptr;
-    std::vector<double>* tp_simide_energy = nullptr;
-    
-    if (tree->GetBranch("event")) tree->SetBranchAddress("event", &event);
-    if (tree->GetBranch("n_tps")) tree->SetBranchAddress("n_tps", &n_tps);
-    if (tree->GetBranch("true_pos_x")) tree->SetBranchAddress("true_pos_x", &true_pos_x);
-    if (tree->GetBranch("true_pos_y")) tree->SetBranchAddress("true_pos_y", &true_pos_y);
-    if (tree->GetBranch("true_pos_z")) tree->SetBranchAddress("true_pos_z", &true_pos_z);
-    if (tree->GetBranch("true_neutrino_mom_x")) tree->SetBranchAddress("true_neutrino_mom_x", &true_neutrino_mom_x);
-    if (tree->GetBranch("true_neutrino_mom_y")) tree->SetBranchAddress("true_neutrino_mom_y", &true_neutrino_mom_y);
-    if (tree->GetBranch("true_neutrino_mom_z")) tree->SetBranchAddress("true_neutrino_mom_z", &true_neutrino_mom_z);
-    if (tree->GetBranch("true_mom_x")) tree->SetBranchAddress("true_mom_x", &true_mom_x);
-    if (tree->GetBranch("true_mom_y")) tree->SetBranchAddress("true_mom_y", &true_mom_y);
-    if (tree->GetBranch("true_mom_z")) tree->SetBranchAddress("true_mom_z", &true_mom_z);
-    if (tree->GetBranch("true_neutrino_energy")) tree->SetBranchAddress("true_neutrino_energy", &true_neutrino_energy);
-    if (tree->GetBranch("true_particle_energy")) tree->SetBranchAddress("true_particle_energy", &true_particle_energy);
-    if (tree->GetBranch("marley_tp_fraction")) tree->SetBranchAddress("marley_tp_fraction", &marley_tp_fraction);
-    if (tree->GetBranch("true_label")) tree->SetBranchAddress("true_label", &true_label);
-    if (tree->GetBranch("is_main_cluster")) tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
-    if (tree->GetBranch("is_es_interaction")) tree->SetBranchAddress("is_es_interaction", &is_es_interaction);
-    if (tree->GetBranch("true_pdg")) tree->SetBranchAddress("true_pdg", &true_pdg);
-    if (tree->GetBranch("cluster_id")) tree->SetBranchAddress("cluster_id", &cluster_id);
-    if (tree->GetBranch("tp_detector")) tree->SetBranchAddress("tp_detector", &tp_detector);
-    if (tree->GetBranch("tp_detector_channel")) tree->SetBranchAddress("tp_detector_channel", &tp_channel);
-    if (tree->GetBranch("tp_time_start")) tree->SetBranchAddress("tp_time_start", &tp_time_start);
-    if (tree->GetBranch("tp_samples_over_threshold")) tree->SetBranchAddress("tp_samples_over_threshold", &tp_s_over);
-    if (tree->GetBranch("tp_samples_to_peak")) tree->SetBranchAddress("tp_samples_to_peak", &tp_samples_to_peak);
-    if (tree->GetBranch("tp_adc_peak")) tree->SetBranchAddress("tp_adc_peak", &tp_adc_peak);
-    if (tree->GetBranch("tp_adc_integral")) tree->SetBranchAddress("tp_adc_integral", &tp_adc_integral);
-    if (tree->GetBranch("tp_simide_energy")) tree->SetBranchAddress("tp_simide_energy", &tp_simide_energy);
-    
+    std::vector<int> *tp_channel = nullptr;
+    std::vector<int> *tp_detector = nullptr;
+    std::vector<int> *tp_time_start = nullptr;
+    std::vector<int> *tp_s_over = nullptr;
+    std::vector<int> *tp_samples_to_peak = nullptr;
+    std::vector<int> *tp_adc_peak = nullptr;
+    std::vector<int> *tp_adc_integral = nullptr;
+    std::vector<double> *tp_simide_energy = nullptr;
+
+    if (tree->GetBranch("event"))
+        tree->SetBranchAddress("event", &event);
+    if (tree->GetBranch("n_tps"))
+        tree->SetBranchAddress("n_tps", &n_tps);
+    if (tree->GetBranch("true_pos_x"))
+        tree->SetBranchAddress("true_pos_x", &true_pos_x);
+    if (tree->GetBranch("true_pos_y"))
+        tree->SetBranchAddress("true_pos_y", &true_pos_y);
+    if (tree->GetBranch("true_pos_z"))
+        tree->SetBranchAddress("true_pos_z", &true_pos_z);
+    if (tree->GetBranch("true_neutrino_mom_x"))
+        tree->SetBranchAddress("true_neutrino_mom_x", &true_neutrino_mom_x);
+    if (tree->GetBranch("true_neutrino_mom_y"))
+        tree->SetBranchAddress("true_neutrino_mom_y", &true_neutrino_mom_y);
+    if (tree->GetBranch("true_neutrino_mom_z"))
+        tree->SetBranchAddress("true_neutrino_mom_z", &true_neutrino_mom_z);
+    if (tree->GetBranch("true_mom_x"))
+        tree->SetBranchAddress("true_mom_x", &true_mom_x);
+    if (tree->GetBranch("true_mom_y"))
+        tree->SetBranchAddress("true_mom_y", &true_mom_y);
+    if (tree->GetBranch("true_mom_z"))
+        tree->SetBranchAddress("true_mom_z", &true_mom_z);
+    if (tree->GetBranch("true_neutrino_energy"))
+        tree->SetBranchAddress("true_neutrino_energy", &true_neutrino_energy);
+    if (tree->GetBranch("true_particle_energy"))
+        tree->SetBranchAddress("true_particle_energy", &true_particle_energy);
+    if (tree->GetBranch("marley_tp_fraction"))
+        tree->SetBranchAddress("marley_tp_fraction", &marley_tp_fraction);
+    if (tree->GetBranch("true_label"))
+        tree->SetBranchAddress("true_label", &true_label);
+    if (tree->GetBranch("is_main_cluster"))
+        tree->SetBranchAddress("is_main_cluster", &is_main_cluster);
+    if (tree->GetBranch("is_es_interaction"))
+        tree->SetBranchAddress("is_es_interaction", &is_es_interaction);
+    if (tree->GetBranch("true_pdg"))
+        tree->SetBranchAddress("true_pdg", &true_pdg);
+    if (tree->GetBranch("cluster_id"))
+        tree->SetBranchAddress("cluster_id", &cluster_id);
+    if (tree->GetBranch("tp_detector"))
+        tree->SetBranchAddress("tp_detector", &tp_detector);
+    if (tree->GetBranch("tp_detector_channel"))
+        tree->SetBranchAddress("tp_detector_channel", &tp_channel);
+    if (tree->GetBranch("tp_time_start"))
+        tree->SetBranchAddress("tp_time_start", &tp_time_start);
+    if (tree->GetBranch("tp_samples_over_threshold"))
+        tree->SetBranchAddress("tp_samples_over_threshold", &tp_s_over);
+    if (tree->GetBranch("tp_samples_to_peak"))
+        tree->SetBranchAddress("tp_samples_to_peak", &tp_samples_to_peak);
+    if (tree->GetBranch("tp_adc_peak"))
+        tree->SetBranchAddress("tp_adc_peak", &tp_adc_peak);
+    if (tree->GetBranch("tp_adc_integral"))
+        tree->SetBranchAddress("tp_adc_integral", &tp_adc_integral);
+    if (tree->GetBranch("tp_simide_energy"))
+        tree->SetBranchAddress("tp_simide_energy", &tp_simide_energy);
+
     // Read all entries
-    for (Long64_t i = 0; i < tree->GetEntries(); i++) {
+    for (Long64_t i = 0; i < tree->GetEntries(); i++)
+    {
         tree->GetEntry(i);
-        
-        if (!tp_channel || tp_channel->empty()) {
-            if (debugMode) LogDebug << "    Skipping entry " << i << " (no TPs)" << std::endl;
+
+        if (!tp_channel || tp_channel->empty())
+        {
+            if (debugMode)
+                LogDebug << "    Skipping entry " << i << " (no TPs)" << std::endl;
             continue;
         }
-        
-        if (verboseMode) LogInfo << "    Entry " << i << ": " << tp_channel->size() << " TPs, event " << event << ", cluster_id " << cluster_id << std::endl;
-        
+
+        if (verboseMode)
+            LogInfo << "    Entry " << i << ": " << tp_channel->size() << " TPs, event " << event << ", cluster_id " << cluster_id << std::endl;
+
         // Create TriggerPrimitives from the vectors
-        std::vector<TriggerPrimitive*> tps;
-        for (size_t j = 0; j < tp_channel->size(); j++) {
+        std::vector<TriggerPrimitive *> tps;
+        for (size_t j = 0; j < tp_channel->size(); j++)
+        {
             int channel = (*tp_channel)[j];
             int detector = (*tp_detector)[j];
             int time_start = (*tp_time_start)[j];
             int s_over_threshold = (*tp_s_over)[j];
             int samples_to_peak = 0;
-            if (tp_samples_to_peak && j < tp_samples_to_peak->size()) {
+            if (tp_samples_to_peak && j < tp_samples_to_peak->size())
+            {
                 samples_to_peak = (*tp_samples_to_peak)[j];
             }
             int adc_peak = (tp_adc_peak && j < tp_adc_peak->size()) ? (*tp_adc_peak)[j] : 0;
             int adc_integral = (*tp_adc_integral)[j];
             double simide_energy = 0.0;
-            if (tp_simide_energy && j < tp_simide_energy->size()) {
+            if (tp_simide_energy && j < tp_simide_energy->size())
+            {
                 simide_energy = (*tp_simide_energy)[j];
             }
 
-            if (debugMode) {
+            if (debugMode)
+            {
                 LogDebug << "      TP " << j
                          << " channel=" << channel
                          << " detector=" << detector
@@ -1141,33 +1404,39 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
                          << " simide_energy=" << simide_energy
                          << std::endl;
             }
-            
+
             // Create TP - Note: event number set via SetEvent() after construction
             // because TriggerPrimitive constructor doesn't take event as parameter
-            TriggerPrimitive* tp = new TriggerPrimitive(0, 0, 0, channel, s_over_threshold, time_start, samples_to_peak, adc_integral, adc_peak);
-            
+            TriggerPrimitive *tp = new TriggerPrimitive(0, 0, 0, channel, s_over_threshold, time_start, samples_to_peak, adc_integral, adc_peak);
+
             // Set simide energy
             tp->SetSimideEnergy(simide_energy);
-            
+
             // IMPORTANT: Set event BEFORE adding to vector to avoid Cluster constructor check failures
             tp->SetEvent(event);
 
             tp->SetDetector(detector);
-            
+
             // Set view from parameter
-            if (view == "X") {
+            if (view == "X")
+            {
                 tp->SetView(0); // Collection
-            } else if (view == "U") {
+            }
+            else if (view == "U")
+            {
                 tp->SetView(1); // Induction U
-            } else if (view == "V") {
+            }
+            else if (view == "V")
+            {
                 tp->SetView(2); // Induction V
             }
-            
+
             tps.push_back(tp);
         }
-        
-        if (verboseMode) LogInfo << "    Creating cluster from " << tps.size() << " TPs..." << std::endl;
-        
+
+        if (verboseMode)
+            LogInfo << "    Creating cluster from " << tps.size() << " TPs..." << std::endl;
+
         // Create cluster
         Cluster cluster(tps);
         cluster.set_is_main_cluster(is_main_cluster);
@@ -1179,48 +1448,56 @@ std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::str
         cluster.set_true_pos({true_pos_x, true_pos_y, true_pos_z});
         cluster.set_true_neutrino_momentum({true_neutrino_mom_x, true_neutrino_mom_y, true_neutrino_mom_z});
         cluster.set_true_momentum({true_mom_x, true_mom_y, true_mom_z});
-        if (true_label) cluster.set_true_label(*true_label);
+        if (true_label)
+            cluster.set_true_label(*true_label);
         cluster.set_true_pdg(true_pdg);
-        
+
         clusters.push_back(cluster);
     }
-    
+
     f->Close();
     delete f;
-    
+
     LogInfo << "  Loaded " << clusters.size() << " " << view << " clusters" << std::endl;
     return clusters;
 }
 
-std::map<int, std::vector<Cluster>> create_event_mapping(std::vector<Cluster>& clusters){
+std::map<int, std::vector<Cluster>> create_event_mapping(std::vector<Cluster> &clusters)
+{
     std::map<int, std::vector<Cluster>> event_mapping;
-    for (auto& g : clusters) {
-    // check if the event is already in the map
-        if (event_mapping.find(g.get_tp(0)->GetEvent()) == event_mapping.end()) {
+    for (auto &g : clusters)
+    {
+        // check if the event is already in the map
+        if (event_mapping.find(g.get_tp(0)->GetEvent()) == event_mapping.end())
+        {
             std::vector<Cluster> temp;
             temp.push_back(g);
             event_mapping[g.get_tp(0)->GetEvent()] = temp;
         }
-        else {
+        else
+        {
             event_mapping[g.get_tp(0)->GetEvent()].push_back(g);
         }
     }
     return event_mapping;
 }
 
-std::map<int, std::vector<TriggerPrimitive>> create_background_event_mapping(std::vector<TriggerPrimitive>& bkg_tps){
+std::map<int, std::vector<TriggerPrimitive>> create_background_event_mapping(std::vector<TriggerPrimitive> &bkg_tps)
+{
     std::map<int, std::vector<TriggerPrimitive>> event_mapping;
-    for (auto& tp : bkg_tps) {
-    // check if the event is already in the map
-        if (event_mapping.find(tp.GetEvent()) == event_mapping.end()) {
+    for (auto &tp : bkg_tps)
+    {
+        // check if the event is already in the map
+        if (event_mapping.find(tp.GetEvent()) == event_mapping.end())
+        {
             std::vector<TriggerPrimitive> temp;
             temp.push_back(tp);
             event_mapping[tp.GetEvent()] = temp;
         }
-        else {
+        else
+        {
             event_mapping[tp.GetEvent()].push_back(tp);
         }
     }
     return event_mapping;
 }
-

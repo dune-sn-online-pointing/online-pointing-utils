@@ -2,6 +2,8 @@
 #ifndef cluster_TO_ROOT_LIBS_H
 #define cluster_TO_ROOT_LIBS_H
 
+#include <map>
+#include <vector>
 #include "Cluster.h"
 #include "Functions.h"
 

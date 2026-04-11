@@ -89,6 +89,7 @@ class VolumeViewer:
             return None
         
         # Look for matched clusters ROOT file
+        volume_dir = self.npz_dir / base_name
         root_dir = volume_dir.parent
         
         # Try matched_clusters folder
