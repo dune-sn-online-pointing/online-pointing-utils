@@ -18,6 +18,7 @@ bool ensureDirectoryExists(const std::string& folder) {
 
 std::string getTpstreamBaseFolder(const nlohmann::json& j) {
     // Priority 1: Explicit tpstream_folder
+    std::cout << "Resolving tpstream base folder..." << std::endl;
     if (j.contains("tpstream_folder") && !j["tpstream_folder"].get<std::string>().empty()) {
         std::string folder = j["tpstream_folder"].get<std::string>();
         return std::filesystem::path(folder).lexically_normal().string();
@@ -34,6 +35,7 @@ std::string getTpstreamBaseFolder(const nlohmann::json& j) {
     if (j.contains("signal_folder") && !j["signal_folder"].get<std::string>().empty()) {
         std::string signal_folder = j["signal_folder"].get<std::string>();
         std::filesystem::path tpstream_path = std::filesystem::path(signal_folder) / "tpstreams";
+        std::cout << "Derived tpstream path from signal_folder: " << tpstream_path << std::endl;
         return tpstream_path.lexically_normal().string();
     }
     
@@ -428,8 +430,10 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
     };
 
     auto file_exists = [](const std::string& filename) -> bool {
-        std::ifstream file(filename);
-        return file.good();
+        // HMS need to implement something that can work with xrootd
+        // std::ifstream file(filename);
+        //return file.good();
+        return true;
     };
 
     try {
@@ -489,18 +493,24 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
             LogInfo << "JSON filename: " << file << std::endl;
             if (file_exists(file) && has_any_suffix(file)) {
                 filenames.push_back(file);
-            } else {
+            } 
+            
+            else {
                 LogWarning << "filename not found or doesn't match suffixes: " << file << std::endl;
             }
         }
 
         // Priority 4: filelist OR inputListFile (file with list of files)
+        
         if (filenames.empty()) {
+            std::cout << " right before filelist" << std::endl;
             std::string list_file;
             if (j.contains("filelist") && !j["filelist"].get<std::string>().empty()) {
                 list_file = j["filelist"].get<std::string>();
                 LogInfo << "JSON filelist: " << list_file << std::endl;
-            } else if (j.contains("inputListFile") && !j["inputListFile"].get<std::string>().empty()) {
+            } 
+            else if (j.contains("inputListFile") && !j["inputListFile"].get<std::string>().empty()) {
+                
                 list_file = j["inputListFile"].get<std::string>();
                 LogInfo << "JSON inputListFile: " << list_file << std::endl;
             }
@@ -523,6 +533,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
                         LogWarning << "Skipping (wrong suffixes): " << line << std::endl; 
                         continue; 
                     }
+                    std::cout << "first attempt file" << line << std::endl;
                     filenames.push_back(line);
                 }
             }
@@ -545,6 +556,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
 
 // another version to look for a specific pattern in json
 std::vector<std::string> find_input_files(const nlohmann::json& j, const std::string& pattern) {
+    
     std::vector<std::string> possible_patterns = {"tpstream", "tps", "tps_bg", "clusters", "sig", "bg"};
     LogInfo << "[find_input_files] Called with pattern: " << pattern << std::endl;
 
@@ -607,8 +619,10 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
         
     auto file_exists = [](const std::string& filename) -> bool {
         std::ifstream file(filename);
-        bool exists = file.good();
-        if (debugMode) LogDebug << "[find_input_files] Checking existence of '" << filename << "': " << (exists ? "exists" : "missing") << std::endl;
+        bool exists = true;
+        // HMS disable while we figure out how to do xroot
+        // bool exists = file.good();
+        // if (debugMode) LogDebug << "[find_input_files] Checking existence of '" << filename << "': " << (exists ? "exists" : "missing") << std::endl;
         return exists;
     };
 
@@ -643,8 +657,8 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
     std::string folder_key      = pattern + "_folder";
     std::string input_file_key  = pattern + "_input_file";
     std::string input_list_key  = pattern + "_input_list";
-
-    if (debugMode) LogDebug << "[find_input_files] Keys: folder_key='" << folder_key << "', input_file_key='" << input_file_key << "', input_list_key='" << input_list_key << "'" << std::endl;
+    std::string input_list_file_key = pattern + "_input_list_file";
+    if (debugMode) LogDebug << "[find_input_files] Keys: folder_key='" << folder_key << "', input_file_key='" << input_file_key << "', input_list_key='" << input_list_key << "'" << "', input_list_file_key='" << input_list_file_key << std::endl;
 
     // Auto-generate folder path if not explicitly provided
     // For "bg" pattern, ALWAYS auto-generate (bg_folder is base, we need bg_folder/tps)
@@ -673,8 +687,9 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
             } else if ((pattern == "tps" || pattern == "sig") && j.contains("sig_folder") && !j["sig_folder"].get<std::string>().empty()) {
                 base = j["sig_folder"].get<std::string>();
             }
+            
         }
-        
+        std::cout << "background base " << base << std::endl;
         // Auto-generate subfolder based on pattern
         if (!base.empty()) {
             if (pattern == "tpstream") {
@@ -772,7 +787,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
             // Build the find command based on pattern
             std::string find_pattern;
             if (pattern == "sig" || pattern == "bg") {
-                find_pattern = "*_tps.root";
+                find_pattern = "*_tps*.root";
             } else if (pattern == "tps_bg") {
                 find_pattern = "*_bg_tps.root";
             } else {
@@ -845,7 +860,49 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
                 LogWarning << "[find_input_files] File '" << file << "' is empty, missing, or does not match pattern" << std::endl;
             }
         }
-    } else if (input_files.empty()) {
+    }
+    // Priority 4: filelist OR inputListFile (file with list of files) HMS - recovered from other instance of this method. 
+
+    if (input_files.empty()) {
+        std::cout << " right before filelist" << std::endl;
+        std::string list_file;
+        if (j.contains("filelist") && !j["filelist"].get<std::string>().empty()) {
+            list_file = j["filelist"].get<std::string>();
+            LogInfo << "JSON filelist: " << list_file << std::endl;
+        } 
+        else if (j.contains("inputListFile") && !j["inputListFile"].get<std::string>().empty()) {
+            list_file = j["inputListFile"].get<std::string>();
+            LogInfo << "JSON inputListFile: " << list_file << std::endl;
+        }
+
+        if (!list_file.empty()) {
+            std::ifstream infile(list_file);
+            if (!infile.good()) {
+                LogError << "Cannot open list file: " << list_file << std::endl;
+                return input_files;  // Return empty vector
+            }
+            std::string line;
+            while (std::getline(infile, line)) {
+                if (line.size() >= 3 && line.substr(0, 3) == "###") break;
+                if (line.empty() || line[0] == '#') continue;
+                // HMS disable file location for xroot
+                // if (!file_exists(line)) {
+                //     LogWarning << "Skipping (missing): " << line << std::endl;
+                //     continue;
+                
+                // HMS - disable as this code doesn't exist in this section 
+                // if (!has_any_suffix(line)) {
+                //     LogWarning << "Skipping (wrong suffixes): " << line << std::endl;
+                //     continue;
+                // }
+                std::cout << "second attempt file" << line << std::endl;
+                input_files.push_back(line);
+            }
+            infile.close();
+        }
+    }
+
+    else if (input_files.empty()) {
         if (debugMode) LogDebug << "[find_input_files] Key '" << input_list_key << "' not found in JSON or input_files already found" << std::endl;
     }
 

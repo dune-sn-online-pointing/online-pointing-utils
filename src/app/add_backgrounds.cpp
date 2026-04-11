@@ -49,6 +49,8 @@ int main(int argc, char* argv[]) {
     clp.addTriggerOption("verboseMode", {"-v", "--verbose"}, "Run in verbose mode");
     clp.addTriggerOption("debugMode", {"-d", "--debug"}, "Run in debug mode (more detailed than verbose)");
     clp.addTriggerOption("override", {"-f", "--override"}, "Override existing output files");
+    clp.addOption("bktrMargin", {"--bktr-margin"}, "Override backtracker_error_margin (int)");
+    
     clp.addDummyOption();
     
     LogInfo << clp.getDescription().str() << std::endl;
@@ -79,6 +81,29 @@ int main(int argc, char* argv[]) {
     int max_files = j.value("max_files", -1); // -1 means no limit
     int skip_files = j.value("skip_files", 0); // number of files to skip at start
     
+    int bktr_margin = backtracker_error_margin; // from parameters/timing.h
+    if (j.contains("backtracker_error_margin")) {
+        try { bktr_margin = j.at("backtracker_error_margin").get<int>(); }
+        catch (...) { /* ignore and keep default */ }
+    }
+
+    if (clp.isOptionTriggered("bktrMargin")) {
+        bktr_margin = clp.getOptionVal<int>("bktrMargin");
+    }
+    LogInfo << "Using backtracker_error_margin: " << bktr_margin << std::endl;
+    // Effective time window for TP<->truth association in TDC ticks (base 1 TPC sample + margin in TPC samples)
+    
+    int effective_time_window = (1 + bktr_margin) * conversion_tdc_to_tpc;
+    LogInfo << "Effective time window (TDC ticks): " << effective_time_window << " (conversion_tdc_to_tpc=" << conversion_tdc_to_tpc << ")" << std::endl;
+
+    int channel_tolerance = 0; // default fallback
+    if (j.contains("backtracker_channel_tolerance")) {
+        try { channel_tolerance = j.at("backtracker_channel_tolerance").get<int>(); }
+        catch (...) { LogWarning << "Invalid backtracker_channel_tolerance in JSON, keeping default (50)." << std::endl; }
+    }
+    LogInfo << "Channel tolerance (channels): " << channel_tolerance << std::endl;
+
+
     // CLI overrides JSON
     if (clp.isOptionTriggered("skip_files")) {
         skip_files = clp.getOptionVal<int>("skip_files");
@@ -93,6 +118,7 @@ int main(int argc, char* argv[]) {
 
     // sig_folder: pure signal TPs (input) - default to tpstream_folder
     std::string sig_folder_cfg = j.value("sig_folder", std::string(""));
+    std::cout << "sig_folder_cfg" << sig_folder_cfg << std::endl;
     std::string sig_folder = sig_folder_cfg.empty()
         ? base_folder
         : resolveFolderAgainstTpstream(j, sig_folder_cfg, true);
@@ -101,8 +127,19 @@ int main(int argc, char* argv[]) {
     // bg_folder: base folder for background files (will auto-generate to bg_folder/tps)
     // Don't need to explicitly resolve here - find_input_files will handle it
     std::string bg_folder_cfg = j.value("bg_folder", std::string(""));
-    LogThrowIf(bg_folder_cfg.empty(), "bg_folder is not specified in JSON config.");
-    
+    std::cout << "bg_folder_cfg" << bg_folder_cfg << std::endl;
+    //LogThrowIf(bg_folder_cfg.empty(), "bg_folder is not specified in JSON config.");
+    bool haslist = false;
+    std::string bg_input_list_file_cfg;
+    if (bg_folder_cfg.empty()) {
+        bg_input_list_file_cfg = j.value("bgListFile", std::string(""));
+        
+        haslist = true;
+        std::cout << "bg_input_list_file_cfg " << bg_input_list_file_cfg << std::endl;
+        LogThrowIf(bg_input_list_file_cfg.empty(), "bg_folder and bg_input_list_file are not specified in JSON config.");
+        std::cout << "bg_input_list_file_cfg is there " << bg_input_list_file_cfg << std::endl;
+    }
+    std::cout << "bg_input_list_file_cfg check " << bg_input_list_file_cfg << std::endl;
     // tps_bg_folder or tps_folder: merged TPs output
     std::string output_folder = getOutputFolder(j, "tps_bg", "tps_bg_folder");
     LogThrowIf(output_folder.empty(), "tps_bg_folder (or tps_folder) is not specified and could not be auto-generated.");
@@ -112,6 +149,7 @@ int main(int argc, char* argv[]) {
     LogInfo << " - Signal type: " << signal_type << std::endl;
     LogInfo << " - Signal folder (pure signal TPs): " << sig_folder << std::endl;
     LogInfo << " - Background folder (base): " << bg_folder_cfg << std::endl;
+    LogInfo << " - Background list (base): " << bg_input_list_file_cfg << std::endl;
     LogInfo << " - Output folder (merged TPs): " << output_folder << std::endl;
     LogInfo << " - Override existing output files: " << (overrideMode ? "YES" : "NO") << std::endl;
     LogInfo << " - Add backgrounds around vertex only: " << (around_vertex_only ? "YES" : "NO") << std::endl;
@@ -129,10 +167,33 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> signal_files = find_input_files_by_tpstream_basenames(j, "sig", skip_files, max_files);
     LogInfo << "Found " << signal_files.size() << " signal files matching tpstream basenames" << std::endl;
     LogThrowIf(signal_files.empty(), "No signal files found matching tpstream basenames.");
+    std::vector<std::string> bkg_files;
     // Find background files in bg_folder (looking for *_tps.root)
-    std::vector<std::string> bkg_files = find_input_files(j, "bg");
-    LogInfo << "Found " << bkg_files.size() << " background files" << std::endl;
-    LogThrowIf(bkg_files.empty(), "No background files found in bg_folder.");
+    std::cout << " find background files" << std::endl;
+    
+    if (!bg_folder_cfg.empty()){
+         bkg_files = find_input_files(j, "bg");
+        LogInfo << "Found " << bkg_files.size() << " background files" << std::endl;
+        LogThrowIf(bkg_files.empty(), "No background files found in bg_folder.");
+    }
+    int count = 0;
+    if (haslist) {
+        LogInfo << "getting bg files from bg_input_list_file_cfg " << bg_input_list_file_cfg << std::endl;
+        std::ifstream thelist(bg_input_list_file_cfg.c_str());
+        std::string buffer;
+        while (!thelist.eof() ) {
+            count++;
+            thelist >> buffer;
+            //std::cout << "a file " << count << " "  << buffer << "\n";
+            if (buffer.size() <1 ) break;
+            bkg_files.push_back(buffer);
+            buffer.clear();
+        }
+        thelist.close();
+        
+        LogInfo << "Found " << bkg_files.size() << " background files" << std::endl;
+        LogThrowIf(bkg_files.empty(), "No background files found in bg_input_list_file.");
+    }
 
     // Random starting point for background files, then sequential access
     std::random_device rd;
@@ -148,7 +209,22 @@ int main(int argc, char* argv[]) {
     std::vector<int> current_event_ids;
     
     // Load first background file
-    read_tps(bkg_files[bkg_file_idx], current_bkg_tps, current_bkg_true, current_bkg_nu);
+    std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x6";
+    bool nomatch = false;
+    // read_tpstream_maps(bkg_files[bkg_file_idx], 
+    //     current_bkg_tps, 
+    //     current_bkg_true, 
+    //     current_bkg_nu, 
+    //     TPtree_path,
+    //     nomatch,
+    //     /*supernova_option*/0,
+    //     static_cast<double>(effective_time_window),
+    //     channel_tolerance); 
+    read_tps(bkg_files[bkg_file_idx], 
+        current_bkg_tps, 
+        current_bkg_true, 
+        current_bkg_nu);
+
     for (const auto& kv : current_bkg_tps) {
         current_event_ids.push_back(kv.first);
     }
@@ -170,7 +246,16 @@ int main(int argc, char* argv[]) {
             current_bkg_nu.clear();
             current_event_ids.clear();
             
-            read_tps(bkg_files[bkg_file_idx], current_bkg_tps, current_bkg_true, current_bkg_nu);
+            // read_tpstream_maps(bkg_files[bkg_file_idx], current_bkg_tps, current_bkg_true, current_bkg_nu,TPtree_path,
+            //     nomatch,
+            //     /*supernova_option*/0,
+            //     static_cast<double>(effective_time_window),
+            //     channel_tolerance); 
+            read_tps(bkg_files[bkg_file_idx], 
+            current_bkg_tps, 
+            current_bkg_true, 
+            current_bkg_nu);
+            
             for (const auto& kv : current_bkg_tps) {
                 current_event_ids.push_back(kv.first);
             }
@@ -182,6 +267,7 @@ int main(int argc, char* argv[]) {
         }
         
         int event_id = current_event_ids[bkg_event_idx];
+
         auto bkg_tps = current_bkg_tps.at(event_id);
         
         if (verboseMode) {
@@ -236,18 +322,22 @@ int main(int argc, char* argv[]) {
         }
         
         // Prepare merged data structures
-        std::vector<std::vector<TriggerPrimitive>> merged_tps_vec;
-        std::vector<std::vector<TrueParticle>> merged_true_vec;
-        std::vector<std::vector<Neutrino>> merged_nu_vec;
+        std::map<int, std::vector<TriggerPrimitive>> merged_tps_by_event;
+        std::map<int, std::vector<TriggerPrimitive>> merged_tps_vec;
+        std::map<int, std::vector<TrueParticle>> merged_true_vec;
+        std::map<int, std::vector<Neutrino>> merged_nu_vec;
         
         // Track signal TP counts for each event (for diagnostics)
         std::vector<int> signal_tp_counts;
         
         // Process each event in the signal file
+        int count = 0;
         for (const auto& kv : signal_tps_by_event) {
             int event_id = kv.first;
             const auto& signal_tps = kv.second;
-            
+    
+            count++;
+            if (count < 1000) LogInfo << "\nProcessing signal event " << event_id << " with " << signal_tps.size() << " signal TPs" << std::endl;
             // Get neutrino vertex position if around_vertex_only is enabled
             TVector3 vertex_pos(0, 0, 0);
             bool has_vertex = false;
@@ -269,10 +359,10 @@ int main(int argc, char* argv[]) {
             // Vectors to hold merged truth info for this event (kept for backward compatibility)
             std::vector<TrueParticle> merged_true;
             std::vector<Neutrino> merged_nu;
-            
+            if (count < 100000) LogInfo << "Look for background events " << std::endl;
             // Get random background event
             auto [bkg_event_id, bkg_tps] = get_next_bkg_event();
-            
+            if (count < 100000) LogInfo << "Selected background event " << bkg_event_id << " with " << bkg_tps.size() << " TPs" << std::endl;
             if (bkg_event_id >= 0 && !bkg_tps.empty()) {
                 int bkg_added = 0;
                 int bkg_truth_linked = 0;
@@ -336,10 +426,14 @@ int main(int argc, char* argv[]) {
                     return a.GetTimeStart() < b.GetTimeStart();
                 });
             
-            merged_tps_vec.push_back(merged_tps);
-            merged_true_vec.push_back(merged_true);
-            merged_nu_vec.push_back(merged_nu);
+            merged_tps_vec[event_id] = merged_tps;
+            merged_true_vec[event_id] = merged_true;
+            merged_nu_vec[event_id] = merged_nu;
             signal_tp_counts.push_back(signal_tps.size());
+            std::cout << event_id << " merged_tps.size() " << merged_tps.size() 
+            << " merged_true.size() " << merged_true.size() 
+            << " merged_nu.size() "   << merged_nu.size() 
+            << " signal_tp_counts " << signal_tps.size() << std::endl;
         }
         
         // Write output file with merged TPs

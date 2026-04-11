@@ -2,7 +2,7 @@
 
 # On worker nodes, INIT_DONE might be inherited but environment is not
 # Always reinitialize to ensure LCG is properly loaded
-if [[ $INIT_DONE == true ]] && [[ -n "${ONLINE_POINTING_UTILS_LCG_VIEW:-}" ]]; then
+if [[ $INIT_DONE == true ]] ; then
     echo "Environment is already initialized, not running init.sh again."
     echo "If it is not loaded properly, run export INIT_DONE=false and rerun init.sh"
 else
@@ -38,8 +38,24 @@ else
     elif [[ $(hostname) == *"fnal"* ]]; then
         if grep -q "Scientific Linux release 7" /etc/redhat-release 2>/dev/null; then
             echo " Setting up environment for fnal cluster, using ups products. If this fails, it means you're not in a slf7 container."
+            # echo "setup-tutorial.sh"
+            # . /cvmfs/dune.opensciencegrid.org/dune-spack/spack-develop-fermi/setup-env.sh
+            # spack env activate dune-tutorial
+            # echo "Activate dune-tutorial"
+
+            # echo "load GCC and CMAKE so don't use system"
+            # echo "GCC"
+            # spack load gcc@12.5.0 arch=linux-almalinux9-x86_64_v2 
+            # echo "CMAKE"
+            # spack load cmake 
+
+            # echo "load ifdhc"
+            # spack load ifdhc
+            # spack load ifdhc-config
             # Set up the basic environment
+            echo " Setting up UPS products"
             source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
+            echo "got here"
             echo " Setting up necessary packages..."
             # versions are chosen for compatibility with the pyenv
             setup root v6_26_06a -q e20:p3913:prof

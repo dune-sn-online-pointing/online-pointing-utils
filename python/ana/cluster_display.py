@@ -313,16 +313,17 @@ class ClusterViewer:
         self.draw_mode = draw_mode.lower()
         self.only_marley = only_marley
         self.params = Parameters(params_dir)
-        
+        self.axis_location = None 
         self.items: List[ClusterItem] = []
         self.current_idx = 0
         
         self.fig = None
         self.ax = None
+        self.ax_y_cm = None
         self.im = None
         self.btn_prev = None
         self.btn_next = None
-        
+        self.cbar = None
         self.load_clusters()
     
     def load_clusters(self):
@@ -353,7 +354,7 @@ class ClusterViewer:
         # Read all branches
         branches = [
             'n_tps', 'true_neutrino_energy', 'total_charge', 'total_energy',
-            'true_label', 'true_interaction', 'event',
+            'true_label', 'is_es_interaction', 'event',
             'tp_detector_channel', 'tp_time_start', 'tp_samples_over_threshold',
             'tp_samples_to_peak', 'tp_adc_peak', 'tp_adc_integral'
         ]
@@ -377,7 +378,7 @@ class ClusterViewer:
                 item.label = label
                 
                 # Handle interaction string (may be bytes or str)
-                interaction = arrays['true_interaction'][i] if 'true_interaction' in arrays else ''
+                interaction = arrays['is_es_interaction'][i] if 'is_es_interaction' in arrays else ''
                 if isinstance(interaction, bytes):
                     interaction = interaction.decode('utf-8')
                 item.interaction = interaction
@@ -499,6 +500,8 @@ class ClusterViewer:
         # Clear and redraw
         self.ax.clear()
         
+        self.ax.set_xticks([])
+
         # Apply threshold mask
         hist_masked = np.ma.masked_where(hist < threshold_adc, hist)
         
@@ -530,9 +533,10 @@ class ClusterViewer:
         time_tick_cm = self.params.get('timing.time_tick_cm', 0.0805)
         
         # Add secondary Y axis (right side, inside plot)
-        ax_y_cm = self.ax.twinx()
-        ax_y_cm.set_ylim(self.ax.get_ylim()[0] * time_tick_cm, self.ax.get_ylim()[1] * time_tick_cm)
-        ax_y_cm.set_ylabel('drift [cm]')
+        if self.ax_y_cm is None: 
+            self.ax_y_cm = self.ax.twinx()
+        self.ax_y_cm.set_ylim(self.ax.get_ylim()[0] * time_tick_cm, self.ax.get_ylim()[1] * time_tick_cm)
+        self.ax_y_cm.set_ylabel('drift [cm]')
         
         # Title
         if item.is_event:
@@ -548,11 +552,13 @@ class ClusterViewer:
         self.ax.set_title(title, fontsize=10)
         
         # Add colorbar
-        if hasattr(self, 'cbar') and self.cbar is not None:
+        if self.cbar is not None and hasattr(self, 'cbar'):
             try:
                 self.cbar.remove()
             except:
                 pass
+        #HMS restore the axes as the colorbar messes with them.
+        self.ax.set_position(self.axis_location)
         self.cbar = plt.colorbar(self.im, ax=self.ax, label=f'ADC ({self.draw_mode} model)')
         
         self.ax.grid(True, alpha=0.3)
@@ -581,7 +587,7 @@ class ClusterViewer:
         
         # Create axes - main plot takes most of the space
         self.ax = self.fig.add_axes([0.1, 0.15, 0.8, 0.75])
-        
+        self.axis_location = self.ax.get_position()
         # Create navigation buttons
         ax_prev = self.fig.add_axes([0.3, 0.02, 0.15, 0.05])
         ax_next = self.fig.add_axes([0.55, 0.02, 0.15, 0.05])
