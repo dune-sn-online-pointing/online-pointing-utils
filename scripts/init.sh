@@ -38,34 +38,26 @@ else
     elif [[ $(hostname) == *"fnal"* ]]; then
         if grep -q "Scientific Linux release 7" /etc/redhat-release 2>/dev/null; then
             echo " Setting up environment for fnal cluster, using ups products. If this fails, it means you're not in a slf7 container."
-            # echo "setup-tutorial.sh"
-            # . /cvmfs/dune.opensciencegrid.org/dune-spack/spack-develop-fermi/setup-env.sh
-            # spack env activate dune-tutorial
-            # echo "Activate dune-tutorial"
 
-            # echo "load GCC and CMAKE so don't use system"
-            # echo "GCC"
-            # spack load gcc@12.5.0 arch=linux-almalinux9-x86_64_v2 
-            # echo "CMAKE"
-            # spack load cmake 
-
-            # echo "load ifdhc"
-            # spack load ifdhc
-            # spack load ifdhc-config
             # Set up the basic environment
             echo " Setting up UPS products"
             source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
             echo "got here"
             echo " Setting up necessary packages..."
             # versions are chosen for compatibility with the pyenv
-            setup root v6_26_06a -q e20:p3913:prof
+            setup root v6_28_12 -q -e26:p3915:prof
             setup nlohmann_json v3_10_4_1 -q e26:prof
             setup cmake  v3_27_4
             setup valgrind v3_10_1
             setup gcc v9_3_0
             echo " Done!"
         else
-            echo " looks like AL9 "
+            echo " looks like AL9, use minimal spack environment"
+            echo "setup-prototype.sh"
+            source /cvmfs/dune.opensciencegrid.org/spack/v1.1/share/spack/setup-env.sh
+            echo "Activate dune-prototype"
+            spack env activate dune-prototype
+            echo "load GCC and ROOT so don't use system"
             spack load root@6_28_12
             spack load gcc@12.5.0 arch=linux-almalinux9-x86_64_v2 
             echo " Done!"

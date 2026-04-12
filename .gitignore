@@ -1,12 +1,12 @@
 # JSON configs (keep only examples tracked)
-json/**/*.json
+!json/**/*.json
 !json/example*.json
 !json/display/example.json
 !json/test_settings.json
 
 #json/*/*
 build/*
-lists/
+!lists/
 benchmark/
 benchmark_cc_tick3_ch2_tot3_e3/
 *.o

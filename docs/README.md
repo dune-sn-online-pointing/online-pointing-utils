@@ -30,7 +30,7 @@ Smoke test used also for local CI
 
 ## 2) Pipeline at a Glance
 
-1. Backtrack TPStreams → `*_tps.root` (signal-only with truth)
+1. Backtrack TPStreams (for signal and background) → `*_tps.root` (signal-only with truth)
 2. Add backgrounds → `tps_bg/*_tps_bg.root`
 3. Make clusters → `clusters_<prefix>_<conds>/*_clusters.root`
 4. Match clusters (3-plane) → `matched_clusters_<prefix>_<conds>/*_matched.root`
@@ -78,9 +78,10 @@ The `scripts/sequence.sh` wrapper runs the steps above in order and recompiles o
 
 Install deps (isolated env recommended)
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python -m venv python/online-pointing-env && source python/online-pointing-env/bin/activate
 pip install -r python/requirements.txt
 ```
+There is a script `python/setup-python.sh` that does this for you.
 
 ## 7) Testing
 
