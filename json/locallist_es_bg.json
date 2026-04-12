@@ -2,7 +2,7 @@
   "comment": "Example configuration for ES signal with background mixing workflow",
   
   "inputListFile":"/Users/schellma/Dropbox/snb/online-pointing-utils/data/prod_es/ec_marley.txt",
-  "bgListFile":"/Users/schellma/Dropbox/snb/online-pointing-utils/data/bg_btrk_list.txt",
+  "bgListFile":"/Users/schellma/Dropbox/snb/online-pointing-utils/lists/local_CENTRAL_v4.txt",
 
   "outputFolder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output",
   "sig_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output/sig",
@@ -12,9 +12,9 @@
   "volume_images_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output/volume_images",
 
   "products_prefix": "es_bg",
-  "max_files": 10,
+  "max_files": 2,
   "file_pattern": "*_tps.root",
-  "backtracker_error_margin": 0,
+  "backtracker_error_margin": 10,
 
   "time_tolerance_ticks": 10,
   "spatial_tolerance_cm": 100,

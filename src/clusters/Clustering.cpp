@@ -580,7 +580,7 @@ void write_clusters(std::vector<Cluster> &clusters, TFile *clusters_file, std::s
 
     if (old_tree)
     {
-        std::cout << "Existing tree found for view " << view << ": " << old_tree->GetName() << std::endl;
+        //std::cout << "Existing tree found for view " << view << ": " << old_tree->GetName() << std::endl;
         bool has_momentum = (old_tree->GetBranch("true_mom_x") != nullptr);
         if (!has_momentum)
         {
@@ -629,7 +629,7 @@ void write_clusters(std::vector<Cluster> &clusters, TFile *clusters_file, std::s
     std::vector<int> *tp_adc_integral;
     std::vector<double> *tp_simide_energy;
 
-    std::cout << "Allocating TP vectors for tree branches" << std::endl;
+    //std::cout << "Allocating TP vectors for tree branches" << std::endl;
     tp_detector_channel = new std::vector<int>();
     tp_detector = new std::vector<int>();
     tp_samples_over_threshold = new std::vector<int>();
@@ -838,7 +838,7 @@ void write_clusters(std::vector<Cluster> &clusters, TFile *clusters_file, std::s
     clusters_dir->cd();
     clusters_tree->Write("", TObject::kOverwrite);
     // File close is managed by caller
-    std::cout << "delete the TP vectors allocated for tree branches" << std::endl;
+    //std::cout << "delete the TP vectors allocated for tree branches" << std::endl;
     delete tp_detector_channel;
     delete tp_detector;
     delete tp_samples_over_threshold;

@@ -65,7 +65,10 @@ else
             setup gcc v9_3_0
             echo " Done!"
         else
-            echo " WARNING: not running in slf7, can't set up dune products and commands, can't compile."
+            echo " looks like AL9 "
+            spack load root@6_28_12
+            spack load gcc@12.5.0 arch=linux-almalinux9-x86_64_v2 
+            echo " Done!"
         fi
     fi
 
