@@ -62,6 +62,9 @@ else
             spack load gcc@12.5.0 arch=linux-almalinux9-x86_64_v2 
             echo " Done!"
         fi
+
+    else
+        echo " WARNING: Unrecognized hostname $(hostname), not setting up LCG or ROOT environment. If you're on a supported cluster, please report this message to the developers."
     fi
 
     export JSON_DIR=$HOME_DIR"/json/"

@@ -69,7 +69,7 @@ DRIFT_VELOCITY_CM_PER_TICK = 0.0805  # Drift velocity in cm per tick (same as TI
 TDC_TO_TPC_CONVERSION = 32           # Conversion factor from TDC to TPC ticks
 
 # Volume size
-VOLUME_SIZE_CM = 100.0  # 1 meter x 1 meter
+VOLUME_SIZE_CM = 50.0  # 1 meter x 1 meter
 
 # ADC thresholds for pentagon drawing (from Display.cpp)
 THRESHOLD_ADC_X = 60   # Collection plane
