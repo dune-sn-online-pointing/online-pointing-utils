@@ -1,1 +1,1 @@
-justin show-replicas --mql="files where merge.tag=$1" | awk '{print $2}' | sort -u > lists/$1.txt
+justin show-replicas --mql="files where merge.tag=$1 and dune.output_status=confirmed" | awk '{print $2}' | sort -u > lists/$1.txt

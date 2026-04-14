@@ -8,9 +8,22 @@ Prerequisites
 - C++17, CMake, ROOT
 - Python 3.9+ with `python/requirements.txt`
 
+There is now a script 
+```bash
+source python/setup-python.sh
+```
+ which will build the python environment `python/online-pointing-env`.
+
+
 Set up the submodules used in this project:
 ```bash
 	./scripts/manage-submodules.sh --up
+```
+
+Initialization, includes setup for SL7 and AL9
+
+```bash
+./scripts/init.sh          # uses build/; add -c to clean, -n to skip build
 ```
 
 Build (use the wrapper to stay portable across macOS/Linux)
@@ -24,11 +37,20 @@ Run the standard pipeline
 ```
 
 Smoke test used also for local CI
+
 ```bash
 ./test/run_all_tests.sh 
 ```
 
 ## 2) Pipeline at a Glance
+
+The fnal pipeline can now use lists of tagged files in rucio.  
+This script, when run on machines with rucio set up will create lists of files with a given merge tag.  They can then be used to do backtracking to produce `tps` files. 
+
+```bash
+./scripts/generatelist.sh <merge tag>
+```
+
 
 1. Backtrack TPStreams (for signal and background) → `*_tps.root` (signal-only with truth)
 2. Add backgrounds → `tps_bg/*_tps_bg.root`
