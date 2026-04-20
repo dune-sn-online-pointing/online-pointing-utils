@@ -445,6 +445,9 @@ class ClusterViewer:
         # Determine axis ranges and create channel mapping
         tmin, tmax = float('inf'), float('-inf')
         unique_channels = sorted(set(item.ch[:n_tps]))
+        first_channel = unique_channels[0]
+        last_channel = unique_channels[-1]
+        print(f"Unique channels: {[int(c) for c in unique_channels]}")
         
         for i in range(n_tps):
             ts = item.tstart[i]
@@ -452,11 +455,12 @@ class ClusterViewer:
             tmin = min(tmin, ts)
             tmax = max(tmax, te)
         
-        ch_to_idx = {ch: idx for idx, ch in enumerate(unique_channels)}
+        #ch_to_idx = {ch: idx for idx, ch in enumerate(unique_channels)}
+        ch_to_idx = {ch: ch - first_channel for ch in unique_channels}
         
         # Create histogram with padding
         pad_bins = 2
-        n_ch = len(unique_channels)
+        n_ch = last_channel - first_channel + 1
         n_t = int(tmax - tmin) + 1
         
         hist = np.zeros((n_t + 2 * pad_bins, n_ch + 2 * pad_bins))
@@ -475,7 +479,8 @@ class ClusterViewer:
             ts = item.tstart[i]
             tot = item.sot[i]
             ch_actual = item.ch[i]
-            ch_idx = ch_to_idx[ch_actual] + pad_bins
+            #ch_idx = ch_to_idx[ch_actual] + pad_bins
+            ch_idx = ch_actual - first_channel + pad_bins
             
             samples_to_peak = item.stopeak[i] if i < len(item.stopeak) else (tot // 2 if tot > 0 else 0)
             peak_adc = item.adc_peak[i] if i < len(item.adc_peak) else 200
@@ -521,8 +526,8 @@ class ClusterViewer:
         self.ax.set_ylabel('time [ticks]')
         
         # Create X-axis labels with actual channel numbers
-        xticks = [i + pad_bins for i in range(len(unique_channels))]
-        xticklabels = [str(ch) for ch in unique_channels]
+        xticks = [i for i in range(-pad_bins, n_ch + pad_bins)]
+        xticklabels = [str(ch + first_channel) for ch in xticks]
         self.ax.set_xticks(xticks)
         self.ax.set_xticklabels(xticklabels, rotation=90, fontsize=8)
         
