@@ -1,4 +1,5 @@
 #include "../backtracking/Backtracking.h"
+#include <format>
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -38,7 +39,12 @@ int main(int argc, char* argv[]) {
     nlohmann::json j; i >> j;
     
     // Determine backtracker_error_margin value: CLI > JSON > default from parameters/timing.h
-    std::string tp_tree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2";
+    std::string tp_tree_path; 
+    #ifdef STANDARD_FORMAT
+    tp_tree_path = "triggerAna/TriggerPrimitive/tpmakerTPCsimpleThr__TPGen";
+    #else
+    tp_tree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2";
+    #endif
     if (j.contains("tp_tree_path")) {
         try { tp_tree_path = j.at("tp_tree_path").get<std::string>(); }
         catch (...) { /* ignore and keep default */ }
@@ -92,6 +98,8 @@ int main(int argc, char* argv[]) {
     int skip_files = j.value("skip_files", 0);
     int max_files = j.value("max_files", -1);
     int maxcount = j.value("maxcount", -1); 
+    int skipevent = j.value("skipevent", -1); 
+
     LogInfo << "Initial skip_files: " << skip_files << ", max_files: " << max_files << ", maxcount: " << maxcount << std::endl;
     // legacy, will be ignored if skip_files/max_files are set
     
@@ -164,6 +172,7 @@ int main(int argc, char* argv[]) {
     LogInfo << "Channel tolerance (channels): " << channel_tolerance << std::endl;
 
     int done_files = 0;
+    TFile* file;
 
     for (auto& filename : filenames) {
 
@@ -175,10 +184,12 @@ int main(int argc, char* argv[]) {
         std::string input_basename = filename.substr(filename.find_last_of("/\\") + 1);
         input_basename = input_basename.substr(0, input_basename.length() - 14); // remove _tpstream.root
         std::ostringstream suffix;
+        //std::string skipper = sprintf("_s%4d_l%4d",skipevent,maxcount);
+        std::string skipper =std::format("_s{}_l{}",skipevent,maxcount);
         if (bktr_margin != standard_backtracker_error_margin) {
-            suffix << "_bktr" << bktr_margin << "_tps.root";
+            suffix << skipper << "_bktr" << bktr_margin << "_tps.root";
         } else {
-            suffix << "_tps.root";
+            suffix << skipper <<"_tps.root";
         }
         std::string out = outfolder + "/" + input_basename + suffix.str();
         // Use absolute path for output
@@ -198,8 +209,13 @@ int main(int argc, char* argv[]) {
         if (verboseMode) LogInfo << "Reading file: " << filename << std::endl;
         // count events
         // using this tree just because it's the smallest
-        std::string MCtree_path = "triggerAnaDumpTPs/mctruths";
-        TFile *file = TFile::Open(filename.c_str());
+        std::string MCtree_path;
+        #ifdef STANDARD_FORMAT
+        MCtree_path = "triggerAna/mctruths";
+        #else
+        MCtree_path = "triggerAnaDumpTPs/mctruths";
+        #endif
+        file = TFile::Open(filename.c_str());
         if (!file || file->IsZombie()) { LogError << "Failed to open file: " << filename << std::endl; continue; }
         // TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
         // if (!TPtree) { LogError << "Tree not found: " << TPtree_path << std::endl; file->Close(); delete file; continue; }
@@ -211,47 +227,68 @@ int main(int argc, char* argv[]) {
         int therun = -1;
         int theevent = -1;
         std::set<UInt_t> unique_events;
-        int count = 0;
+        int evcount = 0;
         if (MCtree) {
-            count++;
-            if ( count > maxcount && maxcount > 0) {
-                std::cout << "Too many trees, breaking loop after maxcount iterations." << std::endl;
-                break;
-            }
+            
 
             MCtree->SetBranchAddress("event", &this_event_number);
             MCtree->SetBranchAddress("run", &this_run_number);
-            
+            int an_event=-1;
             for (Long64_t i = 0; i < MCtree->GetEntries(); ++i) {
                 MCtree->GetEntry(i);
                 //std::cout << "check event" << i << this_run_number << " " << this_event_number << std::endl;
                 
                 UInt_t event_index = this_event_number;
-                unique_events.insert(event_index);
+                
+                if (event_index != an_event){
+                    evcount++;
+                    an_event = event_index;
+                    if (evcount <= skipevent && skipevent > -1){
+                        //if (debugMode) 
+                        LogDebug << "Skipping event " << event_index << " " << an_event << " " << evcount << std::endl;
+                        continue;
+                    }
+                    unique_events.insert(event_index);
+                    
+                    std::cout << event_index << " " << evcount << std::endl;
+                    if ( evcount >= maxcount+skipevent && maxcount > 0) {
+                        std::cout << "Too many trees, breaking loop after maxcount iterations." << std::endl;
+                        break;
+                    }
+                    
+                }
+                
             }
         }
         n_events = unique_events.size();
-        if (verboseMode) LogInfo << " Found " << n_events << " unique events in tree: " << MCtree_path << std::endl;
+        if (verboseMode) LogInfo << " Found " << n_events << " between" << skipevent << " and " << skipevent+maxcount << " in tree: " << MCtree_path << std::endl;
         
-        
+        for (auto event_index:unique_events){
+            std::cout << "event set" << event_index << std::endl;
+        }
         // MCtree->GetEntry(0);
-        // int first_event = this_event_number;
+        // int first_event = this_event_number;unique events in t
 
         if (verboseMode) LogInfo << "Number of events in file: " << n_events << std::endl;
         file->Close(); delete file; file = nullptr;
 
         tps.clear(); true_particles.clear(); neutrinos.clear();
         //std::string treepath = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2";
+        file = TFile::Open(filename.c_str());
+
         for (auto event_index:unique_events){
             if (verboseMode) LogInfo << "Reading event " << event_index << std::endl;
             if (debugMode) LogDebug << "Beginning read_tpstream for event " << event_index << std::endl;
             
             read_tpstream(
                 filename,
+                file,
                 tps[event_index],
                 true_particles[event_index],
                 neutrinos[event_index],
                 tp_tree_path,
+                maxcount,
+                skipevent,
                 /*noMatchingMode*/false,
                 /*supernova_option*/0,
                 event_index,
@@ -280,6 +317,7 @@ int main(int argc, char* argv[]) {
         write_tps(out_abs, tps, true_particles, neutrinos);
         output_files.push_back(out_abs);
     }
+    //file->Close();
 
     LogInfo << "\nList of output files (" << output_files.size() << "):" << std::endl;
     for (size_t i = 0; i < std::min<size_t>(10, output_files.size()); ++i) {

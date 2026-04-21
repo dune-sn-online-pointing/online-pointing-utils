@@ -884,17 +884,17 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
             while (std::getline(infile, line)) {
                 if (line.size() >= 3 && line.substr(0, 3) == "###") break;
                 if (line.empty() || line[0] == '#') continue;
-                // HMS disable file location for xroot
+                //HMS disable file location for xroot
                 // if (!file_exists(line)) {
                 //     LogWarning << "Skipping (missing): " << line << std::endl;
                 //     continue;
-                
+                // }
                 // HMS - disable as this code doesn't exist in this section 
                 // if (!has_any_suffix(line)) {
                 //     LogWarning << "Skipping (wrong suffixes): " << line << std::endl;
                 //     continue;
                 // }
-                std::cout << "second attempt file" << line << std::endl;
+                std::cout << "found a file" << line << std::endl;
                 input_files.push_back(line);
             }
             infile.close();

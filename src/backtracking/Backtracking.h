@@ -3,6 +3,7 @@
 
 #include "TriggerPrimitive.hpp"
 
+#define STANDARD_FORMAT
 std::vector<float> calculate_position(TriggerPrimitive* tp);
 std::vector<std::vector<float>> validate_position_calculation(std::vector<TriggerPrimitive*> tps);
 float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign);
@@ -14,10 +15,13 @@ get_first_and_last_event(TTree* tree, UInt_t * branch_value, int which_event, in
 // read the tps from the files and save them in a vector
 // std::vector<TriggerPrimitive> read_tpstream(std::vector<std::string> filenames, int plane=2, int supernova_option=0, int max_events_per_filename = INT_MAX);
 void read_tpstream(std::string filename,
+				 TFile* filepointer,
 				 std::vector<TriggerPrimitive>& tps,
 				 std::vector<TrueParticle>& true_particles,
 				 std::vector<Neutrino>& neutrinos,
 				 std::string treepath = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2",
+				 int maxcount = -1,
+				 int skipevent = -1,
 				 bool noMatchingMode = false,
 				 int supernova_option = 0,
 				 int event_number = 0,

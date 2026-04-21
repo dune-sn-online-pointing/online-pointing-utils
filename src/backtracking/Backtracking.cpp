@@ -1,108 +1,127 @@
 #include "Backtracking.h"
 #include "TriggerPrimitive.hpp"
+#define TEST_MODE
+
 
 LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
 // method to read in all events and store in maps for later access (instead of just one event at a time like above) - not currently used but could be useful for future studies
-void read_tpstream_maps(std::string filename,
-				 std::map<int,std::vector<TriggerPrimitive>>tps_map,
-				 std::map<int,std::vector<TrueParticle>>true_particles_map,
-				 std::map<int,std::vector<Neutrino>>neutrinos_map,
-                 std::string treepath,
-                 bool noMatchingMode,
-				 int supernova_option,
-				 double time_tolerance_ticks,
-				 int channel_tolerance){
-    if (verboseMode) LogInfo << "Reading file: " << filename << std::endl;
+// void read_tpstream_maps(std::string filename,
+// 				 std::map<int,std::vector<TriggerPrimitive>>tps_map,
+// 				 std::map<int,std::vector<TrueParticle>>true_particles_map,
+// 				 std::map<int,std::vector<Neutrino>>neutrinos_map,
+//                  std::string treepath,
+//                  bool noMatchingMode,
+// 				 int supernova_option,
+// 				 double time_tolerance_ticks,
+// 				 int channel_tolerance){
+//     if (verboseMode) LogInfo << "Reading file: " << filename << std::endl;
 
-    std::cout << "treepath: " << treepath 
-    << " noMatchingMode: " << noMatchingMode 
-    << " supernova_option: " << supernova_option 
-    << " time_tolerance_ticks: " << time_tolerance_ticks 
-    << " channel_tolerance: " << channel_tolerance <<   std::endl;
-    // count events
-    // using this tree just because it's the smallest
-    std::string MCtree_path = "triggerAnaDumpTPs/mctruths";
-    TFile *file = TFile::Open(filename.c_str());
-    if (!file || file->IsZombie()) { LogError << "Failed to open file: " << filename << std::endl; return ; }
-    // TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
-    // if (!TPtree) { LogError << "Tree not found: " << TPtree_path << std::endl; file->Close(); delete file; return; }
-    TTree *MCtree = dynamic_cast<TTree*>(file->Get(MCtree_path.c_str()));
-    int n_events = 0;
-    UInt_t this_event_number = 0;
-    UInt_t this_run_number = 0;
-    if (!MCtree) { LogError << "Tree not found: " << MCtree_path << std::endl; file->Close(); delete file; return; }
-    int therun = -1;
-    int theevent = -1;
-    std::set<UInt_t> unique_events;
-    if (MCtree) {
-        MCtree->SetBranchAddress("event", &this_event_number);
-        MCtree->SetBranchAddress("run", &this_run_number);
-        
-        for (Long64_t i = 0; i < MCtree->GetEntries(); ++i) {
-            MCtree->GetEntry(i);
-            //std::cout << "check event" << i << this_run_number << " " << this_event_number << std::endl;
-            theevent = this_event_number;
+//     std::cout << "treepath: " << treepath 
+//     << " noMatchingMode: " << noMatchingMode 
+//     << " supernova_option: " << supernova_option 
+//     << " time_tolerance_ticks: " << time_tolerance_ticks 
+//     << " channel_tolerance: " << channel_tolerance <<   std::endl;
+//     // count events
+//     // using this tree just because it's the smallest
+//     std::string MCtree_path;
+//     #ifdef STANDARD_FORMAT
+//     MCtree_path = "triggerAna/mctruths";
+//     #else
+//     MCtree_path = "triggerAnaDumpTPs/mctruths";
+//     #endif
+//     TFile *file = TFile::Open(filename.c_str());
+//     if (!file || file->IsZombie()) { LogError << "Failed to open file: " << filename << std::endl; return ; }
+//     // TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
+//     // if (!TPtree) { LogError << "Tree not found: " << TPtree_path << std::endl; file->Close(); delete file; return; }
+//     TTree *MCtree = dynamic_cast<TTree*>(file->Get(MCtree_path.c_str()));
+//     int n_events = 0;
+//     UInt_t this_event_number = 0;
+//     UInt_t this_run_number = 0;
+//     if (!MCtree) { LogError << "Tree not found: " << MCtree_path << std::endl; file->Close(); delete file; return; }
+//     int therun = -1;
+//     int theevent = -1;
+//     int eventcount = 0;
+//     #ifdef TEST_MODE
+//     int maxcount = 100;
+//     #else
+//     int maxcount = -1;
+//     #endif
+//     std::set<UInt_t> unique_events;
+//     if (MCtree) {
+//         MCtree->SetBranchAddress("event", &this_event_number);
+//         MCtree->SetBranchAddress("run", &this_run_number);
+//         for (Long64_t i = 0; i < MCtree->GetEntries(); ++i) {
+//             eventcount++;
+//             if (eventcount > maxcount && maxcount>0) break;
+
+//             MCtree->GetEntry(i);
+//             std::cout << "check event" << i << this_run_number << " " << this_event_number << std::endl;
+//             theevent = this_event_number;
             
-            UInt_t event_index = this_event_number;
-            unique_events.insert(event_index);
-        }
-    }
-    n_events = unique_events.size();
-    if (verboseMode) LogInfo << " Found " << n_events << " unique events in tree: " << MCtree_path << std::endl;
+//             UInt_t event_index = this_event_number;
+//             unique_events.insert(event_index);
+//         }
+//     }
+
+//     n_events = unique_events.size();
+//     if (verboseMode) LogInfo << " Found " << n_events << " unique events in tree: " << MCtree_path << std::endl;
     
-    if (verboseMode) LogInfo << "Number of events in file: " << n_events << std::endl;
-    file->Close(); delete file; file = nullptr;
+//     if (verboseMode) LogInfo << "Number of events in file: " << n_events << std::endl;
+//     file->Close(); delete file; file = nullptr;
 
-    tps_map.clear(); true_particles_map.clear(); neutrinos_map.clear();
-    int count = 0;
-
-    for (auto event_index:unique_events){
-        count++;
-        if (verboseMode) LogInfo << "Reading event " << event_index << std::endl;
-        if (debugMode) LogDebug << "Beginning read_tpstream for event " << event_index << std::endl;
+//     tps_map.clear(); true_particles_map.clear(); neutrinos_map.clear();
+    
+//     eventcount = 0;
+//     for (auto event_index:unique_events){
+//         eventcount++;
+//         if (verboseMode) LogInfo << "Reading event " << event_index << std::endl;
+//         if (debugMode) LogDebug << "Beginning read_tpstream for event " << event_index << std::endl;
         
-        read_tpstream(
-            filename,
-            tps_map[event_index],
-            true_particles_map[event_index],
-            neutrinos_map[event_index],
-            treepath,
-            noMatchingMode,
-            /*supernova_option*/0,
-            event_index,
-            static_cast<double>(time_tolerance_ticks),
-            channel_tolerance
-        );
+//         read_tpstream(
+//             filename,
+//             tps_map[event_index],
+//             true_particles_map[event_index],
+//             neutrinos_map[event_index],
+//             treepath,
+//             noMatchingMode,
+//             /*supernova_option*/0,
+//             event_index,
+//             static_cast<double>(time_tolerance_ticks),
+//             channel_tolerance
+//         );
 
-        // Summarise direct TP-to-truth associations built inside read_tpstream
-        int matched_tps_counter = 0;
-        for (const auto& tp : tps_map[event_index]) {
-            if (tp.GetTrueParticle() != nullptr) { matched_tps_counter++; }
-        }
-        if (verboseMode) LogInfo << "Matched " << matched_tps_counter << "/" << tps_map[event_index].size() 
-            << " TPs to true particles via SimIDE association." << std::endl;
+//         // Summarise direct TP-to-truth associations built inside read_tpstream
+//         int matched_tps_counter = 0;
+//         for (const auto& tp : tps_map[event_index]) {
+//             if (tp.GetTrueParticle() != nullptr) { matched_tps_counter++; }
+//         }
+//         if (verboseMode) LogInfo << "Matched " << matched_tps_counter << "/" << tps_map[event_index].size() 
+//             << " TPs to true particles via SimIDE association." << std::endl;
                 
-        if (debugMode) {
-            LogDebug << "Event " << event_index << " processing complete with " 
-                        << tps_map[event_index].size() << " TPs and " 
-                        << true_particles_map[event_index].size() << " true particles" << std::endl;
-        }
-        // if (verboseMode && count < 2){
-        // LogDebug << print_tps(tps_map, true_particles_map, neutrinos_map, event_index) << std::endl;
-        // }
-    }
-    return;
-}
+//         if (debugMode) {
+//             LogDebug << "Event " << event_index << " processing complete with " 
+//                         << tps_map[event_index].size() << " TPs and " 
+//                         << true_particles_map[event_index].size() << " true particles" << std::endl;
+//         }
+//         // if (verboseMode && count < 2){
+//         // LogDebug << print_tps(tps_map, true_particles_map, neutrinos_map, event_index) << std::endl;
+//         // }
+//     }
+//     return;
+// }
 
                  
 
 // read the tps from the files and save them in a vector
 void read_tpstream(std::string filename,
+                 TFile* file,
                  std::vector<TriggerPrimitive>& tps,
                  std::vector<TrueParticle>& true_particles,
                  std::vector<Neutrino>& neutrinos,
                  std::string TPtree_path,
+                 const int maxcount,
+                 const int skipevent,
                  bool noMatchingMode,
                  int supernova_option,
                  int event_number,
@@ -110,15 +129,30 @@ void read_tpstream(std::string filename,
                  int channel_tolerance
                 ){
 
-    LogInfo << " Reading file: " << filename << std::endl;
-     
-    TFile *file = TFile::Open(filename.c_str());
-    if (!file || file->IsZombie()) {
-        LogError << " Error opening file: " << filename << std::endl;
+    //LogInfo << " Reading file: " << filename << std::endl;
+    
+    if (!file) {
+        LogInfo << " Opening a file: " << filename << std::endl;
+        file = TFile::Open(filename.c_str());
+        if (!file || file->IsZombie()) {
+            LogError << " Error opening file: " << filename << std::endl;
         return;
+        }
     }
 
+    if (file->GetName() != filename) {
+        LogInfo << " Opening new file: " << file->GetName() << " " << filename << std::endl;
+        file = TFile::Open(filename.c_str());
+        if (!file || file->IsZombie()) {
+            LogError << " Error opening file: " << filename << std::endl;
+        return;
+        }
+    }
+
+    //LogInfo << " look for " << TPtree_path << std::endl;
     
+
+
     std::string this_interaction = "UNKNOWN";
     // Extract interaction type from filename by looking for exact _cc_ or _es_ patterns
     // Check _cc_ first to avoid false matches with substrings
@@ -141,7 +175,7 @@ void read_tpstream(std::string filename,
     TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
     if (!TPtree) {
         LogError << " Tree not found: " << TPtree_path << std::endl;
-        file->Close();
+        //file->Close();
         return;  // can still go to next file
         // HMS need to close the file before trun
     }
@@ -163,7 +197,7 @@ void read_tpstream(std::string filename,
     // Check if we found the event in TPs tree - if not, skip this event (can happen with backgrounds)
     if (first_tp_entry_in_event == -1) {
         if (verboseMode) LogInfo << "Event " << event_number << " has no TPs in file " << filename << " (skipping)" << std::endl;
-        file->Close(); // HMS still need to close the file
+        //file->Close(); // HMS still need to close the file
         return; // Return with empty vectors - this is normal for some background events
     }
 
@@ -261,12 +295,16 @@ void read_tpstream(std::string filename,
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Read mcparticles (geant)
-
-    std::string MCparticlestree_path = "triggerAnaDumpTPs/mcparticles";
+    std::string MCparticlestree_path;
+    #ifdef STANDARD_FORMAT
+    MCparticlestree_path = "triggerAna/mcparticles";
+    #else
+    MCparticlestree_path = "triggerAnaDumpTPs/mcparticles";
+    #endif
     TTree *MCparticlestree = dynamic_cast<TTree*>(file->Get(MCparticlestree_path.c_str()));
     if (!MCparticlestree) {
         LogError << "Tree not found: " << MCparticlestree_path << std::endl;
-        file->Close(); //HMS need to close the file
+        //file->Close(); //HMS need to close the file
         return;
     }
 
@@ -305,19 +343,19 @@ void read_tpstream(std::string filename,
     MCparticlestree->SetBranchAddress("z", &z);
 
     if (!SetBranchWithFallback(MCparticlestree, {"Px", "px"}, &px, "MC particles Px")) {
-        file->Close(); //HMS still need to close before return 
+        //file->Close(); //HMS still need to close before return 
         return;
     }
     if (!SetBranchWithFallback(MCparticlestree, {"Py", "py"}, &py, "MC particles Py")) {
-        file->Close();  // HMS still need to close before return
+        //file->Close();  // HMS still need to close before return
         return;
     }
     if (!SetBranchWithFallback(MCparticlestree, {"Pz", "pz"}, &pz, "MC particles Pz")) {
-        file->Close();  // HMS still need to close before return
+        //file->Close();  // HMS still need to close before return
         return;
     }
     if (!SetBranchWithFallback(MCparticlestree, {"en", "energy"}, &energy, "MC particles energy")) {
-        file->Close();  // HMS still need to close before return
+        //file->Close();  // HMS still need to close before return
         return;
     }
 
@@ -360,12 +398,16 @@ void read_tpstream(std::string filename,
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Read MC truth
-
-    std::string MCtruthtree_path = "triggerAnaDumpTPs/mctruths"; 
+    std::string MCtruthtree_path;
+    #ifdef STANDARD_FORMAT
+    MCtruthtree_path = "triggerAna/mctruths"; 
+    #else
+    MCtruthtree_path = "triggerAnaDumpTPs/mctruths"; 
+    #endif
     TTree *MCtruthtree = dynamic_cast<TTree*>(file->Get(MCtruthtree_path.c_str()));
     if (!MCtruthtree) {
         LogError << " Tree not found: " << MCtruthtree_path << std::endl;
-        file->Close();  // HMS still need to close before return
+        //file->Close();  // HMS still need to close before return
         return;
     }
 
@@ -390,15 +432,15 @@ void read_tpstream(std::string filename,
     MCtruthtree->SetBranchAddress("y", &y);
     MCtruthtree->SetBranchAddress("z", &z);
     if (!SetBranchWithFallback(MCtruthtree, {"Px", "px"}, &px, "MC truth Px")) {
-        file->Close();  // HMS still need to close before return
+        //file->Close();  // HMS still need to close before return
         return;
     }
     if (!SetBranchWithFallback(MCtruthtree, {"Py", "py"}, &py, "MC truth Py")) {
-        file->Close();  // HMS still need to close before return
+        //file->Close();  // HMS still need to close before return
         return;
     }
     if (!SetBranchWithFallback(MCtruthtree, {"Pz", "pz"}, &pz, "MC truth Pz")) {
-        file->Close();  // HMS still need to close before return
+        //file->Close();  // HMS still need to close before return
         return;
     }
     if (!SetBranchWithFallback(MCtruthtree, {"en", "energy"}, &energy, "MC truth energy")) {
@@ -469,7 +511,7 @@ void read_tpstream(std::string filename,
     
     if (noMatchingMode) {
         if (verboseMode) LogInfo << "No matching mode enabled, skipping TP-SimIDE association and MC truth linking" << std::endl;
-        file->Close();
+        //file->Close();
         return;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -480,8 +522,8 @@ void read_tpstream(std::string filename,
     if (verboseMode) LogInfo << " Applying direct TP-SimIDE matching for event " << this_event_number << std::endl;
     const double effective_time_tolerance = (time_tolerance_ticks >= 0.0) ? time_tolerance_ticks : 5000.0;
     match_tps_to_simides_direct(tps, true_particles, file, this_event_number, effective_time_tolerance, channel_tolerance);
-    std::cout << " closing file " << file->GetName() << std::endl;
-    file->Close(); // don't need anymore
+    //std::cout << " closing file " << file->GetName() << std::endl;
+    //file->Close(); // don't need anymore
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Connect trueparticles to mctruths using the truth_id
@@ -614,7 +656,12 @@ void match_tps_to_simides_direct(
     }
     
     // Read SimIDEs tree
-    std::string simidestree_path = "triggerAnaDumpTPs/simides";
+    std::string simidestree_path;
+    #ifdef STANDARD_FORMAT
+    simidestree_path= "triggerAna/simides";
+    #else
+    simidestree_path= "triggerAnaDumpTPs/simides";
+    #endif
     TTree *simidestree = dynamic_cast<TTree*>(file->Get(simidestree_path.c_str()));
     if (!simidestree) {
         LogError << "SimIDEs tree not Direct TP-SimIDE: " << simidestree_path << std::endl;
