@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     // Determine backtracker_error_margin value: CLI > JSON > default from parameters/timing.h
     std::string tp_tree_path; 
     #ifdef STANDARD_FORMAT
-    tp_tree_path = "triggerAna/TriggerPrimitive/tpmakerTPCsimpleThr__TPGen";
+    tp_tree_path = "triggerAna/TriggerPrimitives/tpmakerTPCsimpleThr__TPGen";
     #else
     tp_tree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2";
     #endif
@@ -250,9 +250,9 @@ int main(int argc, char* argv[]) {
                     }
                     unique_events.insert(event_index);
                     
-                    std::cout << event_index << " " << evcount << std::endl;
+                    LogDebug << "Adding event " << event_index << " " << evcount << std::endl;
                     if ( evcount >= maxcount+skipevent && maxcount > 0) {
-                        std::cout << "Too many trees, breaking loop after maxcount iterations." << std::endl;
+                        LogInfo << "reached " << maxcount << " events, breaking loop after maxcount iterations." << std::endl;
                         break;
                     }
                     
@@ -263,9 +263,9 @@ int main(int argc, char* argv[]) {
         n_events = unique_events.size();
         if (verboseMode) LogInfo << " Found " << n_events << " between" << skipevent << " and " << skipevent+maxcount << " in tree: " << MCtree_path << std::endl;
         
-        for (auto event_index:unique_events){
-            std::cout << "event set" << event_index << std::endl;
-        }
+        // for (auto event_index:unique_events){
+        //     std::cout << "event set" << event_index << std::endl;
+        // }
         // MCtree->GetEntry(0);
         // int first_event = this_event_number;unique events in t
 

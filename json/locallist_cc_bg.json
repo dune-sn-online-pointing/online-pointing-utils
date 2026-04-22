@@ -1,15 +1,15 @@
 {
   "comment": "Example configuration for ES signal with background mixing workflow",
   
-  "inputListFile":"/Users/schellma/Dropbox/snb/online-pointing-utils/data/prod_cc/cc_marley.txt",
-  "bgListFile":"/Users/schellma/Dropbox/snb/online-pointing-utils/lists/local_CENTRAL_v4.txt",
+  "inputListFile":"/Users/schellma/Dropbox/snb/online-pointing-utils/lists/cc_standard.txt",
+  "bgListFile":"/Users/schellma/Dropbox/snb/online-pointing-utils/lists/bg_1000.txt",
 
   "outputFolder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/cc/output",
   "sig_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/cc/output/sig",
   "tps_bg_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/tps_bg",
   "clusters_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/cc/output/clusters",
   "matched_clusters_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/cc/output/matched_clusters",
-  "volume_images_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/cc/output/volume_images",
+  "volume_imagcc_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/cc/output/volume_images",
 
   "products_prefix": "cc_bg",
   "max_files": 2,
@@ -18,7 +18,7 @@
 
   "time_tolerance_ticks": 10,
   "spatial_tolerance_cm": 100,
-  "maxcount": 2,
+  "maxcount": 100,
   "tick_limit": 3,
   "channel_limit": 2,
   "min_tps_to_cluster": 2,
