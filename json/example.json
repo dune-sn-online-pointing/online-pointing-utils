@@ -1,0 +1,24 @@
+{
+    "thisIsAComment": "Example config — copy this file, rename it, and update the paths below",
+    "thisIsAlsoAComment1": "signal_folder: root folder for all pipeline outputs",
+    "thisIsAlsoAComment2": "bg_folder: folder of pure background TPs (used by add_backgrounds)",
+    "thisIsAlsoAComment3": "products_prefix: string prepended to all output subfolder names",
+
+    "signal_folder": "/path/to/your/signal/tpstreams/",
+    "bg_folder":     "/path/to/your/background/tpstreams/",
+    "products_prefix": "my_sample",
+
+    "max_files": 10,
+    "skip_files": 0,
+
+    "backtracker_error_margin": 10,
+
+    "tick_limit":           3,
+    "channel_limit":        2,
+    "min_tps_to_cluster":   2,
+    "tot_cut":              3,
+    "energy_cut":           2.0,
+
+    "time_tolerance_ticks":  10,
+    "spatial_tolerance_cm":  10
+}

@@ -1,0 +1,18 @@
+# Use TeX and serif fonts
+text.usetex: True
+font.family: serif
+
+# Title sizes
+axes.titlesize: 15
+
+# Tick sizes & padding 
+xtick.labelsize: 15
+ytick.labelsize: 15
+xtick.major.pad: 3
+ytick.major.pad: 3
+
+# Axis labelsize
+# Axis label (x, y, and z)
+axes.labelsize: 18
+axes.labelweight: normal
+axes.labelpad: 8
