@@ -18,49 +18,8 @@ import json
 import sys
 from pathlib import Path
 
-
-def sanitize(value):
-    if isinstance(value, float):
-        s = f"{value:.6f}"
-    else:
-        s = str(value)
-    if '.' in s:
-        parts = s.split('.')
-        if len(parts[1]) > 1:
-            s = f"{parts[0]}.{parts[1][0]}"
-    s = s.replace('.', 'p')
-    return s
-
-
-def resolve_clusters_folder(config):
-    """Derive the clusters folder path from the JSON config."""
-    clusters_folder = config.get('clusters_folder', None)
-    if clusters_folder:
-        return clusters_folder
-
-    base_folder = (config.get('signal_folder') or
-                   config.get('main_folder') or
-                   config.get('tpstream_folder', '.')).rstrip('/')
-
-    prefix = config.get('products_prefix', config.get('clusters_folder_prefix', ''))
-
-    tick_limit       = config.get('tick_limit', 0)
-    channel_limit    = config.get('channel_limit', 0)
-    min_tps          = config.get('min_tps_to_cluster', 0)
-    tot_cut          = config.get('tot_cut', 0)
-    energy_cut       = float(config.get('energy_cut', 0.0))
-
-    conditions = (
-        f"tick{sanitize(tick_limit)}"
-        f"_ch{sanitize(channel_limit)}"
-        f"_min{sanitize(min_tps)}"
-        f"_tot{sanitize(tot_cut)}"
-        f"_e{sanitize(energy_cut)}"
-    )
-
-    if prefix:
-        return f"{base_folder}/{prefix}_clusters_{conditions}"
-    return f"{base_folder}/clusters_{conditions}"
+sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
+from utils import get_clusters_folder
 
 
 def analyze_plane(tree, plane, time_span_threshold=20, verbose=False):
@@ -166,7 +125,7 @@ def main():
     with open(args.json) as f:
         config = json.load(f)
 
-    clusters_folder = resolve_clusters_folder(config)
+    clusters_folder = get_clusters_folder(config)
     clusters_path   = Path(clusters_folder)
 
     if not clusters_path.exists():

@@ -16,54 +16,14 @@ import uproot
 import numpy as np
 import argparse
 import json
+import sys
 from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
 
-
-def sanitize(value):
-    if isinstance(value, float):
-        s = f"{value:.6f}"
-    else:
-        s = str(value)
-    if '.' in s:
-        parts = s.split('.')
-        if len(parts[1]) > 1:
-            s = f"{parts[0]}.{parts[1][0]}"
-    s = s.replace('.', 'p')
-    return s
-
-
-def resolve_matched_clusters_folder(config):
-    """Derive the matched clusters folder path from the JSON config."""
-    matched_folder = config.get('matched_clusters_folder', None)
-    if matched_folder:
-        return Path(matched_folder)
-
-    base_folder = (config.get('signal_folder') or
-                   config.get('main_folder') or
-                   config.get('tpstream_folder', '.')).rstrip('/')
-
-    prefix = config.get('products_prefix', config.get('clusters_folder_prefix', ''))
-
-    tick_limit  = config.get('tick_limit', 0)
-    channel_limit = config.get('channel_limit', 0)
-    min_tps     = config.get('min_tps_to_cluster', 0)
-    tot_cut     = config.get('tot_cut', 0)
-    energy_cut  = float(config.get('energy_cut', 0.0))
-
-    conditions = (
-        f"tick{sanitize(tick_limit)}"
-        f"_ch{sanitize(channel_limit)}"
-        f"_min{sanitize(min_tps)}"
-        f"_tot{sanitize(tot_cut)}"
-        f"_e{sanitize(energy_cut)}"
-    )
-
-    if prefix:
-        return Path(f"{base_folder}/{prefix}_matched_clusters_{conditions}")
-    return Path(f"{base_folder}/matched_clusters_{conditions}")
+sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
+from utils import get_matched_clusters_folder
 
 
 def resolve_reports_folder(config):
@@ -147,7 +107,7 @@ def main():
     with open(args.json) as f:
         config = json.load(f)
 
-    matched_folder = resolve_matched_clusters_folder(config)
+    matched_folder = Path(get_matched_clusters_folder(config))
 
     if not matched_folder.exists():
         print(f"Error: Matched clusters folder not found: {matched_folder}")

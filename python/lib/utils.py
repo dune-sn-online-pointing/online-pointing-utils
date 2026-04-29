@@ -85,6 +85,70 @@ def find_files_matching_basenames(basenames, candidate_files):
     return matched_files
 
 
+def sanitize(value):
+    """Convert a numeric value to a filesystem-safe string (1 decimal digit max, '.' replaced with 'p')."""
+    if isinstance(value, float):
+        s = f"{value:.6f}"
+    else:
+        s = str(value)
+    if '.' in s:
+        parts = s.split('.')
+        if len(parts[1]) > 1:
+            s = f"{parts[0]}.{parts[1][0]}"
+    s = s.replace('.', 'p')
+    return s
+
+
+def get_clusters_folder(json_config):
+    """Derive clusters folder path from JSON config. Matches src/lib/utils.cpp::getClustersFolder()."""
+    import json as _json
+    from pathlib import Path as _Path
+    if isinstance(json_config, (str, _Path)):
+        with open(json_config, 'r') as f:
+            j = _json.load(f)
+    else:
+        j = json_config
+
+    outfolder = j.get("clusters_folder", "").rstrip('/')
+    if not outfolder:
+        outfolder = (
+            j.get("main_folder") or j.get("signal_folder") or j.get("tpstream_folder", ".")
+        ).rstrip('/')
+
+    prefix = j.get("products_prefix", j.get("clusters_folder_prefix", ""))
+    conditions = (
+        f"tick{sanitize(j.get('tick_limit', 0))}"
+        f"_ch{sanitize(j.get('channel_limit', 0))}"
+        f"_min{sanitize(j.get('min_tps_to_cluster', 0))}"
+        f"_tot{sanitize(j.get('tot_cut', 0))}"
+        f"_e{sanitize(float(j.get('energy_cut', 0.0)))}"
+    )
+
+    if prefix:
+        return f"{outfolder}/{prefix}_clusters_{conditions}"
+    return f"{outfolder}/clusters_{conditions}"
+
+
+def get_matched_clusters_folder(json_config):
+    """Derive matched_clusters folder path from JSON config."""
+    import json as _json
+    from pathlib import Path as _Path
+    if isinstance(json_config, (str, _Path)):
+        with open(json_config, 'r') as f:
+            j = _json.load(f)
+    else:
+        j = json_config
+
+    matched_folder = j.get("matched_clusters_folder", "").rstrip('/')
+    if matched_folder:
+        return matched_folder
+
+    clusters_folder = get_clusters_folder(j)
+    if '_clusters_' in clusters_folder:
+        return clusters_folder.replace('_clusters_', '_matched_clusters_')
+    return clusters_folder.replace('clusters', 'matched_clusters')
+
+
 def find_files_by_tpstream_basenames(json_config, folder, file_pattern, skip_files=0, max_files=None):
     """
     Find input files using tpstream file list as source of truth.

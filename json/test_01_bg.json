@@ -4,9 +4,8 @@
     "thisIsAlsoAComment2": "bg_folder: pure background TPs (input to add_backgrounds)",
     "thisIsAlsoAComment3": "All subfolders are determined automatically and will start with 'products_prefix', but can be overriden here with keys tps_folder/tps_bg_folder",
 
-    "signal_folder": "/eos/user/e/evilla/dune/sn-tps/prod_es/",
-    "bg_folder": "/eos/user/e/evilla/dune/sn-tps/bkgs/",
-    "products_prefix": "es_production",
+    "signal_folder": "/home/lopezmore/Desktop/DUNE_software/es_reco/inputs/bg_absTP/",
+    "products_prefix": "es_absTP_01",
 
     "max_files": -1,
     "skip_files": 0,

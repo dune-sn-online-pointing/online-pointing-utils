@@ -59,7 +59,7 @@ def plot_cloud_like_subplot(
     top_charge_frac: float = 0.80,
 ) -> Tuple[plt.Figure, mpl.axes.Axes]:
     """
-    Replicates the style/behavior of your original 3D subplot:
+    Replicates the style/behavior of the original 3D subplot:
     - bar3d voxels colored by charge with plasma colormap + colorbar
     - optionally overlay all hypotheses faintly
     - top-80%-charge filter
@@ -88,8 +88,8 @@ def plot_cloud_like_subplot(
             s=80, c="red", marker="o", depthshade=False, label=true_label
         )
 
-    # These match your original code’s voxel sizing choices
-    # dx is "1 tick -> cm" in your code, but here we just replicate the look.
+    # These match the original code’s voxel sizing choices
+    # dx is "1 tick -> cm" in the code, but here we just replicate the look.
     dx = 0.0805  # cm
     dz = 0.30    # cm (rough collection pitch look; change if you want exact)
     dy = 0.78    # cm
@@ -122,7 +122,7 @@ def plot_cloud_like_subplot(
     amps = cloud_xyz_amp[:, 3].astype(float, copy=False)
 
     # -----------------------------
-    # TOP-FRACTION-CHARGE FILTER (same logic as your original)
+    # TOP-FRACTION-CHARGE FILTER (same logic as the original)
     # -----------------------------
     amps_rank = np.nan_to_num(amps, nan=0.0, posinf=0.0, neginf=0.0)
     amps_rank = np.maximum(amps_rank, 0.0)
@@ -186,7 +186,7 @@ def plot_cloud_like_subplot(
     ax.set_ylim(float(np.min(ys_lim) - pad_cm), float(np.max(ys_lim) + pad_cm))
     ax.set_zlim(float(np.min(zs_lim) - pad_cm), float(np.max(zs_lim) + pad_cm))
 
-    # Truth momentum arrow (same scaling rule as your original)
+    # Truth momentum arrow (same scaling rule as the original)
     if has_true_mom:
         _draw_truth_momentum(ax, truth_xyz if has_truth else None, truth_mom_xyz, label=true_mom_label)
 

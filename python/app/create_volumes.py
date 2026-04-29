@@ -12,23 +12,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
+sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
+from utils import sanitize, get_clusters_folder, get_matched_clusters_folder
+
 
 def get_conditions_string(config):
     """Build conditions string from clustering parameters (matches C++ logic)"""
-    def sanitize(value):
-        s = str(value)
-        if '.' in s:
-            parts = s.split('.')
-            if len(parts) > 1:
-                s = f"{parts[0]}.{parts[1][:1]}"
-        return s.replace('.', 'p')
-    
     tick_limit = config.get('tick_limit', 0)
     channel_limit = config.get('channel_limit', 0)
     min_tps = config.get('min_tps_to_cluster', 0)
     tot_cut = config.get('tot_cut', 0)
     energy_cut = float(config.get('energy_cut', 0.0))
-    
+
     return (f"tick{sanitize(tick_limit)}_ch{sanitize(channel_limit)}_"
             f"min{sanitize(min_tps)}_tot{sanitize(tot_cut)}_e{sanitize(energy_cut)}")
 
@@ -111,112 +106,6 @@ def _read_conversion_factors():
 ADC_TO_MEV_COLLECTION, ADC_TO_MEV_INDUCTION = _read_conversion_factors()
 
 
-def get_clusters_folder(json_config):
-    """
-    Compose clusters folder name from JSON configuration.
-    Matches the logic in src/lib/utils.cpp::getClustersFolder()
-    
-    Args:
-        json_config: Dict with clustering parameters or path to JSON file
-        
-    Returns:
-        str: Full path to clusters folder
-    """
-    # Load JSON if path provided
-    if isinstance(json_config, (str, Path)):
-        with open(json_config, 'r') as f:
-            j = json.load(f)
-    else:
-        j = json_config
-    
-    # Extract parameters with defaults matching C++ code
-    # Priority: products_prefix > clusters_folder_prefix (legacy)
-    cluster_prefix = j.get("products_prefix", j.get("clusters_folder_prefix", "clusters"))
-    tick_limit = j.get("tick_limit", 0)
-    channel_limit = j.get("channel_limit", 0)
-    min_tps_to_cluster = j.get("min_tps_to_cluster", 0)
-    tot_cut = j.get("tot_cut", 0)
-    energy_cut = float(j.get("energy_cut", 0.0))
-    
-    # Auto-generate base folder from main_folder or signal_folder
-    outfolder = j.get("clusters_folder", "")
-    if not outfolder:
-        # Priority: main_folder > signal_folder > tpstream_folder (legacy fallback)
-        if "main_folder" in j and j["main_folder"]:
-            outfolder = j["main_folder"]
-        elif "signal_folder" in j and j["signal_folder"]:
-            outfolder = j["signal_folder"]
-        else:
-            outfolder = j.get("tpstream_folder", ".")
-        if outfolder.endswith('/'):
-            outfolder = outfolder[:-1]
-    else:
-        outfolder = outfolder.rstrip('/')
-    
-    def sanitize(value):
-        """
-        Sanitize numeric value for filesystem.
-        Keeps at most 1 digit after decimal, replaces '.' with 'p'
-        """
-        if isinstance(value, float):
-            s = f"{value:.6f}"
-        else:
-            s = str(value)
-        
-        if '.' in s:
-            parts = s.split('.')
-            if len(parts[1]) > 1:
-                s = f"{parts[0]}.{parts[1][0]}"
-        
-        s = s.replace('.', 'p')
-        return s
-    
-    # Build subfolder name matching C++ format
-    # Pattern: prefix_clusters_conditions
-    if cluster_prefix:
-        clusters_subfolder = (
-            f"{cluster_prefix}_clusters"
-            f"_tick{sanitize(tick_limit)}"
-            f"_ch{sanitize(channel_limit)}"
-            f"_min{sanitize(min_tps_to_cluster)}"
-            f"_tot{sanitize(tot_cut)}"
-            f"_e{sanitize(energy_cut)}"
-        )
-    else:
-        clusters_subfolder = (
-            f"clusters"
-            f"_tick{sanitize(tick_limit)}"
-            f"_ch{sanitize(channel_limit)}"
-            f"_min{sanitize(min_tps_to_cluster)}"
-            f"_tot{sanitize(tot_cut)}"
-            f"_e{sanitize(energy_cut)}"
-        )
-    
-    clusters_folder_path = f"{outfolder}/{clusters_subfolder}"
-    return clusters_folder_path
-
-
-def get_matched_clusters_folder(json_config):
-    """Get matched_clusters folder from JSON config."""
-    if isinstance(json_config, (str, Path)):
-        with open(json_config, 'r') as f:
-            j = json.load(f)
-    else:
-        j = json_config
-    
-    matched_folder = j.get("matched_clusters_folder", "").rstrip('/')
-    if matched_folder:
-        return matched_folder
-    
-    clusters_folder = get_clusters_folder(json_config)
-    # Replace the last part: replace '_clusters_' with '_matched_clusters_'
-    # Works for both "prefix_clusters_conditions" and "clusters_conditions"
-    if '_clusters_' in clusters_folder:
-        matched_folder = clusters_folder.replace('_clusters_', '_matched_clusters_')
-    else:
-        # Fallback for edge cases
-        matched_folder = clusters_folder.replace('clusters', 'matched_clusters')
-    return matched_folder
 
 
 

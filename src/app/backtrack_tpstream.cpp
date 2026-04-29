@@ -1,4 +1,5 @@
 #include "Backtracking.h"
+#include <memory>
 
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -187,42 +188,25 @@ int main(int argc, char* argv[]) {
         // count events
         // using this tree just because it's the smallest
         std::string MCtree_path = "triggerAnaDumpTPs/mctruths";
-        TFile *file = TFile::Open(filename.c_str());
+        std::unique_ptr<TFile> file(TFile::Open(filename.c_str(), "READ"));
         if (!file || file->IsZombie()) { LogError << "Failed to open file: " << filename << std::endl; continue; }
-        // TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
-        // if (!TPtree) { LogError << "Tree not found: " << TPtree_path << std::endl; file->Close(); delete file; continue; }
         TTree *MCtree = dynamic_cast<TTree*>(file->Get(MCtree_path.c_str()));
-        int n_events = 0;
-        UInt_t this_event_number = 0;
-        if (!MCtree) { LogError << "Tree not found: " << MCtree_path << std::endl; file->Close(); delete file; continue; }
-        if (MCtree) {
-            MCtree->SetBranchAddress("Event", &this_event_number);
-            std::set<UInt_t> unique_events;
-            for (Long64_t i = 0; i < MCtree->GetEntries(); ++i) {
-                MCtree->GetEntry(i);
-                unique_events.insert(this_event_number);
-            }
-            n_events = unique_events.size();
-            if (verboseMode) LogInfo << " Found " << n_events << " unique events in tree: " << MCtree_path << std::endl;
-        }
+        if (!MCtree) { LogError << "Tree not found: " << MCtree_path << std::endl; continue; }
 
-        if (verboseMode) LogInfo << "Number of events in file: " << n_events << std::endl;
-        file->Close(); delete file; file = nullptr;
-
-        // Collect the actual event numbers from mctruths (may be non-consecutive after hash-based splitting)
-        TFile *file2 = TFile::Open(filename.c_str());
-        TTree *MCtree2 = dynamic_cast<TTree*>(file2->Get(MCtree_path.c_str()));
+        // Collect unique event numbers in order of first occurrence (handles non-consecutive events
+        // from hash-based file splitting).
         std::vector<UInt_t> event_numbers;
         {
             UInt_t ev = 0;
-            MCtree2->SetBranchAddress("Event", &ev);
+            MCtree->SetBranchAddress("Event", &ev);
             std::set<UInt_t> seen;
-            for (Long64_t i = 0; i < MCtree2->GetEntries(); ++i) {
-                MCtree2->GetEntry(i);
+            for (Long64_t i = 0; i < MCtree->GetEntries(); ++i) {
+                MCtree->GetEntry(i);
                 if (seen.insert(ev).second) event_numbers.push_back(ev);
             }
         }
-        file2->Close(); delete file2; file2 = nullptr;
+        int n_events = static_cast<int>(event_numbers.size());
+        if (verboseMode) LogInfo << " Found " << n_events << " unique events in tree: " << MCtree_path << std::endl;
 
         tps.clear(); true_particles.clear(); neutrinos.clear();
         tps.resize(n_events); true_particles.resize(n_events); neutrinos.resize(n_events);

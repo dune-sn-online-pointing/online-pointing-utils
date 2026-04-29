@@ -5,7 +5,7 @@ matched_cluster_objects.py
 Single-file utilities to LOAD matched-cluster objects from matched_clusters ROOT files.
 
 Goal:
-- Reuse your existing "viewer" style ClusterItem container (TP-level fields)
+- Reuse existing "viewer" style ClusterItem container (TP-level fields)
 - Add minimal new structure to represent U/V/X matches
 - Skip plotting/UI entirely
 - Provide a clean API to:
@@ -33,9 +33,9 @@ Notes:
     clusters/clusters_tree_{U,V,X}
   (it also tries legacy trees if needed)
 - Matching is done by (event, match_id) in case match_id values repeat across events.
-- If your files also contain X-only partner branches (matching_clusterId_U/V),
+- If this files also contain X-only partner branches (matching_clusterId_U/V),
   you can extend the branch list in _read_plane_clusters() similarly, but this
-  file focuses on match_id-based grouping as in your Python analyzer.
+  file focuses on match_id-based grouping as in the Python analyzer.
 
 """
 
@@ -99,7 +99,7 @@ class Parameters:
 @dataclass
 class ClusterItem:
     """
-    A TP-carrying cluster container (very close to your viewer's ClusterItem).
+    A TP-carrying cluster container (very close to the viewer's ClusterItem).
     Fields are expanded minimally to support matched-cluster workflows.
     """
 
@@ -141,7 +141,7 @@ class ClusterItem:
 
     @property
     def is_marley(self) -> bool:
-        # Match your analyzer idea: fraction > 0 indicates MARLEY content
+        # fraction > 0 indicates MARLEY content
         return float(self.marley_tp_fraction) > 0.0
 
     def summary(self) -> str:
@@ -331,7 +331,7 @@ class MatchedClustersLoader:
     def _read_plane_clusters(self, tree, plane: str) -> List[ClusterItem]:
         """
         Read a plane tree into ClusterItem objects (including TP arrays).
-        This merges your analyzer's branch needs + viewer's TP payload.
+        This merges the analyzer's branch needs + viewer's TP payload.
         """
         # Keep branch list minimal but sufficient.
         branches = [

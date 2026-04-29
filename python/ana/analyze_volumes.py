@@ -20,6 +20,9 @@ import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend
 import matplotlib.pyplot as plt
 
+sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
+from utils import sanitize
+
 
 def _resolve_npz_folder(volume_folder, verbose=False):
     """
@@ -627,18 +630,6 @@ def main():
         min_tps_to_cluster = config.get("min_tps_to_cluster", 0)
         tot_cut = config.get("tot_cut", 0)
         energy_cut = float(config.get("energy_cut", 0.0))
-        
-        def sanitize(value):
-            if isinstance(value, float):
-                s = f"{value:.6f}"
-            else:
-                s = str(value)
-            if '.' in s:
-                parts = s.split('.')
-                if len(parts[1]) > 1:
-                    s = f"{parts[0]}.{parts[1][0]}"
-            s = s.replace('.', 'p')
-            return s
         
         conditions = (
             f"tick{sanitize(tick_limit)}"

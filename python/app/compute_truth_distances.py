@@ -2,6 +2,7 @@
 """Re-run match_clusters at various time tolerances and compute truth residuals."""
 from __future__ import annotations
 
+import sys
 import json
 import math
 import subprocess
@@ -10,6 +11,9 @@ from shutil import rmtree
 from typing import Dict, List, Tuple
 
 import uproot
+
+sys.path.insert(0, str(Path(__file__).parent.parent / 'lib'))
+from utils import sanitize
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BUILD_DIR = REPO_ROOT / "build" / "src" / "app"
@@ -20,14 +24,6 @@ RUN_LOG_TEMPLATE = "run_t{tol}.log"
 
 # Time tolerances to scan (ticks)
 TIME_TOLERANCES = [500, 300, 100, 50, 40, 30, 20, 10, 5, 0]
-
-
-def sanitize(value: str) -> str:
-    """Mirror the repo's folder naming logic for clustering conditions."""
-    if "." in value:
-        dot = value.index(".")
-        value = value[: min(len(value), dot + 2)]
-    return value.replace(".", "p")
 
 
 def resolved_matched_folder(config: Dict[str, object]) -> Path:

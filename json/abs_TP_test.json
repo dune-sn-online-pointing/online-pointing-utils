@@ -1,0 +1,19 @@
+{
+    "signal_folder": "/home/lopezmore/Desktop/DUNE_software/pointing_software/inputs/run_2/abs_TP",
+    "bg_folder": "/home/lopezmore/Desktop/DUNE_software/es_reco/inputs/bg_absTP",
+    "products_prefix": "abs_TP_test",
+
+    "max_files": -1,
+    "skip_files": 0,
+
+    "backtracker_error_margin": 10,
+
+    "tick_limit": 3,
+    "channel_limit": 2,
+    "min_tps_to_cluster": 2,
+    "tot_cut": 3,
+    "energy_cut": 2.0,
+
+    "time_tolerance_ticks": 10,
+    "spatial_tolerance_cm": 10
+}

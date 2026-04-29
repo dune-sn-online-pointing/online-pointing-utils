@@ -99,7 +99,7 @@ def _collection_adc_from_xplane(group: MatchedGroup) -> float:
     Lightweight proxy for "collection ADC" from the X-plane cluster.
 
     Uses sum(adc_integral[i]) when available, else falls back to approx peak*samples/2.
-    Mirrors the fallback idea used in your plotting histogram builder.
+    Mirrors the fallback idea used in the plotting histogram builder.
     """
     c = group.get("X")
     n = _safe_tp_count(c)
@@ -188,7 +188,7 @@ def main() -> None:
                         help="Also store all UVX-consistent hypotheses (ragged) in the NPZ")
 
     parser.add_argument("--skip-event-id", type=int, default=11168,
-                        help="Skip a specific event_id (default matches your plotting script behavior)")
+                        help="Skip a specific event_id (default matches the plotting script behavior)")
     parser.add_argument("-v", "--verbose", action="store_true")
 
     args = parser.parse_args()
@@ -274,7 +274,7 @@ def main() -> None:
                 xyz_hyp = reco_3d.process_candidates_to_xyz(cand)  # list-like of candidate tuples
 
                 if args.save_all_hypotheses:
-                    # xyz_hyp elements look like (..., x, y, z, ...) per your usage
+                    # xyz_hyp elements look like (..., x, y, z, ...)
                     hyp_np = np.array([(c[1], c[2], c[3]) for c in xyz_hyp], dtype=np.float32)
 
                 Y_U, Y_V, Y_X = reco_3d.build_measurements_from_candidates(cand)
