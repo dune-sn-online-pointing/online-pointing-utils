@@ -1,0 +1,20 @@
+{
+  "comment": "HMS 2026-04-02 Example configuration for generating BG backtracker files. This configuration assumes that the input files are in a folder called 'bg_folder' and that the list of files is in 'bg_list.txt'. The output will be saved in the 'output' folder. Adjust the parameters as needed for your specific use case.",
+  
+  "inputListFile":"/Users/schellma/Dropbox/snb/online-pointing-utils/data/bg_folder/bg_list.txt",
+
+  "outputFolder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/bg_backtracker",
+  "tp_tree_path": "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x6",
+  "maxcount": 100, 
+  "products_prefix": "bg",
+  "max_files": 10,
+  "file_pattern": "*_tpstream.root",
+  "backtracker_error_margin": 0,
+  "time_tolerance_ticks": 10,
+  "spatial_tolerance_cm": 100,
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 3,
+  "energy_cut": 2.0
+}

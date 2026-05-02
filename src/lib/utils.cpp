@@ -424,6 +424,9 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
     std::vector<std::string> filenames;
     filenames.reserve(64);
 
+    LogInfo << "Looking for input files with suffixes: "<< std::endl;
+
+
     if (file_suffixes.empty()) {
         LogWarning << "No file suffixes provided." << std::endl;
         return filenames;
@@ -446,6 +449,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
     };
 
     try {
+        LogInfo << "Start looking for input files" << std::endl;
         // Priority 1: inputFile (single file)
         if (j.contains("inputFile") && !j["inputFile"].get<std::string>().empty()) {
             std::string file = j["inputFile"].get<std::string>();
@@ -456,7 +460,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
                 LogWarning << "inputFile not found or doesn't match suffixes: " << file << std::endl;
             }
         }
-
+        LogInfo << "Priority 2: inputFolder" << std::endl;
         // Priority 2: inputFolder (with optional inputList)
         if (filenames.empty() && j.contains("inputFolder") && !j["inputFolder"].get<std::string>().empty()) {
             std::string folder = j["inputFolder"].get<std::string>();
@@ -496,6 +500,8 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
             }
         }
 
+        LogInfo << "Priority 3: filename" << std::endl;
+
         // Priority 3: filename (single file)
         if (filenames.empty() && j.contains("filename") && !j["filename"].get<std::string>().empty()) {
             std::string file = j["filename"].get<std::string>();
@@ -506,6 +512,8 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
                 LogWarning << "filename not found or doesn't match suffixes: " << file << std::endl;
             }
         }
+
+        LogInfo << "Priority 4: filelist" << std::endl;
 
         // Priority 4: filelist OR inputListFile (file with list of files)
         if (filenames.empty()) {
@@ -699,6 +707,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
         }
     }
 
+    LogInfo << "Looking for input file: " << pattern << std::endl;
     // Priority 1: pattern_input_file (single file)
     if (j.contains(input_file_key)) {
         std::string file = j[input_file_key].get<std::string>();
@@ -713,6 +722,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
         if (debugMode) LogDebug << "[find_input_files] Key '" << input_file_key << "' not found in JSON" << std::endl;
     }
 
+    LogInfo << "Looking for input files in folder: " << pattern << std::endl;
     // Priority 2: pattern_folder (scan folder for files with pattern)
     if (input_files.empty()) {
         std::string folder;
@@ -800,10 +810,8 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
             }
         }
     }
-    if (input_files.empty()) {
-        if (debugMode) LogDebug << "[find_input_files] Key '" << folder_key << "' not found in JSON or input_files already found" << std::endl;
-    }
-
+    
+    LogInfo << "Looking for input files in array: " << std::endl;
     // Priority 3: pattern_input_list (array of files)
     if (input_files.empty() && j.contains(input_list_key) && j[input_list_key].is_array()) {
         if (verboseMode) LogInfo << "[find_input_files] Found key '" << input_list_key << "' with array value" << std::endl;
@@ -821,7 +829,44 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::st
                 LogWarning << "[find_input_files] File '" << file << "' is empty, missing, or does not match pattern" << std::endl;
             }
         }
-    } else if (input_files.empty()) {
+    }
+         LogInfo << "Priority 4: filelist" << std::endl;
+// HMS copied code from earlier in utils. 
+    // Priority 4: filelist OR inputListFile (file with list of files)
+    if (input_files.empty()) {
+        std::string list_file;
+        if (j.contains("filelist") && !j["filelist"].get<std::string>().empty()) {
+            list_file = j["filelist"].get<std::string>();
+            LogInfo << "JSON filelist: " << list_file << std::endl;
+        } else if (j.contains("inputListFile") && !j["inputListFile"].get<std::string>().empty()) {
+            list_file = j["inputListFile"].get<std::string>();
+            LogInfo << "JSON inputListFile: " << list_file << std::endl;
+        }
+
+        if (!list_file.empty()) {
+            std::ifstream infile(list_file);
+            if (!infile.good()) {
+                LogError << "Cannot open list file: " << list_file << std::endl;
+                return input_files; // Return empty vector
+            }
+            std::string line;
+            while (std::getline(infile, line)) {
+                if (line.size() >= 3 && line.substr(0,3) == "###") break;
+                if (line.empty() || line[0] == '#') continue;
+                if (!file_exists(line) && line.find("root:") == line.npos) { 
+                    LogWarning << "Skipping (missing): " << line << std::endl; 
+                    continue; 
+                }
+                // HMS not certain how to implement this here 
+                // if (!has_any_suffix(line)) { 
+                //     LogWarning << "Skipping (wrong suffixes): " << line << std::endl; 
+                //     continue; 
+                // }
+                input_files.push_back(line);
+            }
+        }
+    }
+    else if (input_files.empty()) {
         if (debugMode) LogDebug << "[find_input_files] Key '" << input_list_key << "' not found in JSON or input_files already found" << std::endl;
     }
 

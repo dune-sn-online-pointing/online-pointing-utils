@@ -3,6 +3,8 @@
 
 #include "TriggerPrimitive.hpp"
 
+#define STANDARD_FORMAT
+
 std::vector<float> calculate_position(TriggerPrimitive* tp);
 std::vector<std::vector<float>> validate_position_calculation(std::vector<TriggerPrimitive*> tps);
 float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign);

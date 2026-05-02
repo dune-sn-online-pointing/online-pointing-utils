@@ -37,6 +37,20 @@ int main(int argc, char* argv[]) {
     std::ifstream i(json);
     LogThrowIf(!i.good(), "Failed to open JSON config: " << json);
     nlohmann::json j; i >> j;
+
+    // get maxcount and skip from json file
+    int maxcount = -1;
+    int skip = 0;
+    if (j.contains("maxcount")) {
+        try { maxcount = j.at("maxcount").get<int>(); }
+        catch (...) { LogWarning << "Failed to read 'maxcount' from JSON, using default (-1 for no limit)." << std::endl; 
+        }
+    }
+    // if (j.contains("skip")) {
+    //     try { skip = j.at("skip").get<int>(); }
+    //     catch (...) { LogWarning << "Failed to read 'skip' from JSON, using default (0 for no skip)." << std::endl; }
+    // }
+
     
     // Determine backtracker_error_margin value: CLI > JSON > default from parameters/timing.h
     int bktr_margin = backtracker_error_margin; // from parameters/timing.h
@@ -187,7 +201,11 @@ int main(int argc, char* argv[]) {
         if (verboseMode) LogInfo << "Reading file: " << filename << std::endl;
         // count events
         // using this tree just because it's the smallest
+        #ifdef STANDARD_FORMAT
+        std::string MCtree_path = "triggerAna/mctruths";
+        #else
         std::string MCtree_path = "triggerAnaDumpTPs/mctruths";
+        #endif
         std::unique_ptr<TFile> file(TFile::Open(filename.c_str(), "READ"));
         if (!file || file->IsZombie()) { LogError << "Failed to open file: " << filename << std::endl; continue; }
         TTree *MCtree = dynamic_cast<TTree*>(file->Get(MCtree_path.c_str()));
@@ -198,11 +216,13 @@ int main(int argc, char* argv[]) {
         std::vector<UInt_t> event_numbers;
         {
             UInt_t ev = 0;
-            MCtree->SetBranchAddress("Event", &ev);
+            MCtree->SetBranchAddress("event", &ev);
             std::set<UInt_t> seen;
+        
             for (Long64_t i = 0; i < MCtree->GetEntries(); ++i) {
                 MCtree->GetEntry(i);
                 if (seen.insert(ev).second) event_numbers.push_back(ev);
+                if (event_numbers.size() >= static_cast<size_t>(maxcount) && maxcount > 0) break; // stop if we've reached maxcount
             }
         }
         int n_events = static_cast<int>(event_numbers.size());
