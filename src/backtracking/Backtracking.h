@@ -9,8 +9,7 @@ std::vector<std::vector<float>> validate_position_calculation(std::vector<Trigge
 float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign);
 float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign);
 
-void
-get_first_and_last_event(TTree* tree, UInt_t * branch_value, int which_event, int& first_entry, int& last_entry);
+void get_first_and_last_event(TTree* tree, UInt_t * branch_value, int which_event, int& first_entry, int& last_entry);
 
 // read the tps from the files and save them in a vector
 // std::vector<TriggerPrimitive> read_tpstream(std::vector<std::string> filenames, int plane=2, int supernova_option=0, int max_events_per_filename = INT_MAX);

@@ -675,8 +675,12 @@ void match_tps_to_simides_direct(
     simidestree->SetBranchAddress("event", &event_number_simides);
     get_first_and_last_event(simidestree, &event_number_simides, event_number, first_simide_entry, last_simide_entry);
     
-    if (verboseMode)  LogInfo << "SimIDEs in event " << event_number << ": " 
-            << ((first_simide_entry != -1) ? std::to_string(last_simide_entry - first_simide_entry + 1) : "0") << std::endl;
+    //if (verboseMode) 
+    //  LogInfo << "SimIDEs in event " << event_number << ": " 
+    //         << ((first_simide_entry != -1) ? std::to_string(last_simide_entry - first_simide_entry + 1) : "0") << std::endl;
+
+    LogInfo << "SimIDEs in event " << event_number << ": " 
+            << first_simide_entry << " " <<  last_simide_entry << std::endl;
 
     if (first_simide_entry == -1) {
         LogWarning << "No SimIDEs found for event " << event_number << std::endl;

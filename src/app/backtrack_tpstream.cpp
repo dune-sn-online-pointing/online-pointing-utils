@@ -226,7 +226,8 @@ int main(int argc, char* argv[]) {
         if (!MCtree) { LogError << "Tree not found: " << MCtree_path << std::endl; file->Close(); delete file; continue; }
         int therun = -1;
         int theevent = -1;
-        std::set<UInt_t> unique_events;
+        //std::set<UInt_t> unique_events;
+        std::vector<UInt_t> unique_events;
         int evcount = 0;
         if (MCtree) {
             
@@ -248,7 +249,10 @@ int main(int argc, char* argv[]) {
                         LogDebug << "Skipping event " << event_index << " " << an_event << " " << evcount << std::endl;
                         continue;
                     }
-                    unique_events.insert(event_index);
+                    unique_events.push_back(event_index);
+                
+                    
+                    //unique_events.insert(event_index);
                     
                     LogDebug << "Adding event " << event_index << " " << evcount << std::endl;
                     if ( evcount >= maxcount+skipevent && maxcount > 0) {
@@ -263,9 +267,9 @@ int main(int argc, char* argv[]) {
         n_events = unique_events.size();
         if (verboseMode) LogInfo << " Found " << n_events << " between" << skipevent << " and " << skipevent+maxcount << " in tree: " << MCtree_path << std::endl;
         
-        // for (auto event_index:unique_events){
-        //     std::cout << "event set" << event_index << std::endl;
-        // }
+        for (auto event_index:unique_events){
+            std::cout << "event set" << event_index << std::endl;
+        }
         // MCtree->GetEntry(0);
         // int first_event = this_event_number;unique events in t
 

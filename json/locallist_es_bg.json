@@ -6,19 +6,20 @@
 
   "outputFolder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output",
   "sig_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output/sig",
-  "tps_bg_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/output/tps_bg",
+  "tps_bg_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/tps_bg",
   "clusters_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output/clusters",
   "matched_clusters_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output/matched_clusters",
   "volume_images_folder": "/Users/schellma/Dropbox/snb/online-pointing-utils/data/es/output/volume_images",
 
   "products_prefix": "es_bg",
-  "max_files": 2,
+  "max_files": 10,
   "file_pattern": "*_tps.root",
   "backtracker_error_margin": 10,
 
   "time_tolerance_ticks": 10,
   "spatial_tolerance_cm": 100,
-  "maxcount": 100,
+  "maxcount": 10,
+  "skipevent": 1000,
   "tick_limit": 3,
   "channel_limit": 2,
   "min_tps_to_cluster": 2,
