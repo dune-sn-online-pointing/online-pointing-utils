@@ -45,7 +45,7 @@ json/locallist_es_bg.json
 
 Note that Utils.cpp has changed to utils.cpp 
 
-- use STANDARD_FORMAT compile flag to switch to official trigger primitive directory structure. 
+- use `STANDARD_FORMAT` compile flag in `BackTracker.h` to switch to official trigger primitive directory structure. 
 
 - add in maxcount argument to limit # of events you run over - still need to reimplement skip
 
