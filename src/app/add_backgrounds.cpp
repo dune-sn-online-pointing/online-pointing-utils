@@ -101,10 +101,25 @@ int main(int argc, char* argv[]) {
     // bg_folder: base folder for background files (will auto-generate to bg_folder/tps)
     // Don't need to explicitly resolve here - find_input_files will handle it
     std::string bg_folder_cfg = j.value("bg_folder", std::string(""));
-    LogThrowIf(bg_folder_cfg.empty(), "bg_folder is not specified in JSON config.");
-    
+    //LogThrowIf(bg_folder_cfg.empty(), "bg_folder is not specified in JSON config.");
+    LogInfo << "Background folder (base): " << bg_folder_cfg << std::endl;
     // tps_bg_folder or tps_folder: merged TPs output
     std::string output_folder = getOutputFolder(j, "tps_bg", "tps_bg_folder");
+    LogThrowIf(output_folder.empty(), "tps_bg_folder (or tps_folder) is not specified and could not be auto-generated.");
+    LogThrowIf(!ensureDirectoryExists(output_folder), "Unable to create output folder '" << output_folder << "'.");
+    bool haslist = false;
+    std::string bg_input_list_file_cfg;
+    if (bg_folder_cfg.empty()) {
+        bg_input_list_file_cfg = j.value("bgListFile", std::string(""));
+        LogInfo << "Background input list file: " << bg_input_list_file_cfg << std::endl;
+        haslist = true;
+        std::cout << "bg_input_list_file_cfg " << bg_input_list_file_cfg << std::endl;
+        LogThrowIf(bg_input_list_file_cfg.empty(), "bg_folder and bg_input_list_file are not specified in JSON config.");
+        std::cout << "bg_input_list_file_cfg is there " << bg_input_list_file_cfg << std::endl;
+    }
+    std::cout << "bg_input_list_file_cfg check " << bg_input_list_file_cfg << std::endl;
+    // tps_bg_folder or tps_folder: merged TPs output
+    // std::string output_folder = getOutputFolder(j, "tps_bg", "tps_bg_folder");
     LogThrowIf(output_folder.empty(), "tps_bg_folder (or tps_folder) is not specified and could not be auto-generated.");
     LogThrowIf(!ensureDirectoryExists(output_folder), "Unable to create output folder '" << output_folder << "'.");
 
@@ -112,9 +127,11 @@ int main(int argc, char* argv[]) {
     LogInfo << " - Signal type: " << signal_type << std::endl;
     LogInfo << " - Signal folder (pure signal TPs): " << sig_folder << std::endl;
     LogInfo << " - Background folder (base): " << bg_folder_cfg << std::endl;
+    LogInfo << " - Background list (base): " << bg_input_list_file_cfg << std::endl;
     LogInfo << " - Output folder (merged TPs): " << output_folder << std::endl;
     LogInfo << " - Override existing output files: " << (overrideMode ? "YES" : "NO") << std::endl;
     LogInfo << " - Add backgrounds around vertex only: " << (around_vertex_only ? "YES" : "NO") << std::endl;
+
     if (around_vertex_only) {
         LogInfo << " - Vertex radius: " << vertex_radius << " cm" << std::endl;
     }
@@ -130,9 +147,33 @@ int main(int argc, char* argv[]) {
     LogInfo << "Found " << signal_files.size() << " signal files matching tpstream basenames" << std::endl;
     LogThrowIf(signal_files.empty(), "No signal files found matching tpstream basenames.");
     // Find background files in bg_folder (looking for *_tps.root)
-    std::vector<std::string> bkg_files = find_input_files(j, "bg");
+    //HMS add in file list option for background files, if bg_folder is not specified, look for bgListFile
+    std::vector<std::string> bkg_files;
+    bkg_files = find_input_files(j, "bg");
     LogInfo << "Found " << bkg_files.size() << " background files" << std::endl;
     LogThrowIf(bkg_files.empty(), "No background files found in bg_folder.");
+ 
+    
+    
+    // try to look in a list
+    if (haslist) {
+        int count = 0;
+        LogInfo << "getting bg files from bg_input_list_file_cfg " << bg_input_list_file_cfg << std::endl;
+        std::ifstream thelist(bg_input_list_file_cfg.c_str());
+        std::string buffer;
+        while (!thelist.eof() ) {
+            count++;
+            thelist >> buffer;
+            //std::cout << "a file " << count << " "  << buffer << "\n";
+            if (buffer.size() <1 ) break;
+            bkg_files.push_back(buffer);
+            buffer.clear();
+        }
+        thelist.close();
+        
+        LogInfo << "Found " << bkg_files.size() << " background files" << std::endl;
+        LogThrowIf(bkg_files.empty(), "No background files found in bg_input_list_file.");
+    }
 
     // Random starting point for background files, then sequential access
     std::random_device rd;

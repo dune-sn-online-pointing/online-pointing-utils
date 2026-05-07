@@ -12,7 +12,8 @@ source $SCRIPTS_DIR/init.sh
 cleanCompile=false
 noCompile=false
 pwd=$PWD
-nproc=$(nproc)
+#nproc=$(nproc) # this failed so fix it
+nproc=4
 nproc_to_use=$((nproc-2))
 
 # Function to print help message

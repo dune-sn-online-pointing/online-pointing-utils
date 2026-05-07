@@ -168,7 +168,7 @@ int main(int argc, char* argv[]) {
         // in the branch, this is the number of events
         int event = 0;
         UInt_t this_event_number = 0;
-        TPtree->SetBranchAddress("Event", &this_event_number);
+        TPtree->SetBranchAddress("event", &this_event_number);
         int n_events = 0;
         for (Long64_t i = 0; i < TPtree->GetEntries(); ++i) {
             TPtree->GetEntry(i);

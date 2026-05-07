@@ -188,3 +188,35 @@ src/backtracking/Backtracking.cpp       RAII TFile (unique_ptr)
 docs/3D_RECO_GUIDE.md                   added (usage guide for python/reco/)
 CHANGELOG.md                             added (this file)
 ```
+
+## Changes added by OSU group April-May 2026
+
+Mainly cleanup to allow reading lists of large files so that the program run using streaming. 
+
+### some new local configs for es/background
+
+---
+
+### 'fix' problem with missing nproc in scripts/compile.sh 
+
+may be a mac issue
+
+---
+
+### add_background.cpp
+
+add in ability to read background files from a list specified by `bgListFile`
+
+add `maxcount` and `skipevents` flags to allow partial reads of large files
+
+change the branch from `Event` to `event` to read newer formats
+
+add the compile flag `STANDARD_FORMAT` in `Backtracker.h` to read standard format production tuples.  
+
+---
+
+### utils.cpp
+
+add in ability to read from a filelist 
+
+

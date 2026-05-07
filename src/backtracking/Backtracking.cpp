@@ -38,8 +38,11 @@ void read_tpstream(std::string filename,
     }
 
     if (verboseMode) LogInfo << " For this file, interaction type: " << this_interaction << std::endl;
-
+    #ifdef STANDARD_FORMAT
+    std::string TPtree_path = "triggerAna/TriggerPrimitives/tpmakerTPCsimpleThr__TPGen"; // TODO make flexible for 1x2x6 and maybe else    
+    #else
     std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
+    #endif
     TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
     if (!TPtree) {
         LogError << " Tree not found: " << TPtree_path << std::endl;
@@ -50,7 +53,7 @@ void read_tpstream(std::string filename,
     int last_tp_entry_in_event = -1;
 
     UInt_t this_event_number = 0;
-    if (TPtree->SetBranchAddress("Event", &this_event_number) < 0) {
+    if (TPtree->SetBranchAddress("event", &this_event_number) < 0) {
         LogWarning << "Failed to bind branch 'Event'" << std::endl;
     }
 
@@ -85,7 +88,7 @@ void read_tpstream(std::string filename,
     bindBranch(TPtree,"adc_integral", &this_adc_integral);
     bindBranch(TPtree,"adc_peak", &this_adc_peak);
     bindBranch(TPtree,"detid", &this_detid);
-    bindBranch(TPtree,"Event", &this_event_number);
+    bindBranch(TPtree,"event", &this_event_number);
     bindBranch(TPtree,"samples_over_threshold", &this_samples_over_threshold);
     bindBranch(TPtree,"samples_to_peak", &this_samples_to_peak);
 
@@ -160,7 +163,12 @@ void read_tpstream(std::string filename,
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Read mcparticles (geant)
 
+    #ifdef STANDARD_FORMAT
+    std::string MCparticlestree_path = "triggerAna/mcparticles";
+    #else
     std::string MCparticlestree_path = "triggerAnaDumpTPs/mcparticles";
+    #endif
+
     TTree *MCparticlestree = dynamic_cast<TTree*>(file->Get(MCparticlestree_path.c_str()));
     if (!MCparticlestree) {
         LogError << "Tree not found: " << MCparticlestree_path << std::endl;
@@ -172,7 +180,7 @@ void read_tpstream(std::string filename,
     int last_mcparticle_entry_in_event = -1;
 
     UInt_t event = 0;
-    MCparticlestree->SetBranchAddress("Event", &event);
+    MCparticlestree->SetBranchAddress("event", &event);
 
     get_first_and_last_event(MCparticlestree, &event, this_event_number, first_mcparticle_entry_in_event, last_mcparticle_entry_in_event);
 
@@ -215,7 +223,7 @@ void read_tpstream(std::string filename,
     }
 
     MCparticlestree->SetBranchAddress("pdg", &pdg);
-    MCparticlestree->SetBranchAddress("Event", &event);
+    MCparticlestree->SetBranchAddress("event", &event);
     MCparticlestree->SetBranchAddress("g4_track_id", &track_id);
     MCparticlestree->SetBranchAddress("truth_block_id", &truth_id);
     MCparticlestree->SetBranchAddress("status_code", &status_code);
@@ -253,8 +261,11 @@ void read_tpstream(std::string filename,
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // Read MC truth
-
+    #ifdef STANDARD_FORMAT
+    std::string MCtruthtree_path = "triggerAna/mctruths"; 
+    #else
     std::string MCtruthtree_path = "triggerAnaDumpTPs/mctruths"; 
+    #endif
     TTree *MCtruthtree = dynamic_cast<TTree*>(file->Get(MCtruthtree_path.c_str()));
     if (!MCtruthtree) {
         LogError << " Tree not found: " << MCtruthtree_path << std::endl;
@@ -266,7 +277,7 @@ void read_tpstream(std::string filename,
     int last_mctruth_entry_in_event = -1;
 
     UInt_t event_truth = 0;
-    MCtruthtree->SetBranchAddress("Event", &event_truth);
+    MCtruthtree->SetBranchAddress("event", &event_truth);
 
     get_first_and_last_event(MCtruthtree, &event_truth, this_event_number, first_mctruth_entry_in_event, last_mctruth_entry_in_event);
 
@@ -294,7 +305,7 @@ void read_tpstream(std::string filename,
         return;
     }
     MCtruthtree->SetBranchAddress("pdg", &pdg);
-    MCtruthtree->SetBranchAddress("Event", &event);
+    MCtruthtree->SetBranchAddress("event", &event);
     MCtruthtree->SetBranchAddress("block_id", &block_id);
     MCtruthtree->SetBranchAddress("status_code", &status_code);
     
@@ -489,7 +500,12 @@ void match_tps_to_simides_direct(
     }
     
     // Read SimIDEs tree
+    #ifdef STANDARD_FORMAT
+    std::string simidestree_path = "triggerAna/simides";
+    #else
     std::string simidestree_path = "triggerAnaDumpTPs/simides";
+    #endif
+
     TTree *simidestree = dynamic_cast<TTree*>(file->Get(simidestree_path.c_str()));
     if (!simidestree) {
         LogError << "SimIDEs tree not found: " << simidestree_path << std::endl;
@@ -500,7 +516,7 @@ void match_tps_to_simides_direct(
     int first_simide_entry = -1;
     int last_simide_entry = -1;
     UInt_t event_number_simides = 0;
-    simidestree->SetBranchAddress("Event", &event_number_simides);
+    simidestree->SetBranchAddress("event", &event_number_simides);
     get_first_and_last_event(simidestree, &event_number_simides, event_number, first_simide_entry, last_simide_entry);
     
     if (verboseMode)  LogInfo << "SimIDEs in event " << event_number << ": " 
