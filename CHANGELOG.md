@@ -219,4 +219,10 @@ add the compile flag `STANDARD_FORMAT` in `Backtracker.h` to read standard forma
 
 add in ability to read from a filelist 
 
+### RunEventFilter.py
+
+script that can read very large input files which are not in tpstream.root filename format and chop them into tpstream.root files which contain a run/event range to avoid superposition of events when they share the same run number.  And to speed up event sorting.
+
+
+
 
