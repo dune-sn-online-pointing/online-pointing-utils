@@ -4,7 +4,7 @@ import ROOT
 import sys, os
 
 DEBUG=False
-testfile = "/Users/schellma/Dropbox/newsnb/online-pointing-utils/data/es/tpstreams/prodmarley_nue_flat_es_dune10kt_1x2x2__trg_mc_2025a_tpg__tpg_dune10kt_1x2x2__triggerAna__v10_12_01d01__triggerana_dune10kt_1x2x2__v10_12_01d01_merged_FLAT-ES_prod_v2-pass2_20251124T190722_f0_tpstream.root"
+#testfile = "/Users/schellma/Dropbox/newsnb/online-pointing-utils/data/es/tpstreams/prodmarley_nue_flat_es_dune10kt_1x2x2__trg_mc_2025a_tpg__tpg_dune10kt_1x2x2__triggerAna__v10_12_01d01__triggerana_dune10kt_1x2x2__v10_12_01d01_merged_FLAT-ES_prod_v2-pass2_20251124T190722_f0_tpstream.root"
 #testfile = "/Users/schellma/Dropbox/snb/online-pointing-utils/data/central/tpstreams/prodbackground_radiological_decay0_dune10kt_1x2x6_centralAPA__trg_mc_2025a_tpg__tpg_dune10kt_1x2x6__reco__v10_12_01d01__triggerana_dune10kt_1x2x6__v10_12_01d01__ntuple__CENTRAL_prod_l005000_20251126T010938_c0_tpstream.root"
 testfile = "/Users/schellma/Dropbox/snb/online-pointing-utils/data/cc/tpstreams/prodmarley_nue_flat_cc_dune10kt_1x2x2__trg_mc_2025a_tpg__tpg_dune10kt_1x2x2__triggerAna__v10_12_01d01__triggerana_dune10kt_1x2x2__v10_12_01d01__ntuple__FLAT-CC_prod-pass2_v2_20251201T185316_f0.root"
 if len(sys.argv) > 1:
@@ -44,9 +44,11 @@ for entry in runtree:
     
 print (f"Found runs: {runs}")
 print (f"Found maxevents: {maxevents}")
-skip = 500*len(runs)
+skip = 500
+if "radiological_decay" in inputfile: # these are bigger
+    skip = 250
 for run in runs:
-    for skipper in range(100,200):
+    for skipper in range(0,200):
         if skipper*skip > maxevents[run]: 
             print(f"Reached end of events for run {run}, max event is {maxevents[run]}, skipping rest of event ranges")
             break
@@ -55,19 +57,22 @@ for run in runs:
         if "tpstream.root" in inputfile:
             combined = os.path.basename(inputfile).replace("tpstream.root", f"run_{run}_{eventrange[0]}-{eventrange[1]}_tpstream.root") 
         else:
-            combined = os.path.basename(inputfile).replace(".root", f"run_{run}_{eventrange[0]}-{eventrange[1]}.root")
+            combined = os.path.basename(inputfile).replace(".root", f"run_{run}_{eventrange[0]}-{eventrange[1]}_tpstream.root")
         outlist = []
     
         for tree in trees:
             treename = os.path.basename(tree)
             treepath = os.path.dirname(tree)
-            if DEBUG: print(f"Processing tree: {tree}")
+            if DEBUG: 
+                print(f"Processing tree: {tree}")
             tree = theinputfile.Get(tree)
             outfilename = os.path.join("tmp",  f"tmp_run_{run}_{eventrange[0]}-{eventrange[1]}_{treename}_tpstream.root")
             outfile = TFile.Open(outfilename, 'RECREATE')
-            if DEBUG: outfile.ls()
+            if DEBUG: 
+                outfile.ls()
             outlist.append(outfilename)
-            if DEBUG: print(f"Output file: {outfilename}, tree is {tree}, treename is {treename}")
+            if DEBUG: 
+                print(f"Output file: {outfilename}, tree is {tree}, treename is {treename}")
             #df = RDataFrame(tree, inputfile)
             filter = "(event>=%s && event<= %s && run==%d)" % (eventrange[0], eventrange[1],run)
             print (f"Applying filter: {filter} to tree {tree} for run {run} and event range {eventrange[0]}-{eventrange[1]} ...")
@@ -79,8 +84,10 @@ for run in runs:
             newtree = tree.CopyTree(filter)
             newtree.Write()
             #gSystem.ChangeDirectory(treepath)
-            if DEBUG: print ("Tree %s Created directory: %s, current path is %s" % (tree,treepath, outfile.GetPath())  )
-            if DEBUG:outfile.ls()
+            if DEBUG: 
+                print ("Tree %s Created directory: %s, current path is %s" % (tree,treepath, outfile.GetPath())  )
+            if DEBUG:
+                outfile.ls()
             outfile.Close()
         
         
