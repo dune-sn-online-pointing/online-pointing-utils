@@ -11,7 +11,7 @@ if len(sys.argv) > 1:
     filename = sys.argv[1]
 else:
     filename = testfile
-
+basename = os.path.basename(filename).replace(".root","_").replace("__","_")
 
 print(f"Opening file: {filename}")
 file = TFile.Open(filename,"READONLY")
@@ -24,7 +24,7 @@ paths = ["triggerAna/simides","triggerAna/mctruths","triggerAna/mcparticles","tr
 
 tp_map_lo = {}
 tp_map_hi = {}
-
+counter = {}
 for path in paths:
     tp_tree = TTree()
     tp_tree = file.Get(path)
@@ -33,31 +33,35 @@ for path in paths:
         continue
     tp_map_lo[path] ={}
     tp_map_hi[path] ={}
+    counter[path] = {}
     newevent = -1
     count = 0
     for index in range(tp_tree.GetEntries()):
         tp_tree.GetEntry(index)
-        event = tp_tree.event
+        event = (tp_tree.run,tp_tree.event)
         if DEBUG: print ("event",path,count,event,index)
         tp_map_hi[path][event] = index
         if event != newevent:
             if DEBUG:print ("new event",path,count,event,index)
             
             newevent = event
+            
             count += 1
             if count > COUNT:
                 print(f"Debug: Reached {COUNT} events for path {path}, stopping early.")
                 break
             tp_map_lo[path][event] = index
+            counter[path][event] = count
         
         
 #file.close()
 
+
 for path in paths:
-    f = open(f"{path.replace('/','_')}_event_map.txt","w")
+    f = open(f"{basename}_{path.replace('/','_')}.txt","w")
     for event in tp_map_lo[path].keys():
         diff = tp_map_hi[path][event] - tp_map_lo[path][event]+1
-        out = f" {event} {tp_map_lo[path][event]} {tp_map_hi[path][event]} {diff}"
+        out = f" {event[0]} {event[1]} {counter[path][event]} {tp_map_lo[path][event]} {tp_map_hi[path][event]} {diff}"
         f.write(out + "\n")
         print(out)
         #print(f"{path} event {event} low {tp_map_lo[path][event]} high {tp_map_hi[path][event]} diff {diff}", file=f)

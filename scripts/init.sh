@@ -2,7 +2,7 @@
 
 # On worker nodes, INIT_DONE might be inherited but environment is not
 # Always reinitialize to ensure LCG is properly loaded
-if [[ $INIT_DONE == true ]] && [[ -n "${ONLINE_POINTING_UTILS_LCG_VIEW:-}" ]]; then
+if [[ $INIT_DONE == true ]]; then
     echo "Environment is already initialized, not running init.sh again."
     echo "If it is not loaded properly, run export INIT_DONE=false and rerun init.sh"
 else
@@ -35,18 +35,27 @@ else
         else
             echo " Environment already sourced from ${ONLINE_POINTING_UTILS_LCG_VIEW}, skipping."
         fi
+    # elif [[ -v SPACK_PYTHON ]]; then
+    #     echo " using SPACK environment, assuming necessary packages are available. If not, you may need to install them with spack."
+    
     elif [[ $(hostname) == *"fnal"* ]]; then
+        
         if grep -q "Scientific Linux release 7" /etc/redhat-release 2>/dev/null; then
             echo " Setting up environment for fnal cluster, using ups products. If this fails, it means you're not in a slf7 container."
             # Set up the basic environment
             source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
             echo " Setting up necessary packages..."
             # versions are chosen for compatibility with the pyenv
-            setup root v6_26_06a -q e20:p3913:prof
+            setup root v6_28_12 -f Linux64bit+3.10-2.17 -z /cvmfs/larsoft.opensciencegrid.org/products -q e26:p3915:prof
+            echo  $SETUP_ROOT
             setup nlohmann_json v3_10_4_1 -q e26:prof
+            echo $SETUP_NLOHMANN_JSON
             setup cmake  v3_27_4
+            echo $SETUP_CMAKE
             setup valgrind v3_10_1
-            setup gcc v9_3_0
+            echo $SETUP_VALGRIND
+            setup gcc v12_1_0
+            echo $SETUP_GCC
             echo " Done!"
         else
             echo " WARNING: not running in slf7, can't set up dune products and commands, can't compile."

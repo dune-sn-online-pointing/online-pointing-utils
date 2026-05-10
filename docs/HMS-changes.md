@@ -59,5 +59,20 @@ Note that Utils.cpp has changed to utils.cpp
 
 - seems to work now. 
 
+## put in a pull request for merge_OSU_3d_reco
+
+- still needs the Event/event resolved
+
+- tried on Al9 but was unable to get file access to work. 
+
+build sequence is
+
+- check out the code
+
+- source python/setup-python.sh
+
+- ./scripts/compile.sh (sometimes need to remove build/CMakeCache.txt to get a clean build)
+
+- problems with build in SL7 as it fails on the second test for setup because the ups install has gone away? 
 
 

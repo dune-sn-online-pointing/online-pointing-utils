@@ -313,16 +313,17 @@ class ClusterViewer:
         self.draw_mode = draw_mode.lower()
         self.only_marley = only_marley
         self.params = Parameters(params_dir)
-        
+        self.axis_location = None 
         self.items: List[ClusterItem] = []
         self.current_idx = 0
         
         self.fig = None
         self.ax = None
+        self.ax_y_cm = None
         self.im = None
         self.btn_prev = None
         self.btn_next = None
-        
+        self.cbar = None
         self.load_clusters()
     
     def load_clusters(self):
@@ -444,6 +445,9 @@ class ClusterViewer:
         # Determine axis ranges and create channel mapping
         tmin, tmax = float('inf'), float('-inf')
         unique_channels = sorted(set(item.ch[:n_tps]))
+        first_channel = unique_channels[0]
+        last_channel = unique_channels[-1]
+        print(f"Unique channels: {[int(c) for c in unique_channels]}")
         
         for i in range(n_tps):
             ts = item.tstart[i]
@@ -451,11 +455,12 @@ class ClusterViewer:
             tmin = min(tmin, ts)
             tmax = max(tmax, te)
         
-        ch_to_idx = {ch: idx for idx, ch in enumerate(unique_channels)}
+        #ch_to_idx = {ch: idx for idx, ch in enumerate(unique_channels)}
+        ch_to_idx = {ch: ch - first_channel for ch in unique_channels}
         
         # Create histogram with padding
         pad_bins = 2
-        n_ch = len(unique_channels)
+        n_ch = last_channel - first_channel + 1
         n_t = int(tmax - tmin) + 1
         
         hist = np.zeros((n_t + 2 * pad_bins, n_ch + 2 * pad_bins))
@@ -474,7 +479,8 @@ class ClusterViewer:
             ts = item.tstart[i]
             tot = item.sot[i]
             ch_actual = item.ch[i]
-            ch_idx = ch_to_idx[ch_actual] + pad_bins
+            #ch_idx = ch_to_idx[ch_actual] + pad_bins
+            ch_idx = ch_actual - first_channel + pad_bins
             
             samples_to_peak = item.stopeak[i] if i < len(item.stopeak) else (tot // 2 if tot > 0 else 0)
             peak_adc = item.adc_peak[i] if i < len(item.adc_peak) else 200
@@ -499,6 +505,8 @@ class ClusterViewer:
         # Clear and redraw
         self.ax.clear()
         
+        self.ax.set_xticks([])
+
         # Apply threshold mask
         hist_masked = np.ma.masked_where(hist < threshold_adc, hist)
         
@@ -518,8 +526,8 @@ class ClusterViewer:
         self.ax.set_ylabel('time [ticks]')
         
         # Create X-axis labels with actual channel numbers
-        xticks = [i + pad_bins for i in range(len(unique_channels))]
-        xticklabels = [str(ch) for ch in unique_channels]
+        xticks = [i for i in range(-pad_bins, n_ch + pad_bins)]
+        xticklabels = [str(ch + first_channel) for ch in xticks]
         self.ax.set_xticks(xticks)
         self.ax.set_xticklabels(xticklabels, rotation=90, fontsize=8)
         
@@ -530,9 +538,10 @@ class ClusterViewer:
         time_tick_cm = self.params.get('timing.time_tick_cm', 0.0805)
         
         # Add secondary Y axis (right side, inside plot)
-        ax_y_cm = self.ax.twinx()
-        ax_y_cm.set_ylim(self.ax.get_ylim()[0] * time_tick_cm, self.ax.get_ylim()[1] * time_tick_cm)
-        ax_y_cm.set_ylabel('drift [cm]')
+        if self.ax_y_cm is None: 
+            self.ax_y_cm = self.ax.twinx()
+        self.ax_y_cm.set_ylim(self.ax.get_ylim()[0] * time_tick_cm, self.ax.get_ylim()[1] * time_tick_cm)
+        self.ax_y_cm.set_ylabel('drift [cm]')
         
         # Title
         if item.is_event:
@@ -548,11 +557,13 @@ class ClusterViewer:
         self.ax.set_title(title, fontsize=10)
         
         # Add colorbar
-        if hasattr(self, 'cbar') and self.cbar is not None:
+        if self.cbar is not None and hasattr(self, 'cbar'):
             try:
                 self.cbar.remove()
             except:
                 pass
+        #HMS restore the axes as the colorbar messes with them.
+        self.ax.set_position(self.axis_location)
         self.cbar = plt.colorbar(self.im, ax=self.ax, label=f'ADC ({self.draw_mode} model)')
         
         self.ax.grid(True, alpha=0.3)
@@ -581,7 +592,7 @@ class ClusterViewer:
         
         # Create axes - main plot takes most of the space
         self.ax = self.fig.add_axes([0.1, 0.15, 0.8, 0.75])
-        
+        self.axis_location = self.ax.get_position()
         # Create navigation buttons
         ax_prev = self.fig.add_axes([0.3, 0.02, 0.15, 0.05])
         ax_next = self.fig.add_axes([0.55, 0.02, 0.15, 0.05])

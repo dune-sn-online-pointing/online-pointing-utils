@@ -495,7 +495,16 @@ int main(int argc, char* argv[]){
       int match_id=-1, match_type=-1;
       bool has_match_id = false;
       
-      pd.tree->SetBranchAddress("event", &event);
+      // HMS
+      // if (pd.tree->GetBranch("event")) pd.tree->SetBranchAddress("event", &event);
+      // else pd.tree->SetBranchAddress("Event", &event); // fallback for older files
+      
+      //if (pd.tree->GetBranch("n_tps")) pd.tree->SetBranchAddress("n_tpstrue_dir_x);
+      //pd.tree->SetBranchAddress("event", &event);
+      // HMS
+      if (pd.tree->GetBranch("event")) pd.tree->SetBranchAddress("event", &event);
+      else pd.tree->SetBranchAddress("Event", &event); // fallback for older files
+
       pd.tree->SetBranchAddress("n_tps", &n_tps);
       // prefer new names; fallback if needed
       if (pd.tree->GetBranch("true_neutrino_energy")) pd.tree->SetBranchAddress("true_neutrino_energy", &true_ne);

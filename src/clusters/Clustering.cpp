@@ -223,7 +223,7 @@ std::vector<Cluster> make_cluster(std::vector<TriggerPrimitive*> all_tps, int ti
             }
 
             if (reject_due_to_same_channel) {
-                if (debugMode) LogInfo << "Rejecting candidate due to same-channel time gap > limit" << std::endl;
+                //if (debugMode) LogInfo << "Rejecting candidate due to same-channel time gap > limit" << std::endl;
                 continue; // Try next candidate
             }
 

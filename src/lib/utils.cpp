@@ -525,6 +525,7 @@ std::vector<std::string> find_input_files(const nlohmann::json& j, const std::ve
                 list_file = j["inputListFile"].get<std::string>();
                 LogInfo << "JSON inputListFile: " << list_file << std::endl;
             }
+            
 
             if (!list_file.empty()) {
                 std::ifstream infile(list_file);

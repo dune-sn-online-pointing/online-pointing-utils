@@ -40,16 +40,16 @@ int main(int argc, char* argv[]) {
 
     // get maxcount and skip from json file
     int maxcount = -1;
-    int skip = 0;
+    int skipevents = -1;
     if (j.contains("maxcount")) {
         try { maxcount = j.at("maxcount").get<int>(); }
         catch (...) { LogWarning << "Failed to read 'maxcount' from JSON, using default (-1 for no limit)." << std::endl; 
         }
     }
-    // if (j.contains("skip")) {
-    //     try { skip = j.at("skip").get<int>(); }
-    //     catch (...) { LogWarning << "Failed to read 'skip' from JSON, using default (0 for no skip)." << std::endl; }
-    // }
+    if (j.contains("skipevents")) {
+        try { skipevents = j.at("skipevents").get<int>(); }
+        catch (...) { LogWarning << "Failed to read 'skipevents' from JSON, using default (-1 for no skip)." << std::endl; }
+    }
 
     
     // Determine backtracker_error_margin value: CLI > JSON > default from parameters/timing.h
@@ -171,17 +171,23 @@ int main(int argc, char* argv[]) {
     for (auto& filename : filenames) {
 
         done_files++;
-
+        if (max_files > 0 && done_files > max_files){
+            LogInfo << "reached " << max_files << " files, breaking loop after max_files iterations." << std::endl;
+            break; }
         GenericToolbox::displayProgressBar(done_files, filenames.size(), "Processing files...");
 
         // Compute expected output path early to allow skip-if-exists behavior
         std::string input_basename = filename.substr(filename.find_last_of("/\\") + 1);
         input_basename = input_basename.substr(0, input_basename.length() - 14); // remove _tpstream.root
         std::ostringstream suffix;
+        std::string skipper = "";
+        if (maxcount > 0 || skipevents > -1) {
+            skipper =std::format("_s{}_l{}",skipevents,maxcount);
+        } 
         if (bktr_margin != standard_backtracker_error_margin) {
-            suffix << "_tps_bktr" << bktr_margin << ".root";
+            suffix << skipper << "_tps_bktr" << bktr_margin << ".root";
         } else {
-            suffix << "_tps.root";
+            suffix << skipper << "_tps.root";
         }
         std::string out = outfolder + "/" + input_basename + suffix.str();
         // Use absolute path for output
@@ -214,15 +220,32 @@ int main(int argc, char* argv[]) {
         // Collect unique event numbers in order of first occurrence (handles non-consecutive events
         // from hash-based file splitting).
         std::vector<UInt_t> event_numbers;
-        {
-            UInt_t ev = 0;
-            MCtree->SetBranchAddress("event", &ev);
-            std::set<UInt_t> seen;
-        
-            for (Long64_t i = 0; i < MCtree->GetEntries(); ++i) {
-                MCtree->GetEntry(i);
+        UInt_t ev = 0;
+        MCtree->SetBranchAddress("event", &ev);
+        std::set<UInt_t> seen;
+        int an_event = -1;
+        int evcount = -1;
+        for (Long64_t i = 0; i < MCtree->GetEntries(); ++i) {
+            MCtree->GetEntry(i);
+            UInt_t event_index = ev;
+
+            if (event_index != an_event){
+                
+                an_event = event_index;
                 if (seen.insert(ev).second) event_numbers.push_back(ev);
-                if (event_numbers.size() >= static_cast<size_t>(maxcount) && maxcount > 0) break; // stop if we've reached maxcount
+                evcount++;
+                if (evcount < skipevents && skipevents > -1){
+                //if (debugMode)                                                                                       
+                    LogInfo << "Skipping event " << event_index << " " << an_event << " " << evcount << std::endl;
+                    continue;
+                }
+
+                                    
+                LogDebug << "Adding event " << event_index << " " << evcount << std::endl;
+            }
+            if ( evcount >= maxcount+skipevents-1 && maxcount > 0) {
+                LogInfo << "reached " << maxcount << " events, breaking loop after maxcount iterations." << std::endl;
+                break;
             }
         }
         int n_events = static_cast<int>(event_numbers.size());
