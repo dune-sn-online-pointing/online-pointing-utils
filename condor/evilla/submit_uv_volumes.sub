@@ -1,0 +1,33 @@
+universe                = vanilla
+executable              = /afs/cern.ch/work/e/evilla/private/dune/refactor-online-utils/scripts/wrapper_uv_volumes.sh
+arguments               = $(cat_lo) $(cat_hi)
+
+request_cpus            = 1
+request_memory          = 4GB
+request_disk            = 4GB
+
++JobFlavour             = "workday"
+requirements            = (OpSysAndVer =?= "AlmaLinux9")
+
+initialdir              = /afs/cern.ch/work/e/evilla/private/dune/refactor-online-utils
+getenv                  = True
+
+log                     = /afs/cern.ch/work/e/evilla/private/dune/refactor-online-utils/logs/uv_volumes_$(Cluster)_$(Process).log
+output                  = /afs/cern.ch/work/e/evilla/private/dune/refactor-online-utils/logs/uv_volumes_$(Cluster)_$(Process).out
+error                   = /afs/cern.ch/work/e/evilla/private/dune/refactor-online-utils/logs/uv_volumes_$(Cluster)_$(Process).err
+
+notification            = Error
+
+queue cat_lo, cat_hi from (
+400 419
+420 439
+440 459
+460 479
+480 499
+500 519
+520 539
+540 559
+560 579
+580 599
+600 621
+)
