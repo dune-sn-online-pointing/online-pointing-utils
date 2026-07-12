@@ -908,8 +908,11 @@ def main():
         else:
             output_folder = f"{base_folder}/volume_images_{conditions}"
     
-    # Process all three planes
-    planes = ['U', 'V', 'X']
+    # Planes to process: default all three, overridable via JSON "planes" key
+    # (e.g. ["X"] for collection-plane-only channel-tagging volumes).
+    planes = config.get('planes', ['U', 'V', 'X'])
+    if isinstance(planes, str):
+        planes = [planes]
     
     # CLI overrides JSON settings
     skip_files = args.skip if args.skip is not None else config.get('skip_files', 0)

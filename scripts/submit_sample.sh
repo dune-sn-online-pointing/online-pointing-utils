@@ -29,6 +29,7 @@ max_files=10
 skip=0
 
 which_sims="--all"
+max_idle=0   # 0 = no throttling; >0 caps concurrently-idle jobs to stagger load
 
 # parse
 while [[ "$#" -gt 0 ]]; do
@@ -36,6 +37,8 @@ while [[ "$#" -gt 0 ]]; do
         -j|--json-config) JSON_SETTINGS="$2"; shift ;;
         --tot-files) tot_files="$2"; shift ;;
         --max-files) max_files="$2"; shift ;;
+        --steps) which_sims="$2"; shift ;;
+        --max-idle) max_idle="$2"; shift ;;
         -d|--delete-submit-files) delete_submit_files="$2"; shift ;;
         --delete-root) delete_root_files="$2"; shift ;;
         -p|--print-only) print_only=true ;;
@@ -112,6 +115,7 @@ log                 = ${JOB_OUTPUT_DIR}job.\$(ClusterId).\$(JOBNAME).log
 # request_memory      = 2000
 
 +JobFlavour         = "workday"
+$( [ "${max_idle}" -gt 0 ] && echo "max_idle            = ${max_idle}" )
 
 queue arguments from ${list_of_jobs}
 EOF
