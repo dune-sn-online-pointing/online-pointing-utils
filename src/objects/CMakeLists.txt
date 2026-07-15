@@ -19,12 +19,13 @@ target_include_directories(
     ${LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/src/backtracking
+    ${CMAKE_SOURCE_DIR}/src/translate
 )
 
 
 target_link_libraries(
     ${LIB_NAME} PUBLIC
-    backtrackingLibs
+    TranslateLibs
     globalLib
     ${ROOT_LIBRARIES}
 )

@@ -20,6 +20,11 @@ add_executable( backtrack_tpstream ${CMAKE_CURRENT_SOURCE_DIR}/backtrack_tpstrea
 target_link_libraries( backtrack_tpstream backtrackingLibs clustersLibs )
 install( TARGETS backtrack_tpstream DESTINATION bin )
 
+cmessage( STATUS "Creating translate_tpstream app..." )
+add_executable( translate_tpstream ${CMAKE_CURRENT_SOURCE_DIR}/translate_tpstream.cpp )
+target_link_libraries( translate_tpstream TranslateLibs globalLib )
+install( TARGETS translate_tpstream DESTINATION bin )
+
 cmessage( STATUS "Creating analyze_clusters app..." )
 add_executable( analyze_clusters ${CMAKE_CURRENT_SOURCE_DIR}/analyze_clusters.cpp )
 target_link_libraries( analyze_clusters clustersLibs anaLib globalLib )
