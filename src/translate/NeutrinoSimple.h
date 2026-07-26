@@ -1,17 +1,17 @@
-#ifndef NEUTRINOSIMPLE_H
-#define NEUTRINOSIMPLE_H
+#ifndef Neutrino_H
+#define Neutrino_H
 
 #include "../lib/root.h"
 
 // the idea is  to associate a neutrino to each TrueParticle 
 // having generator_name == "marley"
 
-class NeutrinoSimple {
+class Neutrino {
     
     public:
 
-        int event; 
-        int run;
+        UInt_t event; 
+        UInt_t run;
         std::string interaction;
         float x;
         float y;
@@ -24,9 +24,9 @@ class NeutrinoSimple {
         int truth_id {-1}; // needed for association
         // could put generator_name, but not needed for the current setup
 
-        NeutrinoSimple(
-            int event, 
-            int run,
+        Neutrino(
+            UInt_t event, 
+            UInt_t run,
             std::string interaction,
             float x,
             float y,
@@ -50,7 +50,7 @@ class NeutrinoSimple {
             truth_id(truth_id)
         {}
 
-        NeutrinoSimple() :
+        Neutrino() :
             event(-1),
             run(-1),
             interaction(""),
@@ -95,4 +95,4 @@ class NeutrinoSimple {
 };
 
 
-#endif // NEUTRINOSIMPLE_H
+#endif // Neutrino_H

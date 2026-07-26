@@ -1,13 +1,13 @@
 #include "../translate/read_tpstream_simple.h"
-#include "../translate/write_tps_simple.h"
+#include "../translate/write_tps_class.h"
 #include "../translate/generate_filemap.h"
-#include "../translate/TriggerPrimitiveSimple.hpp"
-#include "../translate/TrueParticleSimple.h"
-#include "../translate/NeutrinoSimple.h"
+#include "TriggerPrimitive.hpp"
+#include "TrueParticle.h"
+#include "Neutrino.h"
 
 #include <memory>
 
-int COUNT=10000000;
+int COUNT=2;
 
 #define STANDARD_FORMAT
 LoggerInit([]{  Logger::getUserHeader() << "[" << FILENAME << "]";});
@@ -160,9 +160,10 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::string> output_files;
 
-    std::vector<std::vector<TriggerPrimitiveSimple>> tps;
-    std::vector<std::vector<TrueParticleSimple>> true_particles;
-    std::vector<std::vector<NeutrinoSimple>> neutrinos;
+    std::vector<std::vector<TriggerPrimitive>> tps;
+    std::vector<TriggerPrimitive> tps_by_event;
+    std::vector<TrueParticle> true_particles_by_event;
+    std::vector<Neutrino> neutrinos_by_event;
 
     // Effective time window for TP<->truth association in TDC ticks (base 1 TPC sample + margin in TPC samples)
     int effective_time_window = (1 + bktr_margin) * conversion_tdc_to_tpc;
@@ -176,6 +177,7 @@ int main(int argc, char* argv[]) {
     LogInfo << "Channel tolerance (channels): " << channel_tolerance << std::endl;
 
     int done_files = 0;
+    TpsWriter(tps_writer);
 
     for (auto& filename : filenames) {
 
@@ -212,7 +214,8 @@ int main(int argc, char* argv[]) {
             output_files.push_back(out_abs);
             continue;
         }
-
+        
+        bool ok = tps_writer.Create(out_abs,"tps");
         if (verboseMode) LogInfo << "Reading file: " << filename << std::endl;
         // count events
         // using this tree just because it's the smallest
@@ -311,10 +314,10 @@ int main(int argc, char* argv[]) {
         std::map<const ULong_t, UInt_t>  sm_map_lo;
         std::map<const ULong_t, UInt_t>  sm_map_hi;
 
-        int tp_count = generate_filemap(TPtree, tp_map_lo, tp_map_hi);
-        int mc_count = generate_filemap(MCparticlestree, mc_map_lo, mc_map_hi, COUNT);
-        int truth_count = generate_filemap(MCtruthtree, tr_map_lo, tr_map_hi, COUNT);
-        int simide_count = generate_filemap(simidestree, sm_map_lo, sm_map_hi, COUNT);
+        int tp_count = generate_filemap(TPtree, tp_map_lo, tp_map_hi, COUNT);
+        int mc_count = generate_filemap(MCparticlestree, mc_map_lo, mc_map_hi, 100);
+        int truth_count = generate_filemap(MCtruthtree, tr_map_lo, tr_map_hi, 100);
+        int simide_count = generate_filemap(simidestree, sm_map_lo, sm_map_hi, 100);
 
         LogInfo << " File maps generated: " << std::endl;
         LogInfo << "  TP tree: " << tp_count << " entries" << std::endl;
@@ -337,10 +340,9 @@ int main(int argc, char* argv[]) {
 
         for (ULong_t i = 0; i < MCtruthtree->GetEntries(); ++i) {
             MCtruthtree->GetEntry(i);
-            ULong_t event_key = 10000000 * run + ev;
+            ULong_t event_key = 10000000 * (ULong_t)(run) + (ULong_t)ev;
 
             if (event_key != an_event){
-                
                 an_event = event_key;
                 if (seen.insert(event_key).second){ 
                     event_numbers.push_back(event_key);
@@ -366,54 +368,72 @@ int main(int argc, char* argv[]) {
         int n_events = static_cast<int>(event_numbers.size());
         if (verboseMode) LogInfo << " Found " << n_events << " unique events in tree: " << MCtruthtree_path << std::endl;
 
-        tps.clear(); true_particles.clear(); neutrinos.clear();
-        tps.resize(n_events); true_particles.resize(n_events); neutrinos.resize(n_events);
+        //tps.clear(); true_particles.clear(); neutrinos.clear();
+        //tps.resize(n_events); true_particles.resize(n_events); neutrinos.resize(n_events);
         int iRun = -1;
+
+
         // loop over the actual event numbers (not a consecutive range from first_event)
         for (int event_index = 0; event_index < (int)event_numbers.size(); ++event_index) {
-            UInt_t iEvent = (UInt_t)(event_numbers[event_index]%10000000);
-            UInt_t iRun = (UInt_t)(event_numbers[event_index] / 10000000);
-            if (verboseMode) LogInfo << "Reading event " << iEvent << " run " << iRun << std::endl;
+            ULong_t event_key = event_numbers[event_index];
+            UInt_t iEvent = (UInt_t)(event_key%10000000);
+            UInt_t iRun = (UInt_t)(event_key / 10000000);
+            UInt_t tp_lo = tp_map_lo[event_key];
+            UInt_t tp_hi = tp_map_hi[event_key];
+            UInt_t mc_lo = mc_map_lo[event_key];
+            UInt_t mc_hi = mc_map_hi[event_key];
+            UInt_t tr_lo = tr_map_lo[event_key];
+            UInt_t tr_hi = tr_map_hi[event_key];
+            UInt_t sm_lo = sm_map_lo[event_key];
+            UInt_t sm_hi = sm_map_hi[event_key];
+            if (debugMode) LogInfo << "Reading event " << iEvent << " run " << iRun << std::endl;
             //if (debugMode) LogDebug << "Beginning read_tpstream for event " << iEvent << std::endl;
-
+            tps_by_event.clear(); true_particles_by_event.clear(); neutrinos_by_event.clear();
+            
             read_tpstream_simple(
                 this_interaction,
                 TPtree,
                 MCparticlestree,
                 MCtruthtree,
                 simidestree,
-                tps.at(event_index),
-                true_particles.at(event_index),
-                neutrinos.at(event_index),
+                tps_by_event,
+                true_particles_by_event,
+                neutrinos_by_event,
                 /*supernova_option*/0,
                 iEvent,
                 iRun,
-                tp_map_lo, tp_map_hi,
-                mc_map_lo, mc_map_hi,
-                tr_map_lo, tr_map_hi,
-                sm_map_lo, sm_map_hi,
+                tp_lo, tp_hi,
+                mc_lo, mc_hi,
+                tr_lo, tr_hi,
+                sm_lo, sm_hi,
                 static_cast<double>(effective_time_window),
                 channel_tolerance
             );
 
             // Summarise direct TP-to-truth associations built inside read_tpstream
             int matched_tps_counter = 0;
-            for (const auto& tp : tps.at(event_index)) {
+            for (const auto& tp : tps_by_event) {
                 if (tp.GetTrueParticle() != nullptr) { matched_tps_counter++; }
             }
-            if (verboseMode) LogInfo << "Matched " << matched_tps_counter << "/" << tps.at(event_index).size()
+            if (debugMode) LogInfo << "Matched " << matched_tps_counter << "/" << tps_by_event.size()
                 << " TPs to true particles via SimIDE association." << std::endl;
 
             if (debugMode) {
                 LogDebug << "Event " << iEvent << " processing complete with "
-                         << tps.at(event_index).size() << " TPs and "
-                         << true_particles.at(event_index).size() << " true particles" << std::endl;
+                         << tps_by_event.size() << " TPs and "
+                         << true_particles_by_event.size() << " true particles" << std::endl;
             }
+            int counter = tps_writer.WriteSingleEvent(tps_by_event);
+            tps_by_event.clear();
+            
+            
+            //if (verboseMode) LogInfo << "wrote the nth tps by event " << counter << std::endl;
         }
 
         // write *_tps_bktr<N>.root where N is backtracker_error_margin
         if (verboseMode) LogInfo << "Writing output to: " << out_abs << std::endl;
-        write_tps_simple(out_abs, tps, true_particles, neutrinos);
+        //write_tps_simple(out_abs, tps, bktr_margin );
+        ok = tps_writer.Close();
         output_files.push_back(out_abs);
     }
 

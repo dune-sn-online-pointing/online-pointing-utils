@@ -1,5 +1,5 @@
 // Batch-mode match_clusters - matches U/V/X plane clusters across files
-#include "Clustering.h"
+#include "ClusteringSimple.h"
 #include "Cluster.h"
 #include "geometry.h"
 #include "Backtracking.h"
@@ -284,7 +284,9 @@ int main(int argc, char* argv[]) {
                     
                     // Check if U cluster time range overlaps with X cluster time range
                     if (u_time_range.first > x_time_range.second + time_tolerance_ticks_tdc) break;
-                    if (!timesOverlap(u_time_range, x_time_range, time_tolerance_ticks_tdc)) { failed_time_u++; continue; }
+                    if (!timesOverlap(u_time_range, x_time_range, time_tolerance_ticks_tdc)) { 
+                        if (verboseMode) LogInfo << "failed x u time check " << std::endl;
+                        failed_time_u++; continue; }
                     int u_event = clusters_u[j].get_tps()[0]->GetEvent();
                     int x_event = clusters_x[i].get_tps()[0]->GetEvent();
                     if (u_event != x_event) {
@@ -331,7 +333,9 @@ int main(int argc, char* argv[]) {
                     
                     // Check if V cluster time range overlaps with X cluster time range
                     if (v_time_range.first > x_time_range.second + time_tolerance_ticks_tdc) break;
-                    if (!timesOverlap(v_time_range, x_time_range, time_tolerance_ticks_tdc)) { failed_time_v++; continue; }
+                    if (!timesOverlap(v_time_range, x_time_range, time_tolerance_ticks_tdc)) { 
+                        if (verboseMode) LogInfo << "failed x v time check " << std::endl;
+                        failed_time_v++; continue; }
                     int v_event = clusters_v[k].get_tps()[0]->GetEvent();
                     int x_event = clusters_x[i].get_tps()[0]->GetEvent();
                     if (v_event != x_event) {
@@ -362,7 +366,9 @@ int main(int argc, char* argv[]) {
                 int x_id = clusters_x[i].get_cluster_id();
                 bool has_u = x_to_u_match.find(x_id) != x_to_u_match.end();
                 bool has_v = x_to_v_match.find(x_id) != x_to_v_match.end();
-                
+                if (verboseMode) {
+                    LogInfo << " match id " << has_u << " " << has_v << std::endl;
+                }
                 if (has_u && has_v) {
                     // Complete match: X+U+V
                     test_combinations++;

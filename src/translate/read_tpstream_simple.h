@@ -1,14 +1,14 @@
 #ifndef READ_TPSTREAM_SIMPLE_H
 #define READ_TPSTREAM_SIMPLE_H
 
-#include "TriggerPrimitiveSimple.hpp"
+#include "TriggerPrimitive.hpp"
 
 #define STANDARD_FORMAT
 
-std::vector<float> calculate_position(TriggerPrimitiveSimple* tp);
-std::vector<std::vector<float>> validate_position_calculation(std::vector<TriggerPrimitiveSimple*> tps);
-float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitiveSimple*> tps, float z, float x_sign);
-float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitiveSimple*> tps, float z, float x_sign);
+std::vector<float> calculate_position(TriggerPrimitive* tp);
+std::vector<std::vector<float>> validate_position_calculation(std::vector<TriggerPrimitive*> tps);
+float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign);
+float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign);
 
 void get_first_and_last_event(TTree* tree, UInt_t* branch_value, int which_event, int& first_entry, int& last_entry);
 
@@ -19,20 +19,28 @@ void read_tpstream_simple(const std::string this_interaction,
     TTree* MCparticlestree,
     TTree* MCtruthtree,
     TTree* simidestree,
-				std::vector<TriggerPrimitiveSimple>& tps,
-				std::vector<TrueParticleSimple>& true_particles,
-				std::vector<NeutrinoSimple>& neutrinos,
+				std::vector<TriggerPrimitive>& tps,
+				std::vector<TrueParticle>& true_particles,
+				std::vector<Neutrino>& neutrinos,
 				int supernova_option ,
 				UInt_t event_number ,
 				UInt_t run_number ,
-				std::map<const ULong_t, UInt_t>& tp_map_lo,
-				std::map<const ULong_t, UInt_t>& tp_map_hi,
-				std::map<const ULong_t, UInt_t>& mc_map_lo,
-				std::map<const ULong_t, UInt_t>& mc_map_hi,
-				std::map<const ULong_t, UInt_t>& tr_map_lo,
-				std::map<const ULong_t, UInt_t>& tr_map_hi,
-				std::map<const ULong_t, UInt_t>& sm_map_lo,
-				std::map<const ULong_t, UInt_t>& sm_map_hi,
+				// std::map<const ULong_t, UInt_t>& tp_map_lo,
+				// std::map<const ULong_t, UInt_t>& tp_map_hi,
+				// std::map<const ULong_t, UInt_t>& mc_map_lo,
+				// std::map<const ULong_t, UInt_t>& mc_map_hi,
+				// std::map<const ULong_t, UInt_t>& tr_map_lo,
+				// std::map<const ULong_t, UInt_t>& tr_map_hi,
+				// std::map<const ULong_t, UInt_t>& sm_map_lo,
+				// std::map<const ULong_t, UInt_t>& sm_map_hi,
+				UInt_t tp_lo,
+				UInt_t tp_hi,
+				UInt_t mc_lo,
+				UInt_t mc_hi,
+				UInt_t tr_lo,
+				UInt_t tr_hi,
+				UInt_t sm_lo,
+				UInt_t sm_hi,
 				double time_tolerance_ticks = -1.0,
 				int channel_tolerance = -1);
 
@@ -41,24 +49,24 @@ void read_tpstream_simple(const std::string this_interaction,
                  
 // Direct TP-SimIDE matching based on time and channel proximity
 void match_tps_to_simides_direct(
-	std::vector<TriggerPrimitiveSimple>& tps,
-    std::vector<TrueParticleSimple>& true_particles,
+	std::vector<TriggerPrimitive>& tps,
+    std::vector<TrueParticle>& true_particles,
     TTree* simidestree ,
     UInt_t event_number,
     UInt_t run_number,
     double time_tolerance_ticks,
     int channel_tolerance,
-	std::map<const ULong_t, UInt_t>  sm_map_lo,
-	std::map<const ULong_t, UInt_t>  sm_map_hi
+	UInt_t  sm_lo,
+	UInt_t sm_hi
 	);
 
 // Write condensed TPs and truth to a ROOT file for later clustering
 
-void write_tps(
-	const std::string& out_filename,
-	const std::vector<std::vector<TriggerPrimitiveSimple>>& tps_by_event,
-	const std::vector<std::vector<TrueParticleSimple>>& true_particles_by_event,
-	const std::vector<std::vector<NeutrinoSimple>>& neutrinos_by_event);
+// void write_tps(
+// 	const std::string& out_filename,
+// 	const std::vector<std::vector<TriggerPrimitive>>& tps_by_event,
+// 	const std::vector<std::vector<TrueParticle>>& true_particles_by_event,
+// 	const std::vector<std::vector<Neutrino>>& neutrinos_by_event);
 
 
 #endif // READ_TPSTREAM_SIMPLE_H

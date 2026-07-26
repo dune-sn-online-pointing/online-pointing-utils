@@ -9,14 +9,15 @@ class TrueParticle {
     public:
         // constructor
         TrueParticle(
-            int event, 
-            float x,
-            float y,
-            float z,
-            float Px,
-            float Py,
-            float Pz,
-            float energy,
+            UInt_t event,
+            UInt_t run, 
+            Double_t x,
+            Double_t y,
+            Double_t z,
+            Double_t Px,
+            Double_t Py,
+            Double_t Pz,
+            Double_t energy,
             std::string generator_name,
             int pdg,
             std::string process,
@@ -24,6 +25,7 @@ class TrueParticle {
             int truth_id = -1
         ) :
             event(event),
+            run(run),
             x(x),
             y(y),
             z(z),
@@ -39,16 +41,18 @@ class TrueParticle {
         {};
 
         // default constructor
-        TrueParticle() : event(-1), x(0), y(0), z(0), Px(0), Py(0), Pz(0), energy(0), generator_name(""), pdg(-1), process(""),
+        TrueParticle() : event(-1), run(-1), x(0), y(0), z(0), Px(0), Py(0), Pz(0), energy(0), generator_name(""), pdg(-1), process(""),
             track_id(-1), truth_id(-1) {};
 
         // special constructor for when reading the files
         TrueParticle( 
-            int event, 
+            UInt_t event, 
+            UInt_t run,
             std::string generator_name, 
             int block_id
         ) : 
             event(event),
+            run(run),
             generator_name(generator_name),
             truth_id(block_id)
         {
@@ -67,14 +71,15 @@ class TrueParticle {
         ~TrueParticle() {};
 
         // Setters
-        void SetEvent(int event) { this->event = event; }
-        void SetX(float x) { this->x = x; }
-        void SetY(float y) { this->y = y; }
-        void SetZ(float z) { this->z = z; }
-        void SetPx(float Px) { this->Px = Px; }
-        void SetPy(float Py) { this->Py = Py; }
-        void SetPz(float Pz) { this->Pz = Pz; }
-        void SetEnergy(float energy) { this->energy = energy; }
+        void SetEvent(UInt_t event) { this->event = event; }
+        void SetRun(UInt_t run) { this->run = run; }
+        void SetX(Double_t x) { this->x = x; }
+        void SetY(Double_t y) { this->y = y; }
+        void SetZ(Double_t z) { this->z = z; }
+        void SetPx(Double_t Px) { this->Px = Px; }
+        void SetPy(Double_t Py) { this->Py = Py; }
+        void SetPz(Double_t Pz) { this->Pz = Pz; }
+        void SetEnergy(Double_t energy) { this->energy = energy; }
         void SetGeneratorName(std::string generator_name) { this->generator_name = generator_name; }
         void SetPdg(int pdg) { this->pdg = pdg; }
         void SetProcess(std::string process) { this->process = process; }
@@ -86,15 +91,16 @@ class TrueParticle {
 
         // Getters
         int GetEvent() const { return event; }
-        std::vector <float> GetPosition() const { return {x, y, z}; }
-        std::vector <float> GetMomentum() const { return {Px, Py, Pz}; }
-        float GetX() const { return x; }
-        float GetY() const { return y; }
-        float GetZ() const { return z; }
-        float GetPx() const { return Px; }
-        float GetPy() const { return Py; }
-        float GetPz() const { return Pz; }
-        float GetEnergy() const { return energy; }
+        int GetRun() const { return run; }
+        std::vector <Double_t> GetPosition() const { return {x, y, z}; }
+        std::vector <Double_t> GetMomentum() const { return {Px, Py, Pz}; }
+        Double_t GetX() const { return x; }
+        Double_t GetY() const { return y; }
+        Double_t GetZ() const { return z; }
+        Double_t GetPx() const { return Px; }
+        Double_t GetPy() const { return Py; }
+        Double_t GetPz() const { return Pz; }
+        Double_t GetEnergy() const { return energy; }
         std::string GetGeneratorName() const { return generator_name; }
         int GetPdg() const { return pdg; }
         std::string GetProcess() const { return process; }
@@ -117,6 +123,7 @@ class TrueParticle {
         void Print() const {
             LogInfo << "TrueParticle: " << std::endl;
             LogInfo << "Event: " << event << std::endl;
+            LogInfo << "Run: " << run << std::endl;
             LogInfo << "X: " << x << std::endl;
             LogInfo << "Y: " << y << std::endl;
             LogInfo << "Z: " << z << std::endl;
@@ -130,7 +137,8 @@ class TrueParticle {
         };
 
     private:
-        int event {0};
+        UInt_t event {0};
+        UInt_t run {0};
         float x {0.0f};
         float y {0.0f};
         float z {0.0f};

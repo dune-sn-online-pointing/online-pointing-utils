@@ -10,7 +10,8 @@
 #include <fstream>
 #include <cstdio>
 #include <libgen.h>
-#include "../lib/global.h"
+#include "global.h"
+#include "TriggerPrimitive.hpp"
 
 // function to generate maps by run/event number to objects in a
 
@@ -21,9 +22,12 @@ int generate_filemap(TTree* tree,
     std::map<const ULong_t, UInt_t> & tp_map_hi,
     const UInt_t COUNT = 0);
 
-int find_run_event_range(const UInt_t run, const UInt_t event, 
-    std::map<const ULong_t, UInt_t> & tp_map_lo, 
-    std::map<const ULong_t, UInt_t> & tp_map_hi,
-    UInt_t & low_index, UInt_t & high_index);
     
+ULong_t make_event_key(UInt_t event, UInt_t run);
+
+UInt_t event_from_event_key(ULong_t event_key);
+
+UInt_t run_from_event_key(ULong_t event_key);
+
+bool SingleEventChecker(const std::vector<TriggerPrimitive> &tps_by_event);
 #endif

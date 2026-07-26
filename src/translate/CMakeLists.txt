@@ -3,10 +3,11 @@
 set( LIB_NAME "TranslateLibs" )
 
 set( SRC_FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/NeutrinoSimple.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/TrueParticleSimple.cpp
+  #${CMAKE_CURRENT_SOURCE_DIR}/Neutrino.cpp
+  #${CMAKE_CURRENT_SOURCE_DIR}/TrueParticle.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/read_tpstream_simple.cpp
-  #${CMAKE_CURRENT_SOURCE_DIR}/write_tps_simple.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/read_tps_simple.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/write_tps_class.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/generate_filemap.cpp
 )
 

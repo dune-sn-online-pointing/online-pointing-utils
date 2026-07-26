@@ -10,7 +10,8 @@ class Neutrino {
     
     public:
 
-        int event; 
+        UInt_t event; 
+        UInt_t run;
         std::string interaction;
         float x;
         float y;
@@ -24,7 +25,8 @@ class Neutrino {
         // could put generator_name, but not needed for the current setup
 
         Neutrino(
-            int event, 
+            UInt_t event, 
+            UInt_t run,
             std::string interaction,
             float x,
             float y,
@@ -36,6 +38,7 @@ class Neutrino {
             int truth_id
         ) :
             event(event),
+            run(run),
             interaction(interaction),
             x(x),
             y(y),
@@ -49,6 +52,7 @@ class Neutrino {
 
         Neutrino() :
             event(-1),
+            run(-1),
             interaction(""),
             x(0),
             y(0),
@@ -61,7 +65,8 @@ class Neutrino {
         {}  
 
         // Getters
-        int GetEvent() const { return event; }
+        UInt_t GetEvent() const { return event; }
+        UInt_t GetRun() const { return run; }
         std::string GetInteraction() const { return interaction; }
         std::vector <float> GetPosition() const { return {x, y, z}; }
         std::vector <float> GetMomentum() const { return {Px, Py, Pz}; }
@@ -75,7 +80,8 @@ class Neutrino {
         int GetTruthId() const { return truth_id; }
 
         // Setters
-        void SetEvent(int e) { event = e; }
+        void SetEvent(UInt_t e) { event = e; }
+        void SetRun(UInt_t r) { event = r; }
         void SetInteraction(const std::string& i) { interaction = i; }
         void SetX(float val) { x = val; }
         void SetY(float val) { y = val; }

@@ -4,7 +4,8 @@ set( SRC_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/aggregate_clusters_within_volume_libs.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/create_volume_clusters_libs.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/superimpose_root_files_libs.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/Clustering.cpp
+  #${CMAKE_CURRENT_SOURCE_DIR}/Clustering.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ClusteringSimple.cpp
 )
 
 if( USE_STATIC_LINKS )
@@ -19,6 +20,7 @@ target_include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/src/objects
     ${CMAKE_SOURCE_DIR}/src/backtracking
+    ${CMAKE_SOURCE_DIR}/src/translate
 )
 
 

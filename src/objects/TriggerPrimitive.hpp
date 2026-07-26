@@ -18,7 +18,8 @@ class TriggerPrimitive {
         void SetView(const std::string& view)                         { this->view_ = view; }
         void SetDetector(int detector)                                { this->detector_ = detector; }
         void SetDetectorChannel(int detector_channel)                 { this->detector_channel_ = detector_channel; }
-        void SetEvent(int event)                                      { this->event_ = event; }
+        void SetEvent(UInt_t event)                                   { this->event_ = event; }
+        void SetRun(UInt_t run)                                       { this->run_ = run; }
         void SetSimideEnergy(double simide_energy)                    { this->simide_energy_ = simide_energy; }
         void AddSimideEnergy(double simide_energy)                    { this->simide_energy_ += simide_energy; }
         
@@ -28,9 +29,9 @@ class TriggerPrimitive {
         // MARLEY-specific particle truth setters (only set when generator is MARLEY)
         void SetParticlePDG(int pdg)                                 { this->particle_pdg_ = pdg; }
         void SetParticleProcess(const std::string& proc)             { this->particle_process_ = proc; }
-        void SetParticleEnergy(float energy)                         { this->particle_energy_ = energy; }
-        void SetParticlePosition(float x, float y, float z)          { this->particle_x_ = x; this->particle_y_ = y; this->particle_z_ = z; }
-        void SetParticleMomentum(float px, float py, float pz)       { this->particle_px_ = px; this->particle_py_ = py; this->particle_pz_ = pz; }
+        void SetParticleEnergy(float energy)                         { this->particle_energy_ = float(energy); }
+        void SetParticlePosition(float x, float y, float z)          { this->particle_x_ = float(x); this->particle_y_ = float(y); this->particle_z_ = float(z); }
+        void SetParticleMomentum(float px, float py, float pz)       { this->particle_px_ = float(px); this->particle_py_ = float(py); this->particle_pz_ = float(pz); }
         void SetNeutrinoInfo(const std::string& interaction, float nu_x, float nu_y, float nu_z, 
                             float nu_px, float nu_py, float nu_pz, float nu_energy) {
             this->neutrino_interaction_ = interaction;
@@ -94,7 +95,8 @@ class TriggerPrimitive {
         int GetDetector()                   const { return detector_; }
         int GetDetectorChannel()            const { return detector_channel_; }
         int GetChannel()                    const { return channel_; } // this is the original channel for larsoft
-        int GetEvent()                      const { return event_; }
+        UInt_t GetEvent()                      const { return event_; }
+        UInt_t GetRun()                        const { return run_; }
         uint64_t GetSamplesOverThreshold()  const { return samples_over_threshold_; }
         uint64_t GetSamplesToPeak()         const { return samples_to_peak_; }
         uint64_t GetAdcIntegral()           const { return adc_integral_; }
@@ -172,6 +174,7 @@ class TriggerPrimitive {
         void Print() const {
             LogInfo << "TriggerPrimitive: " << std::endl;
             LogInfo << "  event: " << event_ << std::endl;
+            LogInfo << "  run: " << run_ << std::endl;
             LogInfo << "  version: " << version_ << std::endl;
             LogInfo << "  channel: " << channel_ << std::endl;
             LogInfo << "  samples_over_threshold: " << samples_over_threshold_ << std::endl;
@@ -182,6 +185,8 @@ class TriggerPrimitive {
             LogInfo << "  detector: " << detector_ << std::endl;
             LogInfo << "  detector_channel: " << detector_channel_ << std::endl;
             LogInfo << "  view: " << view_ << std::endl;
+            LogInfo << "  stored generator " << generator_name_ << std::endl;
+            LogInfo << "  particle_pdg" << particle_pdg_ << std::endl;
         }
 
     private:
@@ -202,7 +207,8 @@ class TriggerPrimitive {
         int detector_ = -1; // this goes from 0 to the number of APAs 
         int detector_channel_ = -1;
         std::string view_ = "";
-        int event_ = -1;
+        UInt_t event_ = -1;
+        UInt_t run_ = -1;
         
         // SimIDE energy in MeV (sum of all SimIDEs contributing to this TP)
         double simide_energy_ = 0.0;

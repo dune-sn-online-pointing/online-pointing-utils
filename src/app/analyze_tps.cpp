@@ -323,6 +323,7 @@ int main(int argc, char* argv[]) {
 
         // Set up branch addresses for reading TPs
         Int_t tp_event = 0;
+        Int_t tp_run = 0; 
         UInt_t ch_offline = 0;
         UShort_t adc_peak = 0;
         ULong64_t samples_over_threshold = 0;
@@ -333,6 +334,7 @@ int main(int argc, char* argv[]) {
         std::string* view = new std::string();
         
         tpTree->SetBranchAddress("event", &tp_event);
+         tpTree->SetBranchAddress("run", &tp_run);
         tpTree->SetBranchAddress("channel", &ch_offline);
         tpTree->SetBranchAddress("adc_peak", &adc_peak);
         tpTree->SetBranchAddress("samples_over_threshold", &samples_over_threshold);

@@ -3,7 +3,7 @@
 set( LIB_NAME "backtrackingLibs" )
 
 set( SRC_FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/Backtracking.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/BacktrackingSimple.cpp
 )
 
 if( USE_STATIC_LINKS )

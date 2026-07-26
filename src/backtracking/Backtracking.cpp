@@ -53,8 +53,12 @@ void read_tpstream(std::string filename,
     int last_tp_entry_in_event = -1;
 
     UInt_t this_event_number = 0;
+    UInt_t this_run_number = 0;
     if (TPtree->SetBranchAddress("event", &this_event_number) < 0) {
         LogWarning << "Failed to bind branch 'Event'" << std::endl;
+    }
+    if (TPtree->SetBranchAddress("run", &this_run_number) < 0) {
+        LogWarning << "Failed to bind branch 'run'" << std::endl;
     }
 
     get_first_and_last_event(TPtree, &this_event_number, event_number, first_tp_entry_in_event, last_tp_entry_in_event);
@@ -181,6 +185,8 @@ void read_tpstream(std::string filename,
 
     UInt_t event = 0;
     MCparticlestree->SetBranchAddress("event", &event);
+    UInt_t run = 0;
+    MCparticlestree->SetBranchAddress("run", &run);
 
     get_first_and_last_event(MCparticlestree, &event, this_event_number, first_mcparticle_entry_in_event, last_mcparticle_entry_in_event);
 
@@ -233,9 +239,10 @@ void read_tpstream(std::string filename,
 
         if (status_code == 0) continue; // skip initial state particles, not tracked
         if (pdg == PDG::nue) continue; // skip neutrinos, they are in the mctruth tree
-        
+        std::cout << "true generator name " << *generator_name << std::endl;
         true_particles.emplace_back( TrueParticle(
             event,
+            run,
             x,
             y,
             z,
@@ -278,6 +285,9 @@ void read_tpstream(std::string filename,
 
     UInt_t event_truth = 0;
     MCtruthtree->SetBranchAddress("event", &event_truth);
+    UInt_t run_truth = 0;
+    MCtruthtree->SetBranchAddress("run", &run_truth);
+
 
     get_first_and_last_event(MCtruthtree, &event_truth, this_event_number, first_mctruth_entry_in_event, last_mctruth_entry_in_event);
 
@@ -313,7 +323,7 @@ void read_tpstream(std::string filename,
         
         MCtruthtree->GetEntry(iMCtruth);
         // neutrinos.reserve(MCtruthtree->GetEntries());
-        // LogInfo << "  Generator is " << *generator_name << std::endl;
+        LogInfo << "  Generator is " << *generator_name << std::endl;
         
         if ( pdg == PDG::nue) { 
             // if status code is not 0, it's a final state neutrino
@@ -323,6 +333,7 @@ void read_tpstream(std::string filename,
             // Add to the vector of Neutrinos
             neutrinos.emplace_back(Neutrino(
                 event,
+                run,
                 this_interaction,
                 x,
                 y,
@@ -341,10 +352,11 @@ void read_tpstream(std::string filename,
             // if status code is 0, particle is not tracked (initial state)
             if (status_code == 0)  continue;
 
-            // LogInfo << " Found a true particle with generator " << *generator_name << std::endl;
+            LogInfo << " Found a true particle with generator " << *generator_name << std::endl;
             mc_true_particles.emplace_back(
                 TrueParticle(
                     event,
+                    run,
                     x,
                     y,
                     z,
@@ -1002,7 +1014,8 @@ void write_tps(
     TTree tpsTree("tps", "Trigger Primitives with embedded truth");
     
     // TP basic variables
-    int evt = 0; 
+    UInt_t evt = 0; 
+    UInt_t run = 0; 
     UShort_t version=0; 
     UInt_t detid=0; 
     UInt_t channel=0; 

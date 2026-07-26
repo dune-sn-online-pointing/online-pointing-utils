@@ -18,15 +18,19 @@ Cluster::Cluster(std::vector<TriggerPrimitive*> tps) {
         LogError << "Cluster has no TPs!" << std::endl;
         return;
     }
-
+    UInt_t first = tps.at(0)->GetEvent(); 
     for (auto& tp : tps) {
         if (tp == nullptr) {
             LogError << "Cluster has null TP!" << std::endl;
             return;
         }
-        
+        if (debugMode) {
+            LogInfo << "check event content" << first << " " << tp->GetEvent() << std::endl;
+
+        }
         if (tp->GetEvent() != tps.at(0)->GetEvent()) {
-            LogError << "Cluster has TPs from different events!" << std::endl;
+            
+            LogError << "Cluster has TPs from different events!" << tp->GetEvent() << " " << tps.at(0)->GetEvent() <<  std::endl;
             return;
         }
     }
@@ -101,11 +105,14 @@ void Cluster::update_cluster_info() {
         
         // Get truth information from TP embedded data
         std::string gen_name = tp->GetGeneratorName();
+        
+        if (verboseMode and gen_name.size() != 0) LogInfo << " cluster tp gen_name" << tp->GetGeneratorName() << std::endl;
         if (gen_name != "UNKNOWN") {
             tps_with_truth++;
             
             // Count generators
             generator_counts[gen_name]++;
+            
             
             // Create particle key
             ParticleKey key{gen_name, tp->GetParticlePDG(), 

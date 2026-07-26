@@ -1,16 +1,16 @@
-#ifndef TRUEPARTICLESIMPLE_H
-#define TRUEPARTICLESIMPLE_H
+#ifndef TrueParticle_H
+#define TrueParticle_H
 
-#include "../translate/NeutrinoSimple.h"
+#include "Neutrino.h"
 #include "../lib/global.h"
 
-class TrueParticleSimple {
+class TrueParticle {
     
     public:
         // constructor
-        TrueParticleSimple(
-            int event,
-            int run, 
+        TrueParticle(
+            UInt_t event,
+            UInt_t run, 
             float x,
             float y,
             float z,
@@ -41,11 +41,11 @@ class TrueParticleSimple {
         {};
 
         // default constructor
-        TrueParticleSimple() : event(-1), run(-1), x(0), y(0), z(0), Px(0), Py(0), Pz(0), energy(0), generator_name(""), pdg(-1), process(""),
+        TrueParticle() : event(-1), run(-1), x(0), y(0), z(0), Px(0), Py(0), Pz(0), energy(0), generator_name(""), pdg(-1), process(""),
             track_id(-1), truth_id(-1) {};
 
         // special constructor for when reading the files
-        TrueParticleSimple( 
+        TrueParticle( 
             int event, int run,
             std::string generator_name, 
             int block_id
@@ -67,7 +67,7 @@ class TrueParticleSimple {
         };
         
         // destructor
-        ~TrueParticleSimple() {};
+        ~TrueParticle() {};
 
         // Setters
         void SetEvent(int event) { this->event = event; }
@@ -83,7 +83,7 @@ class TrueParticleSimple {
         void SetProcess(std::string process) { this->process = process; }
         void SetTrackId(int track_id) { this->track_id = track_id; }
         void SetTruthId(int truth_id) { this->truth_id = truth_id; }
-        void SetNeutrino(const NeutrinoSimple *neutrino) { this->neutrino = neutrino; }
+        void SetNeutrino(const Neutrino *neutrino) { this->neutrino = neutrino; }
         void SetTimeStart(double time_start) { this->time_start = time_start; }
         void SetTimeEnd(double time_end) { this->time_end = time_end; }
 
@@ -103,7 +103,7 @@ class TrueParticleSimple {
         std::string GetProcess() const { return process; }
         int GetTrackId() const { return track_id; }
         int GetTruthId() const { return truth_id; }
-        const NeutrinoSimple* GetNeutrino() const {
+        const Neutrino* GetNeutrino() const {
             if (neutrino == nullptr) {
                 // LogWarning << "No neutrino associated to this TrueParticle" << std::endl;
             }
@@ -134,8 +134,8 @@ class TrueParticleSimple {
         };
 
     private:
-        int event {0};
-        int run {0};
+        UInt_t event {0};
+        UInt_t run {0};
         float x {0.0f};
         float y {0.0f};
         float z {0.0f};
@@ -149,7 +149,7 @@ class TrueParticleSimple {
         
         int track_id {-1}; // needed for association
         int truth_id {-1}; // needed for association
-        const NeutrinoSimple * neutrino = nullptr; // this is the neutrino that generated the particle, if any. For bkg, it will stay empty
+        const Neutrino * neutrino = nullptr; // this is the neutrino that generated the particle, if any. For bkg, it will stay empty
 
         // these are needed to make associations
         double time_start {INT_MAX};
@@ -158,4 +158,4 @@ class TrueParticleSimple {
 
 };
 
-#endif // TRUEPARTICLESIMPLE_H
+#endif // TrueParticle_H

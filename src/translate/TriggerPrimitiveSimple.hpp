@@ -1,11 +1,11 @@
-#ifndef TRIGGERPRIMITIVESIMPLE_HPP
-#define TRIGGERPRIMITIVESIMPLE_HPP
+#ifndef TriggerPrimitive_HPP
+#define TriggerPrimitive_HPP
 
-#include "../translate/TrueParticleSimple.h"
-#include "../translate/NeutrinoSimple.h"
+#include "TrueParticle.h"
+#include "Neutrino.h"
 #include "../lib/global.h"
 
-class TriggerPrimitiveSimple {
+class TriggerPrimitive {
 
     public:
         static constexpr uint8_t s_trigger_primitive_version = 2;
@@ -19,8 +19,8 @@ class TriggerPrimitiveSimple {
         void SetView(const std::string& view)                         { this->view_ = view; }
         void SetDetector(int detector)                                { this->detector_ = detector; }
         void SetDetectorChannel(int detector_channel)                 { this->detector_channel_ = detector_channel; }
-        void SetEvent(int event)                                      { this->event_ = event; }
-        void SetRun(int run)                                          { this->run_ = run; }
+        void SetEvent(UInt_t event)                                      { this->event_ = event; }
+        void SetRun(UInt_t run)                                          { this->run_ = run; }
         void SetSimideEnergy(double simide_energy)                    { this->simide_energy_ = simide_energy; }
         void AddSimideEnergy(double simide_energy)                    { this->simide_energy_ += simide_energy; }
         
@@ -42,7 +42,7 @@ class TriggerPrimitiveSimple {
         }
         
         // Helper to set all MARLEY truth from TrueParticle and Neutrino (for backward compatibility during transition)
-        void SetTrueParticle(const TrueParticleSimple* true_particle) {
+        void SetTrueParticle(const TrueParticle* true_particle) {
             temp_true_particle_ = true_particle;  // Store pointer for later generator name update
             if (true_particle == nullptr) {
                 generator_name_ = "UNKNOWN";
@@ -64,7 +64,7 @@ class TriggerPrimitiveSimple {
                 particle_py_ = true_particle->GetPy();
                 particle_pz_ = true_particle->GetPz();
                 
-                const NeutrinoSimple* nu = true_particle->GetNeutrino();
+                const Neutrino* nu = true_particle->GetNeutrino();
                 if (nu != nullptr) {
                     neutrino_interaction_ = nu->GetInteraction();
                     neutrino_x_ = nu->GetX();
@@ -134,11 +134,11 @@ class TriggerPrimitiveSimple {
         }
         
         // Temporary accessor for backtracking processing (returns temp pointer, not serialized)
-        const TrueParticleSimple* GetTrueParticle() const {
+        const TrueParticle* GetTrueParticle() const {
             return temp_true_particle_;
         }
 
-        TriggerPrimitiveSimple(
+        TriggerPrimitive(
             uint64_t version,
             uint64_t flag,
             uint64_t detid,
@@ -186,6 +186,8 @@ class TriggerPrimitiveSimple {
             LogInfo << "  detector: " << detector_ << std::endl;
             LogInfo << "  detector_channel: " << detector_channel_ << std::endl;
             LogInfo << "  view: " << view_ << std::endl;
+            LogInfo << "  stored generator : " << generator_name_ << std::endl;
+            LogInfo << "  stored pdg : " << particle_pdg_ << std::endl;
         }
 
     private:
@@ -213,7 +215,7 @@ class TriggerPrimitiveSimple {
         double simide_energy_ = 0.0;
         
         // Temporary pointer for backtracking processing (not serialized)
-        const TrueParticleSimple* temp_true_particle_ = nullptr;
+        const TrueParticle* temp_true_particle_ = nullptr;
         
         // ===== Embedded truth information =====
         // Always stored: generator name for all TPs (from MC truth, not Geant4)

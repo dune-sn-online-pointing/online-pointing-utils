@@ -1,12 +1,12 @@
 #include "../translate/read_tpstream_simple.h"
 #include "../translate/write_tps_simple.h"
-#include "../translate/TriggerPrimitiveSimple.hpp"
-#include "../translate/TrueParticleSimple.h"
-#include "../translate/NeutrinoSimple.h"
+#include "TriggerPrimitive.hpp"
+#include "TrueParticle.h"
+#include "Neutrino.h"
 #include "../translate/generate_filemap.h"
 #include <memory>
 
-
+//bool verboseMode = ;
 
 LoggerInit([]{Logger::getUserHeader() << "[" << FILENAME << "]";});
 
@@ -16,131 +16,70 @@ void read_tpstream_simple(const std::string this_interaction,
     TTree* MCparticlestree,
     TTree* MCtruthtree,
     TTree* simidestree,
-                 std::vector<TriggerPrimitiveSimple>& tps,
-                 std::vector<TrueParticleSimple>& true_particles,
-                 std::vector<NeutrinoSimple >& neutrinos,
-                 int supernova_option,
-                 UInt_t event_number,
-                 UInt_t run_number,
-                    std::map<const ULong_t, UInt_t>& tp_map_lo,
-                    std::map<const ULong_t, UInt_t>& tp_map_hi,
-                    std::map<const ULong_t, UInt_t>& mc_map_lo,
-                    std::map<const ULong_t, UInt_t>& mc_map_hi,
-                    std::map<const ULong_t, UInt_t>& tr_map_lo,
-                    std::map<const ULong_t, UInt_t>& tr_map_hi,
-                    std::map<const ULong_t, UInt_t>& sm_map_lo,
-                    std::map<const ULong_t, UInt_t>& sm_map_hi,
-                 double time_tolerance_ticks,
-                 int channel_tolerance
+    std::vector<TriggerPrimitive>& tps,
+    std::vector<TrueParticle>& true_particles,
+    std::vector<Neutrino >& neutrinos,
+    int supernova_option,
+    UInt_t event_number,
+    UInt_t run_number,
+    // std::map<const ULong_t, UInt_t>& tp__lo,
+    // std::map<const ULong_t, UInt_t>& tp_map_hi,
+    // std::map<const ULong_t, UInt_t>& mc__lo,
+    // std::map<const ULong_t, UInt_t>& mc_map_hi,
+    // std::map<const ULong_t, UInt_t>& tr__lo,
+    // std::map<const ULong_t, UInt_t>& tr_map_hi,
+    // std::map<const ULong_t, UInt_t>& sm__lo,
+    // std::map<const ULong_t, UInt_t>& sm_map_hi,
+    UInt_t tp_lo,
+    UInt_t tp_hi,
+    UInt_t mc_lo,
+    UInt_t mc_hi,
+    UInt_t tr_lo,
+    UInt_t tr_hi,
+    UInt_t sm_lo,
+    UInt_t sm_hi,
+    double time_tolerance_ticks,
+    int channel_tolerance
 ){
+    
                 
-    // if (debugMode) LogInfo << " Reading file: " << filename << std::endl;
-
-    // std::unique_ptr<TFile> file(TFile::Open(filename.c_str(), "READ"));
-    // if (!file || file->IsZombie()) {
-    //     LogError << " Error opening file: " << filename << std::endl;
-    //     return;
+    // if(debugMode){ 
+    //     LogInfo << "Start read_tpstream_simple" << event_number << " " << run_number << std::endl;
+    //     LogInfo << "pointers ";
+    //     LogInfo << tp_lo << " " << tp_hi << " " ;
+    //     LogInfo << mc_lo << " " << mc_hi << " " ;
+    //     LogInfo << tr_lo << " " << tr_hi << " " ;
+    //     LogInfo << sm_lo << " " << sm_hi << " " ;
+    //     LogInfo << std::endl;
     // }
-    
-    // std::string this_interaction = "UNKNOWN";
-    // // Extract interaction type from filename by looking for exact _cc_ or _es_ patterns
-    // // Check _cc_ first to avoid false matches with substrings
-    // if (filename.find("cc_") != std::string::npos) {
-    //     this_interaction = "CC";
-    // } else if (filename.find("CC_") != std::string::npos) {
-    //     this_interaction = "CC";
-    // } else if (filename.find("es_") != std::string::npos) {
-    //     this_interaction = "ES";
-    // } else if (filename.find("ES_") != std::string::npos) {
-    //     this_interaction = "ES";
-    // } else {
-    //     this_interaction = "UNKNOWN";
-    // }
+    UInt_t first_tp_entry_in_event = tp_lo;
+    UInt_t last_tp_entry_in_event = tp_hi;
 
-    // if (verboseMode) LogInfo << " For this file, interaction type: " << this_interaction << std::endl;
-    // #ifdef STANDARD_FORMAT
-    // std::string TPtree_path = "triggerAna/TriggerPrimitives/tpmakerTPCsimpleThr__TPGen"; // TODO make flexible for 1x2x6 and maybe else    
-    // #else
-    // std::string TPtree_path = "triggerAnaDumpTPs/TriggerPrimitives/tpmakerTPC__TriggerAnaTree1x2x2"; // TODO make flexible for 1x2x6 and maybe else
-    // #endif
-    // TTree *TPtree = dynamic_cast<TTree*>(file->Get(TPtree_path.c_str()));
-    // if (!TPtree) {
-    //     LogError << " Tree not found: " << TPtree_path << std::endl;
-    //     return; // can still go to next file
-    // }
-
-    // #ifdef STANDARD_FORMAT
-    // std::string MCparticlestree_path = "triggerAna/mcparticles";
-    // #else
-    // std::string MCparticlestree_path = "triggerAnaDumpTPs/mcparticles";
-    // #endif
-
-    // TTree *MCparticlestree = dynamic_cast<TTree*>(file->Get(MCparticlestree_path.c_str()));
-    // if (!MCparticlestree) {
-    //     LogError << "Tree not found: " << MCparticlestree_path << std::endl;
-    //     return;
-    // }
-
-    // #ifdef STANDARD_FORMAT
-    // std::string MCtruthtree_path = "triggerAna/mctruths"; 
-    // #else
-    // std::string MCtruthtree_path = "triggerAnaDumpTPs/mctruths"; 
-    // #endif
-    // TTree *MCtruthtree = dynamic_cast<TTree*>(file->Get(MCtruthtree_path.c_str()));
-    // if (!MCtruthtree) {
-    //     LogError << " Tree not found: " << MCtruthtree_path << std::endl;
-    //     return;
-    // }
-
-    // #ifdef STANDARD_FORMAT
-    // std::string simidestree_path = "triggerAna/simides";
-    // #else
-    // std::string simidestree_path = "triggerAnaDumpTPs/simides";
-    // #endif
-    // TTree *simidestree = dynamic_cast<TTree*>(file->Get(simidestree_path.c_str()));
-    // if (!simidestree) {
-    //     LogError << " Tree not found: " << simidestree_path << std::endl;
-    //     return;
-    // }
-
-
-    // std::map<const ULong_t, UInt_t>  tp_map_lo; 
-    // std::map<const ULong_t, UInt_t>  tp_map_hi;
-    // std::map<const ULong_t, UInt_t>  mc_map_lo; 
-    // std::map<const ULong_t, UInt_t>  mc_map_hi;
-    // std::map<const ULong_t, UInt_t>  tr_map_lo;
-    // std::map<const ULong_t, UInt_t>  tr_map_hi;
-    // std::map<const ULong_t, UInt_t>  sm_map_lo;
-    // std::map<const ULong_t, UInt_t>  sm_map_hi;
-
-    // int tp_count = generate_filemap(TPtree, tp_map_lo, tp_map_hi);
-    // int mc_count = generate_filemap(MCparticlestree, mc_map_lo, mc_map_hi, COUNT);
-    // int truth_count = generate_filemap(MCtruthtree, tr_map_lo, tr_map_hi, COUNT);
-    // int simide_count = generate_filemap(simidestree, sm_map_lo, sm_map_hi, COUNT);
-
-    if(verboseMode)LogInfo << "Start read_tpstream_simple" << event_number << " " << run_number << std::endl;
-    
-    UInt_t first_tp_entry_in_event = 0;
-    UInt_t last_tp_entry_in_event = 0;
+    std::cout << " lo and hi " << tp_lo << "," << tp_hi << std::endl;
 
     UInt_t this_event_number = (UInt_t)event_number;
     UInt_t this_run_number = (UInt_t)run_number;
 
     if (!TPtree) LogError << "no TPTree in " << this_event_number << " " << this_run_number << std::endl;
     if (TPtree->SetBranchAddress("event", &this_event_number) < 0) {
-        LogWarning << "Failed to bind branch 'Event'" << std::endl;
+        LogWarning << "Failed to bind branch 'event'" << std::endl;
     }
     if (TPtree->SetBranchAddress("run", &this_run_number) < 0) {
-        LogWarning << "Failed to bind branch 'Run'" << std::endl;
+        LogWarning << "Failed to bind branch 'run'" << std::endl;
     }
-    if(verboseMode)LogInfo << "got here " << std::endl;
+    //if(verboseMode)LogInfo << "got here " << std::endl;
     //get_first_and_last_event(TPtree, &this_event_number, event_number, first_tp_entry_in_event, last_tp_entry_in_event);
-    int range_result = find_run_event_range(this_run_number, this_event_number, tp_map_lo, tp_map_hi, first_tp_entry_in_event, last_tp_entry_in_event);
-    if(verboseMode)LogInfo << "got here 2" << std::endl;
+    //int range_result = find_run_event_range(this_run_number, this_event_number, tp__lo, tp_map_hi, first_tp_entry_in_event, last_tp_entry_in_event);
+    int range_result = tp_hi - tp_lo + 1;
+    //if(verboseMode)LogInfo << "got here 2" << std::endl;
     if (debugMode) LogInfo << "First entry having this event number: " << first_tp_entry_in_event << std::endl;
     if (debugMode) LogInfo << "Last entry having this event number: " << last_tp_entry_in_event << std::endl;
 
     // Check if we found the event in TPs tree - if not, skip this event (can happen with backgrounds)
+    tps.clear();
+    true_particles.clear();
+    neutrinos.clear();
+
     if (first_tp_entry_in_event == -1 or range_result == 0) {
         if (verboseMode) LogInfo << "Event " << event_number << " has no TPs in tree " << TPtree->GetName() << " (skipping)" << std::endl;
         return; // Return with empty vectors - this is normal for some background events
@@ -174,10 +113,12 @@ void read_tpstream_simple(const std::string this_interaction,
 
     // Counters and guards for ToT-based filtering
     size_t tot_filtered_count = 0;
-    size_t tot_nonzero_seen = 0; // if no TP has ToT>0, we skip applying the ToT<2 filter
-
+    size_t tot_nonzero_seen = 0; // if no TP has ToT>0, we skip applying the ToT<2 filte
     // Loop over the entries in the tree
+
+    if (debugMode) LogInfo << first_tp_entry_in_event << "-" << last_tp_entry_in_event << std::endl;
     for (Long64_t iTP = first_tp_entry_in_event; iTP <= last_tp_entry_in_event; ++iTP) {
+        //LogInfo << iTP << std::endl;
         TPtree->GetEntry(iTP);
     
         // Determine if the channel appears detector-local; if so promote to global numbering
@@ -194,7 +135,7 @@ void read_tpstream_simple(const std::string this_interaction,
             ++tot_nonzero_seen;
         }
         //if(debugMode) LogInfo << "reading entry " << iTP << std::endl;
-        TriggerPrimitiveSimple this_tp = TriggerPrimitiveSimple(
+        TriggerPrimitive this_tp = TriggerPrimitive(
             this_version,
             0, // flag
             this_detid, // this is just TPC, always 3
@@ -205,19 +146,23 @@ void read_tpstream_simple(const std::string this_interaction,
             this_adc_integral,
             this_adc_peak
         );
-
+        
         this_tp.SetEvent(this_event_number);
         this_tp.SetRun(this_run_number);
         
+        
+        // if (debugMode) 
+        //LogInfo << " got a tp in channel " << this_channel <<std::endl;
         tps.emplace_back(this_tp); // add to collection of TPs
     }
-    if(debugMode)LogInfo << " made a primitive tps" << std::endl;
+    if (debugMode)tps[0].Print();
+    //if(verbose Mode)LogInfo << " made a primitive tps" << std::endl;
     // Apply ToT<2 filter only if ToT info is actually populated (some non-zero values seen)
     if (!tps.empty()) {
         if (tot_nonzero_seen > 0) {
             // Filter in-place: keep only TPs with ToT >= 2
             auto before = tps.size();
-            tps.erase(std::remove_if(tps.begin(), tps.end(), [&](const TriggerPrimitiveSimple& tp){
+            tps.erase(std::remove_if(tps.begin(), tps.end(), [&](const TriggerPrimitive& tp){
                 return tp.GetSamplesOverThreshold() < 2;
             }), tps.end());
             tot_filtered_count = before - tps.size();
@@ -260,30 +205,19 @@ void read_tpstream_simple(const std::string this_interaction,
 
    // List of branches
 
-//    TBranch        *b_bt_primary_track_id;   //!
-//    TBranch        *b_bt_primary_track_numelectron_frac;   //!
-//    TBranch        *b_bt_primary_track_energy_frac;   //!
-//    TBranch        *b_bt_edep;   //!
-//    TBranch        *b_bt_numelectrons;   //!
-//    TBranch        *b_bt_x;   //!
-//    TBranch        *b_bt_y;   //!
-//    TBranch        *b_bt_z;   //!
-//    TBranch        *b_bt_primary_x;   //!
-//    TBranch        *b_bt_primary_y;   //!
-//    TBranch        *b_bt_primary_z;   //!
-//    TBranch        *b_bt_truth_block_id;   //!
-//    TBranch        *b_bt_generator_name;   //!
 
     // find first and last entry of the event
-    UInt_t first_mcparticle_entry_in_event = 0;
-    UInt_t last_mcparticle_entry_in_event = 0;
+    UInt_t first_mcparticle_entry_in_event = mc_lo;
+    UInt_t last_mcparticle_entry_in_event = mc_hi;
 
     //UInt_t event = 0;
     // MCparticlestree->SetBranchAddress("event", &event);
     // MCparticlestree->SetBranchAddress("run", &run);
 
     // get_first_and_last_event(MCparticlestree, &event, this_event_number, first_mcparticle_entry_in_event, last_mcparticle_entry_in_event);
-    int mc_range_result = find_run_event_range(this_run_number, this_event_number, mc_map_lo, mc_map_hi, first_mcparticle_entry_in_event, last_mcparticle_entry_in_event);
+    // int mc_range_result = find_run_event_range(this_run_number, this_event_number, mc__lo, mc_map_hi, first_mcparticle_entry_in_event, last_mcparticle_entry_in_event);
+    if (verboseMode) LogInfo <<  " mc range is " << mc_lo << " " << mc_hi << std::endl;
+    int mc_range_result = mc_hi - mc_lo;
     if (mc_range_result == 0) {
         if (verboseMode) LogInfo << "Event " << event_number << " has no MC particles in file " << MCparticlestree->GetName() << " (skipping)" << std::endl;
         return; // Return with empty vectors - this is normal for some background events
@@ -294,76 +228,73 @@ void read_tpstream_simple(const std::string this_interaction,
     // including both geant and gen particles
 
     std::map<int, std::vector<int>> truthId_to_mcparticleIdx;
-    std::string* generator_name = new std::string();
-    
+    std::string* mc_generator_name = new std::string();
+    std::string* mc_process = new std::string();
     // TODO tidy up this mess
-    Double_t x = 0.0, y = 0.0, z = 0.0;
-    Double_t px = 0.0, py = 0.0, pz = 0.0;
-    Double_t energy = 0.0;
-    int pdg = 0;
-    //UInt_t event = 0;
-    int block_id = 0, track_id = 0;
-    int truth_id = 0;
-    int status_code = -1;
+    Double_t mc_x = 0.0, mc_y = 0.0, mc_z = 0.0;
+    Double_t mc_px = 0.0, mc_py = 0.0, mc_pz = 0.0;
+    Double_t mc_energy = 0.0;
+    Int_t mc_pdg = 0;
+    // UInt_t MAC_OS_VERSION_11_6 = 0;
+    Int_t mc_block_id = 0;
+    Int_t mc_g4_track_id = 0;
+    Int_t mc_truth_block_id = 0;
+    Int_t mc_status_code = -1;
 
-    std::string* process = new std::string();
-    //bindBranch(TPtree, "process", &process);
-    bindBranch(TPtree, "bt_generator_name", &bt_generator_name);
-    bindBranch(TPtree, "bt_x", &bt_x);
-    bindBranch(TPtree, "bt_y", &bt_y);
-    bindBranch(TPtree, "bt_z", &bt_z);
+    UInt_t mc_event;
+    UInt_t mc_run;
 
-//    TBranch        *b_bt_primary_x;   //!
-//    TBranch        *b_bt_primary_y;   //!
-//    TBranch        *b_bt_primary_z;   //!
-//    TBranch        *b_bt_truth_block_id;   //!
-//    TBranch        *b_bt_generator_name;   //!
-
-
-
-    if (!SetBranchWithFallback(MCparticlestree, {"Px", "px"}, &px, "MC particles Px")) {
+    if (!SetBranchWithFallback(MCparticlestree, {"Px", "px"}, &mc_px, "MC particles Px")) {
         return;
     }
-    if (!SetBranchWithFallback(MCparticlestree, {"Py", "py"}, &py, "MC particles Py")) {
+    if (!SetBranchWithFallback(MCparticlestree, {"Py", "py"}, &mc_py, "MC particles Py")) {
         return;
     }
-    if (!SetBranchWithFallback(MCparticlestree, {"Pz", "pz"}, &pz, "MC particles Pz")) {
+    if (!SetBranchWithFallback(MCparticlestree, {"Pz", "pz"}, &mc_pz, "MC particles Pz")) {
         return;
     }
-    if (!SetBranchWithFallback(MCparticlestree, {"en", "energy"}, &energy, "MC particles energy")) {
+    if (!SetBranchWithFallback(MCparticlestree, {"en", "energy"}, &mc_energy, "MC particles energy")) {
         return;
     }
-
-    MCparticlestree->SetBranchAddress("pdg", &pdg);
-    MCparticlestree->SetBranchAddress("process", &process);
+    MCparticlestree->SetBranchAddress("event", &mc_event);
+    MCparticlestree->SetBranchAddress("run", &mc_run);
+    MCparticlestree->SetBranchAddress("x", &mc_x);
+    MCparticlestree->SetBranchAddress("y", &mc_y);
+    MCparticlestree->SetBranchAddress("z", &mc_z);
+    if(verboseMode){LogInfo << "mc_event " << mc_event << " mc_run " << mc_run << std::endl;}
+    MCparticlestree->SetBranchAddress("pdg", &mc_pdg);
+    MCparticlestree->SetBranchAddress("process", &mc_process);
+    MCparticlestree->SetBranchAddress("generator_name", &mc_generator_name);
     // MCparticlestree->SetBranchAddress("event", &event);
-    MCparticlestree->SetBranchAddress("g4_track_id", &track_id);
-    MCparticlestree->SetBranchAddress("truth_block_id", &truth_id);
-    MCparticlestree->SetBranchAddress("status_code", &status_code);
+    MCparticlestree->SetBranchAddress("g4_track_id", &mc_g4_track_id);
+    MCparticlestree->SetBranchAddress("truth_block_id", &mc_truth_block_id);
+    MCparticlestree->SetBranchAddress("status_code", &mc_status_code);
 
     for (Long64_t iMCpart = first_mcparticle_entry_in_event; iMCpart <= last_mcparticle_entry_in_event; ++iMCpart) {
         MCparticlestree->GetEntry(iMCpart);
 
-        if (status_code == 0) continue; // skip initial state particles, not tracked
-        if (pdg == PDG::nue) continue; // skip neutrinos, they are in the mctruth tree
-        
-        true_particles.emplace_back( TrueParticleSimple(
-            this_event_number,
-            this_run_number,
-            x,
-            y,
-            z,
-            px,
-            py,
-            pz,
-            energy*1e3, // converting to MeV
-            *generator_name,
-            pdg,
-            *process,
-            track_id,
-            truth_id
+        if (mc_status_code == 0) continue; // skip initial state particles, not tracked
+        if (mc_pdg == PDG::nue) continue; // skip neutrinos, they are in the mctruth tree
+        if (verboseMode) LogInfo << " mcparticle at x = " << mc_x << " " << float(mc_x) << std::endl;
+        true_particles.emplace_back( 
+            TrueParticle(
+            mc_event,
+            mc_run,
+            float(mc_x),
+            float(mc_y),
+            float(mc_z),
+            mc_px,
+            mc_py,
+            mc_pz,
+            mc_energy*1e3, // converting to MeV
+            *mc_generator_name,
+            mc_pdg,
+            *mc_process,
+            mc_g4_track_id,
+            mc_truth_block_id
         ));
-
+        if(verboseMode) LogInfo << "after reading in mc particles - generator_name " << *mc_generator_name << std::endl;
+        if(verboseMode)true_particles[0].Print();
         // truthId_to_mcparticleIdx[truth_id].push_back(iMCpart - first_mcparticle_entry_in_event); // store the index of this mcparticle in the vector of true_particles
 
         // LogInfo << "......" << std::endl;
@@ -377,11 +308,13 @@ void read_tpstream_simple(const std::string this_interaction,
     // Read MC truth
     
     // find first and last entry of the event
-    UInt_t first_mctruth_entry_in_event = 0;
-    UInt_t last_mctruth_entry_in_event = 0;
+    UInt_t first_mctruth_entry_in_event = tr_lo;
+    UInt_t last_mctruth_entry_in_event = tr_hi;
 
     
-    int true_range_status = find_run_event_range(this_run_number, this_event_number, tr_map_lo, tr_map_hi, first_mctruth_entry_in_event, last_mctruth_entry_in_event);
+    //int true_range_status = find_run_event_range(this_run_number, this_event_number, tr__lo, tr_map_hi, first_mctruth_entry_in_event, last_mctruth_entry_in_event);
+    int true_range_status = tr_hi - tr_lo;
+
     // UInt_t event_truth = 0;
     // MCtruthtree->SetBranchAddress("event", &event_truth);
     if (true_range_status == 0) {
@@ -394,82 +327,102 @@ void read_tpstream_simple(const std::string this_interaction,
 
     // this is a scope vector, just to put somewhere the generator name before
     // associating to the final true particles 
-    std::vector <TrueParticleSimple> mc_true_particles; 
+    std::vector <TrueParticle> mc_true_particles; 
+    Int_t           tr_event;
+    Int_t           tr_run;
+    Int_t           tr_subrun;
+    Int_t           tr_block_id;
+    Int_t           tr_truth_track_id;
+    Int_t           tr_pdg;
+    std::string          *tr_generator_name;
+    Int_t           tr_status_code;
+    Double_t        tr_x;
+    Double_t        tr_y;
+    Double_t        tr_z;
+    Double_t        tr_px;
+    Double_t        tr_py;
+    Double_t        tr_pz;
+    Double_t        tr_p;
+    Double_t        tr_energy;
+    Double_t        tr_kinetic_energy;
+    std::string          *tr_process;
     
-    if (verboseMode) LogInfo << " Reading tree of MCtruths, there are " << MCtruthtree->GetEntries() << " entries" << std::endl;
-    MCtruthtree->SetBranchAddress("generator_name", &generator_name);
-    MCtruthtree->SetBranchAddress("x", &x);
-    MCtruthtree->SetBranchAddress("y", &y);
-    MCtruthtree->SetBranchAddress("z", &z);
-    if (!SetBranchWithFallback(MCtruthtree, {"Px", "px"}, &px, "MC truth Px")) {
+    
+    MCtruthtree->SetBranchAddress("generator_name", &tr_generator_name);
+    MCtruthtree->SetBranchAddress("x", &tr_x);
+    MCtruthtree->SetBranchAddress("y", &tr_y);
+    MCtruthtree->SetBranchAddress("z", &tr_z);
+    if (!SetBranchWithFallback(MCtruthtree, {"Px", "px"}, &tr_px, "MC truth Px")) {
         return;
     }
-    if (!SetBranchWithFallback(MCtruthtree, {"Py", "py"}, &py, "MC truth Py")) {
+    if (!SetBranchWithFallback(MCtruthtree, {"Py", "py"}, &tr_py, "MC truth Py")) {
         return;
     }
-    if (!SetBranchWithFallback(MCtruthtree, {"Pz", "pz"}, &pz, "MC truth Pz")) {
+    if (!SetBranchWithFallback(MCtruthtree, {"Pz", "pz"}, &tr_pz, "MC truth Pz")) {
         return;
     }
-    if (!SetBranchWithFallback(MCtruthtree, {"en", "energy"}, &energy, "MC truth energy")) {
+    if (!SetBranchWithFallback(MCtruthtree, {"en", "energy"}, &tr_energy, "MC truth energy")) {
         return;
     }
-    MCtruthtree->SetBranchAddress("pdg", &pdg);
+    MCtruthtree->SetBranchAddress("pdg", &tr_pdg);
     //MCtruthtree->SetBranchAddress("event", &event);
-    MCtruthtree->SetBranchAddress("block_id", &block_id);
-    MCtruthtree->SetBranchAddress("status_code", &status_code);
+    MCtruthtree->SetBranchAddress("block_id", &tr_block_id);
+    MCtruthtree->SetBranchAddress("status_code", &tr_status_code);
     
     for (Long64_t iMCtruth = first_mctruth_entry_in_event; iMCtruth <= last_mctruth_entry_in_event; ++iMCtruth) {
         
         MCtruthtree->GetEntry(iMCtruth);
         // neutrinos.reserve(MCtruthtree->GetEntries());
-        // LogInfo << "  Generator is " << *generator_name << std::endl;
+        LogInfo << "  Generator is " << *tr_generator_name << std::endl;
         
-        if ( pdg == PDG::nue) { 
+        if ( tr_pdg == PDG::nue) { 
             // if status code is not 0, it's a final state neutrino
-            if (status_code != 0)  continue;
+            if (tr_status_code != 0)  continue;
 
             // LogInfo << "This is a nu_e" << std::endl;
             // Add to the vector of Neutrinos
-            neutrinos.emplace_back(NeutrinoSimple(
+            neutrinos.emplace_back(Neutrino(
                 this_event_number,
                 this_run_number,
                 this_interaction,
-                x,
-                y,
-                z,
-                px,
-                py,
-                pz,
-                energy*1e3, // converting to MeV
-                block_id
+                float(tr_x),
+                float(tr_y),
+                float(tr_z),
+                tr_px,
+                tr_py,
+                tr_pz,
+                tr_energy*1e3, // converting to MeV
+                tr_block_id
             ));
 
-            if (verboseMode) LogInfo << " Neutrino energy is " << energy*1e3 << " MeV" << std::endl;
+            if (verboseMode) LogInfo << " Neutrino energy is " << tr_energy*1e3 << " MeV" << std::endl;
+            //if (verboseMode) neutrinos[-1].Print();
         }
         else { // particles from neutrino interaction or backgrounds
             
             // if status code is 0, particle is not tracked (initial state)
-            if (status_code == 0)  continue;
+            if (tr_status_code == 0)  continue;
 
-            // LogInfo << " Found a true particle with generator " << *generator_name << std::endl;
+            LogInfo << " Found a true particle with generator " << *tr_generator_name << std::endl;
             mc_true_particles.emplace_back(
-                TrueParticleSimple(
+                TrueParticle(
                     this_event_number,
                     this_run_number,
-                    x,
-                    y,
-                    z,
-                    px,
-                    py,
-                    pz,
-                    energy*1e3, // converting to MeV
-                    *generator_name,
-                    pdg,
+                    float(tr_x),
+                    float(tr_y),
+                    float(tr_z),
+                    tr_px,
+                    tr_py,
+                    tr_pz,
+                    tr_energy*1e3, // converting to MeV
+                    *tr_generator_name,
+                    tr_pdg,
                     "", // process not available from mctruth tree
                     -1, // track_id not available from mctruth, will be set later from mcparticles
-                    block_id
+                    tr_block_id
                 )
             );
+            if (verboseMode) mc_true_particles[-1].Print();
             // LogInfo << "  Status code: " << status_code << " and energy " << energy << std::endl;
         }
     }
@@ -486,7 +439,7 @@ void read_tpstream_simple(const std::string this_interaction,
     const double effective_time_tolerance = (time_tolerance_ticks >= 0.0) ? time_tolerance_ticks : 5000.0;
     match_tps_to_simides_direct(tps, true_particles, simidestree, 
         this_event_number, this_run_number, effective_time_tolerance, 
-        channel_tolerance, sm_map_lo, sm_map_hi);
+        channel_tolerance, sm_lo, sm_hi);
 
     //(); // don't need anymore
 
@@ -502,9 +455,10 @@ void read_tpstream_simple(const std::string this_interaction,
         bool found = false;
         for (auto& neutrino : neutrinos) {
             if (neutrino.GetEvent() == particle.GetEvent() 
+            && neutrino.GetRun() == particle.GetRun()
             && neutrino.GetTruthId() == particle.GetTruthId()) 
             {
-                // LogInfo << " This particle comes from a neutrino" << std::endl;
+                LogInfo << " This particle comes from a neutrino" << std::endl;
                 particle.SetNeutrino(&neutrino);
                 // particle.SetGeneratorName("marley");
                 found = true;
@@ -515,6 +469,7 @@ void read_tpstream_simple(const std::string this_interaction,
         // associate MC particles to their MC truth
         for (auto& mc_true_particle : mc_true_particles) {
             if (mc_true_particle.GetEvent() == particle.GetEvent() 
+            && mc_true_particle.GetRun() == particle.GetRun()
             && mc_true_particle.GetTruthId() == particle.GetTruthId()) 
         {
                 if (debugMode)  LogInfo << " Found a match, generator name: " << mc_true_particle.GetGeneratorName() << std::endl;
@@ -544,18 +499,23 @@ void read_tpstream_simple(const std::string this_interaction,
     
     // Update TPs with complete truth info (including momentum) after MC truth association
     for (auto& tp : tps) {
-        const TrueParticleSimple* true_particle = tp.GetTrueParticle();
+        const TrueParticle* true_particle = tp.GetTrueParticle();
         if (true_particle != nullptr) {
+            //std::cout << "set true particle " << std::endl;
             // Re-call SetTrueParticle to update all fields including momentum that was just copied
             tp.SetTrueParticle(true_particle);
         }
+    }
+    if (verboseMode && tps.size()> 0){
+        LogInfo << " first tp as a check" << std::endl;
+        tps[0].Print();
     }
     if (verboseMode) LogInfo << " Updated embedded generator names in TPs" << std::endl;
     
     // sort the TPs by time
     // C++ 17 has the parameter std::execution::par that handles parallelization, can try that out TODO
     std::clock_t start_sorting = std::clock();
-    std::sort(tps.begin(), tps.end(), [](const TriggerPrimitiveSimple& a, const TriggerPrimitiveSimple& b) {
+    std::sort(tps.begin(), tps.end(), [](const TriggerPrimitive& a, const TriggerPrimitive& b) {
         return a.GetTimeStart() < b.GetTimeStart();
     });
     std::clock_t end_sorting = std::clock();
@@ -586,15 +546,15 @@ void read_tpstream_simple(const std::string this_interaction,
 
 // Direct TP-SimIDE matching function based on time and channel proximity
 void match_tps_to_simides_direct(
-    std::vector<TriggerPrimitiveSimple>& tps,
-    std::vector<TrueParticleSimple>& true_particles,
+    std::vector<TriggerPrimitive>& tps,
+    std::vector<TrueParticle>& true_particles,
     TTree* simidestree ,
     UInt_t event_number,
     UInt_t run_number,
     double time_tolerance_ticks,
     int channel_tolerance,
-    std::map<const ULong_t, UInt_t>  sm_map_lo,
-    std::map<const ULong_t, UInt_t>  sm_map_hi
+    UInt_t  sm_lo,
+    UInt_t  sm_hi
     )
 {
     if (verboseMode) LogInfo << "Starting direct TP-SimIDE matching for event " << event_number << std::endl;
@@ -630,16 +590,17 @@ void match_tps_to_simides_direct(
     // }
     
     // Get SimIDE entries for this event
-    UInt_t first_simide_entry = 0;
-    UInt_t last_simide_entry = 0;
+    UInt_t first_simide_entry = sm_lo;
+    UInt_t last_simide_entry = sm_hi;
     UInt_t event_number_simides = 0;
     simidestree->SetBranchAddress("event", &event_number_simides);
     //get_first_and_last_event(simidestree, &event_number_simides, event_number, first_simide_entry, last_simide_entry);
-    int simides_range_result = find_run_event_range(run_number, event_number, sm_map_lo, sm_map_hi, first_simide_entry, last_simide_entry);
+    //int simides_range_result = find_run_event_range(run_number, event_number, sm__lo, sm_map_hi, first_simide_entry, last_simide_entry);
+    int simides_range_result = sm_hi - sm_lo;
     if (verboseMode)  LogInfo << "SimIDEs in event " << event_number << ": " 
             << ((first_simide_entry != -1) ? std::to_string(last_simide_entry - first_simide_entry + 1) : "0") << std::endl;
 
-    if (first_simide_entry == -1) {
+    if (simides_range_result <= 1) {
         LogWarning << "No SimIDEs found for event " << event_number << std::endl;
         return;
     }
@@ -670,7 +631,7 @@ void match_tps_to_simides_direct(
     }
     
     // Build lookup map for true particles by trackID
-    std::unordered_map<int, TrueParticleSimple*> track_to_particle;
+    std::unordered_map<int, TrueParticle*> track_to_particle;
     for (auto& particle : true_particles) {
         if (particle.GetEvent() == event_number) {
             track_to_particle[std::abs(particle.GetTrackId())] = &particle;
@@ -682,7 +643,7 @@ void match_tps_to_simides_direct(
         int channel;
         double time_tpc_ticks;
         int track_id;
-        TrueParticleSimple* particle;
+        TrueParticle* particle;
         double energy;  // Energy in MeV
     };
     std::vector<SimIDEInfo> simides_in_event;
@@ -781,12 +742,12 @@ void match_tps_to_simides_direct(
         total_tp_count++;
         
         // Find best matching SimIDE based on channel/time proximity with plane preference
-        TrueParticleSimple* best_match_same_plane = nullptr;
+        TrueParticle* best_match_same_plane = nullptr;
         double best_score_same_plane = std::numeric_limits<double>::max();
         int best_channel_diff_same_plane = channel_tolerance + 1;
         double best_time_diff_same_plane = time_tolerance_ticks + 1;
 
-        TrueParticleSimple* best_match_any_plane = nullptr;
+        TrueParticle* best_match_any_plane = nullptr;
         double best_score_any_plane = std::numeric_limits<double>::max();
         int best_channel_diff_any_plane = channel_tolerance + 1;
         double best_time_diff_any_plane = time_tolerance_ticks + 1;
@@ -916,7 +877,7 @@ void match_tps_to_simides_direct(
     // }
 }
 
-std::vector<float> calculate_position(TriggerPrimitiveSimple* tp) {
+std::vector<float> calculate_position(TriggerPrimitive* tp) {
     // ...existing code from cluster.cpp...
     float x_signs = (int(tp->GetDetectorChannel()) % APA::total_channels < (APA::induction_channels * 2 + APA::collection_channels)) ? -1.0f : 1.0f;
     float x = ((int(tp->GetTimeStart()) ) * time_tick_in_cm + apa_width_in_cm/2) * x_signs; 
@@ -930,12 +891,12 @@ std::vector<float> calculate_position(TriggerPrimitiveSimple* tp) {
     return {x, y, z};
 }
 
-std::vector<std::vector<float>> validate_position_calculation(std::vector<TriggerPrimitiveSimple*> tps) {
+std::vector<std::vector<float>> validate_position_calculation(std::vector<TriggerPrimitive*> tps) {
     std::vector<std::vector<float>> positions;
     return positions;
 }
 
-float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitiveSimple*> tps, float z, float x_sign) {
+float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign) {
     z = z - int(tps.at(0)->GetDetectorChannel()) / (APA::total_channels*2) * (apa_lenght_in_cm + offset_between_apa_in_cm); // not sure about the 0 TODO
     float ordinate;
     std::vector<float> Y_pred;
@@ -1015,7 +976,7 @@ float eval_y_knowing_z_U_plane(std::vector<TriggerPrimitiveSimple*> tps, float z
     return Y_pred_mean;
 }
 
-float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitiveSimple*> tps, float z, float x_sign) {
+float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitive*> tps, float z, float x_sign) {
     
     z = z - int(tps.at(0)->GetDetectorChannel()) / (APA::total_channels*2) * (apa_lenght_in_cm + offset_between_apa_in_cm);
     float ordinate;
@@ -1096,164 +1057,164 @@ float eval_y_knowing_z_V_plane(std::vector<TriggerPrimitiveSimple*> tps, float z
     return Y_pred_mean;
 }
 
-void write_tps_simple(
-    const std::string& out_filename,
-    const std::vector<std::vector<TriggerPrimitiveSimple>>& tps_by_event,
-    const std::vector<std::vector<TrueParticleSimple>>& true_particles_by_event,
-    const std::vector<std::vector<NeutrinoSimple>>& neutrinos_by_event)
-{
-    // Ensure output directory exists
-    std::string folder = out_filename.substr(0, out_filename.find_last_of("/"));
-    if (!ensureDirectoryExists(folder)) {
-        LogError << "Cannot create or access directory for output file: " << folder << std::endl;
-        return;
-    }
+// void write_tps_simple(
+//     const std::string& out_filename,
+//     const std::vector<std::vector<TriggerPrimitive>>& tps_by_event,
+//     const std::vector<std::vector<TrueParticle>>& true_particles_by_event,
+//     const std::vector<std::vector<Neutrino>>& neutrinos_by_event)
+// {
+//     // Ensure output directory exists
+//     std::string folder = out_filename.substr(0, out_filename.find_last_of("/"));
+//     if (!ensureDirectoryExists(folder)) {
+//         LogError << "Cannot create or access directory for output file: " << folder << std::endl;
+//         return;
+//     }
 
-    TFile outFile(out_filename.c_str(), "RECREATE");
-    if (outFile.IsZombie()) {
-        LogError << "Cannot create output file: " << out_filename << std::endl;
-        return;
-    }
+//     TFile outFile(out_filename.c_str(), "RECREATE");
+//     if (outFile.IsZombie()) {
+//         LogError << "Cannot create output file: " << out_filename << std::endl;
+//         return;
+//     }
 
-    // TPs tree at root level (not inside a folder)
-    TTree tpsTree("tps", "Trigger Primitives with embedded truth");
+//     // TPs tree at root level (not inside a folder)
+//     TTree tpsTree("tps", "Trigger Primitives with embedded truth");
     
-    // TP basic variables
-    UInt_t evt = 0; 
-    UInt_t run = 0;
-    UShort_t version=0; 
-    UInt_t detid=0; 
-    UInt_t channel=0; 
-    UInt_t adc_integral=0; 
-    UShort_t adc_peak=0; 
-    UShort_t det=0; 
-    Int_t det_channel=0; 
-    ULong64_t tstart=0; 
-    ULong64_t s_over=0; 
-    ULong64_t s_to_peak=0;
-    std::string view;
-    Double_t simide_energy = 0.0;
+//     // TP basic variables
+//     UInt_t evt = 0; 
+//     UInt_t run = 0;
+//     UShort_t version=0; 
+//     UInt_t detid=0; 
+//     UInt_t channel=0; 
+//     UInt_t adc_integral=0; 
+//     UShort_t adc_peak=0; 
+//     UShort_t det=0; 
+//     Int_t det_channel=0; 
+//     ULong64_t tstart=0; 
+//     ULong64_t s_over=0; 
+//     ULong64_t s_to_peak=0;
+//     std::string view;
+//     Double_t simide_energy = 0.0;
     
-    // Truth variables (always stored: generator_name from MC truth)
-    std::string gen_name;
+//     // Truth variables (always stored: generator_name from MC truth)
+//     std::string gen_name;
     
-    // MARLEY-specific particle truth (only meaningful when gen_name contains "marley")
-    Int_t particle_pdg = 0;
-    std::string particle_process;
-    Float_t particle_energy = 0.0f;
-    Float_t particle_x = 0.0f, particle_y = 0.0f, particle_z = 0.0f;
-    Float_t particle_px = 0.0f, particle_py = 0.0f, particle_pz = 0.0f;
+//     // MARLEY-specific particle truth (only meaningful when gen_name contains "marley")
+//     Int_t particle_pdg = 0;
+//     std::string particle_process;
+//     Float_t particle_energy = 0.0f;
+//     Float_t particle_x = 0.0f, particle_y = 0.0f, particle_z = 0.0f;
+//     Float_t particle_px = 0.0f, particle_py = 0.0f, particle_pz = 0.0f;
     
-    // Neutrino info (only for MARLEY with neutrino association)
-    std::string neutrino_interaction;
-    Float_t neutrino_x = 0.0f, neutrino_y = 0.0f, neutrino_z = 0.0f;
-    Float_t neutrino_px = 0.0f, neutrino_py = 0.0f, neutrino_pz = 0.0f;
-    Float_t neutrino_energy = 0.0f;
+//     // Neutrino info (only for MARLEY with neutrino association)
+//     std::string neutrino_interaction;
+//     Float_t neutrino_x = 0.0f, neutrino_y = 0.0f, neutrino_z = 0.0f;
+//     Float_t neutrino_px = 0.0f, neutrino_py = 0.0f, neutrino_pz = 0.0f;
+//     Float_t neutrino_energy = 0.0f;
     
-    // TP basic branches
-    tpsTree.Branch("event", &evt, "event/I");
-    tpsTree.Branch("run", &run, "event/I");
-    tpsTree.Branch("version", &version, "version/s");
-    tpsTree.Branch("detid", &detid, "detid/i");
-    tpsTree.Branch("channel", &channel, "channel/i");
-    tpsTree.Branch("samples_over_threshold", &s_over, "samples_over_threshold/l");
-    tpsTree.Branch("time_start", &tstart, "time_start/l");
-    tpsTree.Branch("samples_to_peak", &s_to_peak, "samples_to_peak/l");
-    tpsTree.Branch("adc_integral", &adc_integral, "adc_integral/i");
-    tpsTree.Branch("adc_peak", &adc_peak, "adc_peak/s");
-    tpsTree.Branch("detector", &det, "detector/s");
-    tpsTree.Branch("detector_channel", &det_channel, "detector_channel/I");
-    tpsTree.Branch("view", &view);
-    tpsTree.Branch("simide_energy", &simide_energy, "simide_energy/D");
+//     // TP basic branches
+//     tpsTree.Branch("event", &evt, "event/I");
+//     tpsTree.Branch("run", &run, "event/I");
+//     tpsTree.Branch("version", &version, "version/s");
+//     tpsTree.Branch("detid", &detid, "detid/i");
+//     tpsTree.Branch("channel", &channel, "channel/i");
+//     tpsTree.Branch("samples_over_threshold", &s_over, "samples_over_threshold/l");
+//     tpsTree.Branch("time_start", &tstart, "time_start/l");
+//     tpsTree.Branch("samples_to_peak", &s_to_peak, "samples_to_peak/l");
+//     tpsTree.Branch("adc_integral", &adc_integral, "adc_integral/i");
+//     tpsTree.Branch("adc_peak", &adc_peak, "adc_peak/s");
+//     tpsTree.Branch("detector", &det, "detector/s");
+//     tpsTree.Branch("detector_channel", &det_channel, "detector_channel/I");
+//     tpsTree.Branch("view", &view);
+//     tpsTree.Branch("simide_energy", &simide_energy, "simide_energy/D");
     
-    // Truth branches (always: generator_name from MC truth)
-    tpsTree.Branch("generator_name", &gen_name);
+//     // Truth branches (always: generator_name from MC truth)
+//     tpsTree.Branch("generator_name", &gen_name);
     
-    // MARLEY-specific particle truth branches
-    tpsTree.Branch("particle_pdg", &particle_pdg, "particle_pdg/I");
-    tpsTree.Branch("particle_process", &particle_process);
-    tpsTree.Branch("particle_energy", &particle_energy, "particle_energy/F");
-    tpsTree.Branch("particle_x", &particle_x, "particle_x/F");
-    tpsTree.Branch("particle_y", &particle_y, "particle_y/F");
-    tpsTree.Branch("particle_z", &particle_z, "particle_z/F");
-    tpsTree.Branch("particle_px", &particle_px, "particle_px/F");
-    tpsTree.Branch("particle_py", &particle_py, "particle_py/F");
-    tpsTree.Branch("particle_pz", &particle_pz, "particle_pz/F");
+//     // MARLEY-specific particle truth branches
+//     tpsTree.Branch("particle_pdg", &particle_pdg, "particle_pdg/I");
+//     tpsTree.Branch("particle_process", &particle_process);
+//     tpsTree.Branch("particle_energy", &particle_energy, "particle_energy/F");
+//     tpsTree.Branch("particle_x", &particle_x, "particle_x/F");
+//     tpsTree.Branch("particle_y", &particle_y, "particle_y/F");
+//     tpsTree.Branch("particle_z", &particle_z, "particle_z/F");
+//     tpsTree.Branch("particle_px", &particle_px, "particle_px/F");
+//     tpsTree.Branch("particle_py", &particle_py, "particle_py/F");
+//     tpsTree.Branch("particle_pz", &particle_pz, "particle_pz/F");
     
-    // Neutrino branches
-    tpsTree.Branch("neutrino_interaction", &neutrino_interaction);
-    tpsTree.Branch("neutrino_x", &neutrino_x, "neutrino_x/F");
-    tpsTree.Branch("neutrino_y", &neutrino_y, "neutrino_y/F");
-    tpsTree.Branch("neutrino_z", &neutrino_z, "neutrino_z/F");
-    tpsTree.Branch("neutrino_px", &neutrino_px, "neutrino_px/F");
-    tpsTree.Branch("neutrino_py", &neutrino_py, "neutrino_py/F");
-    tpsTree.Branch("neutrino_pz", &neutrino_pz, "neutrino_pz/F");
-    tpsTree.Branch("neutrino_energy", &neutrino_energy, "neutrino_energy/F");
+//     // Neutrino branches
+//     tpsTree.Branch("neutrino_interaction", &neutrino_interaction);
+//     tpsTree.Branch("neutrino_x", &neutrino_x, "neutrino_x/F");
+//     tpsTree.Branch("neutrino_y", &neutrino_y, "neutrino_y/F");
+//     tpsTree.Branch("neutrino_z", &neutrino_z, "neutrino_z/F");
+//     tpsTree.Branch("neutrino_px", &neutrino_px, "neutrino_px/F");
+//     tpsTree.Branch("neutrino_py", &neutrino_py, "neutrino_py/F");
+//     tpsTree.Branch("neutrino_pz", &neutrino_pz, "neutrino_pz/F");
+//     tpsTree.Branch("neutrino_energy", &neutrino_energy, "neutrino_energy/F");
 
-    // Backtracking metadata tree
-    TTree metaTree("backtracking_metadata", "Backtracking metadata");
-    int n_events = tps_by_event.size();
-    int n_tps_total = 0;
-    for (const auto& v : tps_by_event) n_tps_total += v.size();
-    float bt_error_margin = static_cast<float>(ParametersManager::getInstance().getDouble("timing.backtracker_error_margin"));
-    metaTree.Branch("n_events", &n_events, "n_events/I");
-    metaTree.Branch("n_tps_total", &n_tps_total, "n_tps_total/I");
-    metaTree.Branch("backtracker_error_margin", &bt_error_margin, "backtracker_error_margin/F");
-    metaTree.Fill();
+//     // Backtracking metadata tree
+//     TTree metaTree("backtracking_metadata", "Backtracking metadata");
+//     int n_events = tps_by_event.size();
+//     int n_tps_total = 0;
+//     for (const auto& v : tps_by_event) n_tps_total += v.size();
+//     float bt_error_margin = static_cast<float>(ParametersManager::getInstance().getDouble("timing.backtracker_error_margin"));
+//     metaTree.Branch("n_events", &n_events, "n_events/I");
+//     metaTree.Branch("n_tps_total", &n_tps_total, "n_tps_total/I");
+//     metaTree.Branch("backtracker_error_margin", &bt_error_margin, "backtracker_error_margin/F");
+//     metaTree.Fill();
 
-    // Fill TPs with embedded truth
-    for (size_t ev = 0; ev < tps_by_event.size(); ++ev) {
-        const auto& v = tps_by_event[ev];
-        for (const auto& tp : v) {
-            // Basic TP info
-            evt = tp.GetEvent(); 
-            run = tp.GetRun();
-            version = TriggerPrimitiveSimple::s_trigger_primitive_version; 
-            detid = 0; 
-            channel = tp.GetChannel(); 
-            s_over = tp.GetSamplesOverThreshold(); 
-            tstart = tp.GetTimeStart(); 
-            s_to_peak = tp.GetSamplesToPeak(); 
-            adc_integral = tp.GetAdcIntegral(); 
-            adc_peak = tp.GetAdcPeak(); 
-            det = tp.GetDetector(); 
-            det_channel = tp.GetDetectorChannel(); 
-            view = tp.GetView();
-            simide_energy = tp.GetSimideEnergy();
+//     // Fill TPs with embedded truth
+//     for (size_t ev = 0; ev < tps_by_event.size(); ++ev) {
+//         const auto& v = tps_by_event[ev];
+//         for (const auto& tp : v) {
+//             // Basic TP info
+//             evt = tp.GetEvent(); 
+//             run = tp.GetRun();
+//             version = TriggerPrimitive::s_trigger_primitive_version; 
+//             detid = 0; 
+//             channel = tp.GetChannel(); 
+//             s_over = tp.GetSamplesOverThreshold(); 
+//             tstart = tp.GetTimeStart(); 
+//             s_to_peak = tp.GetSamplesToPeak(); 
+//             adc_integral = tp.GetAdcIntegral(); 
+//             adc_peak = tp.GetAdcPeak(); 
+//             det = tp.GetDetector(); 
+//             det_channel = tp.GetDetectorChannel(); 
+//             view = tp.GetView();
+//             simide_energy = tp.GetSimideEnergy();
             
-            // Truth info (embedded in TP)
-            gen_name = tp.GetGeneratorName();
-            particle_pdg = tp.GetParticlePDG();
-            particle_process = tp.GetParticleProcess();
-            particle_energy = tp.GetParticleEnergy();
-            particle_x = tp.GetParticleX();
-            particle_y = tp.GetParticleY();
-            particle_z = tp.GetParticleZ();
-            particle_px = tp.GetParticlePx();
-            particle_py = tp.GetParticlePy();
-            particle_pz = tp.GetParticlePz();
-            neutrino_interaction = tp.GetNeutrinoInteraction();
-            neutrino_x = tp.GetNeutrinoX();
-            neutrino_y = tp.GetNeutrinoY();
-            neutrino_z = tp.GetNeutrinoZ();
-            neutrino_px = tp.GetNeutrinoPx();
-            neutrino_py = tp.GetNeutrinoPy();
-            neutrino_pz = tp.GetNeutrinoPz();
-            neutrino_energy = tp.GetNeutrinoEnergy();
+//             // Truth info (embedded in TP)
+//             gen_name = tp.GetGeneratorName();
+//             particle_pdg = tp.GetParticlePDG();
+//             particle_process = tp.GetParticleProcess();
+//             particle_energy = tp.GetParticleEnergy();
+//             particle_x = tp.GetParticleX();
+//             particle_y = tp.GetParticleY();
+//             particle_z = tp.GetParticleZ();
+//             particle_px = tp.GetParticlePx();
+//             particle_py = tp.GetParticlePy();
+//             particle_pz = tp.GetParticlePz();
+//             neutrino_interaction = tp.GetNeutrinoInteraction();
+//             neutrino_x = tp.GetNeutrinoX();
+//             neutrino_y = tp.GetNeutrinoY();
+//             neutrino_z = tp.GetNeutrinoZ();
+//             neutrino_px = tp.GetNeutrinoPx();
+//             neutrino_py = tp.GetNeutrinoPy();
+//             neutrino_pz = tp.GetNeutrinoPz();
+//             neutrino_energy = tp.GetNeutrinoEnergy();
             
-            tpsTree.Fill();
-        }
-    }
+//             tpsTree.Fill();
+//         }
+//     }
 
-    // Write both trees at root level
-    outFile.cd();
-    tpsTree.Write();
-    metaTree.Write();
+//     // Write both trees at root level
+//     outFile.cd();
+//     tpsTree.Write();
+//     metaTree.Write();
     
-    outFile.Close();
+//     outFile.Close();
     
-    // Report absolute output path for consistency
-    std::error_code _ec_abs;
-    auto abs_p = std::filesystem::absolute(std::filesystem::path(out_filename), _ec_abs);
-    if (verboseMode) LogInfo << "Wrote TPs file: " << (_ec_abs ? out_filename : abs_p.string()) << std::endl;
-}
+//     // Report absolute output path for consistency
+//     std::error_code _ec_abs;
+//     auto abs_p = std::filesystem::absolute(std::filesystem::path(out_filename), _ec_abs);
+//     if (verboseMode) LogInfo << "Wrote TPs file: " << (_ec_abs ? out_filename : abs_p.string()) << std::endl;
+// }

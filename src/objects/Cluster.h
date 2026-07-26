@@ -33,7 +33,8 @@ class Cluster {
         float get_total_charge(); // { return total_charge_; }
         float get_total_energy(); // { return total_energy_; }
         float get_number_of_tps() { return tps_.size(); }
-        int get_event() { return tps_.at(0)->GetEvent(); }
+        UInt_t get_event() { return tps_.at(0)->GetEvent(); }
+        UInt_t get_run() { return tps_.at(0)->GetRun(); }
         int get_true_pdg() const { return true_pdg_; }
         bool get_is_main_cluster() const { return is_main_cluster_; }
         int get_cluster_id() const { return cluster_id_; }
