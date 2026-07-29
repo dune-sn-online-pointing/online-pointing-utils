@@ -1,0 +1,29 @@
+{
+  "comment": "Example configuration for ES signal with background mixing workflow",
+  
+  "inputListFile":"/Users/schellma/Dropbox/newsnb/online-pointing-utils/lists/central_big.txt",
+  "bgListFile":"/Users/schellma/Dropbox/newsnb/online-pointing-utils/lists/central_big.txt",
+  "tp_tree_path": "triggerAna/TriggerPrimitives/tpmakerTPCsimpleThr__TPGen",  
+  "mc_tree_path": "triggerAna/mctruths",
+  "outputFolder": "/Users/schellma/Dropbox/newsnb/online-pointing-utils/data/central/output",
+  "sig_folder": "/Users/schellma/Dropbox/newsnb/online-pointing-utils/data/central/output/sig",
+  "tps_bg_folder": "/Users/schellma/Dropbox/newsnb/online-pointing-utils/data/output/tps_bg",
+  "clusters_folder": "/Users/schellma/Dropbox/newsnb/online-pointing-utils/data/central/output/clusters",
+  "matched_clusters_folder": "/Users/schellma/Dropbox/newsnb/online-pointing-utils/data/central/output/matched_clusters",
+  "volume_images_folder": "/Users/schellma/Dropbox/newsnb/online-pointing-utils/data/central/output/volume_images",
+
+  "products_prefix": "bg",
+  "max_files": 100,
+  "file_pattern": "*_tps.root",
+  "backtracker_error_margin": 10,
+
+  "time_tolerance_ticks": 10,
+  "spatial_tolerance_cm": 100,
+  "maxcount": -1,
+  "skipevents":-1,
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 3,
+  "energy_cut": 2.0
+}
