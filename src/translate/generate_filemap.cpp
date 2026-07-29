@@ -36,20 +36,18 @@ int generate_filemap(TTree* TPTree,
         if (count == 0) firstevent = runevent;
         tp_map_hi[runevent] = index;
         if (runevent != newevent){
-            tp_map_lo[runevent] = index;
-            count += 1;
+            
             if (debugMode){
                 std::printf("new event: count: %ld, runevent: %ld, event: %d, run %d,index: %d\n", count, runevent, event, run, index);
             }
             newevent = runevent;   
             
-            if (count > fullcount && fullcount > 0){
+            if (count >= fullcount && fullcount > 0){
                 std::printf("Debug: Reached %ld events, stopping early.\n", count);        
                 break;
             }
-            
-            
-            
+            tp_map_lo[runevent] = index;
+            count += 1;
         }
     }
     for (auto run:runs){
