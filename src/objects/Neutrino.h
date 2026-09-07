@@ -13,12 +13,12 @@ class Neutrino {
         UInt_t event; 
         UInt_t run;
         std::string interaction;
-        float x;
-        float y;
-        float z;
-        float Px;
-        float Py;
-        float Pz;
+        Double_t x;
+        Double_t y;
+        Double_t z;
+        Double_t Px;
+        Double_t Py;
+        Double_t Pz;
         int energy;
 
         int truth_id {-1}; // needed for association
@@ -28,13 +28,13 @@ class Neutrino {
             UInt_t event, 
             UInt_t run,
             std::string interaction,
-            float x,
-            float y,
-            float z,
-            float Px,
-            float Py,
-            float Pz,
-            float energy,
+            Double_t x,
+            Double_t y,
+            Double_t z,
+            Double_t Px,
+            Double_t Py,
+            Double_t Pz,
+            Double_t energy,
             int truth_id
         ) :
             event(event),
@@ -68,27 +68,30 @@ class Neutrino {
         UInt_t GetEvent() const { return event; }
         UInt_t GetRun() const { return run; }
         std::string GetInteraction() const { return interaction; }
-        std::vector <float> GetPosition() const { return {x, y, z}; }
-        std::vector <float> GetMomentum() const { return {Px, Py, Pz}; }
-        float GetX() const { return x; }
-        float GetY() const { return y; }
-        float GetZ() const { return z; }
-        float GetPx() const { return Px; }
-        float GetPy() const { return Py; }
-        float GetPz() const { return Pz; }
-        int GetEnergy() const { return energy; }
+        std::vector <Double_t> GetPosition() const { return {x, y, z}; }
+        std::vector <Double_t> GetMomentum() const { return {Px, Py, Pz}; }
+        Double_t GetX() const { return x; }
+        Double_t GetY() const { return y; }
+        Double_t GetZ() const { return z; }
+        Double_t GetPx() const { return Px; }
+        Double_t GetPy() const { return Py; }
+        Double_t GetPz() const { return Pz; }
+        double_t GetEnergy() const { 
+            //return energy; 
+            return std::sqrt(Px*Px + Py*Py + Pz*Pz); // compute energy from momentum
+        }
         int GetTruthId() const { return truth_id; }
 
         // Setters
         void SetEvent(UInt_t e) { event = e; }
         void SetRun(UInt_t r) { event = r; }
         void SetInteraction(const std::string& i) { interaction = i; }
-        void SetX(float val) { x = val; }
-        void SetY(float val) { y = val; }
-        void SetZ(float val) { z = val; }
-        void SetPx(float val) { Px = val; }
-        void SetPy(float val) { Py = val; }
-        void SetPz(float val) { Pz = val; }
+        void SetX(Double_t val) { x = val; }
+        void SetY(Double_t val) { y = val; }
+        void SetZ(Double_t val) { z = val; }
+        void SetPx(Double_t val) { Px = val; }
+        void SetPy(Double_t val) { Py = val; }
+        void SetPz(Double_t val) { Pz = val; }
         void SetEnergy(int e) { energy = e; }
         void SetTruthId(int id) { truth_id = id; }
 

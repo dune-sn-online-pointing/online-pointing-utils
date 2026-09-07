@@ -1,6 +1,6 @@
 #json/*/*
 build/*
-lists/
+#lists/
 *.o
 *.exe
 json/cats/*

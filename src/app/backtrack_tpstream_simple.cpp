@@ -370,15 +370,16 @@ int main(int argc, char* argv[]) {
                          << tps_by_event.size() << " TPs " << std::endl;
             }
             tps.push_back(tps_by_event);
-            tps_writer.WriteSingleEvent(tps_by_event);
-            true_particles.push_back(true_particles_by_event);
-            neutrinos.push_back(neutrinos_by_event);
-            if (verboseMode && count == 1){
+            if (verboseMode && count == 0){
                 LogInfo << " dump second event " << event << " " << run << std::endl;
                 for (auto tp:tps_by_event){
                     tp.Print();
                 }
             }
+            tps_writer.WriteSingleEvent(tps_by_event);
+            true_particles.push_back(true_particles_by_event);
+            neutrinos.push_back(neutrinos_by_event);
+            
             tps_by_event.clear();
             true_particles_by_event.clear();
             neutrinos_by_event.clear();

@@ -24,12 +24,12 @@ struct TruthMatchSample {
     int best_v_delta_event;
 };
 
-bool has_valid_truth(const std::vector<float>& pos) {
+bool has_valid_truth(const std::vector<Double_t>& pos) {
     if (pos.size() < 3) return false;
     return std::fabs(pos[0]) + std::fabs(pos[1]) + std::fabs(pos[2]) > 1e-3f;
 }
 
-float truth_distance(const std::vector<float>& a, const std::vector<float>& b) {
+float truth_distance(const std::vector<Double_t>& a, const std::vector<Double_t>& b) {
     float dx = a[0] - b[0];
     float dy = a[1] - b[1];
     float dz = a[2] - b[2];
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
     }
 
     float truth_tolerance_cm = clp.isOptionTriggered("truth_tolerance_cm")
-                                   ? clp.getOptionVal<float>("truth_tolerance_cm")
+                                   ? clp.getOptionVal<Double_t>("truth_tolerance_cm")
                                    : config.value("truth_tolerance_cm", 10.0f);
     if (truth_tolerance_cm <= 0.0f) {
         LogWarning << "Provided truth tolerance " << truth_tolerance_cm << " cm is <= 0. Using 1 cm." << std::endl;
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
                                   int& best_index,
                                   int& best_event_delta) {
             const auto& target_truth = target.get_true_pos();
-            best_distance_cm = std::numeric_limits<float>::max();
+            best_distance_cm = std::numeric_limits<Double_t>::max();
             best_index = -1;
             best_event_delta = 0;
             for (size_t i = 0; i < candidates.size(); ++i) {

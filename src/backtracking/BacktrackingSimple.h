@@ -33,6 +33,11 @@ void read_tpstream(std::string filename,
 				int channel_tolerance = -1);
                  
 // Direct TP-SimIDE matching based on time and channel proximity
+
+int match_tps_to_tp(
+    std::vector<TriggerPrimitive>& tps, 
+    std::vector<TrueParticle>& true_particles);
+    
 void match_tps_to_simides_direct(
 	std::vector<TriggerPrimitive>& tps,
 	std::vector<TrueParticle>& true_particles,

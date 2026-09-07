@@ -69,7 +69,7 @@ void Cluster::update_cluster_info() {
     struct ParticleKey {
         std::string generator;
         int pdg;
-        float x, y, z;
+        Double_t x, y, z;
         
         bool operator<(const ParticleKey& other) const {
             if (generator != other.generator) return generator < other.generator;
@@ -85,9 +85,9 @@ void Cluster::update_cluster_info() {
     // Struct to store neutrino info associated with each particle key
     struct NeutrinoInfo {
         std::string interaction;
-        float energy;
-        float x, y, z;
-        float px, py, pz;
+        Double_t energy;
+        Double_t x, y, z;
+        Double_t px, py, pz;
     };
     std::map<ParticleKey, NeutrinoInfo> neutrino_info_map;
     
@@ -101,7 +101,7 @@ void Cluster::update_cluster_info() {
         total_charge_ += tp->GetAdcIntegral();
         // Convert ADC to energy using the appropriate conversion factor for the view
         double adc_to_mev = (tp->GetView() == "X") ? ADC_TO_MEV_COLLECTION : ADC_TO_MEV_INDUCTION;
-        total_energy_ += static_cast<float>(tp->GetAdcIntegral() / adc_to_mev);
+        total_energy_ += static_cast<Double_t>(tp->GetAdcIntegral() / adc_to_mev);
         
         // Get truth information from TP embedded data
         std::string gen_name = tp->GetGeneratorName();
@@ -144,8 +144,8 @@ void Cluster::update_cluster_info() {
                 marley_count += kv.second;
             }
         }
-        supernova_tp_fraction_ = (float)marley_count / tps_.size();
-        generator_tp_fraction_ = (float)tps_with_truth / tps_.size();
+        supernova_tp_fraction_ = (Double_t)marley_count / tps_.size();
+        generator_tp_fraction_ = (Double_t)tps_with_truth / tps_.size();
     }
     
     // Find dominant particle (most TPs matched to it)
@@ -182,7 +182,7 @@ void Cluster::update_cluster_info() {
                 std::abs(tp->GetParticleZ() - dominant_key.z) < 0.1) {
                 true_momentum_ = {tp->GetParticlePx(), tp->GetParticlePy(), tp->GetParticlePz()};
                 found_momentum = true;
-                float p_mag = std::sqrt(true_momentum_[0]*true_momentum_[0] + 
+                Double_t p_mag = std::sqrt(true_momentum_[0]*true_momentum_[0] + 
                                        true_momentum_[1]*true_momentum_[1] + 
                                        true_momentum_[2]*true_momentum_[2]);
                 if (p_mag > 0) {
@@ -283,21 +283,21 @@ void Cluster::update_cluster_info() {
     }
 }
 
-float Cluster::get_total_charge() {
+Double_t Cluster::get_total_charge() {
     return total_charge_;
 }
 
-float Cluster::get_total_energy() {
+Double_t Cluster::get_total_energy() {
     return total_energy_;
 }
 
-float distance(Cluster cluster1, Cluster cluster2) {
-    float x1 = cluster1.get_true_pos()[0];
-    float y1 = cluster1.get_true_pos()[1];
-    float z1 = cluster1.get_true_pos()[2];
-    float x2 = cluster2.get_true_pos()[0];
-    float y2 = cluster2.get_true_pos()[1];
-    float z2 = cluster2.get_true_pos()[2];
+Double_t distance(Cluster cluster1, Cluster cluster2) {
+    Double_t x1 = cluster1.get_true_pos()[0];
+    Double_t y1 = cluster1.get_true_pos()[1];
+    Double_t z1 = cluster1.get_true_pos()[2];
+    Double_t x2 = cluster2.get_true_pos()[0];
+    Double_t y2 = cluster2.get_true_pos()[1];
+    Double_t z2 = cluster2.get_true_pos()[2];
     return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
 }
 

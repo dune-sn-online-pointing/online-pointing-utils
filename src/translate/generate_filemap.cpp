@@ -37,7 +37,7 @@ int generate_filemap(TTree* TPTree,
         tp_map_hi[runevent] = index;
         if (runevent != newevent){
             
-            if (debugMode){
+            if (superdebugMode){
                 std::printf("new event: count: %ld, runevent: %ld, event: %d, run %d,index: %d\n", count, runevent, event, run, index);
             }
             newevent = runevent;   

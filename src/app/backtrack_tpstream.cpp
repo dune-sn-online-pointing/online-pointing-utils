@@ -181,8 +181,11 @@ int main(int argc, char* argv[]) {
         input_basename = input_basename.substr(0, input_basename.length() - 14); // remove _tpstream.root
         std::ostringstream suffix;
         std::string skipper = "";
+        char* buffer[100];
         if (maxcount > 0 || skipevents > -1) {
-            skipper =std::format("_s{}_l{}",skipevents,maxcount);
+            sprintf(buffer,"_s%d_l%d",skipevents,maxcount);
+            skipper = string(buffer);
+            //skipper =std::format("_s{}_l{}",skipevents,maxcount);
         } 
         if (bktr_margin != standard_backtracker_error_margin) {
             suffix << skipper << "_tps_bktr" << bktr_margin << ".root";
