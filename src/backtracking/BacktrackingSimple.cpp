@@ -3,7 +3,7 @@
 #include "generate_filemap.h"
 #include <memory>
 
-//#define DIRECT
+#define DIRECT
 
 //#define SUPERDUPERDEBUG
 
@@ -298,7 +298,7 @@ void read_tpstream(std::string filename,
     MCparticlestree->SetBranchAddress("pdg", &pdg);
     //MCparticlestree->SetBranchAddress("event", &event);
     //MCparticlestree->SetBranchAddress("run", &run);
-    MCparticlestree->SetBranchAddress("block_id", &block_id);
+    //MCparticlestree->SetBranchAddress("block_id", &block_id);
     MCparticlestree->SetBranchAddress("g4_track_id", &track_id);
     MCparticlestree->SetBranchAddress("truth_block_id", &truth_id);
     MCparticlestree->SetBranchAddress("status_code", &status_code);
@@ -422,7 +422,7 @@ void read_tpstream(std::string filename,
             // if status code is 0, particle is not tracked (initial state)
             if (status_code == 0)  continue;
 
-            LogInfo << " Found a true particle with generator " << *generator_name <<  " pdg " << pdg << " status code " << status_code << std::endl;
+            if (debugMode) LogInfo << " Found a true particle with generator " << *generator_name <<  " pdg " << pdg << " status code " << status_code << std::endl;
             mc_true_particles.emplace_back(
                 TrueParticle(
                     event,
@@ -525,7 +525,7 @@ void read_tpstream(std::string filename,
      
     for (auto& tp : tps) {
         const TrueParticle* true_particle = tp.GetTrueParticle();
-        LogInfo << " true_particle pointer" <<true_particle << std::endl;
+        //LogInfo << " true_particle pointer" <<true_particle << std::endl;
         if (true_particle != nullptr) {
             // Re-call SetTrueParticle to update all fields including momentum that was just copied
             tp.SetTrueParticle(true_particle);
@@ -614,7 +614,7 @@ int match_tps_to_tp(
         }
         if (found) {
             matches++;
-            LogInfo << "matching " << tp.GetGeneratorName() << " " << tp.GetBTGeneratorName() << " " << pdg<< " id " << id << " d: " << d << std::endl; //<< " dy: " << dy << " dz: " << dz << std::endl; 
+            if(debugMode) LogInfo << "matching " << tp.GetGeneratorName() << " " << tp.GetBTGeneratorName() << " " << pdg<< " id " << id << " d: " << d << std::endl; //<< " dy: " << dy << " dz: " << dz << std::endl; 
         }
 
         if (tp.GetGeneratorName() == "UNKNOWN" || tp.GetGeneratorName() == "largeant"){
