@@ -10,10 +10,10 @@
 // #include "Neutrino.h"
 
 
-class TpsWriter
+class TPSClass
 {
 public:
-    //TpsWriter();
+    //TPSClass();
     bool Create(std::string filename, std::string treename);
     bool Close();
     // TTree* GetTree();
@@ -48,15 +48,15 @@ private:
     // MARLEY-specific particle truth (only meaningful when gen_name contains "marley")
     Int_t particle_pdg = 0;
     std::string particle_process;
-    Float_t particle_energy = 0.0f;
-    Float_t particle_x = 0.0f, particle_y = 0.0f, particle_z = 0.0f;
-    Float_t particle_px = 0.0f, particle_py = 0.0f, particle_pz = 0.0f;
+    Double_t particle_energy = 0.0f;
+    Double_t particle_x = 0.0f, particle_y = 0.0f, particle_z = 0.0f;
+    Double_t particle_px = 0.0f, particle_py = 0.0f, particle_pz = 0.0f;
 
     // Neutrino info (only for MARLEY with neutrino association)
     std::string neutrino_interaction;
-    Float_t neutrino_x = 0.0f, neutrino_y = 0.0f, neutrino_z = 0.0f;
-    Float_t neutrino_px = 0.0f, neutrino_py = 0.0f, neutrino_pz = 0.0f;
-    Float_t neutrino_energy = 0.0f;
+    Double_t neutrino_x = 0.0f, neutrino_y = 0.0f, neutrino_z = 0.0f;
+    Double_t neutrino_px = 0.0f, neutrino_py = 0.0f, neutrino_pz = 0.0f;
+    Double_t neutrino_energy = 0.0f;
 
     // metadata
     int n_events = 0;
