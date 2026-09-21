@@ -22,7 +22,8 @@ class TrueParticle {
             int pdg,
             std::string process,
             int track_id = -1,
-            int truth_id = -1
+            int truth_id = -1,
+            int status = -1
         ) :
             event(event),
             run(run),
@@ -37,7 +38,8 @@ class TrueParticle {
             pdg(pdg),
             process(process),
             track_id(track_id),
-            truth_id(truth_id)
+            truth_id(truth_id),
+            status_code(status)
         {};
 
         // default constructor
@@ -65,6 +67,7 @@ class TrueParticle {
             Pz = 0;
             energy = 0;
             process = "";
+            status_code = -1;
         };
         
         // destructor
@@ -88,7 +91,7 @@ class TrueParticle {
         void SetNeutrino(const Neutrino *neutrino) { this->neutrino = neutrino; }
         void SetTimeStart(double time_start) { this->time_start = time_start; }
         void SetTimeEnd(double time_end) { this->time_end = time_end; }
-
+        void SetStatusCode(int code) {this->status_code = code;}
         // Getters
         int GetEvent() const { return event; }
         int GetRun() const { return run; }
@@ -106,9 +109,10 @@ class TrueParticle {
         std::string GetProcess() const { return process; }
         int GetTrackId() const { return track_id; }
         int GetTruthId() const { return truth_id; }
+        int GetStatusCode() const { return status_code;}
         const Neutrino* GetNeutrino() const {
             if (neutrino == nullptr) {
-                // LogWarning << "No neutrino associated to this TrueParticle" << std::endl;
+                LogWarning << "No neutrino associated to this TrueParticle" << std::endl;
             }
             return neutrino;
         }
@@ -134,18 +138,19 @@ class TrueParticle {
             LogInfo << "Generator name: " << generator_name << std::endl;
             LogInfo << "Pdg: " << pdg << std::endl;
             LogInfo << "Process: " << process << std::endl;
+            LogInfo << "StatusCode: " << status_code << std::endl;
         };
 
     private:
         UInt_t event {0};
         UInt_t run {0};
-        float x {0.0f};
-        float y {0.0f};
-        float z {0.0f};
-        float Px {0.0f};
-        float Py {0.0f};
-        float Pz {0.0f};
-        float energy {0.0f};
+        Double_t x {0.0f};
+        Double_t y {0.0f};
+        Double_t z {0.0f};
+        Double_t Px {0.0f};
+        Double_t Py {0.0f};
+        Double_t Pz {0.0f};
+        Double_t energy {0.0f};
         std::string generator_name {"UNKNOWN"};
         int pdg {0};
         std::string process {"UNKNOWN"};
@@ -155,8 +160,9 @@ class TrueParticle {
         const Neutrino * neutrino = nullptr; // this is the neutrino that generated the particle, if any. For bkg, it will stay empty
 
         // these are needed to make associations
-        double time_start {INT_MAX};
-        double time_end {0};
+        Double_t time_start {INT_MAX};
+        Double_t time_end {0};
+        int status_code {-1};
         std::unordered_set<int> channels = {};
 
 };

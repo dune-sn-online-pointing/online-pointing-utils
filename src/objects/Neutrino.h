@@ -2,6 +2,7 @@
 #define NEUTRINO_H
 
 #include "root.h"
+#include "global.h"
 
 // the idea is  to associate a neutrino to each TrueParticle 
 // having generator_name == "marley"
@@ -19,7 +20,7 @@ class Neutrino {
         Double_t Px;
         Double_t Py;
         Double_t Pz;
-        int energy;
+        Double_t energy;
 
         int truth_id {-1}; // needed for association
         // could put generator_name, but not needed for the current setup
@@ -48,6 +49,7 @@ class Neutrino {
             Pz(Pz),
             energy(energy),
             truth_id(truth_id)
+            
         {}
 
         Neutrino() :
@@ -84,7 +86,7 @@ class Neutrino {
 
         // Setters
         void SetEvent(UInt_t e) { event = e; }
-        void SetRun(UInt_t r) { event = r; }
+        void SetRun(UInt_t r) { run = r; }
         void SetInteraction(const std::string& i) { interaction = i; }
         void SetX(Double_t val) { x = val; }
         void SetY(Double_t val) { y = val; }
@@ -92,8 +94,17 @@ class Neutrino {
         void SetPx(Double_t val) { Px = val; }
         void SetPy(Double_t val) { Py = val; }
         void SetPz(Double_t val) { Pz = val; }
-        void SetEnergy(int e) { energy = e; }
+        void SetEnergy(Double_t e) { energy = e; }
         void SetTruthId(int id) { truth_id = id; }
+        void Print() const{
+            LogInfo << "Dump a neutrino " << truth_id << std::endl;
+            LogInfo << "Neutrino event: " << event << std::endl;
+            LogInfo << "Neutrino run: " << run << std::endl; 
+            LogInfo << "Neutrino energy: " << energy << std::endl;
+            LogInfo << "Neutrino interaction: " << interaction << std::endl;
+            LogInfo << "Neutrino x, y z: " << x << " " << y << " " << z << std::endl;
+            LogInfo << "Neutrino px, py pz: " << Px << " " << Py << " " << Pz << std::endl;
+        }
 
 };
 

@@ -10,11 +10,12 @@ class TriggerPrimitive {
         static constexpr uint8_t s_trigger_primitive_version = 2;
 
         // Setters
-        void SetTimeStart(uint64_t time_start)                        { this->time_start_ = time_start; }
-        void SetSamplesOverThreshold(uint64_t samples_over_threshold) { this->samples_over_threshold_ = samples_over_threshold; }
-        void SetSamplesToPeak(uint64_t samples_to_peak)               { this->samples_to_peak_ = samples_to_peak; }
-        void SetAdcIntegral(uint64_t adc_integral)                    { this->adc_integral_ = adc_integral; }
-        void SetAdcPeak(uint64_t adc_peak)                            { this->adc_peak_ = adc_peak; }
+        void SetTPIndex(Int_t i) {this->tp_index_ = i;}
+        void SetTimeStart(ULong_t time_start)                        { this->time_start_ = time_start; }
+        void SetSamplesOverThreshold(ULong_t samples_over_threshold) { this->samples_over_threshold_ = samples_over_threshold; }
+        void SetSamplesToPeak(ULong_t samples_to_peak)               { this->samples_to_peak_ = samples_to_peak; }
+        void SetAdcIntegral(ULong_t adc_integral)                    { this->adc_integral_ = adc_integral; }
+        void SetAdcPeak(ULong_t adc_peak)                            { this->adc_peak_ = adc_peak; }
         void SetView(const std::string& view)                         { this->view_ = view; }
         void SetDetector(Int_t detector)                                { this->detector_ = detector; }
         void SetDetectorChannel(Int_t detector_channel)                 { this->detector_channel_ = detector_channel; }
@@ -40,9 +41,14 @@ class TriggerPrimitive {
             this->neutrino_px_ = nu_px; this->neutrino_py_ = nu_py; this->neutrino_pz_ = nu_pz;
             this->neutrino_energy_ = nu_energy;
         }
+        void SetTrueIndex(const Int_t i){this->true_index_ = i;}
         
         // Helper to set all MARLEY truth from TrueParticle and Neutrino (for backward compatibility during transition)
         void SetTrueParticle(const TrueParticle* true_particle) {
+            if (debugMode) {
+                LogInfo << "check true particle" << std::endl;
+                true_particle->Print();
+            }
             temp_true_particle_ = true_particle;  // Store pointer for later generator name update
             if (true_particle == nullptr) {
                 generator_name_ = "UNKNOWN";
@@ -54,6 +60,7 @@ class TriggerPrimitive {
             std::string gen_lower = generator_name_;
             std::transform(gen_lower.begin(), gen_lower.end(), gen_lower.begin(), ::tolower);
             if (gen_lower.find("marley") != std::string::npos) {
+                if (debugMode) LogInfo << "actually store true info" << std::endl;
                 particle_pdg_ = true_particle->GetPdg();
                 particle_process_ = true_particle->GetProcess();
                 particle_energy_ = true_particle->GetEnergy();
@@ -65,6 +72,7 @@ class TriggerPrimitive {
                 particle_pz_ = true_particle->GetPz();
                 
                 const Neutrino* nu = true_particle->GetNeutrino();
+                if (debugMode) LogInfo << "particle checking for neutrino " << nu << std::endl;
                 if (nu != nullptr) {
                     neutrino_interaction_ = nu->GetInteraction();
                     neutrino_x_ = nu->GetX();
@@ -75,6 +83,20 @@ class TriggerPrimitive {
                     neutrino_pz_ = nu->GetPz();
                     neutrino_energy_ = (Double_t)nu->GetEnergy();
                 }
+            }
+        }
+
+        // add a neutrino directly
+        void AddNeutrino(const Neutrino *nu){
+            if (nu != nullptr) {
+                neutrino_interaction_ = nu->GetInteraction();
+                neutrino_x_ = nu->GetX();
+                neutrino_y_ = nu->GetY();
+                neutrino_z_ = nu->GetZ();
+                neutrino_px_ = nu->GetPx();
+                neutrino_py_ = nu->GetPy();
+                neutrino_pz_ = nu->GetPz();
+                neutrino_energy_ = (Double_t)nu->GetEnergy();
             }
         }
         void SetView(Int_t ch) {
@@ -89,6 +111,7 @@ class TriggerPrimitive {
         }
 
         // Getters
+        Int_t GetTPIndex() const {return tp_index_;}
         Double_t GetTimeStart() const     { return time_start_; }
         Double_t GetTimeEnd() const       { return time_start_ + samples_over_threshold_ * TPC_sample_length; }
         Double_t GetTimePeak() const      { return time_start_ + samples_to_peak_ * TPC_sample_length; }
@@ -98,16 +121,16 @@ class TriggerPrimitive {
         Int_t GetChannel()                    const { return channel_; } // this is the original channel for larsoft
         UInt_t GetEvent()                      const { return event_; }
         UInt_t GetRun()                        const { return run_; }
-        uint64_t GetSamplesOverThreshold()  const { return samples_over_threshold_; }
-        uint64_t GetSamplesToPeak()         const { return samples_to_peak_; }
-        uint64_t GetAdcIntegral()           const { return adc_integral_; }
-        uint64_t GetAdcPeak()               const { return adc_peak_; }
+        ULong_t GetSamplesOverThreshold()  const { return samples_over_threshold_; }
+        ULong_t GetSamplesToPeak()         const { return samples_to_peak_; }
+        ULong_t GetAdcIntegral()           const { return adc_integral_; }
+        ULong_t GetAdcPeak()               const { return adc_peak_; }
         Double_t GetSimideEnergy()            const { return simide_energy_; }
         
         // Truth getters (always available)
         std::string GetGeneratorName() const { return generator_name_; }
         std::string GetBTGeneratorName() const { return bt_generator_name_; }
-        
+        Int_t GetBTPrimaryTrackID() const { return bt_primary_track_id_;}
         // MARLEY-specific particle truth getters (return meaningful values only if generator is MARLEY)
         Int_t GetParticlePDG() const              { return particle_pdg_; }
         std::string GetParticleProcess() const  { return particle_process_; }
@@ -129,7 +152,7 @@ class TriggerPrimitive {
         Double_t GetNeutrinoPy() const             { return neutrino_py_; }
         Double_t GetNeutrinoPz() const             { return neutrino_pz_; }
         Double_t GetNeutrinoEnergy() const         { return neutrino_energy_; }
-        
+        Int_t GetTrueIndex() const {return true_index_;}
         // Helper to check if this is MARLEY (case-insensitive)
         bool IsMarley() const {
             std::string gen_lower = generator_name_;
@@ -143,15 +166,16 @@ class TriggerPrimitive {
         }
 
         TriggerPrimitive(
-            uint64_t version,
-            uint64_t flag,
-            uint64_t detid,
-            uint64_t channel,
-            uint64_t samples_over_threshold,
-            uint64_t time_start,
-            uint64_t samples_to_peak,
-            uint64_t adc_integral,
-            uint64_t adc_peak
+            
+            ULong_t version,
+            ULong_t flag,
+            ULong_t detid,
+            ULong_t channel,
+            ULong_t samples_over_threshold,
+            ULong_t time_start,
+            ULong_t samples_to_peak,
+            ULong_t adc_integral,
+            ULong_t adc_peak
         ) : version_(version),
             flag_(flag),
             detid_(detid),
@@ -209,7 +233,7 @@ class TriggerPrimitive {
                 this->bt_z_ = bt_z;
             } 
         void Print() const {
-            LogInfo << "TriggerPrimitive: " << std::endl;
+            LogInfo << "TriggerPrimitive: " << tp_index_ << std::endl;
             LogInfo << "  event: " << " " <<event_ << std::endl;
             LogInfo << "  run: " << " " << run_ << std::endl;
             LogInfo << "  version: " << " " << version_ << std::endl;
@@ -258,21 +282,24 @@ class TriggerPrimitive {
             LogInfo << "  bt_x" << " " << bt_x_ << std::endl;
             LogInfo << "  bt_y" << " " << bt_y_ << std::endl;
             LogInfo << "  bt_z" << " " << bt_z_ << std::endl;
+            LogInfo << "  true_index " << " " << true_index_ << std::endl;
+
         }
 
     private:
         // Metadata.
-    uint64_t version_ = 0;
-    uint64_t flag_ = 0;
-    uint64_t detid_ = 0;
+    Int_t tp_index_ = -1;
+    UChar_t version_ = 0;
+    ULong_t flag_ = 0;
+    ULong_t detid_ = 0;
 
     // Physics data.
-    uint64_t channel_ = 0;
-    uint64_t samples_over_threshold_ = 0;
-    uint64_t time_start_ = 0; // in larsoft it's much shorter
-    uint64_t samples_to_peak_ = 0;
-    uint64_t adc_integral_ = 0;
-    uint64_t adc_peak_ = 0;
+    ULong_t channel_ = 0;
+    ULong_t samples_over_threshold_ = 0;
+    ULong_t time_start_ = 0; // in larsoft it's much shorter
+    ULong_t samples_to_peak_ = 0;
+    ULong_t adc_integral_ = 0;
+    ULong_t adc_peak_ = 0;
 
     // Additional variables
     Int_t detector_ = -1; // this goes from 0 to the number of APAs 
@@ -332,6 +359,7 @@ class TriggerPrimitive {
     Double_t bt_x_	= 0.0f;
     Double_t bt_y_	= 0.0f;
     Double_t bt_z_ = 0.0f;
+    Int_t true_index_ = -1;
 }; // class TriggerPrimitive
 
 #endif // TRIGGERPRIMITIVE_HPP
