@@ -28,8 +28,11 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
 
 // write the clusters to a root file with match_id information
 // For X plane, also provide maps to store matching U and V cluster IDs
+// match_id_to_type (optional) maps match_id -> match_type (3 = X+U+V, 2 = U+X, 1 = V+X).
+// If it is not given, or a match_id is missing from it, match_type falls back to 3.
 void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, int>& cluster_to_match, TFile* clusters_file, std::string view,
-                                   std::map<int, int>* x_to_u_map = nullptr, std::map<int, int>* x_to_v_map = nullptr);
+                                   std::map<int, int>* x_to_u_map = nullptr, std::map<int, int>* x_to_v_map = nullptr,
+                                   std::map<int, int>* match_id_to_type = nullptr);
 
 std::vector<Cluster> read_clusters(std::string root_filename);
 std::vector<Cluster> read_clusters_from_tree(std::string root_filename, std::string view, std::string directory = "clusters");

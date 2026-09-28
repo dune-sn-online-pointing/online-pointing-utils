@@ -122,7 +122,7 @@ def find_files_by_tpstream_basenames(json_config, folder, file_pattern, skip_fil
         all_files = sorted(Path(folder).glob(file_pattern))
         if skip_files > 0:
             all_files = all_files[skip_files:]
-        if max_files is not None:
+        if max_files is not None and max_files >= 0:  # -1 means no limit; [:-1] dropped the last file
             all_files = all_files[:max_files]
         return all_files
     
@@ -134,7 +134,7 @@ def find_files_by_tpstream_basenames(json_config, folder, file_pattern, skip_fil
         all_files = sorted(Path(folder).glob(file_pattern))
         if skip_files > 0:
             all_files = all_files[skip_files:]
-        if max_files is not None:
+        if max_files is not None and max_files >= 0:  # -1 means no limit; [:-1] dropped the last file
             all_files = all_files[:max_files]
         return all_files
     
@@ -147,14 +147,16 @@ def find_files_by_tpstream_basenames(json_config, folder, file_pattern, skip_fil
         all_files = sorted(Path(folder).glob(file_pattern))
         if skip_files > 0:
             all_files = all_files[skip_files:]
-        if max_files is not None:
+        if max_files is not None and max_files >= 0:  # -1 means no limit; [:-1] dropped the last file
             all_files = all_files[:max_files]
         return all_files
     
     # Apply skip and max to tpstream list
     if skip_files > 0 and skip_files < len(tpstream_files):
         tpstream_files = tpstream_files[skip_files:]
-    if max_files is not None and max_files < len(tpstream_files):
+    # max_files < 0 (the -1 default of several drivers) means "no limit"; before 2026-09-07
+    # the slice [:-1] silently dropped the last tpstream basename of every cat
+    if max_files is not None and 0 <= max_files < len(tpstream_files):
         tpstream_files = tpstream_files[:max_files]
     
     # Extract basenames

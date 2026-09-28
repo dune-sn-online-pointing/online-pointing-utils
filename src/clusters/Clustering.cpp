@@ -701,7 +701,8 @@ void write_clusters(std::vector<Cluster>& clusters, TFile* clusters_file, std::s
 }
 
 void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, int>& cluster_to_match, TFile* clusters_file, std::string view,
-                                   std::map<int, int>* x_to_u_map, std::map<int, int>* x_to_v_map) {
+                                   std::map<int, int>* x_to_u_map, std::map<int, int>* x_to_v_map,
+                                   std::map<int, int>* match_id_to_type) {
     // Similar to write_clusters but adds match_id and match_type branches
     // For X plane, also adds matching_clusterId_U and matching_clusterId_V
     if (!clusters_file || clusters_file->IsZombie()) {
@@ -838,7 +839,13 @@ void write_clusters_with_match_id(std::vector<Cluster>& clusters, std::map<int, 
         auto it = cluster_to_match.find(cluster_id);
         if (it != cluster_to_match.end()) {
             match_id = it->second;
-            match_type = 3;  // Currently only 3-plane matches
+            // Real match topology: 3 = X+U+V, 2 = U+X, 1 = V+X.
+            // Fall back to 3 when the caller did not provide the map (legacy behaviour).
+            match_type = 3;
+            if (match_id_to_type) {
+                auto type_it = match_id_to_type->find(match_id);
+                if (type_it != match_id_to_type->end()) match_type = type_it->second;
+            }
         } else {
             match_id = -1;
             match_type = -1;  // No match

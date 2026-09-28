@@ -14,6 +14,7 @@ VERBOSE_FLAG=""
 SKIP_OVERRIDE=""
 MAX_OVERRIDE=""
 OVERRIDE_FLAG=""
+RADMASK_FLAGS=""
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -46,9 +47,24 @@ while [[ $# -gt 0 ]]; do
             MAX_OVERRIDE="--max $2"
             shift 2
             ;;
+        --radmask)
+            RADMASK_FLAGS="$RADMASK_FLAGS --radmask"
+            shift
+            ;;
+        --radmask-radius|--radmask-energy-keep|--radmask-metric|--radmask-suffix|--planes)
+            RADMASK_FLAGS="$RADMASK_FLAGS $1 $2"
+            shift 2
+            ;;
+        --output-folder|-o)
+            OUTPUT_OVERRIDE="-o $2"
+            shift 2
+            ;;
         *)
             echo "Unknown option: $1"
             echo "Usage: $0 -j <json_file> [-v] [-f] [--skip N] [--max N]"
+            echo "                 [--radmask] [--radmask-radius CM] [--radmask-energy-keep MEV]"
+            echo "                 [--radmask-metric center|nearest_tp] [--radmask-suffix STR]"
+            echo "                 [-o|--output-folder DIR]"
             exit 1
             ;;
     esac
@@ -76,7 +92,7 @@ echo "=================================================="
 echo ""
 
 # Run the Python script
-python3 "$PYTHON_DIR/app/create_volumes.py" -j "$JSON_FILE" $VERBOSE_FLAG $OVERRIDE_FLAG $SKIP_OVERRIDE $MAX_OVERRIDE
+python3 "$PYTHON_DIR/app/create_volumes.py" -j "$JSON_FILE" $VERBOSE_FLAG $OVERRIDE_FLAG $SKIP_OVERRIDE $MAX_OVERRIDE ${OUTPUT_OVERRIDE:-} $RADMASK_FLAGS
 
 EXIT_CODE=$?
 

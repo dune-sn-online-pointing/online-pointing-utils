@@ -20,6 +20,8 @@ print_help(){
     echo "  --home-dir <path>          Path to the home directory (overrides default)"
     echo "  --max-files <n>             Maximum number of files to process (overrides JSON)"
     echo "  --skip-files <n>            Number of files to skip at start (overrides JSON)"
+    echo "  --first-in-time-partner     Legacy 3-plane matching: keep the FIRST induction candidate in time"
+    echo "                              order (off by default -> highest-energy candidate)"
     echo "  -bt               Run backtrack step"
     echo "  -at               Run analzye_tps"
     echo "  -ab               Run add backgrounds step"
@@ -56,6 +58,7 @@ clean_clusters=false
 bg_suffix="_bg"
 run_analyze_tps=false
 override=false
+first_in_time_partner=false
 all_steps=false
 debug=false
 verbose=false
@@ -69,6 +72,7 @@ while [[ $# -gt 0 ]]; do
                 --home-dir) export HOME_DIR="$2"; echo "Home directory set from CLI to: $HOME_DIR"; source ${HOME_DIR}/scripts/init.sh; shift 2 ;;
                 --max-files) max_files="$2"; shift 2 ;;
                 --skip-files) skip_files="$2"; shift 2 ;;
+                --first-in-time-partner) first_in_time_partner=true; shift ;;
                 --no-compile) noCompile=true; shift ;;
                 --clean-compile) cleanCompile=true; shift ;;
                 -h|--help) print_help ;;
@@ -137,6 +141,7 @@ echo -e "Clean clusters (no backgrounds):\t$clean_clusters"
 echo -e "No compile:\t\t$noCompile"
 echo -e "Clean compile:\t\t$cleanCompile"
 echo -e "Override:\t\t$override"
+echo -e "First-in-time partner:\t$first_in_time_partner"
 echo "**************************"
 echo ""
 echo "**************************"
@@ -244,6 +249,9 @@ fi
 ####################
 
 match_clusters_command="./scripts/match_clusters.sh $common_options"
+if [ "$first_in_time_partner" = true ]; then
+        match_clusters_command+=" --first-in-time-partner"
+fi
 if [ "$run_match_clusters" = true ]; then
         echo "Running match clusters step with command:"
         echo $match_clusters_command

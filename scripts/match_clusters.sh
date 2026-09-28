@@ -14,6 +14,7 @@ print_help(){
   echo "  --no-compile              Do not recompile the code"
   echo "  --clean-compile           Clean and recompile the code"
   echo "  -f|--override [true|false] Force reprocessing even if output already exists (useful for debugging)"
+  echo "  --first-in-time-partner   Legacy ambiguity rule: keep the FIRST induction candidate in time order"
   echo "  -v|--verbose              Enable verbose output"
   echo "  -d|--debug                Enable debug mode"
   echo "  -h|--help                 Print this help message."
@@ -28,6 +29,7 @@ inputFile=""
 output_folder=""
 skip_files=""
 max_files=""
+first_in_time_partner=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -36,6 +38,7 @@ while [[ $# -gt 0 ]]; do
     -o|--output-folder) output_folder="$2"; shift 2;;
     -s|--skip|--skip-files) skip_files="$2"; shift 2;;
     -m|--max|--max-files) max_files="$2"; shift 2;;
+    --first-in-time-partner) first_in_time_partner=true; shift;;
     --no-compile) noCompile=true; shift;;
     --clean-compile) cleanCompile=true; shift;;        
     -f|--override)
@@ -85,6 +88,9 @@ if [ ! -z "$max_files" ]; then
 fi
 if [ "$override" = true ]; then
   cmd+=" -f"
+fi
+if [ "$first_in_time_partner" = true ]; then
+  cmd+=" --first-in-time-partner"
 fi
 if [ "$verbose" = true ]; then
   cmd+=" -v"

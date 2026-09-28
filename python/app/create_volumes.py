@@ -556,6 +556,69 @@ def get_clusters_in_volume(all_clusters, center_channel, center_time_tpc, volume
     return volume_clusters
 
 
+def cluster_distance_to_main(cluster, main_cluster, center_key, channel_key, metric='center'):
+    """Truth-free distance [cm] between a satellite cluster and the main track.
+
+    metric='center'      : distance between cluster centres (same definition used by
+                           `avg_marley_cluster_distance_cm`, i.e. the quantity tabulated
+                           in the CT v80 topology study).
+    metric='nearest_tp'  : minimum TP-to-TP distance between the satellite and the main
+                           cluster. More faithful for extended main tracks, slightly slower.
+
+    Both use the (channel * pitch, tick * drift velocity) plane, so the "time window" is a
+    drift-coordinate window; no truth information is involved.
+    """
+    if metric == 'nearest_tp':
+        m_ch = np.asarray(main_cluster[channel_key], dtype=float) * CHANNEL_PITCH_CM
+        m_t = np.asarray(main_cluster['times_tpc'], dtype=float) * DRIFT_VELOCITY_CM_PER_TICK
+        c_ch = np.asarray(cluster[channel_key], dtype=float) * CHANNEL_PITCH_CM
+        c_t = np.asarray(cluster['times_tpc'], dtype=float) * DRIFT_VELOCITY_CM_PER_TICK
+        if len(m_ch) == 0 or len(c_ch) == 0:
+            return 0.0
+        d2 = (c_ch[:, None] - m_ch[None, :]) ** 2 + (c_t[:, None] - m_t[None, :]) ** 2
+        return float(np.sqrt(d2.min()))
+
+    d_ch = (float(cluster[center_key]) - float(main_cluster[center_key])) * CHANNEL_PITCH_CM
+    d_t = (float(cluster['center_time_tpc']) - float(main_cluster['center_time_tpc'])) * DRIFT_VELOCITY_CM_PER_TICK
+    return float(np.hypot(d_ch, d_t))
+
+
+def select_associated_clusters(volume_clusters, main_cluster, center_key, channel_key,
+                               radius_cm=40.0, energy_keep_mev=-1.0, metric='center'):
+    """Radiological-cluster suppression: split the clusters of a volume into the ones that
+    are associated with the main track (rendered) and the ones that are not (masked out).
+
+    TRUTH-FREE by construction - only cluster positions and reconstructed charge are used.
+
+    A satellite cluster is kept if
+        d(cluster, main track) < radius_cm
+    or, when `energy_keep_mev` > 0,
+        reco_energy_mev >= energy_keep_mev     (a bright deposit anywhere in the volume is
+                                                far more likely a de-excitation gamma or a
+                                                hard bremsstrahlung photon than a
+                                                radiological blip).
+    The main cluster itself is always kept.
+
+    Returns (kept_clusters, masked_clusters, distances_of_masked).
+    """
+    kept, masked, masked_d = [], [], []
+    for cluster in volume_clusters:
+        if cluster['cluster_id'] == main_cluster['cluster_id']:
+            kept.append(cluster)
+            continue
+        d = cluster_distance_to_main(cluster, main_cluster, center_key, channel_key, metric=metric)
+        keep = (d < radius_cm)
+        if (not keep) and energy_keep_mev is not None and energy_keep_mev > 0:
+            if float(cluster.get('reco_energy_mev', 0.0)) >= energy_keep_mev:
+                keep = True
+        if keep:
+            kept.append(cluster)
+        else:
+            masked.append(cluster)
+            masked_d.append(d)
+    return kept, masked, masked_d
+
+
 def create_volume_image(volume_clusters, center_channel, center_time_tpc, volume_size_cm=100.0, plane='X', channel_key='channels'):
     """
     Create a 2D image array from clusters in the volume using pentagon interpolation.
@@ -671,7 +734,8 @@ def create_volume_image(volume_clusters, center_channel, center_time_tpc, volume
     return image
 
 
-def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], verbose=False):
+def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], verbose=False,
+                         radmask=None):
     """
     Process a single cluster file and create volume images for all main tracks on specified planes.
     All volumes from one input file are saved into separate NPZ files per plane in U/V/X subfolders.
@@ -681,6 +745,9 @@ def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], ve
         output_folder: Base output folder
         planes: List of planes to process (default: ['U', 'V', 'X'])
         verbose: Verbose output
+        radmask: None (default, legacy behaviour, byte-identical output) or a dict
+                 {'radius_cm':..., 'energy_keep_mev':..., 'metric':...} enabling the
+                 truth-free radiological-cluster mask.
     
     Returns:
         Total number of volumes created across all planes
@@ -741,6 +808,19 @@ def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], ve
             
             if len(volume_clusters) == 0:
                 continue
+            
+            # Optional truth-free radiological-cluster suppression.
+            # When radmask is None nothing below changes and the output is byte-identical
+            # to the legacy product.
+            all_volume_clusters = volume_clusters
+            masked_clusters, masked_distances = [], []
+            if radmask is not None:
+                volume_clusters, masked_clusters, masked_distances = select_associated_clusters(
+                    all_volume_clusters, main_cluster, center_key, channel_key,
+                    radius_cm=radmask.get('radius_cm', 40.0),
+                    energy_keep_mev=radmask.get('energy_keep_mev', -1.0),
+                    metric=radmask.get('metric', 'center'),
+                )
             
             # Create volume image
             image = create_volume_image(
@@ -826,6 +906,36 @@ def process_cluster_file(cluster_file, output_folder, planes=['U', 'V', 'X'], ve
                 'source_root_file': os.path.abspath(cluster_file)  # position 21
             }
             
+            if radmask is not None:
+                # Everything above (n_clusters_in_volume, n_marley_clusters, ...) refers to
+                # what is actually drawn in the image; the *_unmasked keys keep the
+                # pre-mask numbers so the two products can be compared directly.
+                n_masked_marley = sum(1 for c in masked_clusters if c['is_marley'])
+                masked_marley_d = [d for c, d in zip(masked_clusters, masked_distances) if c['is_marley']]
+                unmasked_marley_d = []
+                for cluster in all_volume_clusters:
+                    if cluster['is_marley'] and cluster['cluster_id'] != main_cluster['cluster_id']:
+                        unmasked_marley_d.append(cluster_distance_to_main(
+                            cluster, main_cluster, center_key, channel_key,
+                            metric=radmask.get('metric', 'center')))
+                metadata.update({
+                    'radmask_applied': True,
+                    'radmask_radius_cm': float(radmask.get('radius_cm', 40.0)),
+                    'radmask_energy_keep_mev': float(radmask.get('energy_keep_mev', -1.0)),
+                    'radmask_distance_metric': str(radmask.get('metric', 'center')),
+                    'n_clusters_masked': len(masked_clusters),
+                    'n_marley_clusters_masked': n_masked_marley,
+                    'n_non_marley_clusters_masked': len(masked_clusters) - n_masked_marley,
+                    'masked_marley_energy_mev': float(sum(c.get('reco_energy_mev', 0.0)
+                                                          for c in masked_clusters if c['is_marley'])),
+                    'masked_marley_max_distance_cm': float(max(masked_marley_d)) if masked_marley_d else -1.0,
+                    'n_clusters_in_volume_unmasked': len(all_volume_clusters),
+                    'n_marley_clusters_unmasked': sum(1 for c in all_volume_clusters if c['is_marley']),
+                    'n_non_marley_clusters_unmasked': sum(1 for c in all_volume_clusters if not c['is_marley']),
+                    'avg_marley_cluster_distance_cm_unmasked': float(np.mean(unmasked_marley_d)) if unmasked_marley_d else -1.0,
+                    'max_marley_cluster_distance_cm_unmasked': float(np.max(unmasked_marley_d)) if unmasked_marley_d else -1.0,
+                })
+            
             all_images.append(image)
             all_metadata.append(metadata)
             
@@ -858,12 +968,43 @@ def main():
     parser.add_argument('--skip', type=int, default=None, help='Override JSON skip_files: skip first N files')
     parser.add_argument('--max', type=int, default=None, help='Override JSON max_files: process at most N files')
     parser.add_argument('-f', '--override', action='store_true', help='Force reprocessing even if output files already exist')
+    # --- Radiological-cluster suppression (NEW, default OFF: output stays byte-identical) ---
+    parser.add_argument('--radmask', action='store_true', default=None,
+                        help='Enable the truth-free radiological-cluster mask (default: off)')
+    parser.add_argument('--radmask-radius', type=float, default=None,
+                        help='Association radius in cm around the main track (default 40)')
+    parser.add_argument('--radmask-energy-keep', type=float, default=None,
+                        help='Keep clusters beyond the radius if their reconstructed energy '
+                             '[MeV] is at least this value (<=0 disables, default -1)')
+    parser.add_argument('--radmask-metric', type=str, default=None, choices=['center', 'nearest_tp'],
+                        help='Distance metric: cluster centres (default) or nearest TP pair')
+    parser.add_argument('--planes', type=str, default=None,
+                        help='Comma-separated planes to render (overrides JSON "planes"), e.g. X')
+    parser.add_argument('--radmask-suffix', type=str, default=None,
+                        help='Suffix appended to the auto-generated output folder when the '
+                             'mask is enabled (default "_radmask")')
     
     args = parser.parse_args()
     
     # Load JSON configuration
     with open(args.json, 'r') as f:
         config = json.load(f)
+    
+    # ---- Radiological-cluster mask configuration (CLI overrides JSON; default OFF) ----
+    radmask_on = args.radmask if args.radmask is not None else bool(config.get('radiological_mask', False))
+    radmask = None
+    radmask_suffix = ''
+    if radmask_on:
+        radmask = {
+            'radius_cm': args.radmask_radius if args.radmask_radius is not None
+                         else float(config.get('radmask_radius_cm', 40.0)),
+            'energy_keep_mev': args.radmask_energy_keep if args.radmask_energy_keep is not None
+                               else float(config.get('radmask_energy_keep_mev', -1.0)),
+            'metric': args.radmask_metric if args.radmask_metric is not None
+                      else str(config.get('radmask_distance_metric', 'center')),
+        }
+        radmask_suffix = args.radmask_suffix if args.radmask_suffix is not None \
+                         else str(config.get('radmask_folder_suffix', '_radmask'))
     
     # Use get_clusters_folder to compute the full path (matching make_clusters logic)
     clusters_folder = get_clusters_folder(config)
@@ -904,13 +1045,15 @@ def main():
         conditions = get_conditions_string(config)
         # Pattern: prefix_volume_images_conditions
         if prefix:
-            output_folder = f"{base_folder}/{prefix}_volume_images_{conditions}"
+            output_folder = f"{base_folder}/{prefix}_volume_images_{conditions}{radmask_suffix}"
         else:
-            output_folder = f"{base_folder}/volume_images_{conditions}"
+            output_folder = f"{base_folder}/volume_images_{conditions}{radmask_suffix}"
     
     # Planes to process: default all three, overridable via JSON "planes" key
     # (e.g. ["X"] for collection-plane-only channel-tagging volumes).
     planes = config.get('planes', ['U', 'V', 'X'])
+    if args.planes:
+        planes = [p.strip() for p in args.planes.split(',') if p.strip()]
     if isinstance(planes, str):
         planes = [planes]
     
@@ -925,6 +1068,11 @@ def main():
     print(f"Output folder: {output_folder}")
     print(f"Planes: {', '.join(planes)}")
     print(f"Volume size: {VOLUME_SIZE_CM} cm x {VOLUME_SIZE_CM} cm")
+    if radmask is not None:
+        print(f"Radiological mask: ON  radius={radmask['radius_cm']} cm  "
+              f"energy_keep={radmask['energy_keep_mev']} MeV  metric={radmask['metric']}")
+    else:
+        print("Radiological mask: OFF (legacy behaviour)")
     if skip_files > 0:
         print(f"Skipping first {skip_files} files")
     if max_files is not None:
@@ -984,7 +1132,8 @@ def main():
             str(cluster_path),
             output_folder,
             planes=planes,
-            verbose=args.verbose
+            verbose=args.verbose,
+            radmask=radmask
         )
         
         total_volumes += n_volumes

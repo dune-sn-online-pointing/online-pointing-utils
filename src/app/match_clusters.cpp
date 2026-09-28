@@ -73,6 +73,9 @@ int main(int argc, char* argv[]) {
     clp.addOption("outFolder", {"--outFolder", "--output-folder"}, "Output folder path (overrides JSON)");
 
     clp.addDummyOption("Triggers");
+    clp.addTriggerOption("firstInTimePartner", {"--first-in-time-partner"},
+                         "Legacy ambiguity resolution: keep the FIRST induction candidate in time order. "
+                         "Default (new) rule: keep the candidate with the highest total_energy.");
     clp.addTriggerOption("override", {"-f", "--override"}, "Override existing output files");
     clp.addTriggerOption("verboseMode", {"-v"}, "RunVerboseMode, bool");
     clp.addTriggerOption("debugMode", {"-d"}, "RunDebugMode, bool");
@@ -112,6 +115,12 @@ int main(int argc, char* argv[]) {
     if (clp.isOptionTriggered("override")) {
         override = true;
     }
+
+    // Ambiguity resolution between several induction candidates of the same X cluster.
+    // Default (new): keep the most energetic candidate - a truth-agnostic proxy for
+    // "the main track of the interaction", see docs/three_plane_matching_efficiency_study.md P3.
+    // Legacy: keep the first candidate in the (time, event, cluster_id) scan order.
+    bool first_in_time_partner = clp.isOptionTriggered("firstInTimePartner");
     
     // Get matching parameters with defaults
     int time_tolerance_ticks_tpc = j.value("time_tolerance_ticks", 100);  // In TPC ticks (from JSON)
@@ -123,6 +132,9 @@ int main(int argc, char* argv[]) {
         LogInfo << "  time_tolerance: " << time_tolerance_ticks_tpc << " TPC ticks = " << time_tolerance_ticks_tdc << " TDC ticks" << std::endl;
         LogInfo << "  spatial_tolerance: " << spatial_tolerance_cm << " cm" << std::endl;
     }
+    LogInfo << "  partner ambiguity rule: "
+            << (first_in_time_partner ? "first candidate in time order (legacy)"
+                                      : "highest total_energy candidate (default)") << std::endl;
     
     // Use tpstream-based file tracking
     std::vector<std::string> cluster_files = find_input_files_by_tpstream_basenames(j, "clusters", skip_files, max_files);
@@ -297,9 +309,16 @@ int main(int argc, char* argv[]) {
                     }
                     if (int(clusters_u[j].get_tps()[0]->GetDetectorChannel()/APA::total_channels) != int(clusters_x[i].get_tps()[0]->GetDetectorChannel()/APA::total_channels)) { failed_apa_u++; continue; }
                     
-                    // Found a matching U cluster - record it (take first match)
-                    if (x_to_u_match.find(x_id) == x_to_u_match.end()) {
-                        x_to_u_match[x_id] = j;
+                    // Found a matching U candidate - keep the BEST one.
+                    // Default rule: highest total_energy (truth-agnostic proxy for the main track);
+                    // ties and the legacy rule keep the first candidate in the scan order.
+                    auto existing_u = x_to_u_match.find(x_id);
+                    if (existing_u == x_to_u_match.end()) {
+                        x_to_u_match[x_id] = int(j);
+                    } else if (!first_in_time_partner) {
+                        if (clusters_u[j].get_total_energy() > clusters_u[existing_u->second].get_total_energy()) {
+                            existing_u->second = int(j);
+                        }
                     }
                 }
             }
@@ -344,14 +363,32 @@ int main(int argc, char* argv[]) {
                     }
                     if (int(clusters_v[k].get_tps()[0]->GetDetectorChannel()/APA::total_channels) != int(clusters_x[i].get_tps()[0]->GetDetectorChannel()/APA::total_channels)) { failed_apa_v++; continue; }
                     
-                    // Found a matching V cluster - record it (take first match)
-                    if (x_to_v_match.find(x_id) == x_to_v_match.end()) {
-                        x_to_v_match[x_id] = k;
+                    // Found a matching V candidate - keep the BEST one (see the U pass above).
+                    auto existing_v = x_to_v_match.find(x_id);
+                    if (existing_v == x_to_v_match.end()) {
+                        x_to_v_match[x_id] = int(k);
+                    } else if (!first_in_time_partner) {
+                        if (clusters_v[k].get_total_energy() > clusters_v[existing_v->second].get_total_energy()) {
+                            existing_v->second = int(k);
+                        }
                     }
                 }
             }
             
-            // Third pass: create matches based on what we found
+            // Third pass: create matches based on what we found.
+            // The topology of every match is recorded here, at creation time.
+            // It cannot be recovered later from the clusters themselves: TriggerPrimitive
+            // objects rebuilt by read_clusters_from_tree() all report GetView() == "U"
+            // (Clustering.cpp calls the SetView(int) *channel* overload with 0/1/2), so any
+            // view sniffing on the stored clusters is unreliable.
+            struct MatchTopology {
+                int type;   // 3 = X+U+V, 2 = U+X, 1 = V+X
+                int x_id;
+                int u_id;   // -1 if absent
+                int v_id;   // -1 if absent
+            };
+            std::vector<MatchTopology> match_topologies;
+
             int complete_matches = 0;  // X+U+V
             int partial_u_matches = 0; // X+U only
             int partial_v_matches = 0; // X+V only
@@ -371,6 +408,9 @@ int main(int argc, char* argv[]) {
                     
                     if (are_compatibles(clusters_u[j], clusters_v[k], clusters_x[i], spatial_tolerance_cm)) {
                         matches.push_back({clusters_u[j], clusters_v[k], clusters_x[i]});
+                        match_topologies.push_back({3, x_id,
+                                                    clusters_u[j].get_cluster_id(),
+                                                    clusters_v[k].get_cluster_id()});
                         Cluster c = join_clusters(clusters_u[j], clusters_v[k], clusters_x[i]);
                         multiplane_clusters.push_back(c);
                         complete_matches++;
@@ -388,6 +428,7 @@ int main(int argc, char* argv[]) {
                     test_combinations++;
                     size_t j = x_to_u_match[x_id];
                     matches.push_back({clusters_u[j], clusters_x[i]});
+                    match_topologies.push_back({2, x_id, clusters_u[j].get_cluster_id(), -1});
                     Cluster c = join_clusters(clusters_u[j], clusters_x[i]);
                     multiplane_clusters.push_back(c);
                     partial_u_matches++;
@@ -401,6 +442,7 @@ int main(int argc, char* argv[]) {
                     test_combinations++;
                     size_t k = x_to_v_match[x_id];
                     matches.push_back({clusters_v[k], clusters_x[i]});
+                    match_topologies.push_back({1, x_id, -1, clusters_v[k].get_cluster_id()});
                     Cluster c = join_clusters(clusters_v[k], clusters_x[i]);
                     multiplane_clusters.push_back(c);
                     partial_v_matches++;
@@ -486,52 +528,27 @@ int main(int argc, char* argv[]) {
             std::map<int, int> x_to_u_map;  // X cluster_id -> U cluster_id
             std::map<int, int> x_to_v_map;  // X cluster_id -> V cluster_id
             
-            for (size_t match_id = 0; match_id < matches.size(); match_id++) {
-                int match_size = matches[match_id].size();
-                
-                if (match_size == 3) {
-                    // Complete match: U, V, X
-                    int u_id = matches[match_id][0].get_cluster_id();
-                    int v_id = matches[match_id][1].get_cluster_id();
-                    int x_id = matches[match_id][2].get_cluster_id();
-                    
-                    if (u_cluster_to_match.find(u_id) == u_cluster_to_match.end()) u_cluster_to_match[u_id] = match_id;
-                    if (v_cluster_to_match.find(v_id) == v_cluster_to_match.end()) v_cluster_to_match[v_id] = match_id;
-                    if (x_cluster_to_match.find(x_id) == x_cluster_to_match.end()) {
-                        x_cluster_to_match[x_id] = match_id;
-                        // Track the first U and V matched to this X cluster
-                        if (x_to_u_map.find(x_id) == x_to_u_map.end()) x_to_u_map[x_id] = u_id;
-                        if (x_to_v_map.find(x_id) == x_to_v_map.end()) x_to_v_map[x_id] = v_id;
-                    }
-                    match_type_map[match_id] = 3;
-                } else if (match_size == 2) {
-                    // Partial match: determine if it's U+X or V+X based on plane
-                    auto& c1 = matches[match_id][0];
-                    auto& c2 = matches[match_id][1];
-                    
-                    bool c1_is_x = (c1.get_size() > 0 && c1.get_tps()[0]->GetView() == "X");
-                    bool c1_is_u = (c1.get_size() > 0 && c1.get_tps()[0]->GetView() == "U");
-                    
-                    int x_id = c1_is_x ? c1.get_cluster_id() : c2.get_cluster_id();
-                    
-                    if (x_cluster_to_match.find(x_id) == x_cluster_to_match.end()) {
-                        x_cluster_to_match[x_id] = match_id;
-                    }
-                    
-                    if (c1_is_u || (!c1_is_x && c2.get_tps()[0]->GetView() == "X")) {
-                        // This is U+X match
-                        int u_id = c1_is_u ? c1.get_cluster_id() : c2.get_cluster_id();
-                        if (u_cluster_to_match.find(u_id) == u_cluster_to_match.end()) u_cluster_to_match[u_id] = match_id;
-                        if (x_to_u_map.find(x_id) == x_to_u_map.end()) x_to_u_map[x_id] = u_id;
-                        match_type_map[match_id] = 2; // U+X
-                    } else {
-                        // This is V+X match
-                        int v_id = c1_is_x ? c2.get_cluster_id() : c1.get_cluster_id();
-                        if (v_cluster_to_match.find(v_id) == v_cluster_to_match.end()) v_cluster_to_match[v_id] = match_id;
-                        if (x_to_v_map.find(x_id) == x_to_v_map.end()) x_to_v_map[x_id] = v_id;
-                        match_type_map[match_id] = 1; // V+X
-                    }
+            for (size_t match_id = 0; match_id < match_topologies.size(); match_id++) {
+                const MatchTopology& topo = match_topologies[match_id];
+                int x_id = topo.x_id;
+
+                if (x_cluster_to_match.find(x_id) == x_cluster_to_match.end()) {
+                    x_cluster_to_match[x_id] = match_id;
                 }
+
+                if (topo.u_id >= 0) {
+                    if (u_cluster_to_match.find(topo.u_id) == u_cluster_to_match.end()) {
+                        u_cluster_to_match[topo.u_id] = match_id;
+                    }
+                    if (x_to_u_map.find(x_id) == x_to_u_map.end()) x_to_u_map[x_id] = topo.u_id;
+                }
+                if (topo.v_id >= 0) {
+                    if (v_cluster_to_match.find(topo.v_id) == v_cluster_to_match.end()) {
+                        v_cluster_to_match[topo.v_id] = match_id;
+                    }
+                    if (x_to_v_map.find(x_id) == x_to_v_map.end()) x_to_v_map[x_id] = topo.v_id;
+                }
+                match_type_map[match_id] = topo.type;
             }
             
             // Compute matching statistics
@@ -554,9 +571,9 @@ int main(int argc, char* argv[]) {
                 output_root->mkdir("clusters");
                 output_root->cd("clusters");
                 
-                write_clusters_with_match_id(clusters_u, u_cluster_to_match, output_root, "U");
-                write_clusters_with_match_id(clusters_v, v_cluster_to_match, output_root, "V");
-                write_clusters_with_match_id(clusters_x, x_cluster_to_match, output_root, "X", &x_to_u_map, &x_to_v_map);
+                write_clusters_with_match_id(clusters_u, u_cluster_to_match, output_root, "U", nullptr, nullptr, &match_type_map);
+                write_clusters_with_match_id(clusters_v, v_cluster_to_match, output_root, "V", nullptr, nullptr, &match_type_map);
+                write_clusters_with_match_id(clusters_x, x_cluster_to_match, output_root, "X", &x_to_u_map, &x_to_v_map, &match_type_map);
                 
                 // Create discarded directory for consistency (will be empty in current production)
                 output_root->cd();

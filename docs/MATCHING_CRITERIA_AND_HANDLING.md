@@ -1,199 +1,154 @@
 # Cluster Matching Criteria and Multiple Match Handling
 
-## Current Matching Criteria
+This document describes **what `src/app/match_clusters.cpp` actually does**, as of the
+P3/P4 fix (see `docs/three_plane_matching_fix_validation.md` and
+`docs/three_plane_matching_efficiency_study.md`).
 
-### Temporal Window
-**Time tolerance**: ±5000 ticks (~2.56 ms)
-- Each tick = 0.512 µs
-- 5000 ticks = 2,560 µs = 2.56 ms
-- U-cluster must be within ±5000 ticks of X-cluster
-- V-cluster must be within ±5000 ticks of U-cluster (not X directly)
+Earlier revisions of this file described a ±5000 tick window and 5 cm geometric cuts.
+Neither of those is in the code; they have been removed here.
 
-**Consideration**: This is quite permissive. For supernova neutrino interactions, signals are expected to be more temporally coincident. Reducing to ±1000 ticks (~512 µs) might improve specificity.
+---
 
-### Spatial Criteria (from `are_compatibles()`)
+## 1. Inputs and scope
 
-1. **Same APA Requirement**
-   - All three clusters must be on the same APA module
-   - APA determined by: `detector_channel / APA::total_channels`
+`match_clusters` reads the per-view cluster trees written by `make_clusters`:
 
-2. **Y-Coordinate Matching** (≤ 5 cm)
-   - Project U and V clusters to X-cluster's z-position
-   - Calculate predicted y-coordinates: `y_pred_u` and `y_pred_v`
-   - Require: `|y_pred_u - y_pred_v| ≤ 5 cm`
+* `clusters/clusters_tree_{U,V,X}` — the clusters that passed `energy_cut`;
+* `discarded/clusters_tree_{U,V,X}` — the clusters below `energy_cut`.
 
-3. **X-Coordinate Matching** (≤ 5 cm)
-   - Extract x-coordinates from all three clusters (using abs value)
-   - Calculate maximum pairwise distance: max(|x_u - x_x|, |x_v - x_x|, |x_u - x_v|)
-   - Require: `max_distance ≤ 5 cm`
+Only the **accepted** clusters take part in matching. The discarded ones are copied to
+the output with `match_id = -1`, `match_type = -1`.
 
-### Matching Algorithm Flow
+**Only X-plane clusters flagged `is_main_cluster` seed a match**
+(`match_clusters.cpp`, first/second/third pass). A background X cluster can therefore
+never carry a `match_id`. `is_main_cluster` is set by `make_clusters` as *the most
+energetic MARLEY cluster of that event in that view* (`make_clusters.cpp:295-315`), so
+it is a truth-derived flag and it is assigned **independently in each view**.
+
+Before matching, the clusters of each view are stable-sorted by
+`(earliest TDC time, event, cluster_id)`; the scan uses a binary search into that order.
+
+## 2. The gates
+
+For every X main-track cluster, a candidate induction cluster must satisfy, in this
+order:
+
+| gate | code | meaning |
+|---|---|---|
+| time overlap | `timesOverlap(range_ind, range_x, time_tolerance_ticks_tdc)` | the two `[first TP start, last TP start + ToT]` ranges must overlap within the tolerance |
+| same event | `ind.GetEvent() == x.GetEvent()` | |
+| same APA | `GetDetectorChannel()/APA::total_channels` compared | **currently a no-op**, see §6 |
+
+`time_tolerance_ticks` comes from the cat JSON and is expressed in **TPC ticks**; it is
+converted to TDC ticks with `toTDCticks()` (× 32). Production value: `10` TPC ticks =
+**320 TDC ticks**. This value is close to optimal: widening it *reduces* the 3-plane
+efficiency under the legacy partner rule, and narrowing it is much worse
+(`three_plane_matching_efficiency_study.md` §9.1).
+
+`are_compatibles(U, V, X, spatial_tolerance_cm)` is called only for complete (3-plane)
+matches. It is **not** the 5 cm geometric test the old version of this document
+described: `src/clusters/MatchClusters.cpp` reduced it to a same-detector check, with
+the wire-crossing geometry disabled. `spatial_tolerance_cm` is read from the JSON but
+is not used. `match_with_true_pos()` (which does implement the 5 cm y/x cuts) is never
+called from the app.
+
+## 3. Ambiguity resolution — which candidate becomes the partner
+
+Several induction clusters of the same event can overlap a long X cluster in time (the
+electron fragments on the induction wires). The rule that picks one of them is:
+
+* **default (since the P3 fix): the candidate with the highest `total_energy`.**
+  This is truth-agnostic — it never looks at `is_main_cluster` or any other truth
+  flag — and on the development samples it selects the same partner as an explicit
+  "prefer the main track" rule.
+* **legacy: the first candidate in the scan order**, i.e. the one that *starts
+  earliest*. Still available with the CLI flag `--first-in-time-partner`, which
+  reproduces the pre-fix products bit-for-bit as far as `match_id` is concerned.
+
+Ties in energy keep the earlier candidate, so the rule is deterministic.
+
+The legacy rule cost ~11 points of 3-plane efficiency, concentrated at high electron
+energy (the lowest-energy fragment often starts first). See the validation document
+for the measured before/after.
+
+U and V are scanned in two independent passes; there is no U↔V consistency requirement
+beyond `are_compatibles`.
+
+## 4. Match topologies and `match_type`
+
+The third pass turns the per-plane choices into matches:
+
+| topology | `match_type` | condition |
+|---|---|---|
+| X + U + V | `3` | a U and a V partner were found and `are_compatibles` accepted them |
+| U + X | `2` | only a U partner was found |
+| V + X | `1` | only a V partner was found |
+| unmatched | `-1` | no partner in either induction plane |
+
+Partial (2-plane) matches **do** receive a `match_id`, so `match_id != -1` is *not* the
+same thing as "3-plane matched". Downstream code that needs a genuine 3-plane match
+should require `match_type == 3` (or intersect the `match_id` sets of the three planes,
+which is what `refactor-snop-pipeline/python/lib/sample_loader.py` does).
+
+Every match is recorded with its topology **at creation time** (`MatchTopology` in
+`match_clusters.cpp`). This matters: `read_clusters_from_tree()` rebuilds
+`TriggerPrimitive` objects and calls the `SetView(int)` *channel* overload with `0/1/2`,
+so every TP read back from a cluster tree reports `GetView() == "U"`. Any attempt to
+recover the plane of a stored cluster from `GetView()` inside `match_clusters` is
+therefore wrong — this is what used to route V+X matches into the U map (§6).
+
+## 5. Multiple match handling
+
+Each X main-track cluster produces at most **one** match, so `match_id` values are
+unique per X cluster by construction. On the induction side, the first match that
+claims a given U (or V) cluster keeps it:
 
 ```cpp
-FOR each X-cluster (collection plane drives the matching):
-    FOR each U-cluster within time window of X:
-        FOR each V-cluster within time window of U:
-            IF are_compatibles(U, V, X, radius=5cm):
-                CREATE MATCH(U, V, X)
+if (u_cluster_to_match.find(topo.u_id) == u_cluster_to_match.end())
+    u_cluster_to_match[topo.u_id] = match_id;
 ```
 
-This creates **ALL geometrically compatible combinations**.
+so a single induction cluster is never shared between two match ids. Two X main tracks
+of the same event competing for the same induction cluster are resolved by X scan order;
+this is rare and has not been measured to matter.
 
-## Multiple Match Handling
+## 6. Known remaining issues (not fixed here)
 
-### The Problem
-When multiple U/V combinations are geometrically compatible with the same X-cluster, the algorithm creates multiple matches. This leads to:
-- 32 geometric matches found
-- But only 8 unique X-clusters involved
-- Only 2 unique U-clusters involved
-- Only 2 unique V-clusters involved
+These were found while implementing the P3/P4 fix. They are **not** addressed, because
+fixing them would change existing products beyond the matching decision:
 
-**Example from ES validation sample**:
+1. **The same-APA gate inside the U/V scan is a no-op.** It compares
+   `GetDetectorChannel() / APA::total_channels`, but `GetDetectorChannel()` is already
+   the channel *within* an APA (`detector_channel_ = channel_ % APA::total_channels`),
+   so the expression is always `0`. The real APA index is `GetDetector()`, which
+   `are_compatibles()` does compare — but only for 3-plane matches, so 2-plane matches
+   have no APA check at all. In practice the time + event gates leave almost nothing:
+   0 different-event and 1 different-APA partner in 15783 X main tracks of the
+   50 development cats.
+2. **X-plane `total_energy` is wrong in `*_matched.root`.** Because
+   `read_clusters_from_tree()` clobbers the TP view to `"U"` (§4), the `Cluster`
+   constructor converts ADC to MeV with the *induction* factor (900) instead of the
+   collection factor (3600) for X clusters. X energies in the matched products, and
+   hence in metadata column 10 of the cluster images, are a factor 4 too large.
+   `total_charge` is unaffected, and `clusters/*.root` (from `make_clusters`) is
+   correct. Fixing this would shift every X cluster energy in every existing product
+   and would require retraining the downstream networks, so it is reported, not fixed.
+3. **`energy_cut` removes the induction partner of low-energy electrons.** ~23% of X
+   main tracks have their U/V main-track cluster in `discarded/`, with a median energy
+   just below the cut. This is a JSON parameter question (P1 of the study), not a code
+   one.
+
+## 7. CLI reference (matching-related)
+
 ```
-Match 0: U_225 + V_227 + X_55
-Match 1: U_225 + V_228 + X_55  <- Same X and U as Match 0
-Match 2: U_226 + V_227 + X_55  <- Same X and V as Match 0
-Match 3: U_226 + V_228 + X_55  <- Same X as Match 0
-```
-
-### Current Solution: Keep First Match Only
-
-The current implementation assigns **only the first match** to each cluster:
-
-```cpp
-for (size_t match_id = 0; match_id < clusters.size(); match_id++) {
-    int u_id = clusters[match_id][0].get_cluster_id();
-    int v_id = clusters[match_id][1].get_cluster_id();
-    int x_id = clusters[match_id][2].get_cluster_id();
-    
-    // Only assign if not already matched (keep first match)
-    if (u_cluster_to_match.find(u_id) == u_cluster_to_match.end()) {
-        u_cluster_to_match[u_id] = match_id;
-    }
-    // Same for V and X...
-}
-```
-
-**Result**:
-- Each cluster appears in at most one match
-- Ambiguous cases are resolved by order (first found wins)
-- 32 geometric matches → 8 unique matched clusters in X-plane
-
-### Alternative Approaches (Not Implemented)
-
-1. **Best Match Selection**
-   - Rank matches by quality metric (e.g., geometric distance, charge correlation)
-   - Keep only the best match per X-cluster
-   - **Pros**: More principled selection
-   - **Cons**: Requires defining "best" metric
-
-2. **Allow Multiple Matches**
-   - Change `match_id` from `int` to `vector<int>`
-   - Each cluster stores all matches it participates in
-   - **Pros**: Preserves all information
-   - **Cons**: More complex downstream analysis
-
-3. **Duplicate Cluster Entries**
-   - Write each cluster once per match it participates in
-   - Different `match_id` for each entry
-   - **Pros**: Simpler structure (still single int match_id)
-   - **Cons**: Larger file size, potential confusion
-
-4. **Stricter Matching Criteria**
-   - Reduce time window (e.g., ±1000 ticks instead of ±5000)
-   - Reduce spatial tolerance (e.g., 3 cm instead of 5 cm)
-   - **Pros**: Fewer ambiguous matches
-   - **Cons**: Might miss legitimate matches due to detector effects
-
-## Tuning Recommendations
-
-### Reduce Time Window
-**Current**: ±5000 ticks (2.56 ms)  
-**Suggested**: ±1000 ticks (512 µs) or ±500 ticks (256 µs)
-
-**Rationale**:
-- Electron drift time across 3m TPC: ~1.5 ms
-- Collection plane signals should be nearly synchronous
-- Induction planes have ~100 µs offset due to wire geometry
-- ±500-1000 ticks should be sufficient for true coincidences
-
-**Testing approach**:
-```cpp
-// In match_clusters.cpp, line 107 and 133:
-// Change from:
-if (clusters_u[j].get_tps()[0]->GetTimeStart() > clusters_x[i].get_tps()[0]->GetTimeStart() + 5000)
-// To:
-if (clusters_u[j].get_tps()[0]->GetTimeStart() > clusters_x[i].get_tps()[0]->GetTimeStart() + 1000)
+build/src/app/match_clusters -j <cat.json> [options]
+  --outFolder <dir>            output folder (overrides matched_clusters_folder)
+  --skip-files / --max-files   file range, overrides the JSON
+  --first-in-time-partner      legacy ambiguity rule (keep the earliest candidate)
+  -f                           overwrite existing outputs
+  -v / -d                      verbose / debug
 ```
 
-### Make Matching Criteria Configurable
-
-Add to JSON configuration:
-```json
-{
-  "input_clusters_file": "...",
-  "output_file": "...",
-  "matching_params": {
-    "time_tolerance_ticks": 1000,
-    "spatial_tolerance_cm": 5.0,
-    "require_unique_matches": true
-  }
-}
-```
-
-### Performance vs. Purity Trade-off
-
-| Time Window | Expected Effect |
-|-------------|----------------|
-| ±5000 ticks | Current: High recall, some ambiguity |
-| ±1000 ticks | Balanced: Good recall, less ambiguity |
-| ±500 ticks  | Conservative: Lower recall, high purity |
-
-Recommend starting with ±1000 ticks and adjusting based on:
-- MARLEY matching efficiency (should stay >90%)
-- Background rejection (should improve)
-- Number of ambiguous matches (should decrease significantly)
-
-## Validation Steps
-
-After tuning matching criteria:
-
-1. **Run with new parameters**
-   ```bash
-   ./build/src/app/match_clusters -j output/test_es_valid_match_config.json
-   ```
-
-2. **Check match statistics**
-   ```python
-   # Count unique X-clusters with matches vs total geometric matches
-   # Should see ratio improve (closer to 1:1)
-   ```
-
-3. **Verify MARLEY purity**
-   ```python
-   # All matched clusters should still be MARLEY (100% purity)
-   # If purity drops, criteria may be too loose
-   ```
-
-4. **Measure efficiency**
-   ```python
-   # Fraction of MARLEY X-clusters that get matched
-   # Should remain >90% with tighter criteria
-   ```
-
-## Implementation Status
-
-### ✅ Completed
-- Match assignment logic (first match only)
-- Output structure (matched_clusters files with U/V/X trees)
-- Metadata branches (match_id, match_type)
-- Updated tools to read matched_clusters:
-  - `analyze_clusters` - Recognizes and logs match_id presence
-  - `generate_cluster_arrays.py` - Includes match_id in metadata (indices 15-16)
-  - `create_volumes.py` - Includes match_id in cluster_info dict
-
-### ⏳ Future Enhancements
-- Make matching criteria configurable via JSON
-- Implement match quality metrics
-- Add 2-plane matching (U+X, V+X for partial matches)
-- Provide statistics on ambiguous matches in output
+JSON keys used by this step: `time_tolerance_ticks`, `spatial_tolerance_cm` (unused),
+`matched_clusters_folder`, plus the clustering-condition keys that build the folder
+names.

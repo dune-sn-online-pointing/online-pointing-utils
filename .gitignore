@@ -41,3 +41,6 @@ Reports/
 condor/evilla/*
 Benchmark_cc_tick3_ch2_tot3_e3/
 Temp/
+# Job logs and worktree scratch
+logs/
+submodules/*.worktrees/
