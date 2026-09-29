@@ -105,8 +105,50 @@ int main(int argc, char* argv[]) {
             energy_cut = static_cast<float>(j.at("energy_cut").get<double>());
         }
     }
-    float adc_integral_cut_col = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");
-    float adc_integral_cut_ind = energy_cut * ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
+
+    // ---------------------------------------------------------------------
+    // Optional per-view energy cuts (default OFF: everything falls back to
+    // the single "energy_cut" key, so behaviour is bit-for-bit unchanged when
+    // the new keys are absent).
+    //
+    // Resolution order, from the most generic to the most specific:
+    //   energy_cut                      -> all three views
+    //   energy_cut_induction            -> U and V
+    //   energy_cut_collection           -> X
+    //   energy_cut_u / _v / _x          -> that single view
+    // ---------------------------------------------------------------------
+    auto read_float_key = [&j](const std::string& key, float fallback) {
+        if (!j.contains(key)) return fallback;
+        try {
+            return j.at(key).get<float>();
+        } catch (const std::exception&) {
+            return static_cast<float>(j.at(key).get<double>());
+        }
+    };
+
+    float energy_cut_induction  = read_float_key("energy_cut_induction",  energy_cut);
+    float energy_cut_collection = read_float_key("energy_cut_collection", energy_cut);
+    float energy_cut_u = read_float_key("energy_cut_u", energy_cut_induction);
+    float energy_cut_v = read_float_key("energy_cut_v", energy_cut_induction);
+    float energy_cut_x = read_float_key("energy_cut_x", energy_cut_collection);
+
+    // Indexed like APA::views = {"U", "V", "X"}
+    std::map<std::string, float> energy_cut_by_view = {
+        {"U", energy_cut_u}, {"V", energy_cut_v}, {"X", energy_cut_x}
+    };
+    const double adc_per_mev_col = ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");
+    const double adc_per_mev_ind = ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
+    std::map<std::string, double> adc_per_mev_by_view = {
+        {"U", adc_per_mev_ind}, {"V", adc_per_mev_ind}, {"X", adc_per_mev_col}
+    };
+    const bool per_view_energy_cut = (energy_cut_u != energy_cut) ||
+                                     (energy_cut_v != energy_cut) ||
+                                     (energy_cut_x != energy_cut);
+
+    float adc_integral_cut_col = energy_cut_x * static_cast<float>(adc_per_mev_col);
+    float adc_integral_cut_ind_u = energy_cut_u * static_cast<float>(adc_per_mev_ind);
+    float adc_integral_cut_ind_v = energy_cut_v * static_cast<float>(adc_per_mev_ind);
+    float adc_integral_cut_ind = adc_integral_cut_ind_u;  // legacy, for the metadata/log line
     int tot_cut = j.value("tot_cut", 0);
 
     // Get output folder: CLI > clusters_folder > outputFolder > default
@@ -125,7 +167,12 @@ int main(int argc, char* argv[]) {
     LogInfo << " - Channel limit: " << channel_limit << std::endl;
     LogInfo << " - Minimum TPs to form a cluster: " << min_tps_to_cluster << std::endl;
     LogInfo << " - Energy cut: " << energy_cut << std::endl;
-    LogInfo << "    - ADC integral cut (induction): " << adc_integral_cut_ind << std::endl;
+    if (per_view_energy_cut) {
+        LogInfo << "    - PER-VIEW energy cuts ACTIVE: U=" << energy_cut_u
+                << " V=" << energy_cut_v << " X=" << energy_cut_x << " MeV" << std::endl;
+    }
+    LogInfo << "    - ADC integral cut (induction U/V): " << adc_integral_cut_ind_u
+            << " / " << adc_integral_cut_ind_v << std::endl;
     LogInfo << "    - ADC integral cut (collection): " << adc_integral_cut_col << std::endl;
     LogInfo << " - ToT cut: " << tot_cut << std::endl;
     LogInfo << " - APA filter: " << (apa_filter >= 0 ? std::to_string(apa_filter) : std::string("disabled")) << std::endl;
@@ -146,6 +193,9 @@ int main(int argc, char* argv[]) {
         int meta_adc_cut_col = adc_integral_cut_col;
         int meta_tot_cut = tot_cut;
         float meta_energy_cut = energy_cut;
+        float meta_energy_cut_u = energy_cut_u;
+        float meta_energy_cut_v = energy_cut_v;
+        float meta_energy_cut_x = energy_cut_x;
         float meta_adc_to_mev_collection = ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");
         float meta_adc_to_mev_induction = ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
         
@@ -156,6 +206,9 @@ int main(int argc, char* argv[]) {
         metadata_tree->Branch("adc_integral_cut_collection", &meta_adc_cut_col, "adc_integral_cut_collection/I");
         metadata_tree->Branch("tot_cut", &meta_tot_cut, "tot_cut/I");
         metadata_tree->Branch("energy_cut", &meta_energy_cut, "energy_cut/F");
+        metadata_tree->Branch("energy_cut_u", &meta_energy_cut_u, "energy_cut_u/F");
+        metadata_tree->Branch("energy_cut_v", &meta_energy_cut_v, "energy_cut_v/F");
+        metadata_tree->Branch("energy_cut_x", &meta_energy_cut_x, "energy_cut_x/F");
         metadata_tree->Branch("adc_to_mev_collection", &meta_adc_to_mev_collection, "adc_to_mev_collection/F");
         metadata_tree->Branch("adc_to_mev_induction", &meta_adc_to_mev_induction, "adc_to_mev_induction/F");
         
@@ -267,8 +320,8 @@ int main(int argc, char* argv[]) {
 
             std::vector<std::vector<Cluster>> clusters_per_view; 
             clusters_per_view.reserve(APA::views.size());
-            std::vector<int> adc_cut = {static_cast<int>(adc_integral_cut_ind), 
-                                        static_cast<int>(adc_integral_cut_ind), 
+            std::vector<int> adc_cut = {static_cast<int>(adc_integral_cut_ind_u), 
+                                        static_cast<int>(adc_integral_cut_ind_v), 
                                         static_cast<int>(adc_integral_cut_col)};
             
             for (size_t iView=0;iView<APA::views.size();++iView)
@@ -333,15 +386,13 @@ int main(int argc, char* argv[]) {
                     // Assign unique cluster ID
                     cluster.set_cluster_id(next_cluster_id++);
                     
-                    // Get cluster energy in MeV
-                    float cluster_energy_mev = 0.0f;
-                    if (APA::views.at(iView) == "X") {
-                        cluster_energy_mev = cluster.get_total_charge() / ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_collection");
-                    } else {
-                        cluster_energy_mev = cluster.get_total_charge() / ParametersManager::getInstance().getDouble("conversion.adc_to_energy_factor_induction");
-                    }
+                    // Get cluster energy in MeV (per-view conversion factor)
+                    const std::string& view_name = APA::views.at(iView);
+                    float cluster_energy_mev = cluster.get_total_charge() / adc_per_mev_by_view.at(view_name);
                     
-                    if (cluster_energy_mev >= energy_cut) {
+                    // Per-view threshold; identical to energy_cut unless the
+                    // optional energy_cut_{induction,collection,u,v,x} keys are set.
+                    if (cluster_energy_mev >= energy_cut_by_view.at(view_name)) {
                         accepted_clusters.push_back(cluster);
                     } else {
                         discarded_clusters.push_back(cluster);
