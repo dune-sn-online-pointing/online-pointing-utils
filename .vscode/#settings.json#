@@ -1,0 +1,12 @@
+{
+  "terminal.integrated.profiles.osx": {
+    "bash (cltest)": {
+      "path": "/bin/bash",
+      "args": [
+        "-c",
+        "source \"$HOME/miniconda3/etc/profile.d/conda.sh\" && conda activate cltest && exec /bin/bash --noprofile --norc -i"
+      ]
+    }
+  },
+  "terminal.integrated.defaultProfile.osx": "bash (cltest)"
+}
