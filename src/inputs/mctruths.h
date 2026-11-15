@@ -5,6 +5,7 @@
 // found on file: prodmarley_nue_flat_es_dune10kt_1x2x2__trg_mc_2025a_tpg__tpg_dune10kt_1x2x2__triggerAna__v10_12_01d01__triggerana_dune10kt_1x2x2__v10_12_01d01_merged_FLAT-ES_prod_v2-pass2_20251124T190722_f0_tpstream.root
 //////////////////////////////////////////////////////////
 
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 20:59:41 UTC
 #ifndef mctruths_h
 #define mctruths_h
 
@@ -72,6 +73,7 @@ public :
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
    virtual void     Show(Long64_t entry = -1);
+   void             Print() const;   // dump current field values (debugging)
 
 private:
    std::unique_ptr<std::string> owned_generator_name_;

@@ -3,9 +3,11 @@
 // Declarations live in mctruths.h.
 //////////////////////////////////////////////////////////
 
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 20:59:41 UTC
 #include "mctruths.h"
+#include <iostream>
 
-mctruths::mctruths(TTree *tree) : fChain(0) 
+mctruths::mctruths(TTree *tree) : fChain(0)
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
@@ -145,4 +147,28 @@ Int_t mctruths::Cut(Long64_t entry)
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
    return 1;
+}
+
+void mctruths::Print() const
+{
+   std::cout << "mctruths entry:\n";
+   std::cout << "  event: " << event << "\n";
+   std::cout << "  run: " << run << "\n";
+   std::cout << "  subrun: " << subrun << "\n";
+   std::cout << "  block_id: " << block_id << "\n";
+   std::cout << "  truth_track_id: " << truth_track_id << "\n";
+   std::cout << "  pdg: " << pdg << "\n";
+   std::cout << "  generator_name: " << (generator_name ? *generator_name : std::string("(null)")) << "\n";
+   std::cout << "  status_code: " << status_code << "\n";
+   std::cout << "  x: " << x << "\n";
+   std::cout << "  y: " << y << "\n";
+   std::cout << "  z: " << z << "\n";
+   std::cout << "  px: " << px << "\n";
+   std::cout << "  py: " << py << "\n";
+   std::cout << "  pz: " << pz << "\n";
+   std::cout << "  p: " << p << "\n";
+   std::cout << "  energy: " << energy << "\n";
+   std::cout << "  kinetic_energy: " << kinetic_energy << "\n";
+   std::cout << "  process: " << (process ? *process : std::string("(null)")) << "\n";
+   std::cout << std::flush;
 }

@@ -3,9 +3,11 @@
 // Declarations live in mcparticles.h.
 //////////////////////////////////////////////////////////
 
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 20:59:41 UTC
 #include "mcparticles.h"
+#include <iostream>
 
-mcparticles::mcparticles(TTree *tree) : fChain(0) 
+mcparticles::mcparticles(TTree *tree) : fChain(0)
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
@@ -172,4 +174,37 @@ Int_t mcparticles::Cut(Long64_t entry)
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
    return 1;
+}
+
+void mcparticles::Print() const
+{
+   std::cout << "mcparticles entry:\n";
+   std::cout << "  event: " << event << "\n";
+   std::cout << "  run: " << run << "\n";
+   std::cout << "  subrun: " << subrun << "\n";
+   std::cout << "  pdg: " << pdg << "\n";
+   std::cout << "  generator_name: " << (generator_name ? *generator_name : std::string("(null)")) << "\n";
+   std::cout << "  status_code: " << status_code << "\n";
+   std::cout << "  g4_track_id: " << g4_track_id << "\n";
+   std::cout << "  mother: " << mother << "\n";
+   std::cout << "  truth_block_id: " << truth_block_id << "\n";
+   std::cout << "  x: " << x << "\n";
+   std::cout << "  y: " << y << "\n";
+   std::cout << "  z: " << z << "\n";
+   std::cout << "  t: " << t << "\n";
+   std::cout << "  end_x: " << end_x << "\n";
+   std::cout << "  end_y: " << end_y << "\n";
+   std::cout << "  end_z: " << end_z << "\n";
+   std::cout << "  end_t: " << end_t << "\n";
+   std::cout << "  px: " << px << "\n";
+   std::cout << "  py: " << py << "\n";
+   std::cout << "  pz: " << pz << "\n";
+   std::cout << "  energy: " << energy << "\n";
+   std::cout << "  kinetic_energy: " << kinetic_energy << "\n";
+   std::cout << "  edep: " << edep << "\n";
+   std::cout << "  numelectrons: " << numelectrons << "\n";
+   std::cout << "  shower_edep: " << shower_edep << "\n";
+   std::cout << "  shower_numelectrons: " << shower_numelectrons << "\n";
+   std::cout << "  process: " << (process ? *process : std::string("(null)")) << "\n";
+   std::cout << std::flush;
 }

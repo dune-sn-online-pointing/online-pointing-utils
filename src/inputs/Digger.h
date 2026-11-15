@@ -1,5 +1,6 @@
 // modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 03:26:01 UTC
 // modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 03:30:04 UTC
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 21:15:21 UTC
 #ifndef DIGGER_H
 #define DIGGER_H
 
@@ -17,8 +18,9 @@
 #include "mcparticles.h"
 #include "mctruths.h"
 #include "simides.h"
-#include "tpmakerTPCabsRS__TPGen.h"
-#include "tpmakerTPCsimpleThr__TPGen.h"
+#include "tpstream.h"
+//#include "tpstream.h"
+//#include "tpmakerTPCsimpleThr__TPGen.h"
 
 namespace digger_detail {
 class BranchAddressGuard {
@@ -80,6 +82,10 @@ public:
         }
         const Long64_t lo = static_cast<Long64_t>(lo_it->second);
         const Long64_t hi = static_cast<Long64_t>(hi_map.at(event_key));
+        // The [lo, hi] range is the exact upper bound on how many objects this
+        // event can yield, so reserve up front to avoid reallocations (and the
+        // string-allocating re-copies they trigger) during emplace_back.
+        objects.reserve(static_cast<std::size_t>(hi - lo + 1));
 
         digger_detail::BranchAddressGuard branch_addresses(tree);
         const auto delete_reader = [](Reader* reader) {
@@ -128,14 +134,14 @@ public:
                                       const FileMap& file_map) const {
         return find_objects<simides>(tree, event_key, file_map);
     }
-    std::vector<tpmakerTPCabsRS__TPGen> find_tpmakerTPCabsRS__TPGen(
+    std::vector<tpstream> find_tpstream(
         TTree* tree, ULong_t event_key, const FileMap& file_map) const {
-        return find_objects<tpmakerTPCabsRS__TPGen>(tree, event_key, file_map);
+        return find_objects<tpstream>(tree, event_key, file_map);
     }
-    std::vector<tpmakerTPCsimpleThr__TPGen> find_tpmakerTPCsimpleThr__TPGen(
-        TTree* tree, ULong_t event_key, const FileMap& file_map) const {
-        return find_objects<tpmakerTPCsimpleThr__TPGen>(tree, event_key, file_map);
-    }
+    // std::vector<tpmakerTPCsimpleThr__TPGen> find_tpmakerTPCsimpleThr__TPGen(
+    //     TTree* tree, ULong_t event_key, const FileMap& file_map) const {
+    //     return find_objects<tpmakerTPCsimpleThr__TPGen>(tree, event_key, file_map);
+    // }
 };
 
 #endif

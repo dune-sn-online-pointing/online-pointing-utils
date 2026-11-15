@@ -3,7 +3,9 @@
 // Declarations live in mcneutrinos.h.
 //////////////////////////////////////////////////////////
 
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 20:59:41 UTC
 #include "mcneutrinos.h"
+#include <iostream>
 
 mcneutrinos::mcneutrinos(TTree *tree) : fChain(0)
 {
@@ -134,4 +136,29 @@ Int_t mcneutrinos::Cut(Long64_t entry)
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
    return 1;
+}
+
+void mcneutrinos::Print() const
+{
+   std::cout << "mcneutrinos entry:\n";
+   std::cout << "  event: " << event << "\n";
+   std::cout << "  run: " << run << "\n";
+   std::cout << "  subrun: " << subrun << "\n";
+   std::cout << "  block_id: " << block_id << "\n";
+   std::cout << "  generator_name: " << (generator_name ? *generator_name : std::string("(null)")) << "\n";
+   std::cout << "  nupdg: " << nupdg << "\n";
+   std::cout << "  leptonpdg: " << leptonpdg << "\n";
+   std::cout << "  ccnc: " << ccnc << "\n";
+   std::cout << "  mode: " << mode << "\n";
+   std::cout << "  interactionType: " << interactionType << "\n";
+   std::cout << "  target: " << target << "\n";
+   std::cout << "  hitnuc: " << hitnuc << "\n";
+   std::cout << "  hitquark: " << hitquark << "\n";
+   std::cout << "  w: " << w << "\n";
+   std::cout << "  x: " << x << "\n";
+   std::cout << "  y: " << y << "\n";
+   std::cout << "  qsqr: " << qsqr << "\n";
+   std::cout << "  pt: " << pt << "\n";
+   std::cout << "  theta: " << theta << "\n";
+   std::cout << std::flush;
 }

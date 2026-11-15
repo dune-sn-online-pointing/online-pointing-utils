@@ -1,3 +1,5 @@
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 19:38:23 UTC
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 21:12:34 UTC
 #ifndef WRITE_TPS_CLASS_H
 #define WRITE_TPS_CLASS_H
 
@@ -6,6 +8,11 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TriggerPrimitive.hpp"
+#include "TString.h"
+#include "mcparticles.h"
+#include "mctruths.h"
+#include "mcneutrinos.h"
+#include "tpstream.h"
 // #include "TrueParticle.h"
 // #include "Neutrino.h"
 
@@ -14,16 +21,40 @@ class TPSClass
 {
 public:
     //TPSClass();
-    bool Create(std::string filename, std::string treename);
+    bool Create(TString filename, TString treename);
     bool Close();
     // TTree* GetTree();
     // TFile* GetFile();
-    int WriteSingleEvent(const std::vector<TriggerPrimitive> &tps_by_event);
-    int WriteEventVector(const std::vector<std::vector<TriggerPrimitive>> tps_vec);
+    // The reader classes (mcparticles/mctruths/mcneutrinos) have a deleted
+    // operator=, so we store non-owning pointers to the caller's objects
+    // rather than copies. They must outlive the next WriteSingleEvent() call.
+    void SetParticle(const mcparticles& particle)       { theparticle = &particle; }
+    void SetNeutrino(const mcneutrinos& neutrino)        { theneutrino = &neutrino; }
+    void SetTruth(const mctruths& truth)                 { thetruth = &truth; }
+    void SetPrimitive(const TriggerPrimitive& primitive) { theprimitive = &primitive; }
+    // Clear the per-TP associations before building a new output object. Only
+    // the non-owning pointers are nulled; the underlying objects live in the
+    // caller's containers and are left intact, so the same particle/truth/
+    // neutrino can be associated with another TP later in the same event.
+    void Reset() {
+        theparticle  = nullptr;
+        theneutrino  = nullptr;
+        thetruth     = nullptr;
+        theprimitive = nullptr;
+    }
+    int WriteSingleTPS();
+    //int WriteSingleEvent(const std::vector<TriggerPrimitive> &tps_by_event);
+    //int WriteEventVector(const std::vector<std::vector<TriggerPrimitive>> tps_vec);
     void SetBTSMargin(float margin) { bt_error_margin = margin; };
     void Print(const TriggerPrimitive &tp);
 
 private:
+    // Non-owning pointers to the current objects set via the Set* methods.
+    const mcparticles*      theparticle  = nullptr;
+    const mcneutrinos*      theneutrino  = nullptr;
+    const mctruths*         thetruth     = nullptr;
+    const TriggerPrimitive* theprimitive = nullptr;
+
     std::string thefilename;
     TTree *tpsTree;
     TFile *outFile;

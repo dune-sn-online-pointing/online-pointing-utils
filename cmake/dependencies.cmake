@@ -1,3 +1,4 @@
+# modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 18:13:33 UTC
 # Detecting compiler
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" )
   message( STATUS "Detected GCC version: ${CMAKE_CXX_COMPILER_VERSION}" )
@@ -17,7 +18,7 @@ if( WITH_ROOT )
   cmessage( STATUS "Looking for ROOT install..." )
 
   # find ROOT package
-  find_package( ROOT COMPONENTS RIO Net )
+  find_package( ROOT COMPONENTS RIO Net Tree Hist Graf Gpad )
   if( ROOT_FOUND )
     cmessage( STATUS "[ROOT]: ROOT found." )
 
@@ -106,8 +107,8 @@ if( WITH_ROOT )
     message(STATUS "ROOT compiled with C++20")
     set(CMAKE_CXX_STANDARD 20)
   else()
-    message(WARNING "ROOT C++ standard not set, use ROOT minimum (C++14)")
-    set(CMAKE_CXX_STANDARD 14)
+    message(WARNING "ROOT C++ standard not detected (is root-config on PATH?); defaulting to C++20 to match conda ROOT 6.40")
+    set(CMAKE_CXX_STANDARD 20)
   endif()
 
   # If GNU, enable generation of ROOT dictionary

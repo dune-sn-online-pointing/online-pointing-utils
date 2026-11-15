@@ -1,8 +1,9 @@
 #!/bin/bash
+# modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 18:21:53 UTC
 
 # On worker nodes, INIT_DONE might be inherited but environment is not
 # Always reinitialize to ensure LCG is properly loaded
-if [[ $INIT_DONE == true ]] ; then
+if [[ $INIT_DONE == true ]]; then
     echo "Environment is already initialized, not running init.sh again."
     echo "If it is not loaded properly, run export INIT_DONE=false and rerun init.sh"
 else
@@ -10,7 +11,10 @@ else
     echo ""
     echo "init.sh script started"
 
-    export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    # Use $0 as a fallback: when sourced into zsh, BASH_SOURCE is empty and this
+    # would otherwise resolve to the CWD. In zsh $0 is the sourced file's path;
+    # in bash BASH_SOURCE[0] is set. This makes SCRIPTS_DIR correct in both.
+    export SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
     export HOME_DIR=$(dirname $SCRIPTS_DIR)
     echo " Repository home is $HOME_DIR"
     
@@ -35,36 +39,35 @@ else
         else
             echo " Environment already sourced from ${ONLINE_POINTING_UTILS_LCG_VIEW}, skipping."
         fi
+    # elif [[ -v SPACK_PYTHON ]]; then
+    #     echo " using SPACK environment, assuming necessary packages are available. If not, you may need to install them with spack."
+    
     elif [[ $(hostname) == *"fnal"* ]]; then
+        
         if grep -q "Scientific Linux release 7" /etc/redhat-release 2>/dev/null; then
             echo " Setting up environment for fnal cluster, using ups products. If this fails, it means you're not in a slf7 container."
-
             # Set up the basic environment
-            echo " Setting up UPS products"
             source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
-            echo "got here"
             echo " Setting up necessary packages..."
             # versions are chosen for compatibility with the pyenv
-            setup root v6_28_12 -q -e26:p3915:prof
+            setup root v6_28_12 -f Linux64bit+3.10-2.17 -z /cvmfs/larsoft.opensciencegrid.org/products -q e26:p3915:prof
+            echo  $SETUP_ROOT
             setup nlohmann_json v3_10_4_1 -q e26:prof
+            echo $SETUP_NLOHMANN_JSON
             setup cmake  v3_27_4
+            echo $SETUP_CMAKE
             setup valgrind v3_10_1
-            setup gcc v9_3_0
+            echo $SETUP_VALGRIND
+            setup gcc v12_1_0
+            echo $SETUP_GCC
             echo " Done!"
         else
-            echo " looks like AL9, use minimal spack environment"
-            echo "setup-prototype.sh"
-            source /cvmfs/dune.opensciencegrid.org/spack/v1.1/share/spack/setup-env.sh
-            echo "Activate dune-prototype"
-            spack env activate dune-prototype
-            echo "load GCC and ROOT so don't use system"
-            spack load root@6_28_12
-            spack load gcc@12.5.0 arch=linux-almalinux9-x86_64_v2 
-            echo " Done!"
+            echo " WARNING: not running in slf7, can't set up dune products and commands, can't compile."
         fi
 
     else
-        echo " WARNING: Unrecognized hostname $(hostname), not setting up LCG or ROOT environment. If you're on a supported cluster, please report this message to the developers."
+        echo " I'm not on lxplus or fnal, running setup_conda.sh"
+        source "${SCRIPTS_DIR}/setup_conda.sh"
     fi
 
     export JSON_DIR=$HOME_DIR"/json/"
