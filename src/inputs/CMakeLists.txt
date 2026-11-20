@@ -3,6 +3,10 @@
 # modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-14 at 23:27:11 UTC
 # modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 18:06:25 UTC
 # modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 19:46:11 UTC
+# modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-16 at 03:27:32 UTC
+# modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-16 at 03:39:35 UTC
+# modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-19 at 21:52:25 UTC (JobConfig + nlohmann link)
+# modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-19 at 22:24:25 UTC (read_trigger_trees executable moved to src/app/convert_tpstream)
 # Library wrapping the ROOT MakeClass tree readers in this directory.
 # Local/standalone: this file does not modify any other CMakeLists.txt.
 # It can be pulled in with add_subdirectory(...) from the top-level build,
@@ -37,6 +41,9 @@ set( SRC_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/FileMap.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/Digger.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TPSClass.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/oldtps.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/newtps.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/JobConfig.cpp
 )
 
 if( USE_STATIC_LINKS )
@@ -71,15 +78,14 @@ if( TARGET globalLib )
   target_link_libraries( ${LIB_NAME} PUBLIC globalLib )
 endif()
 
-add_executable( read_trigger_trees ${CMAKE_CURRENT_SOURCE_DIR}/read_trigger_trees.cpp )
-target_link_libraries( read_trigger_trees PRIVATE ${LIB_NAME} ${ROOT_LIBRARIES} )
-if( NOT TARGET globalLib )
-  target_compile_definitions( read_trigger_trees PRIVATE INPUTS_STANDALONE )
+# JobConfig.cpp uses nlohmann/json; link the interface target (provides the
+# include path) when the top-level build defines it.
+if( TARGET nlohmann_json::nlohmann_json )
+  target_link_libraries( ${LIB_NAME} PUBLIC nlohmann_json::nlohmann_json )
 endif()
-get_filename_component( ONLINE_POINTING_UTILS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE )
-set_target_properties(
-  read_trigger_trees PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY "${ONLINE_POINTING_UTILS_ROOT}"
-)
+
+# The former read_trigger_trees executable now lives in src/app as
+# convert_tpstream (by analogy with backtrack_tpstream); this directory only
+# builds the inputsLibs library.
 
 install( TARGETS ${LIB_NAME} DESTINATION lib )

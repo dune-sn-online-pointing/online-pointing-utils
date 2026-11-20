@@ -1,4 +1,5 @@
 # Applications
+# modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-19 at 22:24:25 UTC (added convert_tpstream app)
 
 # cmessage( STATUS "Creating plot_avg_times app..." )
 # add_executable( plot_avg_times ${CMAKE_CURRENT_SOURCE_DIR}/plot_avg_times.cpp )
@@ -19,6 +20,16 @@ cmessage( STATUS "Creating backtrack_tpstream app..." )
 add_executable( backtrack_tpstream ${CMAKE_CURRENT_SOURCE_DIR}/backtrack_tpstream.cpp )
 target_link_libraries( backtrack_tpstream backtrackingLibs clustersLibs )
 install( TARGETS backtrack_tpstream DESTINATION bin )
+
+# convert_tpstream: reads a tpstream ROOT file and writes the flat *_tps.root
+# tree (formerly read_trigger_trees, moved here from src/inputs). Needs the
+# inputsLibs library, which is only built under WITH_ROOT.
+if( WITH_ROOT )
+  cmessage( STATUS "Creating convert_tpstream app..." )
+  add_executable( convert_tpstream ${CMAKE_CURRENT_SOURCE_DIR}/convert_tpstream.cpp )
+  target_link_libraries( convert_tpstream inputsLibs )
+  install( TARGETS convert_tpstream DESTINATION bin )
+endif()
 
 cmessage( STATUS "Creating analyze_clusters app..." )
 add_executable( analyze_clusters ${CMAKE_CURRENT_SOURCE_DIR}/analyze_clusters.cpp )

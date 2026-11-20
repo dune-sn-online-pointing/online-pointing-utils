@@ -1,5 +1,6 @@
 #!/bin/bash
 # modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 18:21:53 UTC
+# modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-16 at 02:53:06 UTC
 
 # On worker nodes, INIT_DONE might be inherited but environment is not
 # Always reinitialize to ensure LCG is properly loaded
@@ -68,6 +69,15 @@ else
     else
         echo " I'm not on lxplus or fnal, running setup_conda.sh"
         source "${SCRIPTS_DIR}/setup_conda.sh"
+        # The conda env is activated for ROOT (root-config), but its clang++
+        # cannot link on this macOS (ld: -lto_library must be 'libLTO.dylib').
+        # Build with the system Apple compiler instead, which works with ROOT's
+        # C++20. Only set these if the system compiler is present.
+        if [[ -x /usr/bin/clang++ && -x /usr/bin/clang ]]; then
+            export CC=/usr/bin/clang
+            export CXX=/usr/bin/clang++
+            echo " Using system compiler: CXX=$CXX (conda kept for root-config)"
+        fi
     fi
 
     export JSON_DIR=$HOME_DIR"/json/"

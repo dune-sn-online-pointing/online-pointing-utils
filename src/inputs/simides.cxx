@@ -3,7 +3,9 @@
 // Declarations live in simides.h.
 //////////////////////////////////////////////////////////
 
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-19 at 20:37:05 UTC (time-windowed SumEnergy)
 #include "simides.h"
+#include <cmath>
 
 simides::simides(TTree *tree) : fChain(0) 
 {
@@ -125,4 +127,29 @@ Int_t simides::Cut(Long64_t entry)
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
    return 1;
+}
+
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-19 at 19:55:39 UTC
+Double_t simides::SumEnergy(const std::vector<simides>& ides, Int_t trackID, UInt_t channel)
+{
+   Double_t total = 0.0;
+   for (const auto& s : ides) {
+      if (s.trackID == trackID && s.channel == channel) {
+         total += s.energy;
+      }
+   }
+   return total;
+}
+
+Double_t simides::SumEnergy(const std::vector<simides>& ides, Int_t trackID, UInt_t channel,
+                            double tp_time, double time_tol)
+{
+   Double_t total = 0.0;
+   for (const auto& s : ides) {
+      if (s.trackID == trackID && s.channel == channel &&
+          std::fabs(static_cast<double>(s.timestamp) - tp_time) <= time_tol) {
+         total += s.energy;
+      }
+   }
+   return total;
 }

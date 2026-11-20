@@ -22,5 +22,7 @@ fi
 # Set up ROOT / conda environment (puts root-config on PATH, etc.).
 source "$HERE/scripts/init.sh"
 
-# Build. exec so this script's exit status is cmake's.
-exec cmake --build "$HERE/build/full" "$@"
+# Build. (Plain call, not exec: exec would replace the caller's shell, which
+# kills the terminal if this script is sourced. The script's exit status is
+# cmake's either way, since this is the last command.)
+cmake --build "$HERE/build" "$@"

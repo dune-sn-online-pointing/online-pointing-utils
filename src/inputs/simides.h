@@ -5,6 +5,8 @@
 // found on file: prodmarley_nue_flat_es_dune10kt_1x2x2__trg_mc_2025a_tpg__tpg_dune10kt_1x2x2__triggerAna__v10_12_01d01__triggerana_dune10kt_1x2x2__v10_12_01d01_merged_FLAT-ES_prod_v2-pass2_20251124T190722_f0_tpstream.root
 //////////////////////////////////////////////////////////
 
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-19 at 19:55:39 UTC
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-19 at 20:37:05 UTC (time-windowed SumEnergy)
 #ifndef simides_h
 #define simides_h
 
@@ -13,6 +15,7 @@
 #include <TFile.h>
 
 // Header file for the classes stored in the TTree if any.
+#include <vector>
 
 class simides {
 public :
@@ -64,6 +67,20 @@ public :
    virtual Long64_t LoadTree(Long64_t entry);
    virtual void     Init(TTree *tree);
    virtual void     Show(Long64_t entry = -1);
+
+   // Sum the deposited energy over all SimIDEs in `ides` that belong to the
+   // given primary track and channel (trackID linkage). Used to fill a TP's
+   // simide_energy from the per-event SimIDE list.
+   static Double_t SumEnergy(const std::vector<simides>& ides, Int_t trackID, UInt_t channel);
+
+   // As above, but also require the SimIDE to fall within +/- time_tol of
+   // tp_time (localizes the sum like the old backtracker's time window).
+   // WARNING: in this file the SimIDE `timestamp` (UShort_t, ~O(1e3)) and the
+   // TP time_start (~O(1e5)) are NOT on the same clock -- a conversion/offset
+   // is needed for this window to be physically meaningful. Tune/convert on
+   // review; with the raw values a small tolerance will reject everything.
+   static Double_t SumEnergy(const std::vector<simides>& ides, Int_t trackID, UInt_t channel,
+                             double tp_time, double time_tol);
 };
 
 #endif // #ifndef simides_h

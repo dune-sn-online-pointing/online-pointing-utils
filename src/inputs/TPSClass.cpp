@@ -5,6 +5,13 @@
 // modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 21:02:18 UTC
 // modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 21:04:49 UTC (reverted Create() path strip; now writes to the full given path)
 // modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-15 at 21:31:13 UTC (Create(): bare filename -> current dir, fixes ensureDirectoryExists)
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-18 at 20:58:12 UTC (added PrintOneLine())
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-18 at 21:34:17 UTC (declared theincoming_neutrino/theoutgoing_lepton members; gen_name fix)
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-18 at 21:41:07 UTC (commented out neutrino_interaction=interactionType for now)
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-18 at 21:47:00 UTC (neutrino_energy from theincoming_neutrino, not null thetruth; fixes segfault)
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-19 at 19:39:40 UTC (debug bt_* branches)
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-19 at 19:55:39 UTC (simide_energy via SetSimideEnergy)
+// modified using Claude Code with Claude Opus 4.8 by H. Schellman on 2026-11-19 at 21:05:00 UTC (neutrino_interaction filename tag)
 #include "TPSClass.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -78,6 +85,11 @@ bool TPSClass::Create(TString outFilename, TString treename="tps"){
     tpsTree->Branch("neutrino_pz", &neutrino_pz, "neutrino_pz/D");
     tpsTree->Branch("neutrino_energy", &neutrino_energy, "neutrino_energy/D");
 
+    // DEBUG branches: raw backtracking fractions from the tpstream (temporary)
+    tpsTree->Branch("bt_primary_track_energy_frac", &bt_energy_frac_dbg, "bt_primary_track_energy_frac/D");
+    tpsTree->Branch("bt_primary_track_numelectron_frac", &bt_numelectron_frac_dbg, "bt_primary_track_numelectron_frac/D");
+    tpsTree->Branch("bt_primary_track_id", &bt_primary_track_id_dbg, "bt_primary_track_id/I");
+
     if (verboseMode) LogInfo << "Created output tpsTree " << tpsTree->GetName() << std::endl;
     outFile->ls();
     if (debugMode) LogInfo << " tpstree pointer as created " << tpsTree << std::endl;
@@ -131,11 +143,12 @@ int TPSClass::WriteSingleTPS(){
     det = theprimitive->GetDetector();
     det_channel = theprimitive->GetDetectorChannel();
     view = theprimitive->GetView();
-    simide_energy = 0; // not filled for now theprimitive.GetSimideEnergy();
+    // simide_energy is set by the caller via SetSimideEnergy() (summed SimIDEs);
+    // Reset() clears it to 0 per TP, so unmatched TPs stay 0.
     
     // Truth info from the particle and the truth
     if (theparticle){   
-        gen_name = theparticle->generator_name ? *theparticle->generator_name : std::string();
+        //gen_name = theparticle->generator_name ? *theparticle->generator_name : std::string();
         particle_pdg = theparticle->pdg;
         //particle_process = theprimitive->GetParticleProcess();
         particle_energy = theparticle->energy;
@@ -147,7 +160,7 @@ int TPSClass::WriteSingleTPS(){
         particle_pz = theparticle->pz;
     }
     else{
-        gen_name = "";
+        gen_name = "UNKNOWN";
         particle_pdg = 0;
         particle_process = "";
         particle_energy = 0.0;
@@ -159,7 +172,7 @@ int TPSClass::WriteSingleTPS(){
         particle_pz = 0.0;
     }
     if (theneutrino){
-        //neutrino_interaction = theneutrino->interactionType;
+        // neutrino_interaction = theneutrino->interactionType;  // TODO: interactionType is Int_t; map to a label string
         // neutrino_x = theneutrino.x;
         // neutrino_y = theneutrino.y;
         // neutrino_z = theneutrino.z;
@@ -168,14 +181,18 @@ int TPSClass::WriteSingleTPS(){
         // neutrino_pz = theneutrino.pz;
         // neutrino_energy = theneutrino.energy;
     }
-    if (thetruth){
-        neutrino_x = thetruth->x;
-        neutrino_y = thetruth->y;
-        neutrino_z = thetruth->z;
-        neutrino_px = thetruth->px;
-        neutrino_py = thetruth->py;
-        neutrino_pz = thetruth->pz;
-        neutrino_energy = thetruth->energy;
+    if (theincoming_neutrino){
+        gen_name = theincoming_neutrino->generator_name ? *theincoming_neutrino->generator_name : std::string();
+        // ES/CC tag from the input filename (set via SetInteractionLabel),
+        // mirroring the old code -- it is a filename tag, not from the data.
+        neutrino_interaction = interaction_label_;
+        neutrino_x = theincoming_neutrino->x;
+        neutrino_y = theincoming_neutrino->y;
+        neutrino_z = theincoming_neutrino->z;
+        neutrino_px = theincoming_neutrino->px;
+        neutrino_py = theincoming_neutrino->py;
+        neutrino_pz = theincoming_neutrino->pz;
+        neutrino_energy = theincoming_neutrino->energy;
     }
     else{
         neutrino_interaction = "";
@@ -237,6 +254,45 @@ void TPSClass::Print(const TriggerPrimitive &tp){
         LogInfo << "neutrino_py : " << theprimitive->GetNeutrinoPy()<< std::endl;
         LogInfo << "neutrino_pz : " << theprimitive->GetNeutrinoPz()<< std::endl;
         LogInfo << "neutrino_energy : " << theprimitive->GetNeutrinoEnergy()<< std::endl;
+}
+
+void TPSClass::PrintOneLine() const
+{
+    // Compact single-line dump of the current branch values.
+    LogInfo << "tps:"
+            << " event=" << evt
+            << " run=" << run
+            << " version=" << version
+            << " detid=" << detid
+            << " channel=" << channel
+            << " detector=" << det
+            << " detector_channel=" << det_channel
+            << " view='" << view << "'"
+            << " samples_over_threshold=" << s_over
+            << " time_start=" << tstart
+            << " samples_to_peak=" << s_to_peak
+            << " adc_integral=" << adc_integral
+            << " adc_peak=" << adc_peak
+            << " simide_energy=" << simide_energy
+            << " generator_name='" << gen_name << "'"
+            << " particle_pdg=" << particle_pdg
+            << " particle_process='" << particle_process << "'"
+            << " particle_energy=" << particle_energy
+            << " particle_x=" << particle_x
+            << " particle_y=" << particle_y
+            << " particle_z=" << particle_z
+            << " particle_px=" << particle_px
+            << " particle_py=" << particle_py
+            << " particle_pz=" << particle_pz
+            << " neutrino_interaction='" << neutrino_interaction << "'"
+            << " neutrino_x=" << neutrino_x
+            << " neutrino_y=" << neutrino_y
+            << " neutrino_z=" << neutrino_z
+            << " neutrino_px=" << neutrino_px
+            << " neutrino_py=" << neutrino_py
+            << " neutrino_pz=" << neutrino_pz
+            << " neutrino_energy=" << neutrino_energy
+            << std::endl;
 }
 
 // int TPSClass::WriteEventVector(const std::vector<std::vector<TriggerPrimitive>> tps_vec){
