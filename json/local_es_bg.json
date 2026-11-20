@@ -1,0 +1,29 @@
+{
+  "comment": "Example configuration for ES signal with background mixing workflow",
+  
+  "inputFile":"/Users/claudette/newsnb/data/es/tpstreams/prodmarley_nue_flat_es_dune10kt_1x2x2__trg_mc_2025a_tpg__tpg_dune10kt_1x2x2__triggerAna__v10_12_01d01__triggerana_dune10kt_1x2x2__v10_12_01d01_merged_FLAT-ES_prod_v2-pass2_20251124T190722_f0_tpstream.root",
+  "bgFile":"//Users/claudette/mysnb/data/central/output",
+  "tpstream_input_file":"/Users/claudette/mysnb/data/es/tpstreams/prodmarley_nue_flat_es_dune10kt_1x2x2__trg_mc_2025a_tpg__tpg_dune10kt_1x2x2__triggerAna__v10_12_01d01__triggerana_dune10kt_1x2x2__v10_12_01d01_merged_FLAT-ES_prod_v2-pass2_20251124T190722_f0_tpstream.root",
+  "outputFolder": "/Users/claudette/mysnb/data/es/output",
+  "sig_folder": "/Users/claudette/mysnb/data/es/output/sig",
+  "tpstream_folder": "/Users/claudette/mysnb/data/es/tpstreams",
+  "tps_bg_folder": "/Users/claudette/mysnb/data/es/tps_bg",
+  "clusters_folder": "/Users/claudette/mysnb/data/es/output/clusters",
+  "matched_clusters_folder": "/Users/claudette/mysnb/data/es/output/matched_clusters",
+  "volume_images_folder": "/Users/claudette/mysnb/data/es/output/volume_images",
+
+  "products_prefix": "es_bg",
+  "max_files": 10,
+  "file_pattern": "*_tpstream.root",
+  "backtracker_error_margin": 10,
+
+  "time_tolerance_ticks": 10,
+  "spatial_tolerance_cm": 100,
+  "maxcount": 11,
+  "skipevent": 0,
+  "tick_limit": 3,
+  "channel_limit": 2,
+  "min_tps_to_cluster": 2,
+  "tot_cut": 3,
+  "energy_cut": 2.0
+}
